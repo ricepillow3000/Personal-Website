@@ -1,0 +1,22 @@
+:root {
+  --red: #E5191C;
+  --red-dark: #9E0F12;
+  --black: #0B0B0B;
+  --white: #F5F5F0;
+  --paper: #DDD8C8;
+  --yellow: #FFE11A;
+  --grey: #8A8A86;
+  --grey-dark: #3B3B3B;
+
+  --f-head: "Anton", Impact, "Arial Narrow Bold", sans-serif;
+  --f-menu: "Bebas Neue", "Anton", Impact, sans-serif;
+  --f-mark: "Permanent Marker", "Comic Sans MS", cursive;
+  --f-type: "Special Elite", "Courier New", monospace;
+  --f-serif: Georgia, "Times New Roman", serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --skew: -12deg;
+  --gutter: clamp(16px, 3.5vw, 48px);
+  --ease-pop: cubic-bezier(.2, 1.5, .4, 1);
+  color-scheme: dark;
+}

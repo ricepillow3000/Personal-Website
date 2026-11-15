@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>John Nguyen · Interactive Resume</title>
+  <meta name="description" content="John Nguyen — AI Solutions Engineer in training. I direct AI agents to build software, then test it like it's going to production. Play the interactive resume, or open the one-page Quick View.">
+  <meta name="theme-color" content="#E5191C">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="John Nguyen · Interactive Resume">
+  <meta property="og:description" content="I direct AI agents to build software, then test it like it's going to production. Press start.">
+  <meta property="og:image" content="https://ricepillow3000.github.io/assets/og-image.jpg">
+  <meta property="og:url" content="https://ricepillow3000.github.io/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;600;800&family=Permanent+Marker&family=Special+Elite&display=swap">
+</head>
+<body data-screen="boot">
+  <a class="skip-link" href="#/quick">Skip to the one-page resume</a>
+
+  <canvas id="city" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <main id="app">
+    <!-- TITLE -->
+    <section class="screen" id="screen-title" aria-label="Title screen">
+      <div class="title-block">
+        <h1 class="ransom ransom-xl" id="titleName" aria-label="John"></h1>
+        <div class="slab title-codename"><span>PIRATE</span></div>
+        <p class="title-hook" id="titleHook"></p>
+        <button class="press-start" id="pressStart" type="button">PRESS START</button>
+        <a class="quick-link" href="#/quick">⚡ Quick View (1-page resume)</a>
+      </div>
+    </section>
+
+    <!-- CONVERSATION -->
+    <section class="screen" id="screen-talk" aria-label="Conversation with John">
+      <div class="visitor" aria-hidden="true">
+        <div class="visitor-figure"><svg viewBox="0 0 260 600" preserveAspectRatio="xMidYMax meet"><path d="M130 40 C 175 40 196 78 192 118 C 189 150 175 170 160 182 C 214 196 252 236 260 330 L 260 600 L 0 600 L 0 330 C 8 236 46 196 100 182 C 85 170 71 150 68 118 C 64 78 85 40 130 40 Z" fill="#6D6D6A"/><path d="M60 600 L 80 300 M200 600 L 180 300" stroke="#5A5A57" stroke-width="6"/><text x="130" y="140" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="80" fill="#9A9A96">?</text></svg></div>
+        <div class="visitor-tag" id="visitorTag">VISITOR</div>
+      </div>
+      <div class="choices" id="choices" role="group" aria-label="Your reply"></div>
+      <div class="speaker">
+        <div class="splash" aria-hidden="true"></div>
+        <div class="portrait" id="portrait" role="img" aria-label="Ink drawing of John"></div>
+      </div>
+      <div class="dialog" id="dialog">
+        <div class="dialog-tag">JOHN</div>
+        <p class="dialog-text" id="dialogText" aria-live="polite"></p>
+        <span class="dialog-next" aria-hidden="true">▼</span>
+      </div>
+    </section>
+
+    <!-- SECTION PAGES (missions, skills, different, stats, side-quests, contact, system, secret) -->
+    <section class="screen screen-page" id="screen-page" aria-label="Section">
+      <div class="page-inner" id="page"></div>
+    </section>
+
+    <!-- QUICK VIEW -->
+    <section class="screen screen-page" id="screen-quick" aria-label="One-page resume">
+      <div class="quick-bar no-print">
+        <a class="btn" href="#/talk" data-back>◀ Play the game version</a>
+        <a class="btn btn-accent" id="quickPdf" download>⬇ Download PDF</a>
+      </div>
+      <article class="paper" id="paper"></article>
+    </section>
+  </main>
+
+  <!-- HUD -->
+  <header class="hud-tl" id="hudDate" aria-label="Date and status"></header>
+  <nav class="hud-tr" aria-label="Site controls">
+    <button class="hud-btn" id="achBtn" type="button" title="Achievements">★ <span id="achCount">0/7</span></button>
+    <button class="hud-btn" id="soundBtn" type="button" aria-pressed="false" title="Sound (M)"><span class="snd-off">🔇</span><span class="snd-on">🔊</span><span class="sound-tip" id="soundTip">sound?</span></button>
+    <button class="hud-btn" id="menuBtn" type="button" title="Menu">MENU</button>
+  </nav>
+  <button class="hud-bars" id="hudBars" type="button" title="Flip (F)" aria-label="Stats: GPA 3.88, checks 727 of 728. Press to flip."></button>
+  <div class="keyhints" id="keyhints" aria-hidden="true"></div>
+
+  <!-- MENU OVERLAY -->
+  <div class="menu-overlay" id="menu" hidden>
+    <ul class="stair" id="stair" role="menu" aria-label="Menu"></ul>
+    <div class="menu-teaser bubble" id="menuTeaser"></div>
+    <button class="btn menu-close" type="button" data-close-menu>✕ CLOSE <kbd>ESC</kbd></button>
+  </div>
+
+  <!-- MODAL (mission dossier, achievements, secret card) -->
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+    <div class="modal-panel" id="modalPanel"></div>
+  </div>
+
+  <!-- FX LAYERS -->
+  <div class="wipe" aria-hidden="true"><div class="wipe-black"></div><div class="wipe-red"></div></div>
+  <div class="punch" aria-hidden="true"><div class="punch-star"></div><div class="punch-text" id="punchText"></div></div>
+  <div class="cutin" aria-hidden="true"><div class="cutin-strip"><div class="cutin-eyes" id="cutinEyes"></div><div class="cutin-text" id="cutinText"></div></div></div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <button class="bee" id="bee" type="button" aria-label="A bee!" hidden>🐝</button>
+  <div class="motto-screen" id="motto" aria-hidden="true"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

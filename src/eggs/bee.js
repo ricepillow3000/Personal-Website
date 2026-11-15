@@ -1,0 +1,49 @@
+import { gsap } from 'gsap';
+import { $, reducedMotion } from '../core/util.js';
+
+/* Once per visit, 30–90s into the conversation, a bee buzzes across the scene.
+   Click it before it leaves → onCatch(). Nobody clicks → it just flies away. */
+let armed = false;
+let flying = false;
+
+export function armBee(isTalkScreen, onCatch) {
+  if (armed) return;
+  armed = true;
+  const delay = 30000 + Math.random() * 60000;
+  const tryFly = () => {
+    if (!isTalkScreen() || document.hidden) {
+      setTimeout(tryFly, 4000);
+      return;
+    }
+    fly(onCatch);
+  };
+  setTimeout(tryFly, delay);
+}
+
+export function fly(onCatch) {
+  if (flying) return;
+  flying = true;
+  const bee = $('#bee');
+  bee.hidden = false;
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const fromLeft = Math.random() < 0.5;
+  const y0 = H * (0.25 + Math.random() * 0.3);
+  const done = () => {
+    bee.hidden = true;
+    flying = false;
+    bee.onclick = null;
+  };
+  const tl = gsap.timeline({ onComplete: done });
+  const dur = reducedMotion() ? 6 : 7.5;
+  gsap.set(bee, { x: fromLeft ? -60 : W + 20, y: y0, scaleX: fromLeft ? -1 : 1 });
+  tl.to(bee, { x: fromLeft ? W + 40 : -80, duration: dur, ease: 'none' }, 0);
+  if (!reducedMotion()) {
+    tl.to(bee, { y: `+=${H * 0.08}`, duration: 0.45, yoyo: true, repeat: Math.floor(dur / 0.45), ease: 'sine.inOut' }, 0);
+  }
+  bee.onclick = () => {
+    tl.kill();
+    gsap.to(bee, { x: fromLeft ? -120 : W + 120, y: -80, rotation: 30, duration: 0.6, ease: 'power2.in', onComplete: done });
+    onCatch();
+  };
+}
