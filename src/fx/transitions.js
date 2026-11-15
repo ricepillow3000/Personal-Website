@@ -74,22 +74,25 @@ export function cutIn(text = '', expr = 'smirk') {
 }
 
 /** PRESS START: crowd freezes → world goes grey → camera rushes John → slash. (~1.2s) */
-export function startSequence(city, swap) {
+export function startSequence(city, swap, skyline) {
   if (reducedMotion()) {
     swap();
     return Promise.resolve();
   }
   const canvas = $('#city');
+  const world = [canvas, $('#skyline')];
   const p = city.johnPoint();
+  skyline?.setFrozen(true);
   const gray = { v: 0 };
   city.freeze();
   const tl = gsap.timeline();
   tl.to('#screen-title .title-block', { x: -60, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0)
     .to(gray, { v: 1, duration: 0.3, onUpdate: () => city.setGray(gray.v) }, 0)
-    .to(canvas, { scale: 2.6, transformOrigin: `${p.x}px ${p.y}px`, duration: 0.55, ease: 'power3.in' }, 0.3)
+    .to(world, { scale: 2.6, transformOrigin: `${p.x}px ${p.y}px`, duration: 0.55, ease: 'power3.in' }, 0.3)
     .add(() => {}, 0.75);
   return track(tl).then(() => slashWipe(() => {
-    gsap.set(canvas, { clearProps: 'transform' });
+    gsap.set(world, { clearProps: 'transform' });
+    skyline?.setFrozen(false);
     gsap.set('#screen-title .title-block', { clearProps: 'all' });
     swap();
   }));
