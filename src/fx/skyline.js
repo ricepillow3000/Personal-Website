@@ -26,11 +26,52 @@ const line = (p, color, w, extra = '') =>
   `<polyline points="${pts(p)}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linejoin="miter" stroke-linecap="square" ${extra}/>`;
 const mirror = (p) => p.map(([x, y]) => [2 * CX - x, y]);
 
-/** Worm's-eye lean: tops tilt toward the centre line, bases stay on the ground. */
-const lean = (cx, body, max = 6) => {
-  const a = ((cx - CX) / CX) * max;
-  return `<g transform="translate(${cx} ${GROUND}) skewX(${a.toFixed(2)}) translate(${-cx} ${-GROUND})">${body}</g>`;
-};
+/* ---------- architecture toolkit ----------
+   Light comes from the sun at the centre, so every building has a lit front
+   (charcoal + a regular window grid) and a shadow side (black) on its OUTER edge,
+   plus a clean white rim on its inner edge. That volume is what makes the
+   silhouettes read as real buildings instead of flat cut-outs. */
+const WIN_W = 12; // window grid (must match the #win pattern)
+const WIN_H = 16;
+const shadeLeft = (cx) => cx < CX; // left half: shadow on the left (outer) side
+
+/** Lit windows aligned to the window grid (mostly dark, a few lit). */
+function litWindows(rnd, x, top, w, bottom = GROUND, p = 0.07) {
+  let out = '';
+  const x0 = Math.ceil((x + 2) / WIN_W) * WIN_W + 3;
+  const y0 = Math.ceil((top + 8) / WIN_H) * WIN_H + 4;
+  for (let wx = x0; wx + 6 < x + w - 2; wx += WIN_W) {
+    for (let wy = y0; wy + 8 < bottom - 6; wy += WIN_H) {
+      if (rnd() < p) out += `<rect x="${wx}" y="${wy}" width="6" height="8" fill="${rnd() < 0.3 ? C.red2 : C.white}"/>`;
+    }
+  }
+  return out;
+}
+
+/** Window grid + shadow side + rim light for a rectangular shaft. */
+function facade(rnd, x, top, w, { bottom = GROUND, lit = 0.07, side = null, rimLen = 9999 } = {}) {
+  const left = side ?? shadeLeft(x + w / 2);
+  const sw = Math.max(8, Math.round(w * 0.24));
+  const sx = left ? x : x + w - sw;
+  const rimX = left ? x + w - 1.5 : x + 1.5;
+  return `<rect x="${x}" y="${top}" width="${w}" height="${bottom - top}" fill="url(#win)"/>` +
+    litWindows(rnd, x, top, w, bottom, lit) +
+    `<rect x="${sx}" y="${top}" width="${sw}" height="${BASE - top}" fill="${C.black}"/>` +
+    `<rect x="${sx}" y="${top}" width="${sw}" height="${bottom - top}" fill="url(#winS)"/>` +
+    line([[rimX, top], [rimX, Math.min(bottom, top + rimLen)]], C.white, 2.5, 'class="rim"');
+}
+
+/** Generic filler building with a parapet and rooftop clutter. */
+function building(rnd, { x, w, top, kind }) {
+  let roof = `<rect x="${x - 2}" y="${top - 5}" width="${w + 4}" height="6" fill="${C.char}"/>` +
+    line([[x - 2, top - 5], [x + w + 2, top - 5]], C.white, 2, 'class="rim"');
+  const mid = x + w / 2;
+  if (kind === 0) roof += `<rect x="${mid - 1}" y="${top - 46}" width="2" height="42" fill="${C.char}"/><rect x="${mid - 4}" y="${top - 30}" width="8" height="2" fill="${C.char}"/>`;
+  if (kind === 1) roof += `<rect x="${x + 8}" y="${top - 22}" width="18" height="17" fill="${C.char}"/><rect x="${x + 10}" y="${top - 26}" width="14" height="5" fill="${C.char}"/>`;
+  if (kind === 2) roof += `<rect x="${x + w * 0.2}" y="${top - 14}" width="${w * 0.6}" height="10" fill="${C.char}"/><rect x="${x + w * 0.3}" y="${top - 24}" width="${w * 0.4}" height="10" fill="${C.char}"/>`;
+  if (kind === 3) roof += `<rect x="${x + w - 26}" y="${top - 12}" width="16" height="8" fill="${C.char}"/><rect x="${x + 8}" y="${top - 10}" width="12" height="6" fill="${C.char}"/>`;
+  return `<rect x="${x}" y="${top}" width="${w}" height="${BASE - top}" fill="${C.char}"/>` + facade(rnd, x, top, w, { rimLen: 160 }) + roof;
+}
 
 /** Jagged white rim-light running down an edge (zig-zags ±amp every `step`). */
 function rim(x, y1, y2, { amp = 2.5, step = 16, w = 3, side = 1 } = {}) {
@@ -99,30 +140,28 @@ function farLayer() {
 /* =========================================================================
    LAYER 2 — MIDGROUND: charcoal Downtown/Midtown, landmarks in mirrored pairs
    ========================================================================= */
-function fillersSymmetric() {
+/** Packed, mirrored city blocks: a tall back row and a short front row. Buildings
+    overlap (no slivers of sky between them) so the city reads as one solid mass. */
+function cityRows() {
   const rnd = seeded(404);
-  const left = [];
-  for (let x = -280; x < CX - 40; ) {
-    const w = 48 + Math.floor(rnd() * 64);
-    // shorter toward the edges, taller toward the centre: a gentle symmetric "mountain"
-    const near = 1 - Math.abs(x + w / 2 - CX) / 1080;
-    const top = Math.round(760 - near * 170 - rnd() * 80);
-    left.push({ x, w, top, slant: rnd() < 0.3 ? 12 + rnd() * 20 : 0 });
-    x += w + 4 + Math.floor(rnd() * 6);
-  }
-  const all = [...left, ...left.map((b) => ({ ...b, x: 2 * CX - b.x - b.w, slant: -b.slant }))];
-  const srnd = seeded(77);
-  return all
-    .map((b) => {
-      const topL = b.top + Math.max(0, b.slant);
-      const topR = b.top + Math.max(0, -b.slant);
-      const body =
-        poly([[b.x, BASE], [b.x, topL], [b.x + b.w, topR], [b.x + b.w, BASE]], C.char) +
-        slits(srnd, b.x, b.top, b.w, { density: 0.13 }) +
-        (b.x + b.w / 2 < CX ? rim(b.x + 1, topL + 6, topL + 130, { w: 2 }) : rim(b.x + b.w - 1, topR + 6, topR + 130, { w: 2, side: -1 }));
-      return lean(b.x + b.w / 2, body, 5);
-    })
-    .join('');
+  const row = (minW, maxW, high, low, overlap) => {
+    const left = [];
+    for (let x = -320; x < CX - 10; ) {
+      const w = minW + Math.floor(rnd() * (maxW - minW));
+      const near = 1 - Math.min(1, Math.abs(x + w / 2 - CX) / 900);
+      const top = Math.round(low - near * (low - high) - rnd() * 50);
+      left.push({ x, w, top, kind: Math.floor(rnd() * 5) });
+      x += w - overlap;
+    }
+    return [...left, ...left.map((b) => ({ ...b, x: 2 * CX - b.x - b.w }))];
+  };
+  const back = row(70, 128, 470, 640, 10);
+  const front = row(54, 104, 650, 760, 6);
+  const wr = seeded(77);
+  return {
+    back: back.map((b) => building(wr, b)).join(''),
+    front: front.map((b) => building(wr, b)).join('')
+  };
 }
 
 function midLayer() {
@@ -138,7 +177,8 @@ function midLayer() {
   }
   const boa =
     poly([[bx, BASE], [bx, 322], [bx + 12, 300], [bx + 60, 300], [bx + 72, 322], [bx + 72, BASE]], C.char) +
-    slits(rnd, bx, 320, 72, { density: 0.32, red: 0.35 }) +
+    `<rect x="${bx}" y="322" width="72" height="${GROUND - 322}" fill="url(#win)"/>` + litWindows(rnd, bx, 322, 72, GROUND, 0.1) +
+    `<rect x="${bx}" y="322" width="14" height="${BASE - 322}" fill="${C.black}"/><rect x="${bx + 58}" y="322" width="14" height="${BASE - 322}" fill="${C.black}"/>` +
     `<g fill="none" stroke="${C.char}" stroke-linejoin="miter">
       <path d="M${bx} 300 L${CX} 175 L${bx + 72} 300 Z" stroke-width="7"/>
       <path d="${lat.join(' ')} M${bx} 300 L${CX} 230 L${bx + 72} 300 M${CX - 20} 300 L${CX} 175 L${CX + 20} 300" stroke-width="3.5"/>
@@ -148,7 +188,7 @@ function midLayer() {
     <rect x="${CX - 6}" y="176" width="12" height="6" fill="${C.char}"/>` +
     line([[bx, 322], [bx + 12, 300], [CX, 175]], C.white, 3, 'class="rim"') +
     line([[bx + 72, 322], [bx + 60, 300], [CX, 175]], C.white, 3, 'class="rim"') +
-    rim(bx + 1, 326, 780, { w: 3.5 }) + rim(bx + 71, 326, 780, { w: 3.5, side: -1 }) +
+    line([[bx + 15, 322], [bx + 15, GROUND]], C.white, 2) + line([[bx + 57, 322], [bx + 57, GROUND]], C.white, 2) +
     `<g class="beacon"><rect x="${CX - 6}" y="84" width="12" height="12" fill="${C.red2}"/><rect class="beacon-w" x="${CX - 6}" y="84" width="12" height="12" fill="${C.white}"/></g>`;
 
   /* INNER LEFT — Westin Peachtree Plaza: glass cylinder + restaurant ring */
@@ -163,7 +203,8 @@ function midLayer() {
      <rect x="${wx + 6}" y="266" width="50" height="20" fill="${C.char}"/>
      <rect x="${wx + 26}" y="244" width="10" height="24" fill="${C.char}"/>
      <rect x="${wx - 5}" y="296" width="72" height="3" fill="${C.white}"/>` +
-    glass + rim(wx + 1, 316, 800, { amp: 1.5 }) + line([[wx - 5, 312], [wx - 5, 284], [wx + 6, 284], [wx + 6, 266]], C.white, 2.5, 'class="rim"');
+    `<rect x="${wx}" y="312" width="22" height="${BASE - 312}" fill="${C.black}"/>` +
+    glass + line([[wx + 61, 312], [wx + 61, GROUND]], C.white, 2.5, 'class="rim"') + line([[wx - 5, 312], [wx - 5, 284], [wx + 6, 284], [wx + 6, 266]], C.white, 2.5, 'class="rim"');
 
   /* INNER RIGHT — 191 Peachtree Tower: twin neo-gothic crowns */
   const px = 878;
@@ -174,13 +215,13 @@ function midLayer() {
     poly([[px, BASE], [px, 350], [px + 68, 350], [px + 68, BASE]], C.char) +
     poly([[px + 22, 350], [px + 22, 338], [px + 46, 338], [px + 46, 350]], C.char) +
     crown(px, false) + crown(px + 48, true) +
-    slits(rnd, px, 360, 68, { density: 0.3 }) + rim(px + 67, 352, 800, { side: -1 });
+    facade(rnd, px, 352, 68, { lit: 0.1, side: false });
 
   /* OUTER LEFT — Truist Plaza: stepped pyramid crown */
   const tx = 528;
   const truistPts = [[tx, BASE], [tx, 330], [tx + 6, 330], [tx + 6, 304], [tx + 14, 304], [tx + 14, 280], [tx + 22, 280], [tx + 22, 258], [tx + 37, 222],
     [tx + 52, 258], [tx + 52, 280], [tx + 60, 280], [tx + 60, 304], [tx + 68, 304], [tx + 68, 330], [tx + 74, 330], [tx + 74, BASE]];
-  const truist = poly(truistPts, C.char) + slits(rnd, tx, 330, 74, { density: 0.3 }) + rim(tx + 1, 334, 780) +
+  const truist = poly(truistPts, C.char) + facade(rnd, tx, 332, 74, { lit: 0.1, side: true }) +
     line(truistPts.slice(1, 9), C.white, 2.5, 'class="rim"');
 
   /* OUTER RIGHT — One Atlantic Center: steep pyramid top + corner finials */
@@ -190,8 +231,8 @@ function midLayer() {
     poly([[ox - 3, 344], [ox - 1, 318], [ox + 3, 344]], C.char) +
     poly([[ox + 61, 344], [ox + 65, 318], [ox + 67, 344]], C.char) +
     `<rect x="${ox + 30}" y="202" width="4" height="26" fill="${C.char}"/>` +
-    slits(rnd, ox, 350, 64, { density: 0.3 }) +
-    line([[ox + 64, 344], [ox + 32, 226]], C.white, 3, 'class="rim"') + rim(ox + 63, 348, 780, { side: -1 });
+    facade(rnd, ox, 346, 64, { lit: 0.1, side: false }) +
+    line([[ox, 344], [ox + 32, 226]], C.white, 3, 'class="rim"');
 
   /* LEFT FLANK — Mercedes-Benz Stadium: big angular origami roof that rises above the MARTA deck */
   const sy = GROUND - 236;
@@ -235,17 +276,19 @@ function midLayer() {
      <circle cx="${fx}" cy="${fy}" r="12" fill="${C.char}" stroke="${C.white}" stroke-width="2.5"/>
      <rect x="${fx - 80}" y="${GROUND - 14}" width="160" height="14" fill="${C.char}"/>`;
 
-  const chevron = [[-300, 852], [CX, 834], [1900, 852], [1900, 858], [CX, 840], [-300, 858]];
+  const rows = cityRows();
   return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-  <defs>${dotPattern('ht-red', 9, 2.2, C.red)}</defs>
-  ${fillersSymmetric()}
-  ${lean(tx + 37, truist)}${lean(wx + 31, westin)}${boa}${lean(px + 34, p191)}${lean(ox + 32, oneAtl)}
-  ${stadium}${skyview}
+  <defs>
+    <pattern id="win" width="${WIN_W}" height="${WIN_H}" patternUnits="userSpaceOnUse"><rect x="3" y="4" width="6" height="8" fill="${C.black}"/></pattern>
+    <pattern id="winS" width="${WIN_W}" height="${WIN_H}" patternUnits="userSpaceOnUse"><rect x="3" y="4" width="6" height="8" fill="${C.char}"/></pattern>
+  </defs>
+  ${rows.back}
+  ${truist}${westin}${boa}${p191}${oneAtl}
+  ${rows.front}
+  ${skyview}${stadium}
   <!-- one shared ground plane for the whole city -->
-  <rect x="-300" y="${GROUND}" width="2200" height="400" fill="${C.char}"/>
+  <rect x="-300" y="${GROUND}" width="2200" height="400" fill="${C.black}"/>
   ${line([[-300, GROUND], [1900, GROUND]], C.white, 3)}
-  <rect x="-300" y="${GROUND + 4}" width="2200" height="120" fill="url(#ht-red)"/>
-  ${poly(chevron, C.white, 'class="slash"')}
 </svg>`;
 }
 
@@ -281,7 +324,12 @@ function foreLayer() {
   const wire = (dy, w) => `<path d="M-300 ${560 + dy} Q 20 ${640 + dy} 330 ${520 + dy} Q ${CX} ${640 + dy} 1270 ${520 + dy} Q 1580 ${640 + dy} 1900 ${560 + dy}" fill="none" stroke="${C.black}" stroke-width="${w}"/>`;
 
   return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-  <defs>${dotPattern('ht-fw', 12, 1.8, C.white)}</defs>
+  <defs>
+    ${dotPattern('ht-fw', 12, 1.8, C.white)}
+    <pattern id="winF" width="${WIN_W}" height="${WIN_H}" patternUnits="userSpaceOnUse"><rect x="3" y="4" width="6" height="8" fill="${C.char}"/></pattern>
+    <clipPath id="lbClip"><polygon points="${pts(leftBlock)}"/></clipPath>
+    <clipPath id="rbClip"><polygon points="${pts(rightBlock)}"/></clipPath>
+  </defs>
   ${poly(sideSlash, C.white, 'class="slash"')}${poly(mirror(sideSlash), C.white, 'class="slash"')}
 
   <!-- symmetric power lines -->
@@ -304,8 +352,10 @@ function foreLayer() {
   <!-- mirrored framing blocks -->
   ${poly(leftBlock, C.black)}${line(leftBlock.slice(1, -1), C.white, 3.5, 'class="rim"')}
   ${poly(rightBlock, C.black)}${line(rightBlock.slice(1, -1), C.white, 3.5, 'class="rim"')}
-  ${slits(rnd, -10, 470, 240, { density: 0.1, bottom: 860, red: 0.5 })}
-  ${slits(rnd, 1370, 470, 240, { density: 0.1, bottom: 860, red: 0.5 })}
+  <rect x="-300" y="360" width="560" height="500" fill="url(#winF)" clip-path="url(#lbClip)"/>
+  <rect x="1340" y="360" width="560" height="500" fill="url(#winF)" clip-path="url(#rbClip)"/>
+  ${litWindows(rnd, 160, 580, 80, 840, 0.12)}${litWindows(rnd, 1360, 580, 80, 840, 0.12)}
+  ${litWindows(rnd, 76, 470, 80, 840, 0.1)}${litWindows(rnd, 1446, 470, 80, 840, 0.1)}
 
   <!-- Downtown Connector: level overpass along the bottom, lights streaming both ways -->
   <rect x="-300" y="846" width="2200" height="40" fill="${C.black}"/>
