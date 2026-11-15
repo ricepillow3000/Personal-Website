@@ -1,7 +1,7 @@
 /* =========================================================================
    Street-art wall — 3-layer parallax background (pure inline SVG + CSS).
    Original artwork in a graffiti / pop-art / high-contrast style:
-   a crimson → black spray-paint fade on concrete, stencil stars, drips,
+   a crimson → black spray-paint fade on concrete, stencil stars,
    torn posters, tape, scribble tags and broken-glass shards.
    Palette: crimson #E60012 / #D80000, black #050505, white #FFFFFF
    (spray fades are the only gradients — they read as aerosol overspray).
@@ -22,19 +22,6 @@ const star = (cx, cy, r, inner = 0.42, n = 5, rot = -90) => {
   }
   return out;
 };
-
-/** Paint drips hanging from y0: rounded-end runs of varying length. */
-function drips(x0, x1, y0, color, seed = 1, cls = 'drip') {
-  let s = seed;
-  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
-  let out = '';
-  for (let x = x0; x < x1; x += 18 + rnd() * 34) {
-    const w = 5 + rnd() * 9;
-    const len = 30 + rnd() * 150;
-    out += `<path class="${cls}" style="--dl:-${(rnd() * 6).toFixed(1)}s" d="M${x} ${y0} v ${len.toFixed(0)} a ${w / 2} ${w / 2} 0 0 0 ${w} 0 v -${len.toFixed(0)} Z" fill="${color}"/>`;
-  }
-  return out;
-}
 
 /** Torn-edge rectangle (poster paper). */
 function torn(x, y, w, h, seed = 3) {
@@ -80,7 +67,7 @@ function wallLayer() {
 }
 
 /* =========================================================================
-   LAYER 2 — GRAFFITI: stencil stars, sprayed stripe + drips,
+   LAYER 2 — GRAFFITI: stencil stars,
    torn posters with tape, a swoosh arrow, scribble tags, X marks.
    ========================================================================= */
 function graffitiLayer() {
@@ -92,10 +79,6 @@ function graffitiLayer() {
     <pattern id="dotsR" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="2.6" fill="${C.red2}"/></pattern>
     <pattern id="dotsW" width="11" height="11" patternUnits="userSpaceOnUse"><circle cx="5.5" cy="5.5" r="1.8" fill="${C.white}"/></pattern>
   </defs>
-
-  <!-- sprayed black stripe across the top with drips running down -->
-  <path d="M-100 96 C 300 70, 700 120, 1000 88 S 1500 70, 1700 100 L 1700 150 C 1400 132, 1000 160, 600 140 S 100 150, -100 160 Z" fill="${C.black}" opacity=".9"/>
-  <g class="drips">${drips(-60, 1660, 140, C.black, 42)}</g>
 
   <!-- giant stencil star with an offset red echo -->
   <g class="spin-slow" style="--spin:120s">
