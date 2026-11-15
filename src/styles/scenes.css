@@ -19,17 +19,13 @@
 /* ===================== CONVERSATION ===================== */
 #screen-talk.active { display: block; }
 .speaker { position: absolute; left: 3vw; bottom: 22vh; width: min(34vw, 470px); height: min(46vh, 380px); z-index: 2; }
-.name-tag { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; will-change: transform; }
-.name-tag svg { width: 100%; height: 100%; display: block; overflow: visible; }
-.name-tag .tag-sparkle, .name-tag .tag-panic { opacity: 0; transition: opacity .12s; }
-.name-tag[data-mood="excited"] .tag-sparkle { opacity: 1; }
-.name-tag[data-mood="panicked"] .tag-panic { opacity: 1; }
-.name-tag[data-mood="panicked"] svg { animation: tag-shake .18s linear infinite; }
-.name-tag[data-mood="thinking"] svg { transform: rotate(-5deg); transform-origin: 50% 80%; transition: transform .25s; }
-.name-tag[data-mood="smirk"] svg { transform: rotate(3deg); transform-origin: 50% 80%; transition: transform .25s; }
-.name-tag .tag-word, .name-tag .tag-crown { transform-box: fill-box; transform-origin: center; }
-.name-tag.talking .tag-word { transform: rotate(-8deg) scale(1.035); }
-.name-tag.talking .tag-crown { transform: rotate(-14deg) translateY(-3px); }
+.name-tag { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: flex-start; padding-left: 2vw; will-change: transform; }
+.name-block { display: grid; justify-items: start; gap: 14px; }
+.name-ransom { font-size: clamp(64px, 9vw, 132px); }
+.name-slab { font-size: clamp(22px, 2.6vw, 34px); }
+.name-tag[data-mood="thinking"] .name-block { transform: rotate(-4deg); transition: transform .25s; }
+.name-tag[data-mood="smirk"] .name-block { transform: rotate(2deg); transition: transform .25s; }
+.name-tag[data-mood="panicked"] .name-block { animation: tag-shake .18s linear infinite; }
 @keyframes tag-shake { 25% { transform: translate(-4px, 2px) rotate(-1deg); } 75% { transform: translate(4px, -2px) rotate(1deg); } }
 
 .dialog {
@@ -262,7 +258,9 @@
   #screen-title.active { padding-bottom: 12vh; }
 
   #screen-talk.active { display: flex; flex-direction: column; overflow-y: auto; padding: 118px 16px 28px; }
-  .speaker { position: relative; left: auto; bottom: auto; width: 70vw; max-width: 300px; height: 24vh; min-height: 170px; margin: 0 auto; flex: none; }
+  .speaker { position: relative; left: auto; bottom: auto; width: 100%; height: auto; margin: 0 0 38px; flex: none; }
+  .name-tag { position: static; padding-left: 4px; }
+  .name-ransom { font-size: 64px; }
   .dialog { position: relative; left: auto; right: auto; bottom: auto; margin-top: -12px; min-height: 0; padding: 26px 22px 22px 24px; flex: none; }
   .visitor { position: relative; right: auto; bottom: auto; width: auto; height: auto; order: 5; margin-top: 12px; align-self: flex-end; }
   .visitor-tag { position: static; display: inline-block; font-size: 16px; }

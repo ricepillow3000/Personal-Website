@@ -1,6 +1,7 @@
 import { gsap } from 'gsap';
 import { $, reducedMotion } from '../core/util.js';
-import { tagMarkup } from '../ui/tag.js';
+import { ransom } from '../ui/ransom.js';
+import { NAME_SEED } from '../ui/tag.js';
 
 /* Every big animation runs through here so ONE click / Esc can skip it. */
 let current = null;
@@ -58,11 +59,13 @@ export function titlePunch(text) {
   return track(tl);
 }
 
-/** Name-tag strip that slashes across for big moments. (~0.5s) */
+/** Name strip (ransom letters) that slashes across for big moments. (~0.5s) */
 export function cutIn(text = '') {
   if (reducedMotion()) return Promise.resolve();
   const wrap = $('.cutin');
-  $('#cutinEyes').innerHTML = tagMarkup('0 40 420 260');
+  const holder = $('#cutinEyes');
+  holder.innerHTML = '<div class="ransom cutin-name"></div>';
+  ransom(holder.firstChild, 'JOHN', NAME_SEED);
   $('#cutinText').textContent = text;
   const tl = gsap.timeline();
   tl.set(wrap, { visibility: 'visible' })
