@@ -10,7 +10,7 @@ export function createConversation() {
   const textEl = $('#dialogText');
   const dialog = $('#dialog');
   const choicesEl = $('#choices');
-  const splash = $('.splash');
+  const splashes = document.querySelectorAll('.splash');
   const portrait = createPortrait($('#portrait'));
   let typing = null;
   let flap = null;
@@ -72,7 +72,7 @@ export function createConversation() {
 
   function hover(b) {
     sfx('hat');
-    splash.classList.toggle('alt');
+    splashes.forEach((el) => el.classList.toggle('alt'));
     if (!reducedMotion()) gsap.fromTo(b, { x: -4 }, { x: 0, duration: 0.18, ease: 'elastic.out(2, .3)', clearProps: 'x' });
   }
 

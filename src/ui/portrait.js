@@ -41,7 +41,7 @@ function brows(expr) {
     thinking: 'M116 126 L152 133 M168 124 Q186 114 204 122',
     panicked: 'M116 134 L152 120 M168 120 L204 134'
   }[expr];
-  return `<path d="${b}" fill="none" stroke-width="7" ${INK}/>`;
+  return `<path d="${b}" fill="none" stroke="#F5F5F0" stroke-width="10" stroke-linecap="round"/><path d="${b}" fill="none" stroke-width="6" ${INK}/>`;
 }
 
 function mouth(expr, open) {
@@ -118,8 +118,8 @@ function extras(expr) {
   return out;
 }
 
-/* Original spiky look; bangs a little longer than v1, plus a chin goatee. */
-const HAIR = 'M96 152 L88 120 L74 104 L92 98 L84 72 L109 76 L111 50 L135 61 L150 34 L167 55 L191 40 L198 63 L226 57 L221 83 L244 92 L229 110 L236 142 L223 124 L218 150 L212 119 L201 127 L192 105 L182 125 L168 103 L157 124 L144 103 L134 125 L122 107 L114 131 L108 114 Z';
+/* Original spiky look; bangs fall past the eyebrows, plus a chin goatee. */
+const HAIR = 'M96 152 L88 120 L74 104 L92 98 L84 72 L109 76 L111 50 L135 61 L150 34 L167 55 L191 40 L198 63 L226 57 L221 83 L244 92 L229 110 L236 142 L223 124 L219 152 L210 120 L204 143 L195 110 L185 131 L174 108 L160 145 L148 108 L135 131 L124 110 L115 143 L108 116 Z';
 const FACE = 'M100 128 C 100 72, 220 72, 220 128 C 222 176, 204 216, 160 234 C 116 216, 98 176, 100 128 Z';
 const BODY = 'M14 360 C 26 290, 88 262, 160 258 C 232 262, 294 290, 306 360 Z';
 const GOATEE = 'M148 219 Q 160 227 172 219 Q 171 233 160 236 Q 149 233 148 219 Z';
@@ -143,11 +143,11 @@ function svgMarkup(expr = 'neutral', open = false, blink = false, viewBox = '0 0
   <path d="M104 150 C 104 182, 120 210, 148 226 C 126 206, 116 182, 116 150 Z" fill="url(#dotsDark)"/>
   <path d="M163 162 L158 180 L165 180" fill="none" stroke-width="3" ${INK}/>
   <path d="M206 150 C 210 178, 196 206, 168 228 C 190 214, 214 190, 216 150 Z" fill="#0B0B0B" opacity=".85"/>
-  ${brows(expr)}
   ${eyes(expr, blink)}
   <path d="${GOATEE}" fill="#0B0B0B"/>
   ${mouth(expr, open)}
   <path d="${HAIR}" fill="#0B0B0B"/>
+  ${brows(expr)}
   <path d="M120 70 L150 40 M170 58 L192 44" stroke="#F5F5F0" stroke-width="3" opacity=".7"/>
   ${extras(expr)}
 </svg>`;

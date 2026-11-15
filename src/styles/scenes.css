@@ -28,6 +28,9 @@
   border: 0;
 }
 .splash::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(0, 0, 0, .45) 1.4px, transparent 2px); background-size: 8px 8px; }
+.splash-back { background: #050505; transform: translate(16px, 12px); }
+.splash-back::after { display: none; }
+.splash-back.alt { transform: translate(16px, 12px) rotate(4deg) scale(1.03); }
 .splash.alt { clip-path: polygon(6% 14%, 34% 4%, 58% 16%, 90% 6%, 82% 30%, 98% 50%, 80% 60%, 92% 88%, 58% 80%, 44% 98%, 28% 76%, 2% 86%, 12% 58%, 4% 36%, 22% 24%); transform: rotate(4deg) scale(1.03); }
 
 .dialog {

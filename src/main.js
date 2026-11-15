@@ -3,6 +3,7 @@ import './styles/base.css';
 import './styles/components.css';
 import './styles/scenes.css';
 import './styles/print.css';
+import './styles/skyline.css';
 
 import { gsap } from 'gsap';
 import { resume } from './data/resume.js';
@@ -11,6 +12,7 @@ import { readCompany } from './data/companies.js';
 import { store } from './core/store.js';
 import { $, $$, esc, wait, reducedMotion, timeOfDay } from './core/util.js';
 import { createCity } from './fx/city.js';
+import { mountSkyline } from './fx/skyline.js';
 import { slashWipe, titlePunch, startSequence, cutIn, enter, skipCurrent, isAnimating, shake, slam } from './fx/transitions.js';
 import { ransom, dropIn } from './ui/ransom.js';
 import { renderDate, createBars } from './ui/hud.js';
@@ -27,6 +29,7 @@ import { bindInput, bindGamepad } from './input/input.js';
 /* ---------------------------------------------------------------- setup */
 const company = readCompany();
 const ctx = { company };
+const skyline = mountSkyline($('#skyline'));
 const city = createCity($('#city'));
 const convo = createConversation();
 const bars = createBars(() => unlock('off-record'));
@@ -78,7 +81,7 @@ function activate(id) {
   el.classList.add('active');
   el.scrollTop = 0;
   city.setMode(mode === 'title' ? 'title' : mode === 'talk' ? 'talk' : 'page');
-  $('#city').style.filter = mode === 'page' ? 'brightness(.42) saturate(.7)' : mode === 'quick' ? 'brightness(.2)' : '';
+  skyline.setFrozen(false);
   renderKeyHints(mode);
 }
 
@@ -102,7 +105,7 @@ async function show(id) {
     swap();
   } else if (prev === 'title' && id === 'talk' && pendingStart) {
     pendingStart = false;
-    await startSequence(city, swap);
+    await startSequence(city, swap, skyline);
   } else {
     await slashWipe(swap);
   }
