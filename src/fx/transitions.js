@@ -1,6 +1,6 @@
 import { gsap } from 'gsap';
 import { $, reducedMotion } from '../core/util.js';
-import { eyesMarkup } from '../ui/portrait.js';
+import { tagMarkup } from '../ui/tag.js';
 
 /* Every big animation runs through here so ONE click / Esc can skip it. */
 let current = null;
@@ -58,11 +58,11 @@ export function titlePunch(text) {
   return track(tl);
 }
 
-/** Eye close-up strip that slashes across for big moments. (~0.5s) */
-export function cutIn(text = '', expr = 'smirk') {
+/** Name-tag strip that slashes across for big moments. (~0.5s) */
+export function cutIn(text = '') {
   if (reducedMotion()) return Promise.resolve();
   const wrap = $('.cutin');
-  $('#cutinEyes').innerHTML = eyesMarkup(expr);
+  $('#cutinEyes').innerHTML = tagMarkup('0 40 420 260');
   $('#cutinText').textContent = text;
   const tl = gsap.timeline();
   tl.set(wrap, { visibility: 'visible' })
@@ -74,15 +74,15 @@ export function cutIn(text = '', expr = 'smirk') {
 }
 
 /** PRESS START: crowd freezes → world goes grey → camera rushes John → slash. (~1.2s) */
-export function startSequence(city, swap, skyline) {
+export function startSequence(city, swap, backdrop) {
   if (reducedMotion()) {
     swap();
     return Promise.resolve();
   }
   const canvas = $('#city');
-  const world = [canvas, $('#skyline')];
+  const world = [canvas, $('#backdrop')];
   const p = city.johnPoint();
-  skyline?.setFrozen(true);
+  backdrop?.setFrozen(true);
   const gray = { v: 0 };
   city.freeze();
   const tl = gsap.timeline();
@@ -92,7 +92,7 @@ export function startSequence(city, swap, skyline) {
     .add(() => {}, 0.75);
   return track(tl).then(() => slashWipe(() => {
     gsap.set(world, { clearProps: 'transform' });
-    skyline?.setFrozen(false);
+    backdrop?.setFrozen(false);
     gsap.set('#screen-title .title-block', { clearProps: 'all' });
     swap();
   }));

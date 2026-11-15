@@ -9,7 +9,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
-        skyline: resolve(import.meta.dirname, 'skyline.html') // standalone background demo
+        backdrop: resolve(import.meta.dirname, 'backdrop.html') // standalone background demo
       }
     }
   }

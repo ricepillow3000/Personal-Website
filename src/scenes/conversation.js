@@ -2,38 +2,37 @@ import { gsap } from 'gsap';
 import { $, esc, reducedMotion } from '../core/util.js';
 import { store } from '../core/store.js';
 import { typewrite } from '../ui/typewriter.js';
-import { createPortrait } from '../ui/portrait.js';
+import { createTag } from '../ui/tag.js';
 import { sfx, duck } from '../audio/audio.js';
 
-/* Talking-John: the dialog box, the portrait and the reply bubbles. */
+/* Talking-John: the dialog box, the graffiti name tag and the reply bubbles. */
 export function createConversation() {
   const textEl = $('#dialogText');
   const dialog = $('#dialog');
   const choicesEl = $('#choices');
-  const splashes = document.querySelectorAll('.splash');
-  const portrait = createPortrait($('#portrait'));
+  const tag = createTag($('#nameTag'));
   let typing = null;
   let flap = null;
 
   function stopFlap() {
     clearTimeout(flap);
-    portrait.mouth(false);
+    tag.mouth(false);
   }
 
   /** John says a line. Resolves when the line is fully shown. */
   function say(line, vars = {}) {
     const text = line.text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
-    portrait.set(line.expr || 'neutral');
-    portrait.bounce();
+    tag.set(line.expr || 'neutral');
+    tag.bounce();
     dialog.classList.remove('ready');
     typing?.finish();
     duck(true);
     typing = typewrite(textEl, text, {
       onTick: () => {
         sfx('tick');
-        portrait.mouth(true);
+        tag.mouth(true);
         clearTimeout(flap);
-        flap = setTimeout(() => portrait.mouth(false), 70);
+        flap = setTimeout(() => tag.mouth(false), 70);
       }
     });
     return typing.done.then(() => {
@@ -72,7 +71,6 @@ export function createConversation() {
 
   function hover(b) {
     sfx('hat');
-    splashes.forEach((el) => el.classList.toggle('alt'));
     if (!reducedMotion()) gsap.fromTo(b, { x: -4 }, { x: 0, duration: 0.18, ease: 'elastic.out(2, .3)', clearProps: 'x' });
   }
 
@@ -93,7 +91,7 @@ export function createConversation() {
     choicesEl.innerHTML = '';
   }
 
-  return { say, showChoices, clearChoices, finishLine, portrait, isTyping: () => !dialog.classList.contains('ready') };
+  return { say, showChoices, clearChoices, finishLine, tag, isTyping: () => !dialog.classList.contains('ready') };
 }
 
 /** Choice list for the hub, with CLEARED! stamps for visited sections. */
