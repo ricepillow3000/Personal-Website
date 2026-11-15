@@ -2,7 +2,7 @@
    Street-art wall — 3-layer parallax background (pure inline SVG + CSS).
    Original artwork in a graffiti / pop-art / high-contrast style:
    a crimson → black spray-paint fade on concrete, stencil stars, drips,
-   splatter, torn posters, tape, scribble tags and broken-glass shards.
+   torn posters, tape, scribble tags and broken-glass shards.
    Palette: crimson #E60012 / #D80000, black #050505, white #FFFFFF
    (spray fades are the only gradients — they read as aerosol overspray).
    Geometry lives in a 1600×900 box; `xMidYMid slice` covers 100vw × 100vh.
@@ -32,24 +32,6 @@ function drips(x0, x1, y0, color, seed = 1, cls = 'drip') {
     const w = 5 + rnd() * 9;
     const len = 30 + rnd() * 150;
     out += `<path class="${cls}" style="--dl:-${(rnd() * 6).toFixed(1)}s" d="M${x} ${y0} v ${len.toFixed(0)} a ${w / 2} ${w / 2} 0 0 0 ${w} 0 v -${len.toFixed(0)} Z" fill="${color}"/>`;
-  }
-  return out;
-}
-
-/** Splatter cluster: one big blot + scattered droplets. */
-function splatter(cx, cy, r, color, seed = 7) {
-  let s = seed;
-  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
-  let out = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"/>`;
-  for (let i = 0; i < 26; i++) {
-    const a = rnd() * Math.PI * 2;
-    const d = r * (1 + rnd() * 2.6);
-    const rr = r * (0.06 + rnd() * 0.22) * (1.4 - d / (r * 3.6));
-    out += `<circle cx="${(cx + Math.cos(a) * d).toFixed(1)}" cy="${(cy + Math.sin(a) * d).toFixed(1)}" r="${Math.max(1.5, rr).toFixed(1)}" fill="${color}"/>`;
-  }
-  for (let i = 0; i < 7; i++) {
-    const a = rnd() * Math.PI * 2;
-    out += `<line x1="${cx}" y1="${cy}" x2="${(cx + Math.cos(a) * r * 2.2).toFixed(1)}" y2="${(cy + Math.sin(a) * r * 2.2).toFixed(1)}" stroke="${color}" stroke-width="${(r * 0.18).toFixed(1)}" stroke-linecap="round"/>`;
   }
   return out;
 }
@@ -98,7 +80,7 @@ function wallLayer() {
 }
 
 /* =========================================================================
-   LAYER 2 — GRAFFITI: stencil stars, sprayed stripe + drips, splatter,
+   LAYER 2 — GRAFFITI: stencil stars, sprayed stripe + drips,
    torn posters with tape, a swoosh arrow, scribble tags, X marks.
    ========================================================================= */
 function graffitiLayer() {
@@ -122,10 +104,6 @@ function graffitiLayer() {
   </g>
   ${poly(star(330, 560, 110), C.black)}
 
-  <!-- splatter -->
-  ${splatter(980, 330, 46, C.black, 13)}
-  ${splatter(640, 760, 30, C.white, 21)}
-  ${splatter(1450, 210, 22, C.white, 5)}
 
   <!-- torn poster A: halftone + bold mark, taped -->
   <g transform="rotate(5 1260 635)">
