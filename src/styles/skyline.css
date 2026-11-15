@@ -9,18 +9,17 @@
 .sky-drift { position: absolute; inset: 0; will-change: transform; }
 .sky-layer svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-/* pointer parallax: nearer layers move more */
-.sky-far { transform: translate3d(calc(var(--px) * -6px), calc(var(--py) * -4px), 0); }
-.sky-mid { transform: translate3d(calc(var(--px) * -16px), calc(var(--py) * -8px), 0); }
-.sky-fore { transform: translate3d(calc(var(--px) * -30px), calc(var(--py) * -14px), 0); }
-
-/* restless drift, each layer on its own speed */
-.sky-far .sky-drift { animation: drift-far 26s ease-in-out infinite alternate; }
-.sky-mid .sky-drift { animation: drift-mid 17s ease-in-out infinite alternate; }
-.sky-fore .sky-drift { animation: drift-fore 11s ease-in-out infinite alternate; }
-@keyframes drift-far { from { transform: translate3d(-10px, 0, 0); } to { transform: translate3d(10px, -4px, 0); } }
-@keyframes drift-mid { from { transform: translate3d(14px, 2px, 0); } to { transform: translate3d(-16px, -2px, 0); } }
-@keyframes drift-fore { from { transform: translate3d(-24px, 3px, 0); } to { transform: translate3d(22px, -3px, 0); } }
+/* Depth amount per layer: the SAME drift + pointer parallax, scaled, so the
+   city moves as one piece instead of layers sliding against each other. */
+.sky-far { --amp: 4; }
+.sky-mid { --amp: 9; }
+.sky-fore { --amp: 15; }
+.sky-layer { transform: translate3d(calc(var(--px) * var(--amp) * -1px), calc(var(--py) * var(--amp) * -0.5px), 0); }
+.sky-drift { animation: sky-drift 18s ease-in-out infinite alternate; }
+@keyframes sky-drift {
+  from { transform: translate3d(calc(var(--amp) * -1px), 0, 0); }
+  to { transform: translate3d(calc(var(--amp) * 1px), calc(var(--amp) * -0.2px), 0); }
+}
 
 /* living details inside the SVGs */
 .ht-wheel { transform-box: fill-box; transform-origin: center; animation: sky-spin var(--spin, 60s) linear infinite; }
@@ -35,7 +34,7 @@
 .traffic.rev { animation-duration: 1.4s; animation-direction: reverse; }
 @keyframes traffic { to { stroke-dashoffset: -128; } }
 .train { animation: train 14s ease-in-out infinite alternate; }
-@keyframes train { from { transform: translateX(-90px); } to { transform: translateX(110px); } }
+@keyframes train { from { transform: translateX(-36px); } to { transform: translateX(36px); } }
 
 /* PRESS START freeze: world drains to grey and stops */
 .skyline.frozen { filter: grayscale(1); }
