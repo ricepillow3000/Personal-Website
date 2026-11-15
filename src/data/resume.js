@@ -147,7 +147,6 @@ export const resume = {
 
   /* Asset switches — flip to true once the real files are in public/assets. */
   assets: {
-    photoPortraits: false, // public/assets/portrait/{expr}_{closed|open}.webp + neutral_blink.webp
     drumSamples: false, // public/assets/audio/{hat,snare,kick,crash,toms}.ogg
     drumLoop: false // public/assets/audio/loop.ogg
   },

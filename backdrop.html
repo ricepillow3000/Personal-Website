@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Atlanta Skyline Background</title>
-  <meta name="description" content="Standalone demo of the 3-layer Atlanta skyline background (inline SVG + CSS, pointer parallax).">
+  <title>Street Art Backdrop</title>
+  <meta name="description" content="Standalone demo of the 3-layer street-art wall background (inline SVG + CSS, pointer parallax).">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@600;800&display=swap">
@@ -19,17 +19,17 @@
   </style>
 </head>
 <body>
-  <div id="skyline"></div>
+  <div id="backdrop"></div>
   <main class="demo-ui">
     <div class="demo-card">
-      <h1>ATLANTA</h1>
-      <p>3-layer SVG skyline · move your mouse for parallax · <a href="/">back to the resume</a></p>
+      <h1>STREET WALL</h1>
+      <p>3-layer SVG street-art wall · move your mouse for parallax · <a href="/">back to the resume</a></p>
     </div>
   </main>
   <script type="module">
-    import './src/styles/skyline.css';
-    import { mountSkyline } from './src/fx/skyline.js';
-    mountSkyline(document.getElementById('skyline'));
+    import './src/styles/backdrop.css';
+    import { mountBackdrop } from './src/fx/backdrop.js';
+    mountBackdrop(document.getElementById('backdrop'));
   </script>
 </body>
 </html>

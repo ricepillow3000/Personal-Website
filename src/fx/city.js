@@ -1,7 +1,7 @@
 import { reducedMotion, seeded, isPhone } from '../core/util.js';
 
 /* Title-screen street layer (original artwork): crosswalk, a grey crowd walking,
-   John in red. Sits on top of the SVG skyline (fx/skyline.js); clears itself on other screens. */
+   John in red. Sits on top of the street-art wall (fx/backdrop.js); clears itself on other screens. */
 
 const PALETTES = {
   title: { sky: ['#3B0709', '#9E0F12', '#E5191C', '#FF6A2B'], sun: '#FFD9A0', far: '#5C0A0D', near: '#1A0405', win: 'rgba(255,214,140,.55)', street: '#050505', walk: 'rgba(255,255,255,.9)' }
@@ -130,7 +130,7 @@ export function createCity(canvas) {
     ctx.beginPath();
     ctx.arc(x, y - 92 * s, 11 * s, 0, Math.PI * 2);
     ctx.fill();
-    // spiky hair (matches the portrait)
+    // spiky hair
     ctx.beginPath();
     ctx.moveTo(x - 12 * s, y - 94 * s);
     for (let i = 0; i <= 6; i++) ctx.lineTo(x - 12 * s + i * 4 * s, y - (i % 2 ? 110 : 102) * s);
@@ -153,7 +153,7 @@ export function createCity(canvas) {
     if (!w) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    // The sky + skyline is the SVG layer (fx/skyline.js). The canvas only adds the
+    // The wall is the SVG backdrop (fx/backdrop.js). The canvas only adds the
     // title-screen street, crosswalk and walking crowd on top of it.
     if (mode !== 'title') return;
     const pal = greyPalette(PALETTES.title, gray);

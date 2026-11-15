@@ -2,8 +2,8 @@
 
 ![tests](https://github.com/ricepillow3000/ricepillow3000.github.io/actions/workflows/ci.yml/badge.svg)
 
-An original, game-style resume. Press start, and an ink-drawn John talks to you;
-your replies are the navigation. Every recruiter shortcut still works: a one-page
+An original, game-style resume with a street-art look. Press start, and John's graffiti
+tag talks to you; your replies are the navigation. Every recruiter shortcut still works: a one-page
 **Quick View** and the **standard PDF** are always one click (or the `Q` key) away.
 
 Live: https://ricepillow3000.github.io/ · One-pager: https://ricepillow3000.github.io/#/quick
@@ -37,17 +37,16 @@ Mouse/touch · arrows or WASD · Enter · Esc back · `1–5` pick · `Q` Quick 
 `M` sound · game controllers work too.
 
 ## Swapping in real assets later
-- **Ink photos:** see `SHOOT_GUIDE.md`, run `python tools/ink.py tools/photos public/assets/portrait`,
-  then set `assets.photoPortraits: true` in `resume.js`.
 - **Drums:** see `RECORDING_GUIDE.md`, drop files in `public/assets/audio/`, then set
   `assets.drumSamples` / `assets.drumLoop` to `true`.
 - **Analytics (optional, cookie-free):** create a GoatCounter site and put its code in `analytics.goatcounter`.
 
 ## How it's built
-Vite + vanilla JavaScript modules + GSAP. The city, crowd and portrait are drawn in code
-(canvas + SVG), so the title screen paints without downloading any images. Sound is a
+Vite + vanilla JavaScript modules + GSAP. The spray-painted wall, the graffiti tag and the
+walking crowd are drawn in code (inline SVG + canvas), so the title screen paints without
+downloading any images. `/backdrop.html` shows the background on its own. Sound is a
 synthesized drum kit (Web Audio) until real recordings are added. CI runs the Playwright
 suite and Lighthouse budgets on every push; `deploy.yml` publishes `dist/` to GitHub Pages.
 
-The visual style is inspired by bold anime-RPG menus, but every screen, drawing and sound
-here is original.
+The visual style blends pop art, street art and high-contrast anime UI, but every screen,
+graphic and sound here is original.

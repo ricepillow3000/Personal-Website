@@ -1,0 +1,215 @@
+/* =========================================================================
+   Street-art wall — 3-layer parallax background (pure inline SVG + CSS).
+   Original artwork in a graffiti / pop-art / high-contrast style:
+   a crimson → black spray-paint fade on concrete, stencil stars, drips,
+   splatter, torn posters, tape, scribble tags and broken-glass shards.
+   Palette: crimson #E60012 / #D80000, black #050505, white #FFFFFF
+   (spray fades are the only gradients — they read as aerosol overspray).
+   Geometry lives in a 1600×900 box; `xMidYMid slice` covers 100vw × 100vh.
+   ========================================================================= */
+
+const C = { black: '#050505', red: '#D80000', red2: '#E60012', white: '#FFFFFF', blood: '#7A0008' };
+const VB = '0 0 1600 900';
+
+const pts = (p) => p.map((q) => q.join(',')).join(' ');
+const poly = (p, fill, extra = '') => `<polygon points="${pts(p)}" fill="${fill}" ${extra}/>`;
+const star = (cx, cy, r, inner = 0.42, n = 5, rot = -90) => {
+  const out = [];
+  for (let i = 0; i < n * 2; i++) {
+    const a = ((rot + (i * 180) / n) * Math.PI) / 180;
+    const rr = i % 2 ? r * inner : r;
+    out.push([+(cx + Math.cos(a) * rr).toFixed(1), +(cy + Math.sin(a) * rr).toFixed(1)]);
+  }
+  return out;
+};
+
+/** Paint drips hanging from y0: rounded-end runs of varying length. */
+function drips(x0, x1, y0, color, seed = 1, cls = 'drip') {
+  let s = seed;
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  let out = '';
+  for (let x = x0; x < x1; x += 18 + rnd() * 34) {
+    const w = 5 + rnd() * 9;
+    const len = 30 + rnd() * 150;
+    out += `<path class="${cls}" style="--dl:-${(rnd() * 6).toFixed(1)}s" d="M${x} ${y0} v ${len.toFixed(0)} a ${w / 2} ${w / 2} 0 0 0 ${w} 0 v -${len.toFixed(0)} Z" fill="${color}"/>`;
+  }
+  return out;
+}
+
+/** Splatter cluster: one big blot + scattered droplets. */
+function splatter(cx, cy, r, color, seed = 7) {
+  let s = seed;
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  let out = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"/>`;
+  for (let i = 0; i < 26; i++) {
+    const a = rnd() * Math.PI * 2;
+    const d = r * (1 + rnd() * 2.6);
+    const rr = r * (0.06 + rnd() * 0.22) * (1.4 - d / (r * 3.6));
+    out += `<circle cx="${(cx + Math.cos(a) * d).toFixed(1)}" cy="${(cy + Math.sin(a) * d).toFixed(1)}" r="${Math.max(1.5, rr).toFixed(1)}" fill="${color}"/>`;
+  }
+  for (let i = 0; i < 7; i++) {
+    const a = rnd() * Math.PI * 2;
+    out += `<line x1="${cx}" y1="${cy}" x2="${(cx + Math.cos(a) * r * 2.2).toFixed(1)}" y2="${(cy + Math.sin(a) * r * 2.2).toFixed(1)}" stroke="${color}" stroke-width="${(r * 0.18).toFixed(1)}" stroke-linecap="round"/>`;
+  }
+  return out;
+}
+
+/** Torn-edge rectangle (poster paper). */
+function torn(x, y, w, h, seed = 3) {
+  let s = seed;
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const p = [];
+  for (let i = 0; i <= 12; i++) p.push([x + (w * i) / 12, y + (rnd() * 10 - 5)]);
+  for (let i = 1; i <= 8; i++) p.push([x + w + (rnd() * 10 - 5), y + (h * i) / 8]);
+  for (let i = 11; i >= 0; i--) p.push([x + (w * i) / 12, y + h + (rnd() * 12 - 6)]);
+  for (let i = 7; i >= 1; i--) p.push([x + (rnd() * 10 - 5), y + (h * i) / 8]);
+  return p.map(([a, b]) => [+a.toFixed(1), +b.toFixed(1)]);
+}
+
+/* =========================================================================
+   LAYER 1 — WALL: concrete + crimson→black spray-paint fade + overspray clouds
+   ========================================================================= */
+function wallLayer() {
+  return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="wallFade" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${C.red2}"/>
+      <stop offset=".42" stop-color="${C.red}"/>
+      <stop offset=".72" stop-color="${C.blood}"/>
+      <stop offset="1" stop-color="${C.black}"/>
+    </linearGradient>
+    <radialGradient id="glow"><stop offset="0" stop-color="#FF2A36" stop-opacity=".85"/><stop offset=".55" stop-color="${C.red2}" stop-opacity=".35"/><stop offset="1" stop-color="${C.red2}" stop-opacity="0"/></radialGradient>
+    <radialGradient id="soot"><stop offset="0" stop-color="${C.black}" stop-opacity=".92"/><stop offset=".6" stop-color="${C.black}" stop-opacity=".45"/><stop offset="1" stop-color="${C.black}" stop-opacity="0"/></radialGradient>
+    <pattern id="bricks" width="120" height="44" patternUnits="userSpaceOnUse">
+      <path d="M0 .5 H120 M0 22.5 H120 M.5 0 V22 M60.5 22 V44" stroke="${C.black}" stroke-width="1.4" opacity=".14" fill="none"/>
+    </pattern>
+    <pattern id="dotsK" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="3.2" fill="${C.black}"/></pattern>
+    <linearGradient id="dotFade" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <mask id="dotMask"><rect width="1600" height="900" fill="url(#dotFade)"/></mask>
+  </defs>
+  <rect x="-100" y="-100" width="1800" height="1100" fill="url(#wallFade)"/>
+  <ellipse cx="1180" cy="230" rx="560" ry="380" fill="url(#glow)"/>
+  <ellipse cx="300" cy="320" rx="380" ry="300" fill="url(#glow)" opacity=".6"/>
+  <ellipse cx="180" cy="900" rx="700" ry="420" fill="url(#soot)"/>
+  <ellipse cx="1500" cy="980" rx="560" ry="360" fill="url(#soot)"/>
+  <rect x="-100" y="-100" width="1800" height="1100" fill="url(#bricks)"/>
+  <rect x="-100" y="-100" width="1800" height="1100" fill="url(#dotsK)" mask="url(#dotMask)" opacity=".55"/>
+</svg>`;
+}
+
+/* =========================================================================
+   LAYER 2 — GRAFFITI: stencil stars, sprayed stripe + drips, splatter,
+   torn posters with tape, a swoosh arrow, scribble tags, X marks.
+   ========================================================================= */
+function graffitiLayer() {
+  const posterA = torn(1120, 470, 280, 330, 11);
+  const posterB = torn(150, 120, 230, 170, 29);
+  const tape = (x, y, r) => `<rect x="${x}" y="${y}" width="74" height="22" fill="${C.white}" opacity=".55" transform="rotate(${r} ${x + 37} ${y + 11})"/>`;
+  return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <pattern id="dotsR" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="2.6" fill="${C.red2}"/></pattern>
+    <pattern id="dotsW" width="11" height="11" patternUnits="userSpaceOnUse"><circle cx="5.5" cy="5.5" r="1.8" fill="${C.white}"/></pattern>
+  </defs>
+
+  <!-- sprayed black stripe across the top with drips running down -->
+  <path d="M-100 96 C 300 70, 700 120, 1000 88 S 1500 70, 1700 100 L 1700 150 C 1400 132, 1000 160, 600 140 S 100 150, -100 160 Z" fill="${C.black}" opacity=".9"/>
+  <g class="drips">${drips(-60, 1660, 140, C.black, 42)}</g>
+
+  <!-- giant stencil star with an offset red echo -->
+  <g class="spin-slow" style="--spin:120s">
+    ${poly(star(330, 560, 250), 'none', `stroke="${C.red2}" stroke-width="16" stroke-linejoin="miter" transform="translate(18 14)"`)}
+    ${poly(star(330, 560, 250), 'none', `stroke="${C.white}" stroke-width="16" stroke-linejoin="miter"`)}
+  </g>
+  ${poly(star(330, 560, 110), C.black)}
+
+  <!-- splatter -->
+  ${splatter(980, 330, 46, C.black, 13)}
+  ${splatter(640, 760, 30, C.white, 21)}
+  ${splatter(1450, 210, 22, C.white, 5)}
+
+  <!-- torn poster A: halftone + bold mark, taped -->
+  <g transform="rotate(5 1260 635)">
+    ${poly(posterA, C.white)}
+    ${poly(posterA, 'url(#dotsR)')}
+    ${poly(star(1260, 610, 88), C.black)}
+    <text x="1260" y="770" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="64" fill="${C.black}" letter-spacing="4">ATL</text>
+    ${tape(1104, 456, -18)}${tape(1340, 452, 14)}
+  </g>
+  <!-- torn poster B: black paper, white halftone corner -->
+  <g transform="rotate(-7 265 205)">
+    ${poly(posterB, C.black)}
+    <rect x="160" y="130" width="120" height="150" fill="url(#dotsW)"/>
+    <text x="265" y="228" text-anchor="middle" font-family="'Permanent Marker', cursive" font-size="54" fill="${C.red2}">GO!</text>
+    ${tape(140, 104, -10)}
+  </g>
+
+  <!-- swoosh arrow (wildstyle-ish), white with black outline -->
+  <path d="M520 420 C 700 330, 900 330, 1040 400 L 1060 360 L 1130 460 L 1010 488 L 1028 446 C 900 392, 720 400, 560 470 Z"
+    fill="${C.white}" stroke="${C.black}" stroke-width="10" stroke-linejoin="round" paint-order="stroke"/>
+
+  <!-- scribble tags + X marks -->
+  <path d="M760 210 c 20 -40 40 40 60 0 s 30 -30 44 10 s 26 -40 50 -6 M780 236 l 120 -10" fill="none" stroke="${C.white}" stroke-width="5" stroke-linecap="round" opacity=".85"/>
+  <path d="M1460 400 l 40 40 m 0 -40 l -40 40 M90 420 l 34 34 m 0 -34 l -34 34" stroke="${C.white}" stroke-width="8" stroke-linecap="round"/>
+  <path d="M600 600 v 40 m 12 -40 v 40 m 12 -40 v 40 m 12 -40 v 40 m -50 26 l 60 -32" stroke="${C.black}" stroke-width="5" stroke-linecap="round"/>
+  <!-- crown tag outline -->
+  <path d="M1360 120 l 16 -42 l 18 28 l 18 -36 l 18 36 l 18 -28 l 16 42 Z" fill="none" stroke="${C.white}" stroke-width="5" stroke-linejoin="round"/>
+</svg>`;
+}
+
+/* =========================================================================
+   LAYER 3 — FOREGROUND: broken-glass shards in the corners, big halftone,
+   white speed slashes. Asymmetric and jagged on purpose.
+   ========================================================================= */
+function shardLayer() {
+  const shardTL = [[-20, -20], [380, -20], [120, 130], [-20, 260]];
+  const shardBR = [[1620, 920], [1180, 920], [1420, 700], [1620, 580]];
+  const shardBL = [[-20, 920], [-20, 700], [220, 920]];
+  return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs><pattern id="dotsB" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="4.6" fill="${C.black}"/></pattern></defs>
+  ${poly(shardTL, C.black)}
+  <path d="M-20 260 L 120 130 L 380 -20 M 120 130 L 60 -20 M 120 130 L 250 40" fill="none" stroke="${C.white}" stroke-width="3"/>
+  ${poly(shardBR, C.black)}
+  <path d="M1180 920 L 1420 700 L 1620 580 M1420 700 L 1520 920 M1420 700 L 1600 760" fill="none" stroke="${C.white}" stroke-width="3"/>
+  ${poly(shardBL, 'url(#dotsB)')}
+  <g class="slashes">
+    ${poly([[-60, 520], [520, 470], [-60, 532]], C.white)}
+    ${poly([[1660, 300], [1080, 350], [1660, 312]], C.white)}
+    ${poly([[900, 900], [1300, 640], [1312, 650], [930, 900]], C.white, 'opacity=".9"')}
+  </g>
+</svg>`;
+}
+
+/* =========================================================================
+   Mount + motion: shared drift (nearer layers move further) + pointer parallax.
+   ========================================================================= */
+export function mountBackdrop(el, { interactive = true } = {}) {
+  el.classList.add('backdrop');
+  el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = `
+    <div class="bd-layer bd-wall"><div class="bd-drift">${wallLayer()}</div></div>
+    <div class="bd-layer bd-graffiti"><div class="bd-drift">${graffitiLayer()}</div></div>
+    <div class="bd-layer bd-shards"><div class="bd-drift">${shardLayer()}</div></div>`;
+
+  if (interactive && window.matchMedia('(pointer: fine)').matches) {
+    let raf = 0;
+    let tx = 0;
+    let ty = 0;
+    window.addEventListener('pointermove', (e) => {
+      tx = (e.clientX / window.innerWidth) * 2 - 1;
+      ty = (e.clientY / window.innerHeight) * 2 - 1;
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        el.style.setProperty('--px', tx.toFixed(3));
+        el.style.setProperty('--py', ty.toFixed(3));
+      });
+    }, { passive: true });
+  }
+
+  return {
+    el,
+    setFrozen(on) {
+      el.classList.toggle('frozen', on);
+    }
+  };
+}
