@@ -1,0 +1,12 @@
+@media print {
+  @page { size: letter; margin: .45in; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  #city, .grain, .hud-tl, .hud-tr, .hud-bars, .keyhints, .wipe, .punch, .cutin, .toasts, .modal, .menu-overlay, .bee, .motto-screen, .skip-link, .no-print { display: none !important; }
+  .screen { display: none !important; position: static !important; }
+  #screen-quick { display: block !important; position: static !important; padding: 0 !important; background: #fff !important; overflow: visible !important; }
+  .paper { box-shadow: none !important; max-width: none !important; font-size: 10.5pt; }
+  .paper header, .paper h2, .rl { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .paper-body { grid-template-columns: 1fr 2.2fr !important; gap: 20px !important; padding: 6px 4px 0 !important; }
+  .paper section { break-inside: avoid; }
+  a { text-decoration: none; }
+}
