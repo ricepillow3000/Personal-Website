@@ -8,8 +8,7 @@ export default defineConfig({
     assetsInlineLimit: 0,
     rollupOptions: {
       input: {
-        main: resolve(import.meta.dirname, 'index.html'),
-        backdrop: resolve(import.meta.dirname, 'backdrop.html') // standalone background demo
+        main: resolve(import.meta.dirname, 'index.html')
       }
     }
   }

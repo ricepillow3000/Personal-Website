@@ -313,19 +313,6 @@ export function shake(el = document.body) {
   el.classList.add('shake');
 }
 
-/** CLEARED!-style stamp slam. */
-export function slam(el) {
-  if (reducedMotion()) return;
-  gsap.timeline()
-    .fromTo(el, { scale: 3.4, opacity: 0, rotation: -40 }, { scale: 0.92, opacity: 1, rotation: -12, duration: 0.16, ease: 'power4.in' })
-    .add(() => {
-      sfx('thunk');
-      const r = el.getBoundingClientRect();
-      burst(r.left + r.width / 2, r.top + r.height / 2, 1.1);
-      shake(el.parentElement);
-    })
-    .to(el, { scale: 1, duration: 0.3, ease: 'elastic.out(1.4, .4)' });
-}
 
 
 /* ---------------------------------------------------------------------------------

@@ -18,7 +18,6 @@ export function reducedMotion() {
 
 export const isPhone = () => window.matchMedia('(max-width: 760px)').matches;
 
-export const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function timeOfDay(date = new Date()) {
   const h = date.getHours();

@@ -13,8 +13,6 @@ export const ACHIEVEMENTS = [
   { id: 'player-2', name: 'Player 2', hint: 'Bring your own controller.' }
 ];
 
-const listeners = new Set();
-export const onUnlock = (fn) => listeners.add(fn);
 
 export function count() {
   return store.get().achievements.length;
@@ -35,7 +33,6 @@ export function unlock(id) {
   toast(a.name);
   sfx('treasure');
   refreshCounter();
-  listeners.forEach((fn) => fn(a));
   if (allFound()) setTimeout(() => toast('Behind the scenes unlocked — check SYSTEM', 'ALL SECRETS FOUND'), 1200);
   return true;
 }

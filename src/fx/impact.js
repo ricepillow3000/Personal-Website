@@ -78,7 +78,7 @@ export function initClickFx() {
   // Hovering a section: each kind of card has its own voice (mouse only, once per entry, gently throttled)
   const HOVER = [
     ['.case', 'hvCase'], ['.poster', 'hvPoster'], ['.note-about', 'hvPerson'], ['.note-quests .quest, .stop', 'hvQuest'],
-    ['.edge-tile, .panel', 'hvFact'], ['.calling', 'hvCard'], ['.crew-row', 'hvRow']
+    ['.panel', 'hvFact'], ['.calling', 'hvCard'], ['.crew-row', 'hvRow']
   ];
   let hovered = null;
   let lastAt = 0;

@@ -44,7 +44,7 @@ Mouse/touch · Tab or arrows/WASD · Enter · Esc back · `1–2` open a case fi
 ## How it's built
 Vite + vanilla JavaScript modules + GSAP. The spray-painted wall, the red string and the
 walking crowd are drawn in code (inline SVG + canvas), so the title screen paints without
-downloading any images. `/backdrop.html` shows the background on its own. Sound is a
+downloading any images. Sound is a
 synthesized drum kit (Web Audio) until real recordings are added. CI runs the Playwright
 suite and Lighthouse budgets on every push; `deploy.yml` publishes `dist/` to GitHub Pages.
 

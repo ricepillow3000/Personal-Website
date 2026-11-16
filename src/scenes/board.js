@@ -293,4 +293,3 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
   return { reveal, relayout, highlight, demo };
 }
 
-export const caseEl = (id) => $(`.case[data-case="${id}"]`);
