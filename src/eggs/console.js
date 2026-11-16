@@ -21,7 +21,7 @@ export function installConsole() {
   const john = {
     run() {
       const lines = [
-        '> booting PIRATE.exe ...',
+        '> booting JOHN.exe ...',
         '> orchestrator agent ....... online',
         '> researcher agent ......... online',
         '> builder agent ............ online',

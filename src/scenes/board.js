@@ -35,7 +35,7 @@ function caseCard(m, i) {
     ? `<svg class="cc-chart" viewBox="0 0 300 200" aria-hidden="true"><polygon points="0,200 0,150 40,120 70,140 105,80 140,110 175,40 205,75 240,20 270,55 300,10 300,200"/><polyline points="0,150 40,120 70,140 105,80 140,110 175,40 205,75 240,20 270,55 300,10"/></svg>`
     : '<span class="cc-star" aria-hidden="true"></span>';
   return `<article class="case card-pop cc ${v}" data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
-    ${pin}${mark}
+    ${pin}<span class="cc-deco" aria-hidden="true">${mark}</span>
     <span class="case-grade" aria-label="Difficulty ${esc(m.grade)}"><span>${esc(m.grade)}</span></span>
     <div class="case-top"><span class="case-no">CASE 0${i + 1}</span><span class="case-live">${esc(m.status)}</span></div>
     <h3 class="case-target ransom" data-ransom="${esc(m.target.toUpperCase())}"></h3>
@@ -90,7 +90,7 @@ export function boardMarkup(ctx) {
   <header class="board-head" data-board-item>
     <div class="board-name">
       <h1 class="ransom" id="boardName"></h1>
-      <div class="slab board-slab"><span>${esc(resume.codename)}</span></div>
+      <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
       <div class="progress-chip" id="progressChip" role="status"></div>
     </div>
     <p class="board-hook">${esc(resume.role)}. ${esc(resume.hook)}</p>
@@ -109,7 +109,7 @@ export function boardMarkup(ctx) {
       <h2 class="col-label" data-board-item><span class="ransom" data-ransom="CASE FILES"></span><small>2 live apps</small></h2>
       <div class="cases">${missions.map(caseCard).join('')}</div>
       <div class="edge card-pop cc edge-v" data-board-item>${pin}
-        <svg class="cc-bolt" viewBox="0 0 100 160" aria-hidden="true"><polygon points="62,0 14,88 46,88 30,160 88,62 54,62 76,0"/></svg>
+        <span class="cc-deco" aria-hidden="true"><svg class="cc-bolt" viewBox="0 0 100 160"><polygon points="62,0 14,88 46,88 30,160 88,62 54,62 76,0"/></svg></span>
         <div class="cc-banner light"><h3>${kin('WHAT MAKES ME DIFFERENT', 5)}</h3></div>
         <ol class="edge-grid">${resume.different
           .map((d, i) => `<li class="edge-tile"><span class="edge-no" aria-hidden="true"><span>${i + 1}</span></span>
@@ -121,7 +121,7 @@ export function boardMarkup(ctx) {
     <section class="col col-notes" aria-label="About and contact">
       <article class="note note-about card-pop" data-board-item>${pin}
         <div class="note-band"><h3>${kin('THE PERSON', 4)}</h3></div>
-        <span class="gpa-burst" aria-label="GPA ${esc(e.gpa)}"><span><b>${esc(e.gpa)}</b><small>GPA</small></span></span>
+        <button class="gpa-burst" type="button" aria-label="GPA ${esc(e.gpa)}. Press to flip for the off-the-record stats." aria-pressed="false"><span class="gb-front"><b>${esc(e.gpa)}</b><small>GPA</small></span><span class="gb-back"><b>MAX</b><small>BEE FEAR</small></span></button>
         <p class="person-school">${esc(e.school.toUpperCase())}</p>
         <p class="person-degree">${esc(e.degree)}</p>
         <div class="person-tags">
@@ -147,7 +147,7 @@ export function boardMarkup(ctx) {
         <p class="calling-to">To ${esc(ctx.company ? ctx.company.name : 'the one reading this')},</p>
         <h3 class="calling-title ransom" data-ransom="YOUR MOVE."></h3>
         <p class="calling-msg">You've seen the cases. You've seen the receipts. If you want to talk, I'm easy to find.</p>
-        <p class="calling-sign">— John <span>“${esc(resume.codename)}”</span> ${esc(resume.name.split(' ').slice(1).join(' '))}</p>
+        <p class="calling-sign">— ${esc(resume.name)}</p>
         <span class="calling-seal" aria-hidden="true"><span>J</span></span>
         <a class="btn-cartoon cta" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">Connect on LinkedIn ↗</a>
         <p class="calling-row"><a data-nav href="mailto:${esc(L.email)}" data-track="email_click">Email</a><span aria-hidden="true">·</span><a data-nav href="${esc(L.pdf)}" download data-track="pdf_click">Resume PDF ↓</a></p>
@@ -278,6 +278,7 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
       clearProps: 'transform,opacity'
     }, 0);
     const paths = [...svg.querySelectorAll('.string')];
+    if (!paths.length) return tl; // phones draw no strings
     paths.forEach((p) => {
       const len = p.getTotalLength();
       p.style.strokeDasharray = `${len}`;

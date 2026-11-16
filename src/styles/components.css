@@ -142,7 +142,27 @@ body[data-screen="title"] .hud-bars, body[data-mode="page"] .hud-bars, body[data
 body[data-screen="title"] .keyhints, body[data-mode="quick"] .keyhints { display: none; }
 
 /* ============ MENU OVERLAY (diagonal staircase) ============ */
-.menu-overlay { position: fixed; inset: 0; z-index: 70; background: linear-gradient(115deg, rgba(229, 25, 28, .96) 0 58%, rgba(11, 11, 11, .96) 58%); }
+.menu-overlay {
+  position: fixed; inset: 0; z-index: 70; overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 78%, rgba(11, 11, 11, .55) 0 1.6px, transparent 2.4px) 0 0 / 14px 14px,
+    repeating-linear-gradient(115deg, transparent 0 46px, rgba(245, 245, 240, .07) 46px 50px),
+    linear-gradient(115deg, var(--red) 0 58%, var(--black) 58%);
+}
+/* comic layers: a big outlined star on the red side, speed lines on the black side */
+.menu-overlay::before {
+  content: ""; position: absolute; left: -12vw; bottom: -22vh; width: 70vh; height: 70vh; pointer-events: none;
+  z-index: -1; background: var(--black); opacity: .18; transform: rotate(-12deg);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: menuStar 14s steps(28) infinite;
+}
+.menu-overlay::after {
+  content: ""; position: absolute; right: -10vw; top: 0; bottom: 0; width: 55vw; pointer-events: none; opacity: .5; z-index: -1;
+  background: repeating-linear-gradient(115deg, transparent 0 22px, rgba(245, 245, 240, .14) 22px 25px, transparent 25px 70px);
+  -webkit-mask: linear-gradient(90deg, transparent, #000 40%); mask: linear-gradient(90deg, transparent, #000 40%);
+}
+@keyframes menuStar { to { transform: rotate(348deg); } }
+@media (prefers-reduced-motion: reduce) { .menu-overlay::before { animation: none; } }
 .stair { list-style: none; margin: 0; padding: 0; position: absolute; left: var(--gutter); top: 15vh; }
 .stair li { margin: 0 0 4px calc(var(--i) * 4.2vw); }
 .stair-item {
@@ -414,3 +434,19 @@ body.scrolled .hud-bars { translate: calc(-100% - 60px) 0; pointer-events: none;
 .stair-item > .clear-stamp { position: relative; inset: auto; flex: none; align-self: center; margin-left: 16px; padding: 4px 6px; z-index: 3; rotate: -8deg; }
 .stair-item > .clear-stamp .cs-word { font-size: 13px; }
 .stair-item > .clear-stamp .cs-star { width: 18px; height: 18px; right: -6px; top: -8px; }
+
+/* ============ TYPE PASS: no more "doc print" body text ============
+   Body: Barlow Semi Condensed (narrow, punchy, easy to read).
+   Small headings/labels: Barlow Condensed bold italic caps, like game UI. */
+body { font-weight: 500; letter-spacing: .15px; }
+b, strong { font-weight: 700; }
+.skill-name { font-family: var(--f-ui) !important; font-style: italic; font-weight: 700 !important; font-size: 18px !important; text-transform: uppercase; letter-spacing: .4px; }
+.bar-label { font-family: var(--f-ui) !important; font-style: italic; font-weight: 800 !important; letter-spacing: .5px; }
+.crew-name { font-family: var(--f-ui); font-style: italic; font-weight: 700; font-size: 21px; text-transform: uppercase; letter-spacing: .4px; }
+.person-degree, .id-info p, .panel p, .stop-card ul, .poster-brief, .bubble-say, .edge-tile p, .quest-place, .person-facts { font-family: var(--f-body); }
+.quest-place, .case-name span { font-family: var(--f-ui); font-style: italic; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.ql-text { font-family: var(--f-ui); font-style: italic; font-weight: 700; letter-spacing: .3px; font-size: 14.5px; }
+.calling-row, .crew-say, .id-chips, .trait { font-family: var(--f-ui); font-weight: 700; letter-spacing: .3px; }
+.crew-say { font-style: italic; font-size: 17px; }
+.trait { font-size: 18px; font-style: italic; }
+.page-sub { letter-spacing: 0; }

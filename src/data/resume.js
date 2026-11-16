@@ -7,7 +7,6 @@
 export const resume = {
   name: 'John Nguyen',
   first: 'JOHN',
-  codename: 'PIRATE',
   role: 'AI Solutions Engineer in training',
   hook: "I direct AI agents to build software, then test it like it's going to production.",
   status: 'Status: open to opportunities',

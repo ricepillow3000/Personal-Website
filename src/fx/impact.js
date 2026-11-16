@@ -75,6 +75,33 @@ export function initClickFx() {
     burst(e.clientX, e.clientY, el.matches('.btn-primary, .cta, #pressStart') ? 1.35 : 1);
   }, { passive: true });
 
+  // Hovering a section: each kind of card has its own voice (mouse only, once per entry, gently throttled)
+  const HOVER = [
+    ['.case', 'hvCase'], ['.poster', 'hvPoster'], ['.note-about', 'hvPerson'], ['.note-quests .quest, .stop', 'hvQuest'],
+    ['.edge-tile, .panel', 'hvFact'], ['.calling', 'hvCard'], ['.crew-row', 'hvRow']
+  ];
+  let hovered = null;
+  let lastAt = 0;
+  document.addEventListener('pointerover', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    let hit = null;
+    let voice = null;
+    for (const [sel, v] of HOVER) {
+      const el = e.target.closest?.(sel);
+      if (el) {
+        hit = el;
+        voice = v;
+        break;
+      }
+    }
+    if (hit === hovered) return;
+    hovered = hit;
+    const now = performance.now();
+    if (!hit || now - lastAt < 90) return;
+    lastAt = now;
+    sfx(voice);
+  }, { passive: true });
+
   // Moving focus with the keyboard/gamepad: the newly selected thing pops with a tick.
   document.addEventListener('focusin', (e) => {
     const el = e.target;

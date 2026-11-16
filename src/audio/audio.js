@@ -296,6 +296,49 @@ const VOICES = {
     [2093, 2637, 3136, 4186, 3520, 5274].forEach((f, i) => tone(bus, { at: c + 0.08 + i * 0.07, dur: 0.16, from: f, to: f, type: 'sine', gain: 0.06 }));
     tone(bus, { at: c, dur: 0.5, from: 130.8, to: 130.8, type: 'triangle', gain: 0.18 }); // warm low C under it
   },
+  /* ---- section hover sounds: each kind of card has its own little arcade voice ---- */
+  hvCase: (bus, at) => { // case files: "bip-BOP" two-step, like selecting a stage
+    tone(bus, { at, dur: 0.05, from: 660, to: 660, type: 'square', gain: 0.045 });
+    tone(bus, { at: at + 0.055, dur: 0.08, from: 990, to: 990, type: 'square', gain: 0.045 });
+  },
+  hvPerson: (bus, at) => { // person card: friendly cartoon "boing"
+    const o = ac.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(320, at);
+    o.frequency.exponentialRampToValueAtTime(760, at + 0.06);
+    o.frequency.exponentialRampToValueAtTime(420, at + 0.18);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0008, at);
+    g.gain.exponentialRampToValueAtTime(0.16, at + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0008, at + 0.2);
+    o.connect(g).connect(bus);
+    o.start(at);
+    o.stop(at + 0.22);
+  },
+  hvQuest: (bus, at) => [523, 659, 784].forEach((f, i) => tone(bus, { at: at + i * 0.035, dur: 0.07, from: f, to: f, type: 'triangle', gain: 0.1 })), // side quests: quick "do-mi-sol"
+  hvFact: (bus, at) => tone(bus, { at, dur: 0.09, from: 1900, to: 620, type: 'square', gain: 0.035 }), // facts: tiny laser "pew"
+  hvCard: (bus, at) => { // calling card: paper flick + one glint
+    noise(bus, { at, dur: 0.05, type: 'bandpass', freq: 2600, q: 2.5, gain: 0.18 });
+    tone(bus, { at: at + 0.04, dur: 0.12, from: 2637, to: 2637, type: 'sine', gain: 0.06 });
+  },
+  hvPoster: (bus, at) => sweep(bus, at, 1800, 600, 0.07, 0.14, 2), // posters: tape "thwip"
+  hvRow: (bus, at) => tone(bus, { at, dur: 0.04, from: 1200, to: 1500, type: 'square', gain: 0.03 }), // list rows: tiny tick-up
+  /* LEVEL CLEAR (Full Story): a whip crack, then an original bright 8-bit victory jingle:
+     quick climbing arpeggio, a two-note "ta-da", and a held sparkling top note. */
+  fanfare: (bus, at) => {
+    VOICES.whip(bus, at, 0.8);
+    const t = at + 0.16;
+    const sq = (n, when, len, g = 0.05) => {
+      const f = 440 * 2 ** ((n - 69) / 12);
+      tone(bus, { at: when, dur: len, from: f, to: f, type: 'square', gain: g });
+      tone(bus, { at: when, dur: len, from: f * 2, to: f * 2, type: 'triangle', gain: g * 1.2 });
+    };
+    [67, 71, 74, 79, 83, 86].forEach((n, i) => sq(n, t + i * 0.055, 0.07)); // G4 B4 D5 G5 B5 D6
+    sq(88, t + 0.38, 0.09, 0.06); // E6
+    sq(91, t + 0.48, 0.5, 0.06); //  G6 held
+    [2637, 3136, 3951].forEach((f, i) => tone(bus, { at: t + 0.52 + i * 0.06, dur: 0.2, from: f, to: f, type: 'sine', gain: 0.05 }));
+    tone(bus, { at: t + 0.48, dur: 0.45, from: 98, to: 98, type: 'triangle', gain: 0.18 }); // bass G under the last note
+  },
   /* achievement chime */
   chime: (bus, at) => [1319, 1976].forEach((f, i) => tone(bus, { at: at + i * 0.09, dur: 0.3, from: f, to: f, type: 'sine', gain: 0.2 })),
   /* WHIP: a lash whooshes in and CRACKS at at+0.11 (schedule it 0.11s before the hit) */
