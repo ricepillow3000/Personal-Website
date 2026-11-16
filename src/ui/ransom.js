@@ -3,6 +3,9 @@ import { seeded, reducedMotion } from '../core/util.js';
 
 const COLORS = ['c-black', 'c-white', 'c-red', 'c-paper', 'c-black', 'c-white'];
 
+/** Seed for John's name so it looks identical everywhere (title, board, cut-ins). */
+export const NAME_SEED = 11;
+
 /** Builds cut-out "ransom note" letters into el. Medium chaos: ±12° tilt, small hops, 5 fonts. */
 export function ransom(el, text, seed = 7) {
   const rnd = seeded(seed * 9973 + text.length * 31);

@@ -4,19 +4,20 @@ import './styles/components.css';
 import './styles/scenes.css';
 import './styles/print.css';
 import './styles/backdrop.css';
+import './styles/board.css';
 
 import { gsap } from 'gsap';
 import { resume } from './data/resume.js';
-import { script, SECTIONS } from './data/script.js';
 import { readCompany } from './data/companies.js';
 import { store } from './core/store.js';
-import { $, $$, esc, wait, reducedMotion, timeOfDay } from './core/util.js';
+import { $, $$, esc, reducedMotion } from './core/util.js';
 import { createCity } from './fx/city.js';
 import { mountBackdrop } from './fx/backdrop.js';
 import { slashWipe, titlePunch, startSequence, cutIn, enter, skipCurrent, isAnimating, shake, slam } from './fx/transitions.js';
-import { ransom, dropIn } from './ui/ransom.js';
+import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate, createBars } from './ui/hud.js';
-import { createConversation, hubItems } from './scenes/conversation.js';
+import { createBoard } from './scenes/board.js';
+import { toast } from './ui/toast.js';
 import { createMenu, MENU_ITEMS } from './scenes/menu.js';
 import { SECTION_RENDERERS, dossierMarkup, animateDossier } from './scenes/sections.js';
 import { renderQuickView } from './scenes/quickview.js';
@@ -31,21 +32,17 @@ const company = readCompany();
 const ctx = { company };
 const backdrop = mountBackdrop($('#backdrop'));
 const city = createCity($('#city'));
-const convo = createConversation();
 const bars = createBars(() => unlock('off-record'));
 const menu = createMenu((id) => navigate(id));
-const tod = renderDate();
+renderDate();
 
 let screen = null; // title | talk | page | quick
 let pageId = null;
-let greeted = false;
-let thanked = false;
 let pendingStart = false;
 let lastFocus = null;
 
 document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotion === true);
-if (company) $('#visitorTag').textContent = `TO: ${company.name.toUpperCase()}`;
-ransom($('#titleName'), resume.first, 11);
+ransom($('#titleName'), resume.first, NAME_SEED);
 $('#titleHook').textContent = resume.hook;
 $('#quickPdf').href = resume.links.pdf;
 renderQuickView($('#paper'));
@@ -54,10 +51,11 @@ installConsole();
 syncSoundButton();
 
 /* ---------------------------------------------------------------- routing */
-const VALID = new Set(['title', 'talk', 'quick', ...Object.keys(SECTION_RENDERERS)]);
+const VALID = new Set(['title', 'board', 'quick', ...Object.keys(SECTION_RENDERERS)]);
 
 function route() {
-  const id = window.location.hash.replace(/^#\/?/, '') || 'title';
+  const raw = window.location.hash.replace(/^#\/?/, '') || 'title';
+  const id = raw === 'talk' ? 'board' : raw; // old links still work
   return VALID.has(id) ? id : 'title';
 }
 
@@ -69,7 +67,7 @@ export function navigate(id) {
 
 window.addEventListener('hashchange', () => show(route()));
 
-const modeOf = (id) => (id === 'title' || id === 'talk' ? id : id === 'quick' ? 'quick' : 'page');
+const modeOf = (id) => (id === 'title' || id === 'board' ? id : id === 'quick' ? 'quick' : 'page');
 
 function activate(id) {
   const mode = modeOf(id);
@@ -79,7 +77,7 @@ function activate(id) {
   const el = mode === 'page' ? $('#screen-page') : $(`#screen-${mode}`);
   el.classList.add('active');
   el.scrollTop = 0;
-  city.setMode(mode === 'title' ? 'title' : mode === 'talk' ? 'talk' : 'page');
+  city.setMode(mode === 'title' ? 'title' : 'page');
   backdrop.setFrozen(false);
   renderKeyHints(mode);
 }
@@ -102,7 +100,7 @@ async function show(id) {
 
   if (prev === null) {
     swap();
-  } else if (prev === 'title' && id === 'talk' && pendingStart) {
+  } else if (prev === 'title' && id === 'board' && pendingStart) {
     pendingStart = false;
     await startSequence(city, swap, backdrop);
   } else {
@@ -110,7 +108,7 @@ async function show(id) {
   }
 
   if (mode === 'title') introTitle();
-  if (mode === 'talk') await enterTalk(prev === 'page' ? prevPage : prev);
+  if (mode === 'board') enterBoard();
   if (mode === 'page') {
     await titlePunch(SECTION_RENDERERS[id](ctx).title);
     enter($('#page'));
@@ -133,60 +131,31 @@ $('#pressStart').addEventListener('click', () => {
   sfx('snare');
   unlock('first-words');
   pendingStart = true;
-  navigate('talk');
+  navigate('board');
 });
 
-/* ---------------------------------------------------------------- conversation */
-async function enterTalk(from) {
-  convo.clearChoices();
-  const vars = { timeOfDay: tod.word, company: company ? company.name : '' };
-  if (!greeted) {
-    greeted = true;
-    await convo.say(company ? script.companyGreeting : script.greeting, vars);
-    if (tod.key === 'late') {
-      await wait(700);
-      await convo.say(script.lateNight);
-    }
+/* ---------------------------------------------------------------- heist board */
+const board = createBoard($('#board'), ctx, {
+  onOpenCase: (id, el) => openDossier(id, el),
+  onAllStringsLit: () => unlock('full-recon')
+});
+
+let boardSeen = false;
+function enterBoard() {
+  board.reveal();
+  $('#board .case-open')?.focus({ preventScroll: true });
+  if (!boardSeen) {
+    boardSeen = true;
     soundHint();
-    armBee(() => screen === 'talk', onBee);
-  } else if (!thanked && SECTIONS.every((s) => store.has('visited', s))) {
-    thanked = true;
-    await convo.say(script.allSeen);
-    showHub(true);
-    return;
-  } else {
-    await convo.say(script.returns[from] || script.returns.default);
+    armBee(() => screen === 'board', onBee);
   }
-  showHub();
-}
-
-function showHub(withLinkedIn = false) {
-  let items = hubItems(script, company?.order?.choices);
-  if (withLinkedIn) items = [{ key: '__linkedin', label: script.allSeenChoice, primary: true }, ...items];
-  const buttons = convo.showChoices(items, onPick);
-  buttons[0]?.focus({ preventScroll: true });
-}
-
-async function onPick(key) {
-  if (key === '__linkedin') {
-    track('linkedin_click');
-    window.open(resume.links.linkedin, '_blank', 'noopener');
-    showHub(true);
-    return;
-  }
-  const choice = script.choices[key];
-  await convo.say(choice.reply);
-  await wait(reducedMotion() ? 150 : 450);
-  navigate(choice.to);
 }
 
 function onBee() {
   unlock('bee');
   bars.spike();
   shake();
-  convo.say(script.bee).then(() => wait(1200)).then(() => {
-    if (screen === 'talk') convo.say(script.beeAfter);
-  });
+  toast('BEE!! Get it away!', 'JOHN');
 }
 
 /* ---------------------------------------------------------------- section pages */
@@ -200,7 +169,7 @@ function renderPage(id) {
   root.querySelector('#musicVol')?.addEventListener('input', (e) => setMusicVolume(Number(e.target.value)));
   r.after?.(root);
   if (id === 'contact') sfx('toms');
-  if (store.addTo('visited', id) && SECTIONS.every((s) => store.has('visited', s))) unlock('full-recon');
+  store.addTo('visited', id);
 }
 
 let cutinShown = false;
@@ -299,7 +268,7 @@ $('#menuBtn').addEventListener('click', () => {
 
 function renderKeyHints(mode) {
   const sets = {
-    talk: [['↑↓', 'SELECT'], ['⏎', 'CONFIRM'], ['1-7', 'PICK'], ['F', 'FLIP'], ['Q', 'QUICK VIEW']],
+    board: [['TAB', 'MOVE'], ['⏎', 'OPEN'], ['1-2', 'CASE FILES'], ['F', 'FLIP'], ['Q', 'QUICK VIEW']],
     page: [['↑↓', 'MOVE'], ['⏎', 'OPEN'], ['ESC', 'BACK'], ['Q', 'QUICK VIEW']]
   };
   $('#keyhints').innerHTML = (sets[mode] || [])
@@ -316,7 +285,7 @@ function back() {
   }
   if (screen === 'page' || screen === 'quick') {
     sfx('kick');
-    navigate('talk');
+    navigate('board');
     return true;
   }
   return false;
@@ -337,7 +306,7 @@ document.addEventListener('pointerdown', () => {
 }, true);
 
 function navItems() {
-  const scope = !$('#modal').hidden ? $('#modal') : menu.isOpen() ? $('#menu') : screen === 'talk' ? $('#choices') : screen === 'quick' ? $('#screen-quick') : $('#page');
+  const scope = !$('#modal').hidden ? $('#modal') : menu.isOpen() ? $('#menu') : screen === 'board' ? $('#screen-board') : screen === 'quick' ? $('#screen-quick') : $('#page');
   return [...scope.querySelectorAll('[data-nav], .btn, a[href]')].filter((el, i, arr) => el.offsetParent !== null && arr.indexOf(el) === i);
 }
 
@@ -347,17 +316,13 @@ function moveFocus(dir) {
   const i = items.indexOf(document.activeElement);
   const next = items[(i + dir + items.length) % items.length] || items[0];
   next.focus();
-  if (screen !== 'talk' && !menu.isOpen()) next.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
+  if (!menu.isOpen()) next.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
   sfx('hat');
   return true;
 }
 
 function handle(action, e) {
   if (isAnimating() && (action === 'confirm' || action === 'back')) return skipCurrent();
-  if (screen === 'talk' && convo.isTyping() && action === 'confirm') {
-    convo.finishLine();
-    return true;
-  }
   switch (action) {
     case 'up':
     case 'left':
@@ -390,8 +355,8 @@ function handle(action, e) {
     default:
       if (action.startsWith('hotkey:')) {
         const n = Number(action.split(':')[1]);
-        if (screen === 'talk' && !menu.isOpen()) {
-          const b = $$('#choices .choice')[n - 1];
+        if (screen === 'board' && !menu.isOpen() && n <= resume.missions.length) {
+          const b = $$('#board .case-open')[n - 1];
           b?.click();
           return Boolean(b);
         }
@@ -436,6 +401,4 @@ setTimeout(() => {
 }, 1000);
 
 /* ---------------------------------------------------------------- boot */
-const first = route();
-if (first !== 'title') greeted = first === 'talk' ? false : greeted;
-show(first);
+show(route());

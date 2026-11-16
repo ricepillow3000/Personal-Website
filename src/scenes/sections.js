@@ -7,7 +7,7 @@ import { listMarkup, allFound } from '../eggs/achievements.js';
 
 /* Each section returns { title, html, after(root) }. Content comes from resume.js only. */
 
-const back = '<button class="btn back-btn" type="button" data-back>◀ BACK <kbd>ESC</kbd></button>';
+const back = '<button class="btn back-btn" type="button" data-back>◀ BOARD <kbd>ESC</kbd></button>';
 const head = (title, sub = '') => `
   <div class="page-head"><h2 class="ransom ransom-lg" data-ransom="${esc(title)}"></h2></div>
   ${sub ? `<p class="page-sub" data-in>${sub}</p>` : ''}`;

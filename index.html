@@ -36,18 +36,9 @@
       </div>
     </section>
 
-    <!-- CONVERSATION -->
-    <section class="screen" id="screen-talk" aria-label="Conversation with John">
-      <div class="choices" id="choices" role="group" aria-label="Your reply"></div>
-      <div class="speaker">
-        <div class="name-tag" id="nameTag" role="img" aria-label="John, codename Pirate"></div>
-      </div>
-      <div class="dialog" id="dialog">
-        <div class="dialog-tag">JOHN</div>
-        <div class="visitor-tag" id="visitorTag" aria-hidden="true">TO: VISITOR</div>
-        <p class="dialog-text" id="dialogText" aria-live="polite"></p>
-        <span class="dialog-next" aria-hidden="true">▼</span>
-      </div>
+    <!-- HEIST BOARD (the portfolio) -->
+    <section class="screen screen-board" id="screen-board" aria-label="Portfolio board">
+      <div class="board" id="board"></div>
     </section>
 
     <!-- SECTION PAGES (missions, skills, different, stats, side-quests, contact, system, secret) -->
@@ -58,7 +49,7 @@
     <!-- QUICK VIEW -->
     <section class="screen screen-page" id="screen-quick" aria-label="One-page resume">
       <div class="quick-bar no-print">
-        <a class="btn" href="#/talk" data-back>◀ Play the game version</a>
+        <a class="btn" href="#/board" data-back>◀ Back to the board</a>
         <a class="btn btn-accent" id="quickPdf" download>⬇ Download PDF</a>
       </div>
       <article class="paper" id="paper"></article>
