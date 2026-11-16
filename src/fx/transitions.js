@@ -1,7 +1,6 @@
 import { gsap } from 'gsap';
 import { $, reducedMotion } from '../core/util.js';
-import { ransom } from '../ui/ransom.js';
-import { NAME_SEED } from '../ui/tag.js';
+import { ransom, NAME_SEED } from '../ui/ransom.js';
 
 /* Every big animation runs through here so ONE click / Esc can skip it. */
 let current = null;

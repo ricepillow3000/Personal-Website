@@ -6,7 +6,7 @@ import { sfx } from '../audio/audio.js';
 export const ACHIEVEMENTS = [
   { id: 'first-words', icon: '▶', name: 'First Words', hint: 'Every story starts with a button.' },
   { id: 'case-file', icon: '📁', name: 'Case File', hint: 'Open one of the mission files.' },
-  { id: 'full-recon', icon: '🗺', name: 'Full Recon', hint: 'See everything there is to see.' },
+  { id: 'full-recon', icon: '🧵', name: 'Full Recon', hint: 'Light up every red string on the board.' },
   { id: 'bee', icon: '🐝', name: 'BEE!!', hint: 'Something small and buzzing passes by. Be quick.' },
   { id: 'off-record', icon: '↻', name: 'Off the Record', hint: 'Those stat bars have a flip side.' },
   { id: 'inspector', icon: '💻', name: 'Inspector', hint: 'Developers know where to look.' },
