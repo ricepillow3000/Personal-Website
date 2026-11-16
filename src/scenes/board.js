@@ -5,6 +5,7 @@ import { reorder } from '../data/companies.js';
 import { $, esc, reducedMotion, isPhone } from '../core/util.js';
 import { ransom, NAME_SEED } from '../ui/ransom.js';
 import { sfx } from '../audio/audio.js';
+import { store } from '../core/store.js';
 
 /* =========================================================================
    HEIST BOARD — the portfolio as one planning board.
@@ -90,6 +91,7 @@ export function boardMarkup(ctx) {
     <div class="board-name">
       <h1 class="ransom" id="boardName"></h1>
       <div class="slab board-slab"><span>${esc(resume.codename)}</span></div>
+      <div class="progress-chip" id="progressChip" role="status"></div>
     </div>
     <p class="board-hook">${esc(resume.role)}. ${esc(resume.hook)}</p>
     ${note}
@@ -165,7 +167,7 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
   root.querySelectorAll('[data-ransom]').forEach((el, i) => ransom(el, el.dataset.ransom, 21 + i * 7));
   const svg = root.querySelector('#strings');
   const grid = root.querySelector('.board-grid');
-  const lit = new Set(JSON.parse(sessionStorageGet('jn-lit') || '[]'));
+  const lit = new Set(store.get().lit || []); // saved: survives coming back another day
   let sticky = null; // a tapped skill/case stays lit until tapped again
 
   /* ---------- red string geometry ---------- */
@@ -220,7 +222,7 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
     root.querySelectorAll('.case').forEach((el) => el.classList.toggle('lit', cases.has(el.dataset.case)));
     if (kind === 'skill' && id && !lit.has(id)) {
       lit.add(id);
-      sessionStorageSet('jn-lit', JSON.stringify([...lit]));
+      store.addTo('lit', id);
       if (resume.skills.every((s) => lit.has(s.id))) onAllStringsLit?.();
     }
   }
@@ -290,22 +292,6 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
   }
 
   return { reveal, relayout, highlight };
-}
-
-/* Session-only memory for which strings were lit (try/catch: storage may be blocked). */
-function sessionStorageGet(k) {
-  try {
-    return window.sessionStorage.getItem(k);
-  } catch {
-    return null;
-  }
-}
-function sessionStorageSet(k, v) {
-  try {
-    window.sessionStorage.setItem(k, v);
-  } catch {
-    /* ignore */
-  }
 }
 
 export const caseEl = (id) => $(`.case[data-case="${id}"]`);

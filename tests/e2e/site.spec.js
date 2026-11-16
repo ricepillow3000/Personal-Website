@@ -187,3 +187,23 @@ test('no phone number anywhere in the built site', async () => {
   expect(text).not.toMatch(/555[-.\s]?0100/);
   expect(text).not.toMatch(/\(555\)/);
 });
+
+test('progress is saved: returning visitors CONTINUE with their case log', async ({ page }) => {
+  await page.goto('/#/skills');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'skills');
+  await page.goto('/#/contact');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'contact');
+  await page.goto('/#/');
+  await page.reload();
+  await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
+  await expect(page.locator('#saveLine')).toContainText('2/8 cleared');
+  await page.locator('#pressStart').click();
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  await expect(page.locator('#progressChip')).toContainText('2/8');
+  // starting over wipes the save
+  await page.goto('/#/');
+  await page.reload();
+  await page.locator('.save-reset').click();
+  await expect(page.locator('#pressStart')).toHaveText('PRESS START');
+  await expect(page.locator('#saveLine')).toHaveCount(0);
+});

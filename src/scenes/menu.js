@@ -3,6 +3,7 @@ import { $, esc, reducedMotion } from '../core/util.js';
 import { store } from '../core/store.js';
 import { menuTeasers } from '../data/script.js';
 import { sfx } from '../audio/audio.js';
+import { clearStampMarkup, hydrateStamps } from '../ui/clear.js';
 
 /* The diagonal staircase list menu (opened from the MENU button). */
 export const MENU_ITEMS = [
@@ -22,8 +23,9 @@ export function createMenu(go) {
     stair.innerHTML = MENU_ITEMS.map(
       (m, i) => `<li role="none" style="--i:${i}"><button class="stair-item" role="menuitem" type="button" data-nav data-go="${m.id}">
         <span class="cursor-star" aria-hidden="true"></span><span class="si-text">${esc(m.label)}</span>
-        ${store.has('visited', m.id) ? '<span class="stamp">CLEARED!</span>' : ''}</button></li>`
+        ${store.has('visited', m.id) ? clearStampMarkup('mini') : ''}</button></li>`
     ).join('');
+    hydrateStamps(stair);
     stair.querySelectorAll('.stair-item').forEach((b) => {
       const on = () => select(b);
       b.addEventListener('pointerenter', on);

@@ -7,6 +7,7 @@ const defaults = () => ({
   visited: [],
   opened: [],
   cleared: [],
+  lit: [],
   achievements: [],
   settings: { sound: false, music: 0.5, reduceMotion: null }
 });
