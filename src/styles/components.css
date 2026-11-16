@@ -1,6 +1,6 @@
 /* ============ CUT-OUT "RANSOM" LETTERS (big titles only) ============ */
 .ransom { margin: 0; line-height: 1; display: flex; flex-wrap: wrap; row-gap: .1em; }
-.ransom .rw { display: inline-flex; gap: .05em; margin-right: .3em; }
+.ransom .rw { user-select: none; display: inline-flex; gap: .05em; margin-right: .3em; }
 .ransom .rl {
   display: inline-block; padding: .05em .12em .02em;
   transform: rotate(var(--r, 0deg)) translateY(var(--y, 0));
@@ -100,11 +100,13 @@ body[data-screen="title"] .hud-tl .hud-meta { display: none; }
 @keyframes wiggle { 25% { transform: skew(var(--skew)) rotate(-12deg) scale(1.15); } 75% { transform: skew(var(--skew)) rotate(10deg) scale(1.15); } }
 body[data-screen="title"] #menuBtn, body[data-screen="title"] #achBtn { display: none; }
 
-.keyhints {
+.keyhints { /* a solid HUD tab, so it never reads as text lying on the page; it slides away once you scroll */
   position: fixed; right: var(--gutter); bottom: 12px; z-index: 39; pointer-events: none;
   display: flex; gap: 14px; font-family: var(--f-menu); font-size: 17px; letter-spacing: 1px;
-  color: var(--white); text-shadow: 1px 1px 0 var(--black);
+  color: var(--white); background: var(--black); padding: 5px 14px; transform: skew(var(--skew));
+  box-shadow: 4px 4px 0 var(--red); transition: translate .18s ease-out, opacity .18s;
 }
+body.scrolled .keyhints { translate: 0 80px; opacity: 0; }
 .keyhints b { background: var(--white); color: var(--black); padding: 0 6px; margin-right: 4px; text-shadow: none; }
 body[data-screen="title"] .keyhints, body[data-mode="quick"] .keyhints { display: none; }
 
@@ -448,7 +450,6 @@ body[data-mode="board"] .hud-tl .hud-meta { display: grid; }
 .screen::before {
   content: ""; position: fixed; left: 0; right: 0; top: 0; z-index: 39; height: var(--strip-h, 64px); pointer-events: none;
   background: linear-gradient(to top, var(--red) 0 4px, var(--black) 4px);
-  clip-path: polygon(0 0, 100% 0, 100% 86%, 64% 100%, 30% 88%, 0 96%);
   translate: 0 -110%; transition: translate .18s ease-out;
 }
 body.scrolled:is([data-mode="board"], [data-mode="page"], [data-mode="quick"]) .screen.active::before { translate: 0 0; }
@@ -459,4 +460,4 @@ body.scrolled[data-mode="page"] .back-btn { top: 12px; }
   body[data-mode="page"], body[data-mode="quick"] { --strip-h: 110px; }
   body.scrolled[data-mode="page"] .back-btn { top: 64px; }
 }
-@media (prefers-reduced-motion: reduce) { .screen::before, .back-btn { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .screen::before, .back-btn, .keyhints { transition: none; } }

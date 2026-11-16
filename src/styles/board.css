@@ -44,7 +44,7 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 /* grid + red string */
 .board-grid { position: relative; display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 40px; align-items: start; }
 .strings { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; overflow: visible; filter: drop-shadow(1px 2px 0 rgba(5, 5, 5, .85)); }
-.string { fill: none; stroke: #FF3030; stroke-width: 2.6; stroke-linecap: round; opacity: .75; transition: opacity .15s, stroke .15s, stroke-width .15s; }
+.string { fill: none; stroke: #FF3030; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; opacity: .75; transition: opacity .15s, stroke .15s, stroke-width .15s; }
 /* while a skill is highlighted, the strings come up over the cards so the lit one is never hidden */
 .board-focus .strings { z-index: 3; }
 .board-focus .string { opacity: 0; }

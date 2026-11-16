@@ -119,11 +119,12 @@ function focusSoon(el, tries = 16, from = document.activeElement) {
 
 let navSeq = 0; // a newer navigation cancels whatever an older one still had left to do
 async function show(id) {
-  const tok = ++navSeq;
   const prev = screen;
-  const prevPage = pageId;
-  if (prev === 'page' && pageId === id) return;
-  if (prev === id && id !== 'page') return;
+  if ((prev === 'page' && pageId === id) || (prev === id && id !== 'page')) {
+    viaMenu = false; // already here: nothing to do, and nothing in progress is cancelled
+    return;
+  }
+  const tok = ++navSeq;
   menu.close(false);
   closeModal();
   const mode = modeOf(id);
@@ -197,7 +198,7 @@ function renderProgress(celebrate) {
     ? '<span class="pc-label">CASE LOG</span><span class="pc-all">ALL CLEAR!</span>'
     : `<span class="pc-label">CASE LOG</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
        <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>
-       <span class="pc-hint" aria-hidden="true">clear both cases · open every menu page</span>`;
+       <span class="pc-hint" aria-hidden="true">clear both cases · open the 5 menu pages</span>`;
   if (celebrate && !reducedMotion()) gsap.fromTo(chip, { scale: 1.6, rotation: -12 }, { scale: 1, rotation: -3, duration: 0.5, ease: 'elastic.out(1.4, .4)' });
 }
 let wasAll = progress().all;
@@ -444,7 +445,8 @@ function syncSoundButton() {
 /* Sound was left ON last visit: browsers only allow audio after a gesture, so the music
    picks back up on the visitor's first click or key press. */
 if (store.get().settings.sound) {
-  const resumeAudio = () => {
+  const resumeAudio = (e) => {
+    if (e.key === 'Escape') return; // Escape doesn't count as a gesture that may start audio
     window.removeEventListener('pointerdown', resumeAudio, true);
     window.removeEventListener('keydown', resumeAudio, true);
     if (store.get().settings.sound) setSound(true);

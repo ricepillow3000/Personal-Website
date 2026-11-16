@@ -111,7 +111,7 @@ function boardMarkup(ctx) {
       <div class="cases">${missions.map(caseCard).join('')}</div>
     </section>
 
-    <section class="col col-notes" aria-label="About and contact">
+    <section class="col col-notes" aria-label="About">
       <article class="note note-about card-pop" data-board-item>${pin}
         <div class="note-band"><h3>${kin('THE PERSON', 4)}</h3></div>
         <button class="gpa-burst" type="button" aria-label="GPA ${esc(e.gpa)}. Press to flip for the off-the-record stats." aria-pressed="false"><span class="gb-front"><b>${esc(e.gpa)}</b><small>GPA</small></span><span class="gb-back"><b>MAX</b><small>BEE FEAR</small></span></button>
@@ -179,26 +179,34 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
     svg.setAttribute('width', g.width);
     svg.setAttribute('height', g.height);
     let out = '';
-    resume.skills.forEach((s) => {
+    resume.skills.forEach((s, i) => {
       const a = root.querySelector(`.skill[data-skill="${s.id}"]`);
       s.uses.forEach((caseId) => {
         const b = root.querySelector(`.case[data-case="${caseId}"]`);
         if (!a || !b) return;
         const p1 = centerOf(a);
         const p2 = centerOf(b);
-        const sag = Math.min(70, Math.abs(p2.x - p1.x) * 0.18);
-        const mx = (p1.x + p2.x) / 2;
-        const my = Math.max(p1.y, p2.y) + sag;
-        out += `<path class="string" data-skill="${s.id}" data-case="${caseId}" d="M${p1.x.toFixed(1)} ${p1.y.toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}"/>`;
+        // angular route: out to the gap between the columns, straight up it, then along the card
+        // tops to the pin, so a string never runs across a card's text. Each skill sits a few px
+        // apart, so a bundle still reads as separate strings.
+        const f = (n) => n.toFixed(1);
+        const gx = p1.x + 14 + (i % 5) * 4;
+        const top = p2.y - (i % 5) * 3;
+        out += `<path class="string" data-skill="${s.id}" data-case="${caseId}" d="M${f(p1.x)} ${f(p1.y)} L${f(gx)} ${f(p1.y)} L${f(gx)} ${f(top)} L${f(p2.x)} ${f(top)} L${f(p2.x)} ${f(p2.y)}"/>`;
       });
     });
     svg.innerHTML = out;
+    markLit();
   }
+
+  let focus = [null, null]; // what is highlighted right now, so a redraw keeps it lit
+  const markLit = () => svg.querySelectorAll('.string').forEach((p) => p.classList.toggle('lit', Boolean(focus[1]) && p.dataset[focus[0]] === focus[1]));
 
   /* ---------- highlight logic ---------- */
   function highlight(kind, id, { silent = false } = {}) {
+    focus = [kind, id];
     root.classList.toggle('board-focus', Boolean(id));
-    root.querySelectorAll('.string').forEach((p) => p.classList.toggle('lit', Boolean(id) && p.dataset[kind] === id));
+    markLit();
     const skills = new Set();
     const cases = new Set();
     if (kind === 'skill' && id) {
@@ -256,6 +264,8 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
   };
   window.addEventListener('resize', relayout);
   if (document.fonts?.ready) document.fonts.ready.then(relayout);
+  // anything that moves the columns (fonts, the calling card, a wrapping line) re-pins the strings
+  if (window.ResizeObserver) new ResizeObserver(relayout).observe(grid);
 
   function reveal(delay = 0) {
     drawStrings();
@@ -281,6 +291,7 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
       p.style.strokeDashoffset = `${len}`;
     });
     tl.to(paths, { strokeDashoffset: 0, duration: 0.42, ease: 'expo.out', stagger: 0.018, onComplete: () => paths.forEach((p) => (p.style.strokeDasharray = p.style.strokeDashoffset = '')) }, 0.35);
+    tl.add(relayout); // once everything has landed, pin the strings to the final card positions
     return tl;
   }
 

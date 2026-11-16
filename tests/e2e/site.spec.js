@@ -341,6 +341,23 @@ test.describe('with motion on', () => {
     await expect(opener).toBeFocused();
   });
 
+  test('menu -> STATS (flip wipe) and a repeated hotkey still land focus on the page', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'keyboard check');
+    await openBoard(page);
+    await page.waitForTimeout(1500);
+    await page.locator('#menuBtn').click();
+    await page.waitForTimeout(500);
+    await page.locator('.stair-item[data-go="stats"]').click();
+    await page.waitForTimeout(2500);
+    expect(await page.evaluate(() => Boolean(document.activeElement.closest('#page')))).toBe(true);
+    await page.keyboard.press('3');
+    await page.waitForTimeout(400);
+    await page.keyboard.press('3'); // same page again: must not cancel the entrance
+    await page.waitForTimeout(2500);
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'different');
+    expect(await page.evaluate(() => Boolean(document.activeElement.closest('#page')))).toBe(true);
+  });
+
   test('menu: opens with focus on the first item, Esc returns focus to MENU', async ({ page, isMobile }) => {
     test.skip(isMobile, 'keyboard check');
     await openBoard(page);
