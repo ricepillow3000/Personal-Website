@@ -302,7 +302,7 @@ body[data-mode="board"] .keyhints { display: none; }
 .card-pop.cc::before { display: none; }
 .cc-star { position: absolute; right: -50px; bottom: -46px; width: 220px; height: 220px; background: var(--black); opacity: .85; pointer-events: none; transform: rotate(14deg);
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
-.cc > *:not(.cc-star):not(.cc-chart):not(.pin):not(.case-grade):not(.stamp):not(.case-fold) { position: relative; z-index: 1; }
+.cc > *:not(.cc-star):not(.cc-chart):not(.cc-bolt):not(.pin):not(.case-grade):not(.stamp):not(.case-fold) { position: relative; z-index: 1; }
 .cc-banner { margin: 0 -24px 14px; padding: 12px 24px 18px; background: var(--black); clip-path: polygon(0 0, 100% 0, 100% 70%, 76% 100%, 58% 78%, 30% 96%, 0 80%); }
 .cc-banner h3 { margin: 0 !important; color: var(--white) !important; }
 .cc-banner .kin .k-first { color: var(--red) !important; }
@@ -347,6 +347,29 @@ body[data-mode="board"] .keyhints { display: none; }
 .case.cc.v1 .case-name { font-family: var(--f-type); font-weight: 700; letter-spacing: 0; }
 .case.cc.v1 .case-open { background: var(--black); color: var(--white); box-shadow: 0 6px 0 var(--white), 0 6px 0 3px var(--black); }
 
+
+/* What makes me different: own interior (white banner, bolt watermark, tile grid) */
+.edge.edge-v { background-image: radial-gradient(rgba(5, 5, 5, .28) 1.8px, transparent 2.4px), linear-gradient(110deg, rgba(5, 5, 5, .5) 0 18%, transparent 18%); background-size: 11px 11px, 100% 100%; }
+.cc-bolt { position: absolute; right: 4%; top: 6%; width: 170px; height: 270px; pointer-events: none; transform: rotate(12deg); }
+.cc-bolt polygon { fill: rgba(5, 5, 5, .55); stroke: rgba(255, 255, 255, .35); stroke-width: 2; }
+.cc-banner.light { background: var(--white); }
+.cc-banner.light h3 { color: var(--black) !important; }
+.cc-banner.light .kin .k-inv { background: var(--black); color: var(--white); }
+.edge-grid { list-style: none; margin: 0; padding: 0 !important; display: grid !important; grid-template-columns: 1fr 1fr; gap: 16px 18px !important; }
+.edge-tile {
+  position: relative; padding: 14px 14px 12px 48px; background: var(--black); color: var(--white); border: 3px solid var(--white);
+  box-shadow: 5px 5px 0 var(--black); transform: rotate(var(--et, -1deg)) skewX(-3deg); text-shadow: none !important; transition: transform .15s var(--ease-pop);
+}
+.edge-tile:nth-child(2) { --et: 1.2deg; }
+.edge-tile:nth-child(3) { --et: .6deg; }
+.edge-tile:nth-child(4) { --et: -1.4deg; }
+.edge-tile:hover { transform: rotate(0) skewX(-3deg) scale(1.03); }
+.edge-no { position: absolute; left: -16px; top: -16px; width: 52px; height: 52px; display: grid; place-items: center; background: var(--yellow);
+  clip-path: polygon(50% 0, 63% 26%, 95% 20%, 76% 46%, 100% 70%, 68% 72%, 62% 100%, 46% 78%, 18% 96%, 24% 66%, 0 48%, 28% 36%, 14% 8%, 40% 22%); }
+.edge-no span { font-family: var(--f-head); font-size: 24px; color: var(--black); transform: skewX(-10deg); }
+.edge-tile b { display: block; margin-bottom: 4px; color: var(--yellow) !important; font-family: var(--f-head) !important; font-weight: 400; font-size: 19px !important; line-height: 1.05; text-shadow: none !important; }
+.edge-fact { display: block; font-size: 13.5px; line-height: 1.4; color: #EDEDED; }
+
 /* ===================== PHONES ===================== */
 @media (max-width: 1100px) {
   .board-grid { grid-template-columns: 260px minmax(0, 1fr); }
@@ -363,6 +386,7 @@ body[data-mode="board"] .keyhints { display: none; }
   .hint-desk { display: none; }
   .hint-phone { display: inline; }
   .col-notes { grid-template-columns: 1fr; }
+  .edge-grid { grid-template-columns: 1fr; }
   .col-label { flex-wrap: wrap; }
   .col-label .ransom { font-size: 28px; flex-wrap: nowrap; }
   .card-pop { box-shadow: -6px 6px 0 -3px var(--sheet), -6px 6px 0 1px var(--ink), 7px 8px 0 0 var(--pop), 11px 12px 0 0 var(--ink); }
