@@ -176,8 +176,8 @@ function renderProgress(celebrate) {
   const p = progress();
   const left = p.items.filter((i) => !i.done).map((i) => i.label);
   chip.classList.toggle('all', p.all);
-  chip.setAttribute('aria-label', p.all ? 'Case log: all clear' : `Case log: ${p.done} of ${p.total}. Left: ${left.join(', ')}`);
-  chip.title = p.all ? 'Everything cleared. Thanks for playing.' : `Left: ${left.join(' · ')}`;
+  chip.setAttribute('aria-label', p.all ? 'Case log, all clear' : `Case log, ${p.done} of ${p.total}. Still to do, ${left.join(', ')}`);
+  chip.title = p.all ? 'Everything cleared. Thanks for playing.' : `Still to do · ${left.join(' · ')}`;
   chip.innerHTML = p.all
     ? '<span class="pc-label">CASE LOG</span><span class="pc-all">ALL CLEAR!</span>'
     : `<span class="pc-label">CASE LOG</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
@@ -385,7 +385,7 @@ $('#achBtn').addEventListener('click', () => {
   sfx('select');
   openModal(`<button class="modal-x" type="button" data-close aria-label="Close">✕</button>
     <h2 class="dossier-title" id="modalTitle" style="margin-bottom:12px">ACHIEVEMENTS</h2>${listMarkup()}
-    <p style="margin:14px 0 0;font-size:14px">All 7 unlock the director's cut: how my AI crew built this.</p>`);
+    <p style="margin:14px 0 0;font-size:14px">All 7 unlock the director's cut, how my AI crew built this.</p>`);
 });
 
 /* ---------------------------------------------------------------- HUD + sound */
