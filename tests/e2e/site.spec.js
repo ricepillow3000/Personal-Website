@@ -21,7 +21,7 @@ test('title → PRESS START → John greets the visitor', async ({ page }) => {
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'talk');
   await expect(page.locator('#dialogText')).toContainText("I'm John");
   await waitForHub(page);
-  await expect(page.locator('#choices .choice')).toHaveCount(5);
+  await expect(page.locator('#choices .blade')).toHaveCount(7);
   expect(errors).toEqual([]);
 });
 
@@ -45,15 +45,16 @@ for (const [choice, section, returnText] of HUB) {
   });
 }
 
-test('page 2 swap shows the other three choices and a back bubble', async ({ page }) => {
+test('radial menu: all seven resume blades, no console glyphs, hotkey 7 opens contact', async ({ page, isMobile }) => {
   await page.goto('/#/talk');
   await waitForHub(page);
-  await page.locator('.choice[data-choice="__more"]').click();
-  await expect(page.locator('.choice[data-choice="about"]')).toBeVisible();
-  await expect(page.locator('.choice[data-choice="team"]')).toBeVisible();
-  await expect(page.locator('.choice[data-choice="connect"]')).toBeVisible();
-  await page.locator('.choice[data-choice="__back"]').click();
-  await expect(page.locator('.choice[data-choice="pdf"]')).toBeVisible();
+  const words = await page.locator('#choices .blade').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label').split(':')[0]));
+  expect(words).toEqual(['MISSIONS', 'SKILLS', 'EDGE', 'RESUME', 'STATS', 'LEADER', 'CONTACT']);
+  await expect(page.locator('#choices')).not.toContainText(/[△○□✕×]/);
+  if (!isMobile) {
+    await page.keyboard.press('7');
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'contact');
+  }
 });
 
 test('seeing every section ends with the quiet LinkedIn thank-you', async ({ page }) => {

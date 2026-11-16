@@ -5,7 +5,33 @@ import { typewrite } from '../ui/typewriter.js';
 import { createTag } from '../ui/tag.js';
 import { sfx, duck } from '../audio/audio.js';
 
-/* Talking-John: the dialog box, the graffiti name tag and the reply bubbles. */
+/* Talking-John: the dialog box, the name and the RADIAL BURST MENU.
+   Choices are jagged black blades fanning out from one centre point (red shards
+   behind, one letter flipped black-on-white). Original design: no console glyphs. */
+
+/* Blade slots around the centre point, in reading order of the choices.
+   side: which way the blade points away from the centre. x/y in px at 1440×900. */
+const SLOTS = [
+  { side: 'l', x: 46, y: -122, w: 380, rot: 12 },
+  { side: 'r', x: 50, y: -140, w: 400, rot: -12 },
+  { side: 'l', x: 60, y: -8, w: 400, rot: 2 },
+  { side: 'r', x: 70, y: -32, w: 390, rot: -3 },
+  { side: 'l', x: 46, y: 100, w: 340, rot: -5 },
+  { side: 'r', x: 64, y: 74, w: 400, rot: 5 },
+  { side: 'r', x: 40, y: 172, w: 360, rot: 11 }
+];
+const BLADE_H = 96;
+
+function wordMarkup(word, inv) {
+  return [...word]
+    .map((ch, i) => {
+      if (ch === ' ') return '<span class="sp"> </span>';
+      const cls = ['ch', i === 0 ? 'first' : '', i === inv ? 'inv' : ''].filter(Boolean).join(' ');
+      return `<span class="${cls}">${esc(ch)}</span>`;
+    })
+    .join('');
+}
+
 export function createConversation() {
   const textEl = $('#dialogText');
   const dialog = $('#dialog');
@@ -48,30 +74,75 @@ export function createConversation() {
   }
   dialog.addEventListener('click', finishLine);
 
-  /** Render reply bubbles. items: [{ key, label, cleared, primary }] */
+  /* Keep the whole burst inside the viewport on smaller desktops. */
+  function fit() {
+    const s = Math.min(1, window.innerWidth / 1440, window.innerHeight / 940);
+    choicesEl.style.setProperty('--rs', s.toFixed(3));
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  /** Render the radial menu. items: [{ key, word, sub, inv, cleared, primary }] */
   function showChoices(items, onPick) {
-    choicesEl.innerHTML = items
-      .map(
-        (c, i) => `<button class="choice${c.more ? ' more' : ''}${c.primary ? ' primary' : ''}" type="button" data-nav data-choice="${esc(c.key)}">
-          <span class="tail" aria-hidden="true"></span><span class="num" aria-hidden="true">${i + 1}</span>${esc(c.label)}
-          ${c.cleared ? '<span class="stamp">CLEARED!</span>' : ''}</button>`
-      )
-      .join('');
+    const blades = items.filter((c) => !c.primary);
+    const center = items.find((c) => c.primary);
+    choicesEl.innerHTML = `
+      <div class="radial-burst" aria-hidden="true"></div>
+      ${center
+        ? `<button class="choice core-btn" type="button" data-nav data-choice="${esc(center.key)}"><span class="core-star" aria-hidden="true"></span><span class="core-label">${esc(center.label)}</span></button>`
+        : '<div class="radial-core" aria-hidden="true"><span class="core-star"></span></div>'}
+      ${blades
+        .map((c, i) => {
+          const s = SLOTS[i % SLOTS.length];
+          const left = s.side === 'r' ? s.x : -(s.x + s.w);
+          return `<button class="choice blade blade-${s.side}" type="button" data-nav data-choice="${esc(c.key)}"
+            style="left:${left}px;top:${s.y - BLADE_H / 2}px;width:${s.w}px;--rot:${s.rot}deg" aria-label="${esc(c.word)}: ${esc(c.sub)}">
+            <span class="blade-inner">
+              <span class="blade-red" aria-hidden="true"></span>
+              <span class="blade-bg" aria-hidden="true"></span>
+              <span class="blade-txt" aria-hidden="true"><span class="blade-word">${wordMarkup(c.word, c.inv)}</span><span class="blade-sub">${esc(c.sub)}</span></span>
+              ${c.cleared ? '<span class="stamp">CLEARED!</span>' : ''}
+            </span>
+          </button>`;
+        })
+        .join('')}`;
+
     const buttons = [...choicesEl.querySelectorAll('.choice')];
     buttons.forEach((b) => {
       b.addEventListener('pointerenter', () => hover(b));
       b.addEventListener('focus', () => hover(b));
       b.addEventListener('click', () => pick(b, onPick));
     });
-    if (!reducedMotion()) {
-      gsap.from(buttons, { x: 140, opacity: 0, duration: 0.32, ease: 'back.out(2)', stagger: 0.06, clearProps: 'x,opacity' });
-    }
+    popOut();
     return buttons;
+  }
+
+  /** The opening: a white flash at the centre point, then every blade bursts out
+      of that point (scaling from its tip), overshoots and settles; letters pop last. */
+  function popOut() {
+    if (reducedMotion()) return;
+    const blades = [...choicesEl.querySelectorAll('.blade')];
+    const inners = blades.map((b) => b.querySelector('.blade-inner'));
+    const tl = gsap.timeline();
+    tl.fromTo(choicesEl.querySelector('.radial-burst'), { scale: 0, opacity: 1 }, { scale: 3.2, opacity: 0, duration: 0.5, ease: 'power3.out' }, 0)
+      .from(choicesEl.querySelectorAll('.radial-core, .core-btn'), { scale: 0, rotation: -120, duration: 0.35, ease: 'back.out(2.4)', clearProps: 'transform' }, 0)
+      .from(inners, {
+        scale: 0,
+        rotation: (i) => (blades[i].classList.contains('blade-r') ? -28 : 28),
+        opacity: 0,
+        duration: 0.42,
+        ease: 'back.out(2.1)',
+        stagger: 0.045,
+        clearProps: 'transform,opacity'
+      }, 0.06)
+      .from(choicesEl.querySelectorAll('.blade-red'), { scaleX: 0.2, duration: 0.3, ease: 'power3.out', stagger: 0.045, clearProps: 'transform' }, 0.16)
+      .from(choicesEl.querySelectorAll('.ch'), { y: -18, opacity: 0, duration: 0.18, stagger: 0.008, ease: 'back.out(3)', clearProps: 'transform,opacity' }, 0.24);
   }
 
   function hover(b) {
     sfx('hat');
-    if (!reducedMotion()) gsap.fromTo(b, { x: -4 }, { x: 0, duration: 0.18, ease: 'elastic.out(2, .3)', clearProps: 'x' });
+    choicesEl.querySelectorAll('.choice').forEach((x) => x.classList.toggle('on', x === b));
+    choicesEl.classList.add('has-on');
   }
 
   function pick(b, onPick) {
@@ -79,25 +150,32 @@ export function createConversation() {
     choicesEl.dataset.locked = '1';
     sfx('snare');
     if (!reducedMotion()) {
+      const others = [...choicesEl.querySelectorAll('.blade')].filter((x) => x !== b).map((x) => x.querySelector('.blade-inner'));
+      const mine = b.querySelector('.blade-inner') || b;
       gsap.timeline()
-        .to(b, { scale: 1.08, duration: 0.06 })
-        .to(b, { scale: 1, duration: 0.12 })
-        .to([...choicesEl.children].filter((x) => x !== b), { x: 80, opacity: 0, duration: 0.18, stagger: 0.03 }, 0);
+        .to(others, { scale: 0, opacity: 0, duration: 0.2, ease: 'power3.in', stagger: 0.02 }, 0)
+        .to(mine, { scale: 1.14, duration: 0.08, ease: 'power2.out' }, 0)
+        .to(mine, { scale: 1, duration: 0.14 });
     }
     Promise.resolve(onPick(b.dataset.choice)).finally(() => delete choicesEl.dataset.locked);
   }
 
   function clearChoices() {
     choicesEl.innerHTML = '';
+    choicesEl.classList.remove('has-on');
   }
 
   return { say, showChoices, clearChoices, finishLine, tag, isTyping: () => !dialog.classList.contains('ready') };
 }
 
-/** Choice list for the hub, with CLEARED! stamps for visited sections. */
-export function hubItems(script, page, order) {
-  const keys = page === 2 ? script.page2 : order || script.page1;
-  const items = keys.map((k) => ({ key: k, label: script.choices[k].label, cleared: store.has('visited', script.choices[k].to) }));
-  items.push(page === 2 ? { key: '__back', label: script.backLabel, more: true } : { key: '__more', label: `${script.moreLabel} ↻`, more: true });
-  return items;
+/** Every hub choice as a blade, with CLEARED! stamps for visited sections. */
+export function hubItems(script, order) {
+  const all = [...script.page1, ...script.page2];
+  const keys = order ? [...order, ...all.filter((k) => !order.includes(k))] : all;
+  return keys.map((k) => ({
+    key: k,
+    ...script.radial[k],
+    label: script.choices[k].label,
+    cleared: store.has('visited', script.choices[k].to)
+  }));
 }

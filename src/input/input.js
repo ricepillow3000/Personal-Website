@@ -18,7 +18,7 @@ export function bindInput(handle) {
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     let action = KEYS[e.key];
-    if (!action && /^[1-5]$/.test(e.key)) action = `hotkey:${e.key}`;
+    if (!action && /^[1-7]$/.test(e.key)) action = `hotkey:${e.key}`;
     if (!action && (e.key === 'Enter' || e.key === ' ')) action = 'confirm';
     if (!action) return;
     const used = handle(action, e);

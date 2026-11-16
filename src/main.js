@@ -41,7 +41,6 @@ let pageId = null;
 let greeted = false;
 let thanked = false;
 let pendingStart = false;
-let hubPage = 1;
 let lastFocus = null;
 
 document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotion === true);
@@ -139,7 +138,6 @@ $('#pressStart').addEventListener('click', () => {
 
 /* ---------------------------------------------------------------- conversation */
 async function enterTalk(from) {
-  hubPage = 1;
   convo.clearChoices();
   const vars = { timeOfDay: tod.word, company: company ? company.name : '' };
   if (!greeted) {
@@ -163,19 +161,13 @@ async function enterTalk(from) {
 }
 
 function showHub(withLinkedIn = false) {
-  const order = company?.order?.choices;
-  let items = hubItems(script, hubPage, order);
-  if (withLinkedIn && hubPage === 1) items = [{ key: '__linkedin', label: script.allSeenChoice, primary: true }, ...items];
+  let items = hubItems(script, company?.order?.choices);
+  if (withLinkedIn) items = [{ key: '__linkedin', label: script.allSeenChoice, primary: true }, ...items];
   const buttons = convo.showChoices(items, onPick);
   buttons[0]?.focus({ preventScroll: true });
 }
 
 async function onPick(key) {
-  if (key === '__more' || key === '__back') {
-    hubPage = key === '__more' ? 2 : 1;
-    await slashSwapChoices();
-    return;
-  }
   if (key === '__linkedin') {
     track('linkedin_click');
     window.open(resume.links.linkedin, '_blank', 'noopener');
@@ -186,14 +178,6 @@ async function onPick(key) {
   await convo.say(choice.reply);
   await wait(reducedMotion() ? 150 : 450);
   navigate(choice.to);
-}
-
-async function slashSwapChoices() {
-  if (!reducedMotion()) {
-    await gsap.to('#choices', { x: 60, skewX: -20, opacity: 0, duration: 0.14 });
-    gsap.set('#choices', { clearProps: 'all' });
-  }
-  showHub();
 }
 
 function onBee() {
@@ -315,7 +299,7 @@ $('#menuBtn').addEventListener('click', () => {
 
 function renderKeyHints(mode) {
   const sets = {
-    talk: [['↑↓', 'SELECT'], ['⏎', 'CONFIRM'], ['1-5', 'PICK'], ['F', 'FLIP'], ['Q', 'QUICK VIEW']],
+    talk: [['↑↓', 'SELECT'], ['⏎', 'CONFIRM'], ['1-7', 'PICK'], ['F', 'FLIP'], ['Q', 'QUICK VIEW']],
     page: [['↑↓', 'MOVE'], ['⏎', 'OPEN'], ['ESC', 'BACK'], ['Q', 'QUICK VIEW']]
   };
   $('#keyhints').innerHTML = (sets[mode] || [])
