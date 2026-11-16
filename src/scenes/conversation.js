@@ -12,15 +12,15 @@ import { sfx, duck } from '../audio/audio.js';
 /* Blade slots around the centre point, in reading order of the choices.
    side: which way the blade points away from the centre. x/y in px at 1440×900. */
 const SLOTS = [
-  { side: 'l', x: 46, y: -122, w: 380, rot: 12 },
-  { side: 'r', x: 50, y: -140, w: 400, rot: -12 },
-  { side: 'l', x: 60, y: -8, w: 400, rot: 2 },
-  { side: 'r', x: 70, y: -32, w: 390, rot: -3 },
-  { side: 'l', x: 46, y: 100, w: 340, rot: -5 },
-  { side: 'r', x: 64, y: 74, w: 400, rot: 5 },
-  { side: 'r', x: 40, y: 172, w: 360, rot: 11 }
+  { side: 'l', x: 40, y: -132, w: 360, rot: 24 },
+  { side: 'r', x: 46, y: -150, w: 360, rot: -24 },
+  { side: 'l', x: 56, y: -8, w: 410, rot: 5 },
+  { side: 'r', x: 66, y: -52, w: 400, rot: -8 },
+  { side: 'l', x: 40, y: 130, w: 330, rot: -18 },
+  { side: 'r', x: 60, y: 70, w: 400, rot: 10 },
+  { side: 'r', x: 36, y: 178, w: 330, rot: 24 }
 ];
-const BLADE_H = 96;
+const BLADE_H = 112;
 
 function wordMarkup(word, inv) {
   return [...word]

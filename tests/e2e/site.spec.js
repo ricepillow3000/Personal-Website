@@ -87,12 +87,12 @@ test('mission dossier opens with objectives, loot and live links', async ({ page
 test('?company=Google personalizes the greeting and the visitor tag', async ({ page }) => {
   await page.goto('/?company=Google#/talk');
   await expect(page.locator('#dialogText')).toContainText("someone from Google? I've been expecting you");
-  await expect(page.locator('#visitorTag')).toHaveText('GOOGLE');
+  await expect(page.locator('#visitorTag')).toHaveText('TO: GOOGLE');
 });
 
 test('?company= is sanitized and rendered as text only', async ({ page }) => {
   await page.goto('/?company=%3Cimg%20src=x%20onerror=alert(1)%3EAcme#/talk');
-  await expect(page.locator('#visitorTag')).toHaveText('IMG SRCX ONERRORALERT1ACME'.slice(0, 30));
+  await expect(page.locator('#visitorTag')).toHaveText(`TO: ${'IMG SRCX ONERRORALERT1ACME'.slice(0, 30)}`);
   await expect(page.locator('#screen-talk img')).toHaveCount(0);
 });
 
