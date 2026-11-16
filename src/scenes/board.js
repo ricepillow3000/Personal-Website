@@ -137,24 +137,20 @@ export function boardMarkup(ctx) {
           .map((q, i) => `<li class="quest">
             <span class="quest-no" aria-hidden="true"><span>${i + 1}</span></span>
             <div><b class="quest-title">${esc(q.title)}</b><span class="quest-place">${esc(q.place)}</span>
-            <span class="quest-lesson">${esc(q.lesson)}</span></div>
+            <span class="quest-lesson"><b class="ql-tag">REWARD ★</b><span class="ql-text">${esc(q.lesson)}</span></span></div>
             <span class="quest-done" aria-hidden="true">CLEAR</span></li>`)
           .join('')}</ol>
         <a class="btn-cartoon quest-more" href="#/side-quests" data-nav>FULL STORY ▸</a>
       </article>
-      <article class="calling card-pop" data-board-item>${pin}
-        <span class="calling-star" aria-hidden="true"></span>
-        <div class="calling-banner"><span>CALLING CARD</span></div>
-        <p class="calling-to">TO: ${esc(ctx.company ? ctx.company.name.toUpperCase() : 'WHOEVER IS READING THIS')}</p>
-        <p class="calling-msg">I direct AI agents, ship real apps and test everything. You know where to find me.</p>
-        <h3 class="calling-name ransom" data-ransom="${esc(resume.name.toUpperCase())}"></h3>
-        <p class="calling-sign">— ${esc(resume.codename)} · ${esc(resume.location)}</p>
-        <a class="btn-cartoon cta" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect on LinkedIn ↗</a>
-        <div class="calling-row">
-          <a class="btn-cartoon" data-nav href="mailto:${esc(L.email)}" data-track="email_click">Email</a>
-          <a class="btn-cartoon alt" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">↓ PDF</a>
-        </div>
-        <span class="calling-status">${esc(resume.status)}</span>
+      <article class="calling card-pop" data-board-item aria-label="Calling card">${pin}
+        <span class="calling-tape" aria-hidden="true"></span>
+        <p class="calling-to">To ${esc(ctx.company ? ctx.company.name : 'the one reading this')},</p>
+        <h3 class="calling-title ransom" data-ransom="YOUR MOVE."></h3>
+        <p class="calling-msg">You've seen the cases. You've seen the receipts. If you want to talk, I'm easy to find.</p>
+        <p class="calling-sign">— John <span>“${esc(resume.codename)}”</span> ${esc(resume.name.split(' ').slice(1).join(' '))}</p>
+        <span class="calling-seal" aria-hidden="true"><span>J</span></span>
+        <a class="btn-cartoon cta" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">Connect on LinkedIn ↗</a>
+        <p class="calling-row"><a data-nav href="mailto:${esc(L.email)}" data-track="email_click">Email</a><span aria-hidden="true">·</span><a data-nav href="${esc(L.pdf)}" download data-track="pdf_click">Resume PDF ↓</a></p>
       </article>
     </section>
   </div>`;

@@ -354,7 +354,7 @@ export function blindsWipe(swap) {
   const slats = [...el.children];
   const tl = gsap.timeline();
   tl.set(el, { visibility: 'visible' })
-    .add(() => sfx('ratchet'), 0)
+    .add(() => sfx('rip', 0.3), 0)
     .fromTo(slats, { xPercent: (i) => (i % 2 ? 110 : -110) }, { xPercent: 0, duration: 0.2, ease: 'power4.in', stagger: 0.025 }, 0)
     .add(() => {
       swap();
@@ -436,12 +436,12 @@ export function shatterWipe(swap) {
   const H = window.innerHeight;
   const tl = gsap.timeline();
   tl.set(el, { visibility: 'visible' })
-    .add(() => sfx('swish'), 0)
+    .add(() => sfx('rip', 0.36), 0)
     .fromTo(shards, { x: () => gsap.utils.random(-1, 1) * W * 0.6, y: () => gsap.utils.random(-1, 1) * H * 0.6, rotation: () => gsap.utils.random(-90, 90), autoAlpha: 0 },
       { x: 0, y: 0, rotation: 0, autoAlpha: 1, duration: 0.22, ease: 'power4.in', stagger: { each: 0.008, from: 'random' } }, 0)
     .add(() => {
       swap();
-      sfx('glass');
+      sfx('rip', 0.22);
       shake(el);
     }, 0.4)
     .to(shards, { x: () => gsap.utils.random(-1, 1) * W, y: () => gsap.utils.random(0.2, 1.2) * H, rotation: () => gsap.utils.random(-200, 200), duration: 0.38, ease: 'power3.in', stagger: { each: 0.006, from: 'center' } }, 0.48)
@@ -460,8 +460,7 @@ export function stripesWipe(swap) {
   const bars = [...el.children];
   const tl = gsap.timeline();
   tl.set(el, { visibility: 'visible' })
-    .add(() => sfx('swish'), 0)
-    .add(() => sfx('swish'), 0.09)
+    .add(() => sfx('rip', 0.4), 0)
     .fromTo(bars, { xPercent: 140 }, { xPercent: 0, duration: 0.22, ease: 'power4.in', stagger: 0.04 }, 0)
     .add(() => {
       swap();
@@ -480,7 +479,7 @@ export function flipWipe(swap) {
   }
   const old = $('.screen.active');
   const tl = gsap.timeline();
-  tl.add(() => sfx('paper'), 0)
+  tl.add(() => sfx('rip', 0.24), 0)
     .to(old, { rotationY: 90, transformPerspective: 1300, transformOrigin: '50% 50%', scale: 0.92, filter: 'brightness(.5)', duration: 0.24, ease: 'power3.in' }, 0)
     .add(() => {
       gsap.set(old, { clearProps: 'transform,filter' });
@@ -510,7 +509,7 @@ export function inkWipe(swap) {
   const [red, black] = el.children;
   const tl = gsap.timeline();
   tl.set(el, { visibility: 'visible' })
-    .add(() => sfx('swish'), 0)
+    .add(() => sfx('rip', 0.3), 0)
     .fromTo(red, { scale: 0, rotation: -40, yPercent: 0 }, { scale: 1.1, rotation: 0, duration: 0.24, ease: 'power3.in' }, 0)
     .fromTo(black, { scale: 0, rotation: 30, yPercent: 0 }, { scale: 1, rotation: 0, duration: 0.24, ease: 'power3.in' }, 0.05)
     .add(() => {

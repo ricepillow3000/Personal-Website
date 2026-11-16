@@ -146,12 +146,6 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
   box-shadow: 8px 8px 0 var(--red); transform: rotate(.8deg); display: grid; gap: 8px; justify-items: start;
 }
 .calling p { margin: 0; }
-.calling-head { font-family: var(--f-menu); font-size: 18px; letter-spacing: 4px; color: var(--red); transform: skewX(-9deg); }
-.calling-name { font-size: 32px; line-height: 1; margin: 2px 0 4px !important; }
-.calling-status { font-size: 13px; color: #CFCFCF; }
-.calling .btn-primary { font-size: 22px; }
-.calling-row { display: flex; gap: 12px; flex-wrap: wrap; }
-.calling .btn { font-size: 18px; }
 
 /* keep the HUD bars from covering the board on shorter screens */
 body[data-mode="board"] .keyhints { display: none; }
@@ -194,8 +188,6 @@ body[data-mode="board"] .keyhints { display: none; }
 
 .btn-cartoon.cta { background: var(--white); color: var(--black); font-size: 18px; white-space: nowrap; }
 .btn-cartoon.alt { background: var(--yellow); color: var(--black); }
-.calling .btn-cartoon { text-decoration: none; }
-.calling-row { margin-top: 6px; }
 
 /* ----- case files, cartoon edition ----- */
 .case.card-pop { padding: 28px 22px 22px; background: #F7F4EA; }
@@ -261,35 +253,40 @@ body[data-mode="board"] .keyhints { display: none; }
 .quest-no span { font-family: var(--f-head); font-size: 22px; color: var(--white); transform: skewX(-10deg); -webkit-text-stroke: 1.5px var(--black); paint-order: stroke fill; text-shadow: 2px 2px 0 var(--black); }
 .quest-title { display: block; font-family: var(--f-head); font-weight: 400; font-size: 18px; line-height: 1.05; letter-spacing: .3px; transform: skewX(-8deg); transform-origin: left; }
 .quest-place { display: block; font-size: 12px; font-weight: 800; color: #555; margin: 2px 0 6px; }
-.quest-lesson { display: block; font-size: 12.5px; font-weight: 600; line-height: 1.35; padding: 5px 8px; background: var(--black); color: var(--white); transform: skewX(-4deg); }
+.quest-lesson { display: block; margin-top: 4px; font-size: 13px; font-weight: 800; line-height: 1.5; color: var(--black); }
 .quest-done { position: absolute; top: 8px; right: 8px; font-family: var(--f-head); font-size: 12px; letter-spacing: 1px; color: var(--red); border: 3px solid var(--red); background: var(--white); padding: 1px 6px; transform: rotate(10deg); }
 .quest-more { font-size: 16px !important; text-decoration: none; }
 .quest .quest-title, .quest .quest-place { padding-right: 58px; }
 
 
-/* ----- CALLING CARD, cartoon edition ----- */
+/* ----- CALLING CARD: a cream paper notice (deliberately unlike the red/black menu) ----- */
 .calling.card-pop {
-  --sheet: var(--black); --pop: var(--white);
-  overflow: hidden; padding: 0 20px 22px; background: var(--red); color: var(--white); border-color: var(--black);
-  display: grid; gap: 8px; justify-items: start; transform: rotate(1.4deg);
-  background-image: radial-gradient(rgba(5, 5, 5, .32) 1.6px, transparent 2.2px), linear-gradient(160deg, transparent 58%, rgba(5, 5, 5, .55) 58%);
-  background-size: 9px 9px, 100% 100%;
+  --sheet: var(--black); --pop: var(--red);
+  overflow: visible; padding: 26px 22px 22px; background: #F7F1E1; color: var(--black); border: 4px solid var(--black);
+  display: grid; gap: 10px; justify-items: start; transform: rotate(-1.6deg);
+  background-image: repeating-linear-gradient(0deg, transparent 0 27px, rgba(229, 25, 28, .08) 27px 28px);
+  outline: 3px solid var(--red); outline-offset: -11px;
 }
 .calling.card-pop::before { display: none; }
-.calling-star { position: absolute; right: -46px; bottom: -40px; width: 210px; height: 210px; background: var(--black); opacity: .9; pointer-events: none; transform: rotate(14deg);
-  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
-.calling > *:not(.calling-star):not(.pin) { position: relative; z-index: 1; }
-.calling-banner { margin: 0 -20px 6px; width: calc(100% + 40px); padding: 10px 20px 14px; background: var(--black);
-  clip-path: polygon(0 0, 100% 0, 100% 70%, 76% 100%, 58% 78%, 30% 96%, 0 80%); }
-.calling-banner span { display: inline-block; font-family: var(--f-head); font-size: 26px; letter-spacing: 3px; color: var(--white); transform: skewX(-10deg); }
-.calling-banner span::first-letter { color: var(--red); font-size: 1.3em; }
-.calling-to { margin: 0; font-family: var(--f-type); font-size: 13px; font-weight: 700; background: var(--white); color: var(--black); padding: 2px 8px; transform: rotate(-2deg); }
-.calling-msg { margin: 0; font-family: var(--f-mark); font-size: 17px; line-height: 1.3; color: var(--white); text-shadow: 2px 2px 0 var(--black); }
-.calling-name { margin: 6px 0 0 !important; font-size: 30px !important; }
-.calling-sign { margin: 0; font-family: var(--f-head); font-size: 15px; letter-spacing: 1px; color: var(--yellow); text-shadow: 2px 2px 0 var(--black); transform: skewX(-8deg); }
-.calling .btn-cartoon { margin-top: 2px; }
-.calling .btn-cartoon:not(.cta):not(.alt) { box-shadow: 0 6px 0 var(--white), 0 6px 0 3px var(--black); }
-.calling-status { margin-top: 4px; font-size: 12px; font-weight: 800; background: var(--black); color: var(--white); padding: 2px 8px; transform: skewX(-8deg); }
+.calling > *:not(.pin) { position: relative; z-index: 1; }
+.calling-tape { position: absolute !important; top: -14px; left: 50%; width: 110px; height: 28px; margin-left: -55px; background: rgba(255, 225, 26, .75); border: 1px solid rgba(0, 0, 0, .15); transform: rotate(-4deg); }
+.calling-to { margin: 0; font-family: var(--f-type); font-size: 15px; }
+.calling-title { margin: 0 !important; font-size: 40px !important; line-height: 1; transform: rotate(-3deg); }
+.calling-msg { margin: 0; font-family: var(--f-mark); font-size: 18px; line-height: 1.35; color: var(--black); max-width: 30ch; }
+.calling-sign { margin: 0; font-family: var(--f-mark); font-size: 17px; color: var(--red); }
+.calling-sign span { color: var(--black); }
+.calling-seal {
+  position: absolute !important; right: -16px; top: 46px; width: 70px; height: 70px; display: grid; place-items: center; transform: rotate(14deg);
+  background: var(--red); border-radius: 50%; box-shadow: 3px 3px 0 var(--black), inset 0 0 0 5px rgba(0, 0, 0, .18);
+  clip-path: polygon(50% 0, 62% 6%, 75% 3%, 82% 15%, 95% 20%, 94% 34%, 100% 46%, 94% 58%, 97% 72%, 86% 79%, 80% 93%, 66% 92%, 55% 100%, 43% 94%, 30% 98%, 22% 86%, 8% 82%, 8% 67%, 0 55%, 6% 42%, 2% 28%, 14% 21%, 19% 7%, 34% 7%);
+}
+.calling-seal::before { content: ""; position: absolute; inset: 14px; background: var(--black); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.calling-seal span { position: relative; font-family: var(--f-head); font-size: 18px; color: var(--white); margin-top: 6px; }
+.calling .btn-cartoon.cta { margin-top: 4px; background: var(--black); color: var(--white); text-decoration: none; }
+.calling .btn-cartoon.cta:hover, .calling .btn-cartoon.cta:focus-visible { background: var(--red); color: var(--white); }
+.calling-row { display: flex; align-items: center; gap: 10px; margin: 0; font-weight: 800; font-size: 15px; }
+.calling-row a { color: var(--black); text-decoration: underline; text-decoration-color: var(--red); text-decoration-thickness: 3px; text-underline-offset: 4px; padding: 8px 2px; }
+.calling-row a:hover, .calling-row a:focus-visible { color: var(--red); }
 .calling.card-pop:hover { transform: rotate(0) translate(-3px, -6px) !important; }
 
 
@@ -396,3 +393,9 @@ body[data-mode="board"] .keyhints { display: none; }
   .case-grade { right: -8px; }
   body[data-mode="board"] .hud-bars { display: none; }
 }
+
+/* ----- side quest REWARD: bright highlighter text + a red reward tag (no black boxes) ----- */
+.ql-tag { display: inline-block; margin-right: 6px; padding: 0 7px; font-family: var(--f-head); font-weight: 400; font-size: 12px; letter-spacing: 1px; background: var(--red); color: var(--white); transform: rotate(-4deg) skewX(-10deg); box-shadow: 2px 2px 0 var(--black); vertical-align: 1px; }
+.ql-text { background: linear-gradient(transparent 14%, var(--yellow) 14% 90%, transparent 90%); -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 0 3px; }
+.note-quests .quest .quest-lesson, .note-quests .quest .quest-lesson .ql-text { color: var(--black); font-size: 13px; }
+.note-quests .quest .quest-lesson .ql-tag { color: var(--white); font-size: 12px; }

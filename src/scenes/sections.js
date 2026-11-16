@@ -237,7 +237,7 @@ function sideQuests() {
             <div class="stop-card">
               <div class="stop-head"><span class="stop-title">${esc(q.title)}</span><span class="stop-meta">${esc(q.place)} · ${esc(q.dates)}</span></div>
               <ul>${q.did.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
-              <span class="lesson">${esc(q.lesson)}</span>
+              <span class="lesson"><b class="ql-tag">REWARD ★</b><span class="ql-text">${esc(q.lesson)}</span></span>
               <span class="stop-clear" aria-hidden="true">CLEAR</span>
             </div></article>`
           )
