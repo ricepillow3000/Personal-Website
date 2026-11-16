@@ -167,7 +167,7 @@ function different() {
     intro(root) {
       if (reducedMotion()) return;
       const panels = [...root.querySelectorAll('.panel')];
-      const page = root.closest('.screen') || root;
+      const page = root; // shake the content only (it is clipped), never the scrolling screen
       const from = [{ x: -260, y: -80 }, { x: 260, y: -80 }, { x: -260, y: 80 }, { x: 260, y: 80 }];
       const tl = gsap.timeline();
       panels.forEach((p, i) => {
