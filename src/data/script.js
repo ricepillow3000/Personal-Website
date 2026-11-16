@@ -6,5 +6,6 @@ export const menuTeasers = {
   skills: 'Ranks with receipts · AI agents rank 9',
   stats: 'GSU · 3.88 GPA · Dean’s List ×2',
   'side-quests': 'Elected team leader · July 4th rush',
+  different: 'Four facts. No pitch.',
   system: 'Quick View · PDF · sound · achievements'
 };

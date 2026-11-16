@@ -63,7 +63,8 @@ let lastFocus = null;
 
 document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotion === true);
 ransom($('#titleName'), resume.first, NAME_SEED);
-$('#titleHook').textContent = resume.hook;
+$('#titleHook').textContent = resume.titleHook || resume.hook;
+$('#hudLinkedIn').href = resume.links.linkedin;
 $('#quickPdf').href = resume.links.pdf;
 renderQuickView($('#paper'));
 refreshCounter();
@@ -104,7 +105,7 @@ function activate(id) {
 
 let lastStyle = 'slash';
 /* every menu destination gets its own transition */
-const MENU_STYLE = { missions: 'shatter', skills: 'blinds', stats: 'flip', 'side-quests': 'stripes', system: 'ink' };
+const MENU_STYLE = { missions: 'shatter', skills: 'blinds', different: 'slash', stats: 'flip', 'side-quests': 'stripes', system: 'ink' };
 const WIPES = { slash: slashWipe, blinds: blindsWipe, paper: paperWipe, iris: irisWipe, shatter: shatterWipe, stripes: stripesWipe, flip: flipWipe, ink: inkWipe };
 async function show(id) {
   const prev = screen;
@@ -262,6 +263,7 @@ let revealDelay = 0;
 function enterBoard() {
   renderProgress();
   board.reveal(revealDelay);
+  setTimeout(() => screen === 'board' && board.demo(), (revealDelay + 1.1) * 1000);
   revealDelay = 0;
   $('#board .case-open')?.focus({ preventScroll: true });
   if (!boardSeen) {
@@ -383,7 +385,7 @@ $('#achBtn').addEventListener('click', () => {
   sfx('select');
   openModal(`<button class="modal-x" type="button" data-close aria-label="Close">✕</button>
     <h2 class="dossier-title" id="modalTitle" style="margin-bottom:12px">ACHIEVEMENTS</h2>${listMarkup()}
-    <p style="margin:14px 0 0;font-size:14px">All 7 unlock a behind-the-scenes card in SYSTEM.</p>`);
+    <p style="margin:14px 0 0;font-size:14px">All 7 unlock the director's cut: how my AI crew built this.</p>`);
 });
 
 /* ---------------------------------------------------------------- HUD + sound */

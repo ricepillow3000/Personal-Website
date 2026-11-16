@@ -43,7 +43,7 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 .board-focus .string { opacity: .12; }
 .board-focus .string.lit { opacity: 1; stroke: #FFFFFF; stroke-width: 4; }
 .col { position: relative; z-index: 2; min-width: 0; }
-.col-label { display: flex; align-items: flex-end; gap: 10px; margin: 0 0 20px; font-weight: 400; }
+.col-label { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px; margin: 0 0 20px; font-weight: 400; }
 .col-label .ransom { font-size: 36px; }
 .col-label small { font-family: var(--f-body); font-size: 12px; font-weight: 800; letter-spacing: .5px; color: var(--white); background: rgba(5, 5, 5, .8); padding: 2px 8px; transform: skew(var(--skew)); }
 

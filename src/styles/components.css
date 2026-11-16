@@ -450,3 +450,27 @@ b, strong { font-weight: 700; }
 .crew-say { font-style: italic; font-size: 17px; }
 .trait { font-size: 18px; font-style: italic; }
 .page-sub { letter-spacing: 0; }
+
+/* ============ council pass ============ */
+/* CASE 00 note: the site itself is the first case */
+.note-case0 { font-size: 15px; line-height: 1.4; }
+.c0-tag { display: inline-block; margin: 0 6px 4px 0; padding: 0 8px; font-family: var(--f-head); font-weight: 400; font-size: 15px; letter-spacing: 1px; background: var(--black); color: var(--yellow); transform: skewX(-10deg); }
+/* TRY ONE arrow: cut-out label that bobs until the first try */
+.try-one { display: inline-block; flex: none; white-space: nowrap; margin-left: 12px; padding: 1px 10px; font-family: var(--f-head); font-size: 16px; letter-spacing: 1px; background: var(--yellow); color: var(--black); border: 3px solid var(--black); transform: rotate(-6deg); box-shadow: 3px 3px 0 var(--red); animation: tryBob .9s steps(3) infinite; vertical-align: middle; }
+@keyframes tryBob { 50% { translate: 0 4px; rotate: 4deg; } }
+@media (prefers-reduced-motion: reduce) { .try-one { animation: none; } }
+/* compact side quests on the board (full story lives on its page) */
+.quest-mini { align-items: center; padding: 6px 10px 6px 6px; }
+.quest-mini .quest-title, .quest-mini .quest-place { padding-right: 0 !important; }
+/* top-left HUD: keep only status + school once you are inside */
+body[data-mode="board"] .hud-tl .hud-date, body[data-mode="board"] .hud-tl .hud-day,
+body[data-mode="page"] .hud-tl .hud-date, body[data-mode="page"] .hud-tl .hud-day { display: none; }
+body[data-mode="board"] .hud-tl .hud-meta { display: grid; }
+.hud-in { text-decoration: none; display: inline-flex; align-items: center; }
+
+/* phones: the top-left HUD collides with the top-right buttons, so the status moves into the header */
+.board-status { display: none; }
+@media (max-width: 760px) {
+  body[data-mode="board"] .hud-tl, body[data-mode="page"] .hud-tl { display: none; }
+  .board-status { display: inline-block; margin-top: 8px; padding: 2px 10px; font-family: var(--f-ui); font-style: italic; font-weight: 700; font-size: 14px; background: var(--white); color: var(--black); transform: rotate(-2deg) skew(var(--skew)); box-shadow: 3px 3px 0 var(--black); }
+}

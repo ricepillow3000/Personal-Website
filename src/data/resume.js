@@ -9,6 +9,8 @@ export const resume = {
   first: 'JOHN',
   role: 'AI Solutions Engineer in training',
   hook: "I direct AI agents to build software, then test it like it's going to production.",
+  // the title screen tells the story; the board keeps the job line above
+  titleHook: 'Resumes are boring. So I directed a crew of AI agents to turn mine into a game.',
   status: 'Status: open to opportunities',
   school: 'GSU · Class of 2029',
   location: 'Atlanta Metropolitan Area',
@@ -93,8 +95,8 @@ export const resume = {
   /* Ranks 1–10, or 'MAX'. Each one is backed by proof. `uses` = which projects the
      red string on the Heist Board connects it to. */
   skills: [
-    { id: 'testing', name: 'Testing / QA', rank: 'MAX', proof: '2,000+ automated tests across 2 apps', uses: ['meliona', 'arcas'] },
     { id: 'agents', name: 'AI Agents (Claude Code)', rank: 9, proof: '3-role agent workflow: orchestrator, researcher, builder', uses: ['meliona'] },
+    { id: 'testing', name: 'Testing / QA', rank: 'MAX', proof: '2,000+ automated tests across 2 apps', uses: ['meliona', 'arcas'] },
     { id: 'python', name: 'Python', rank: 8, proof: '7,700+ lines in Meliona · ARCAS backend', uses: ['meliona', 'arcas'] },
     { id: 'aieval', name: 'AI Evaluation', rank: 8, proof: 'Live-data audits · 727/728 checks passed', uses: ['meliona'] },
     { id: 'cicd', name: 'GitHub Actions (CI/CD)', rank: 7, proof: '6 workflows: lint, security scan, 3 test suites', uses: ['meliona', 'arcas'] },
@@ -107,7 +109,7 @@ export const resume = {
   different: [
     { title: 'I ship, not just study', fact: 'Two live apps, launched while keeping a 3.88 GPA.' },
     { title: 'I test like it’s production', fact: '2,000+ automated tests. 199 of 201 hidden errors caught. False alarms cut 86%.' },
-    { title: 'I manage AI agents', fact: 'I run an orchestrator / researcher / builder agent team — the core skill of an AI Solutions Engineer.' },
+    { title: 'I manage AI agents', fact: 'Orchestrator plans, researcher checks, builder codes. I direct and test.' },
     { title: 'I lead under pressure', fact: 'Elected team leader. Ran a banquet floor of new servers on the club’s busiest day of the year.' }
   ],
 
