@@ -265,6 +265,32 @@ body[data-mode="board"] .keyhints { display: none; }
 .quest-done { position: absolute; top: -10px; right: -8px; font-family: var(--f-head); font-size: 12px; letter-spacing: 1px; color: var(--red); border: 3px solid var(--red); background: var(--white); padding: 1px 6px; transform: rotate(10deg); }
 .quest-more { font-size: 16px !important; text-decoration: none; }
 
+
+/* ----- CALLING CARD, cartoon edition ----- */
+.calling.card-pop {
+  --sheet: var(--black); --pop: var(--white);
+  overflow: hidden; padding: 0 20px 22px; background: var(--red); color: var(--white); border-color: var(--black);
+  display: grid; gap: 8px; justify-items: start; transform: rotate(1.4deg);
+  background-image: radial-gradient(rgba(5, 5, 5, .32) 1.6px, transparent 2.2px), linear-gradient(160deg, transparent 58%, rgba(5, 5, 5, .55) 58%);
+  background-size: 9px 9px, 100% 100%;
+}
+.calling.card-pop::before { display: none; }
+.calling-star { position: absolute; right: -46px; bottom: -40px; width: 210px; height: 210px; background: var(--black); opacity: .9; pointer-events: none; transform: rotate(14deg);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.calling > *:not(.calling-star):not(.pin) { position: relative; z-index: 1; }
+.calling-banner { margin: 0 -20px 6px; width: calc(100% + 40px); padding: 10px 20px 14px; background: var(--black);
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 76% 100%, 58% 78%, 30% 96%, 0 80%); }
+.calling-banner span { display: inline-block; font-family: var(--f-head); font-size: 26px; letter-spacing: 3px; color: var(--white); transform: skewX(-10deg); }
+.calling-banner span::first-letter { color: var(--red); font-size: 1.3em; }
+.calling-to { margin: 0; font-family: var(--f-type); font-size: 13px; font-weight: 700; background: var(--white); color: var(--black); padding: 2px 8px; transform: rotate(-2deg); }
+.calling-msg { margin: 0; font-family: var(--f-mark); font-size: 17px; line-height: 1.3; color: var(--white); text-shadow: 2px 2px 0 var(--black); }
+.calling-name { margin: 6px 0 0 !important; font-size: 30px !important; }
+.calling-sign { margin: 0; font-family: var(--f-head); font-size: 15px; letter-spacing: 1px; color: var(--yellow); text-shadow: 2px 2px 0 var(--black); transform: skewX(-8deg); }
+.calling .btn-cartoon { margin-top: 2px; }
+.calling .btn-cartoon:not(.cta):not(.alt) { box-shadow: 0 6px 0 var(--white), 0 6px 0 3px var(--black); }
+.calling-status { margin-top: 4px; font-size: 12px; font-weight: 800; background: var(--black); color: var(--white); padding: 2px 8px; transform: skewX(-8deg); }
+.calling.card-pop:hover { transform: rotate(0) translate(-3px, -6px) !important; }
+
 /* ===================== PHONES ===================== */
 @media (max-width: 1100px) {
   .board-grid { grid-template-columns: 260px minmax(0, 1fr); }
