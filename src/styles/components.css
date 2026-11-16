@@ -296,7 +296,7 @@ body.reduce-motion .btn-cartoon, body.reduce-motion .press-start, body.reduce-mo
 .case.cc:has(> .clear-stamp) { padding-bottom: 66px; }
 .poster > .clear-stamp { top: auto; bottom: 10px; right: 14px; }
 .dossier { position: relative; }
-.dossier > .clear-stamp { top: 54px; right: 34px; }
+.dossier > .clear-stamp { top: 62px; right: 74px; }
 .dossier-hint { margin: 12px 0 0; font-family: var(--f-type); font-size: 14px; }
 @media (prefers-reduced-motion: reduce) { .cs-star { animation: none; } }
 body.reduce-motion .cs-star { animation: none; }
@@ -324,3 +324,14 @@ body.scrolled .hud-bars { translate: calc(-100% - 60px) 0; pointer-events: none;
   .cutin-name { font-size: 46px; }
   .cutin-text { font-size: 30px; padding-right: 8vw; text-shadow: 3px 3px 0 var(--red); }
 }
+
+/* ============ CLEARED! return transition ============ */
+.clear-fx { position: fixed; inset: 0; z-index: 94; pointer-events: none; display: grid; place-items: center; overflow: hidden; }
+.clear-fx-rays { position: absolute; left: 50%; top: 50%; width: 160vmax; height: 160vmax; margin: -80vmax 0 0 -80vmax;
+  background: repeating-conic-gradient(from 0deg, var(--red) 0 7deg, var(--black) 7deg 14deg); will-change: transform; }
+.clear-fx-flash { position: absolute; inset: 0; background: var(--white); opacity: 0; }
+.clear-fx > .clear-stamp { position: relative; inset: auto; padding: 22px 30px; rotate: 0deg; }
+.clear-fx > .clear-stamp .cs-burst { inset: -14px -22px; }
+.clear-fx > .clear-stamp .cs-slab { border-width: 6px; padding: 8px 20px 4px 24px; box-shadow: 10px 10px 0 var(--black); }
+.clear-fx > .clear-stamp .cs-word { font-size: clamp(54px, 10vw, 140px); }
+.clear-fx > .clear-stamp .cs-star { width: 80px; height: 80px; right: -26px; top: -34px; }
