@@ -13,7 +13,8 @@
   --f-mark: "Permanent Marker", "Comic Sans MS", cursive;
   --f-type: "Special Elite", "Courier New", monospace;
   --f-serif: Georgia, "Times New Roman", serif;
-  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "Barlow Semi Condensed", "Arial Narrow", system-ui, -apple-system, sans-serif;
+  --f-ui: "Barlow Condensed", "Bebas Neue", "Arial Narrow", sans-serif; /* bold italic labels */
 
   --skew: -12deg;
   --gutter: clamp(16px, 3.5vw, 48px);

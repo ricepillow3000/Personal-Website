@@ -190,7 +190,7 @@ function stats() {
     title: 'STATS',
     html: `${watermark('PROFILE')}${back}${head('STATS', 'The person behind the projects.')}
       <section class="idcard" data-in>
-        <div class="id-band"><span>ID · ${esc(resume.codename)}</span><span>${esc(resume.location)}</span></div>
+        <div class="id-band"><span>ID · ${esc(resume.name.toUpperCase())}</span><span>${esc(resume.location)}</span></div>
         <div class="id-body">
           <figure class="gpa-card" aria-label="GPA ${esc(e.gpa)} out of 4.00">
             <span class="gpa-tag" aria-hidden="true">GPA</span>
@@ -266,7 +266,6 @@ function contact() {
         <div class="ccard-face ccard-front" aria-hidden="true"><div class="ccard-emblem"></div></div>
         <div class="ccard-face ccard-back">
           <span class="ccard-name">${esc(resume.name)}</span>
-          <span class="ccard-code">${esc(resume.codename)}</span>
           <span class="ccard-role">${esc(resume.role)} · ${esc(resume.education.school)}, ${esc(resume.education.grad)}</span>
           <span class="ccard-line">${esc(resume.location)} · ${esc(resume.status)}</span>
         </div>

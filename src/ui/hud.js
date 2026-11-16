@@ -15,39 +15,3 @@ export function renderDate() {
     <div class="hud-meta"><span>${esc(resume.status)}</span><span>${esc(resume.school)}</span></div>`;
   return tod;
 }
-
-function rows(list) {
-  return list
-    .map(
-      (b, i) => `<div class="bar-row c${i}"><span class="bar-label">${esc(b.label)}</span>
-      <span class="bar-val">${esc(b.text)}</span>
-      <span class="bar-track"><span class="bar-fill" style="width:${Math.min(100, (b.value / b.max) * 100).toFixed(1)}%"></span></span></div>`
-    )
-    .join('');
-}
-
-/** Bottom-left bars: proof by default, flips to fun stats for 4s. */
-export function createBars(onFirstFlip) {
-  const el = $('#hudBars');
-  el.innerHTML = `<div class="bars-card">
-      <div class="bars-face bars-front">${rows(resume.bars.proof)}</div>
-      <div class="bars-face bars-back">${rows(resume.bars.fun)}</div>
-    </div><span class="bars-flip-hint" aria-hidden="true">↻</span>`;
-  let timer = null;
-  const flip = () => {
-    el.classList.add('flipped');
-    el.setAttribute('aria-label', 'Fun stats: drums 200 plus BPM, bee fear maximum.');
-    onFirstFlip?.();
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      el.classList.remove('flipped');
-      el.setAttribute('aria-label', 'Stats: GPA 3.88, 2 live apps. Press to flip.');
-    }, 4000);
-  };
-  el.addEventListener('click', flip);
-  return {
-    flip,
-    /** Bee panic: show the fun side right away. */
-    spike: flip
-  };
-}

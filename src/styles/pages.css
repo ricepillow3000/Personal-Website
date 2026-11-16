@@ -253,3 +253,7 @@
 }
 body.reduce-motion :is(.pg-mark span, .wanted-slot, .poster-grade, .crew-star, .route-dash, .pg-rays, .stop-pin),
 body.reduce-motion .panel::before { animation: none !important; }
+
+.crew { overflow-x: clip; }
+/* the rays stay inside the page (no sideways overflow on phones) */
+.card-stage { overflow: clip; padding: 30px 0; margin: -30px 0; }

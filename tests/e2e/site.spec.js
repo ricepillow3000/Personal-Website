@@ -143,11 +143,10 @@ test('keyboard: 1 opens a case file, Q for Quick View, Esc back', async ({ page,
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
 });
 
-test('flipping the HUD bars unlocks an achievement that survives reload', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'HUD bars are hidden on phones');
+test('flipping the GPA star unlocks an achievement that survives reload', async ({ page }) => {
   await openBoard(page);
-  await page.keyboard.press('f');
-  await expect(page.locator('#hudBars')).toHaveClass(/flipped/);
+  await page.locator('#board .gpa-burst').click();
+  await expect(page.locator('#board .gpa-burst')).toHaveClass(/flipped/);
   await expect(page.locator('#achCount')).toHaveText('1/7');
   await page.reload();
   await expect(page.locator('#achCount')).toHaveText('1/7');

@@ -18,7 +18,7 @@ import { initClearing, hydrateStamps } from './ui/clear.js';
 import { progress } from './core/progress.js';
 import { slashWipe, blindsWipe, paperWipe, irisWipe, shatterWipe, stripesWipe, flipWipe, inkWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
-import { renderDate, createBars } from './ui/hud.js';
+import { renderDate } from './ui/hud.js';
 import { createBoard } from './scenes/board.js';
 import { toast } from './ui/toast.js';
 import { createMenu, MENU_ITEMS } from './scenes/menu.js';
@@ -34,7 +34,20 @@ import { bindInput, bindGamepad } from './input/input.js';
 const company = readCompany();
 const ctx = { company };
 const backdrop = mountBackdrop($('#backdrop'));
-const bars = createBars(() => unlock('off-record'));
+/* "Off the Record": the GPA star on the person card flips to the fun stats */
+function flipGpa() {
+  const b = $('#board .gpa-burst');
+  if (!b) return;
+  const on = !b.classList.contains('flipped');
+  b.classList.toggle('flipped', on);
+  b.setAttribute('aria-pressed', String(on));
+  sfx(on ? 'hvPerson' : 'back');
+  if (on) unlock('off-record');
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest?.('.gpa-burst')) flipGpa();
+});
+const bars = { spike: () => {}, flip: flipGpa };
 /* how the next screen change should look; the menu asks for blinds */
 let viaMenu = false;
 const menu = createMenu((id) => {
@@ -226,6 +239,10 @@ $('#pressStart').addEventListener('click', () => {
 
 /* ---------------------------------------------------------------- heist board */
 initClickFx();
+// FULL STORY on the side quests gets a whip crack + level-clear jingle
+document.addEventListener('click', (e) => {
+  if (e.target.closest?.('.quest-more')) sfx('fanfare');
+});
 /* Once you scroll, the date (top-left) and stat box (bottom-left) slide away so they
    never sit on top of text; they snap back when you return to the top. */
 $$('.screen').forEach((sc) =>

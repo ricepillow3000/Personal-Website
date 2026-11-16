@@ -8,7 +8,7 @@ export const ACHIEVEMENTS = [
   { id: 'case-file', name: 'Case File', hint: 'Open one of the mission files.' },
   { id: 'full-recon', name: 'Full Recon', hint: 'Light up every red string on the board.' },
   { id: 'bee', name: 'BEE!!', hint: 'Something small and buzzing passes by. Be quick.' },
-  { id: 'off-record', name: 'Off the Record', hint: 'Those stat bars have a flip side.' },
+  { id: 'off-record', name: 'Off the Record', hint: 'That GPA star has a flip side.' },
   { id: 'inspector', name: 'Inspector', hint: 'Developers know where to look.' },
   { id: 'player-2', name: 'Player 2', hint: 'Bring your own controller.' }
 ];
