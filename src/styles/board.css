@@ -439,3 +439,7 @@ button.gpa-burst { border: 0; padding: 0; cursor: pointer; perspective: 400px; }
 .gpa-burst:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
 /* tablets: two case cards side by side don't fit next to the skills column, so they stack */
 @media (max-width: 1100px) { .cases { grid-template-columns: 1fr; } .case-grade { right: -6px; } }
+
+.calling-steal { margin: 0; font-family: var(--f-head); font-size: 26px; line-height: 1; letter-spacing: .5px; color: var(--red); transform: rotate(-3deg) skewX(-8deg); text-shadow: 2px 2px 0 var(--black); }
+.calling-msg { font-size: 17px !important; max-width: 32ch !important; }
+.calling-to { padding-right: 64px; }
