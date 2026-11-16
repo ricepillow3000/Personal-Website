@@ -122,6 +122,7 @@ export const resume = {
         'Coordinated 35 assignments across seven weekly rounds for a five-person team.',
         'Spearheaded a pivot to commuters after spotting missed parking-deck opportunities; pitched three high-traffic locations and a contactless sampling plan with geofence advertising.'
       ],
+      stat: ['35', 'assignments run for a 5-person team'],
       lesson: 'I can turn five opinions into one plan — and change course when the data says so.'
     },
     {
@@ -132,6 +133,7 @@ export const resume = {
         'Led a section of 5 new servers and temps on July 4th, the club’s busiest day, coaching each one live.',
         'Set up shortcuts and pre-placed supplies for accurate, on-time service at 5 weekly banquets.'
       ],
+      stat: ['5', 'new servers coached live on July 4th'],
       lesson: 'I onboard people fast, under real pressure.'
     },
     {
@@ -139,6 +141,7 @@ export const resume = {
       place: 'The Sparrow',
       dates: 'May 2025 — Aug 2025',
       did: ['Mentored new hires on menu, POS and table flow while running a full section; named in six positive Google reviews.'],
+      stat: ['6', 'Google reviews mention me by name'],
       lesson: 'I stay calm and friendly in front of real customers.'
     }
   ],
