@@ -44,7 +44,7 @@ let pendingStart = false;
 let lastFocus = null;
 
 document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotion === true);
-if (company) $('#visitorTag').textContent = company.name.toUpperCase();
+if (company) $('#visitorTag').textContent = `TO: ${company.name.toUpperCase()}`;
 ransom($('#titleName'), resume.first, 11);
 $('#titleHook').textContent = resume.hook;
 $('#quickPdf').href = resume.links.pdf;
