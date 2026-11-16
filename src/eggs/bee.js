@@ -33,17 +33,25 @@ export function fly(onCatch) {
     bee.hidden = true;
     flying = false;
     bee.onclick = null;
+    bee.onpointerdown = null;
   };
   const tl = gsap.timeline({ onComplete: done });
   const dur = reducedMotion() ? 6 : 7.5;
-  gsap.set(bee, { x: fromLeft ? -60 : W + 20, y: y0, scaleX: fromLeft ? -1 : 1 });
+  gsap.set(bee, { x: fromLeft ? -60 : W + 20, y: y0, rotation: 0, scaleX: fromLeft ? -1 : 1 });
   tl.to(bee, { x: fromLeft ? W + 40 : -80, duration: dur, ease: 'none' }, 0);
   if (!reducedMotion()) {
     tl.to(bee, { y: `+=${H * 0.08}`, duration: 0.45, yoyo: true, repeat: Math.floor(dur / 0.45), ease: 'sine.inOut' }, 0);
   }
-  bee.onclick = () => {
+  // pointerdown, not click: the bee moves, so down and up can land on different spots and
+  // the browser drops the click. Keyboard users still trigger it through click (Enter/Space).
+  let caught = false;
+  const catchIt = () => {
+    if (caught) return;
+    caught = true;
     tl.kill();
     gsap.to(bee, { x: fromLeft ? -120 : W + 120, y: -80, rotation: 30, duration: 0.6, ease: 'power2.in', onComplete: done });
     onCatch();
   };
+  bee.onpointerdown = catchIt;
+  bee.onclick = catchIt;
 }

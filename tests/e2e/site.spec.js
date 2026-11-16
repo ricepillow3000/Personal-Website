@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { inflateSync } from 'node:zlib';
 
 const errorsOf = (page) => {
   const errors = [];
@@ -185,6 +186,71 @@ test('no phone number anywhere in the built site', async () => {
   const text = walk('dist').filter((f) => /\.(html|js|css|svg|json)$/.test(f)).map((f) => readFileSync(f, 'utf8')).join('\n');
   expect(text).not.toMatch(/555[-.\s]?0100/);
   expect(text).not.toMatch(/\(555\)/);
+});
+
+/* Reads every text string out of a PDF's compressed content streams. */
+function pdfDigits(path) {
+  const buf = readFileSync(path);
+  const raw = buf.toString('latin1');
+  let out = '';
+  const re = /stream\r?\n/g;
+  let m;
+  while ((m = re.exec(raw))) {
+    const start = m.index + m[0].length;
+    const end = raw.indexOf('endstream', start);
+    if (end < 0) break;
+    let data;
+    try {
+      data = inflateSync(buf.subarray(start, end)).toString('latin1');
+    } catch {
+      continue;
+    }
+    for (const x of data.matchAll(/\(((?:\\.|[^\\)])*)\)/g)) out += x[1].replace(/\\(.)/g, '$1');
+    for (const x of data.matchAll(/<([0-9A-Fa-f\s]+)>/g)) {
+      const h = x[1].replace(/\s/g, '');
+      for (let i = 0; i + 1 < h.length; i += 2) out += String.fromCharCode(parseInt(h.slice(i, i + 2), 16));
+    }
+  }
+  return out.replace(/\D/g, '');
+}
+
+test('the downloadable resume PDF has no phone number', async () => {
+  const digits = pdfDigits('dist/assets/John_Nguyen_Resume.pdf');
+  expect(digits.length).toBeGreaterThan(20); // the reader really found text
+  expect(digits).not.toContain('5550100');
+});
+
+test('a corrupted or hostile save can never crash the site or inject markup', async ({ page }) => {
+  const errors = errorsOf(page);
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.setItem('jn-resume-v1', JSON.stringify({
+      visited: 5, cleared: '"]<img src=x onerror=window.__pwned=1>', lit: { a: 1 }, achievements: null,
+      settings: { sound: '"><img src=x onerror=window.__pwned=1>', music: 'loud', reduceMotion: 'x' }
+    }));
+    sessionStorage.setItem('clear-pending', '"]<b>x</b>');
+  });
+  await openBoard(page);
+  await page.goto('/#/system');
+  await expect(page.locator('#page h2.ransom')).toBeVisible();
+  await expect(page.locator('[data-toggle="sound"]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#musicVol')).toHaveValue('0.5');
+  await page.evaluate(() => { window.dispatchEvent(new Event('blur')); window.dispatchEvent(new Event('focus')); });
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.__pwned)).toBeUndefined();
+  expect(await page.locator('img[src="x"]').count()).toBe(0);
+  expect(errors).toEqual([]);
+});
+
+test('hostile ?company= values render as plain text', async ({ page }) => {
+  const errors = errorsOf(page);
+  for (const bad of ['constructor', '__proto__', '<script>alert(1)</script>', '" onmouseover="alert(1)']) {
+    await openBoard(page, `/?company=${encodeURIComponent(bad)}#/board`);
+    expect(await page.locator('#board script').count()).toBe(0);
+    await expect(page.locator('.note-company')).not.toContainText('Object');
+  }
+  expect(errors).toEqual([]);
 });
 
 test('progress is saved: returning visitors CONTINUE with their case log', async ({ page }) => {

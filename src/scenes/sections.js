@@ -13,10 +13,15 @@ const head = (title, sub = '') => `
   <div class="page-head"><h2 class="ransom ransom-lg" data-ransom="${esc(title)}"></h2></div>
   ${sub ? `<p class="page-sub" data-in>${sub}</p>` : ''}`;
 const cleared = (on) => (on ? clearStampMarkup() : '');
+let crewResize = null;
+let crewResizeBound = false;
 
 /* Highlight numbers in a sentence with the yellow marker. */
 const mark = (text) =>
-  esc(text).replace(/(\d[\d,.]*\+?\s?(?:%|of \d[\d,]*|lines|tests|years|checks|errors|bugs|workflows)?|−\d+%)/g, '<span class="hl">$1</span>');
+  String(text)
+    .split(/(\d[\d,.]*\+?\s?(?:%|of \d[\d,]*|lines|tests|years|checks|errors|bugs|workflows)?|−\d+%)/g)
+    .map((part, i) => (i % 2 ? `<span class="hl">${esc(part)}</span>` : esc(part)))
+    .join('');
 
 /* Big outlined word drifting behind each page (background depth layer). */
 const watermark = (word) => `<div class="pg-mark" aria-hidden="true"><span>${word}</span><span>${word}</span></div>`;
@@ -145,7 +150,12 @@ function skills(ctx) {
         r.addEventListener('focus', () => select(r));
       });
       requestAnimationFrame(() => select(rows[0], true));
-      window.addEventListener('resize', () => current && gsap.set(cursor, { y: current.offsetTop, height: current.offsetHeight }), { passive: true });
+      // one shared listener for every visit (the old page is gone, so only the live cursor is moved)
+      crewResize = () => current && cursor.isConnected && gsap.set(cursor, { y: current.offsetTop, height: current.offsetHeight });
+      if (!crewResizeBound) {
+        crewResizeBound = true;
+        window.addEventListener('resize', () => crewResize?.(), { passive: true });
+      }
     },
     intro(root) {
       if (reducedMotion()) return;
@@ -311,9 +321,9 @@ function system() {
         </section>
         <section class="sys jag light" data-in>
           <h3>SETTINGS</h3>
-          <div class="row">Sound <button class="toggle" type="button" data-nav data-toggle="sound" aria-pressed="${s.sound}">${s.sound ? 'ON' : 'OFF'}</button></div>
-          <div class="row"><label for="musicVol">Music volume</label><input id="musicVol" type="range" min="0" max="1" step="0.05" value="${s.music}" data-nav></div>
-          <div class="row">Reduce motion <button class="toggle" type="button" data-nav data-toggle="motion" aria-pressed="${reduce}">${reduce ? 'ON' : 'OFF'}</button></div>
+          <div class="row">Sound <button class="toggle" type="button" data-nav data-toggle="sound" aria-pressed="${s.sound ? 'true' : 'false'}">${s.sound ? 'ON' : 'OFF'}</button></div>
+          <div class="row"><label for="musicVol">Music volume</label><input id="musicVol" type="range" min="0" max="1" step="0.05" value="${Number(s.music) || 0}" data-nav></div>
+          <div class="row">Reduce motion <button class="toggle" type="button" data-nav data-toggle="motion" aria-pressed="${reduce ? 'true' : 'false'}">${reduce ? 'ON' : 'OFF'}</button></div>
         </section>
         <section class="sys jag light" data-in style="grid-column:1/-1">
           <h3>ACHIEVEMENTS</h3>
@@ -336,6 +346,8 @@ function secret() {
       </div>`
   };
 }
+
+export const SECTION_TITLES = { missions: 'MISSIONS', skills: 'SKILLS', different: 'DIFFERENT', stats: 'STATS', 'side-quests': 'SIDE QUESTS', contact: 'CONTACT', system: 'SYSTEM', secret: 'BEHIND THE SCENES' };
 
 export const SECTION_RENDERERS = {
   missions,

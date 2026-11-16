@@ -18,7 +18,22 @@ function load() {
     if (!raw) return defaults();
     const data = JSON.parse(raw);
     const d = defaults();
-    return { ...d, ...data, settings: { ...d.settings, ...(data.settings || {}) } };
+    if (!data || typeof data !== 'object') return d;
+    const ids = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string' && /^[a-z0-9-]{1,40}$/.test(x)) : []);
+    const st = data.settings && typeof data.settings === 'object' ? data.settings : {};
+    const music = Number(st.music);
+    return {
+      visited: ids(data.visited),
+      opened: ids(data.opened),
+      cleared: ids(data.cleared),
+      lit: ids(data.lit),
+      achievements: ids(data.achievements),
+      settings: {
+        sound: st.sound === true,
+        music: Number.isFinite(music) ? Math.min(1, Math.max(0, music)) : d.settings.music,
+        reduceMotion: typeof st.reduceMotion === 'boolean' ? st.reduceMotion : null
+      }
+    };
   } catch {
     return defaults();
   }

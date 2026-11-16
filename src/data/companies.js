@@ -27,7 +27,7 @@ export function readCompany(search = window.location.search) {
   const clean = raw.replace(SAFE, '').trim().slice(0, 30);
   if (!clean) return null;
   const key = clean.toLowerCase();
-  const known = companies[key];
+  const known = Object.hasOwn(companies, key) ? companies[key] : null;
   return { key, name: known ? known.name : clean, order: known ? known.order : null };
 }
 
