@@ -264,19 +264,29 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
   window.addEventListener('resize', relayout);
   if (document.fonts?.ready) document.fonts.ready.then(relayout);
 
-  function reveal() {
+  function reveal(delay = 0) {
     drawStrings();
     if (reducedMotion()) return;
     const items = root.querySelectorAll('[data-board-item], .case, .skill');
-    const tl = gsap.timeline();
-    tl.from(items, { y: -28, rotation: () => gsap.utils.random(-8, 8), opacity: 0, duration: 0.34, ease: 'back.out(2)', stagger: 0.025, clearProps: 'transform,opacity' }, 0);
+    const tl = gsap.timeline({ delay });
+    tl.from(items, {
+      y: () => gsap.utils.random(-90, -50),
+      x: () => gsap.utils.random(-30, 30),
+      scale: 1.3,
+      rotation: () => gsap.utils.random(-16, 16),
+      opacity: 0,
+      duration: 0.4,
+      ease: 'back.out(2.8)',
+      stagger: 0.022,
+      clearProps: 'transform,opacity'
+    }, 0);
     const paths = [...svg.querySelectorAll('.string')];
     paths.forEach((p) => {
       const len = p.getTotalLength();
       p.style.strokeDasharray = `${len}`;
       p.style.strokeDashoffset = `${len}`;
     });
-    tl.to(paths, { strokeDashoffset: 0, duration: 0.5, ease: 'power2.out', stagger: 0.02, onComplete: () => paths.forEach((p) => (p.style.strokeDasharray = p.style.strokeDashoffset = '')) }, 0.35);
+    tl.to(paths, { strokeDashoffset: 0, duration: 0.42, ease: 'expo.out', stagger: 0.018, onComplete: () => paths.forEach((p) => (p.style.strokeDasharray = p.style.strokeDashoffset = '')) }, 0.35);
     return tl;
   }
 
