@@ -79,10 +79,10 @@
 .blade-r .blade-inner { transform-origin: 0% 50%; }
 .blade-l .blade-inner { transform-origin: 100% 50%; }
 .blade-bg, .blade-red { position: absolute; display: block; }
-.blade-bg { inset: 0; background: var(--black); clip-path: polygon(0% 52%, 9% 30%, 12% 12%, 34% 8%, 38% 0%, 62% 5%, 70% 0%, 100% 2%, 97% 36%, 100% 45%, 95% 100%, 66% 93%, 60% 100%, 38% 91%, 30% 98%, 14% 88%, 10% 72%); transition: background .1s; }
-.blade-red { inset: -10px -18px -14px 6%; background: var(--red); clip-path: polygon(0% 66%, 16% 32%, 24% 0%, 50% 10%, 57% -2%, 100% 12%, 96% 50%, 100% 58%, 92% 100%, 62% 93%, 55% 104%, 30% 92%, 22% 100%); transform-origin: 0 50%; transition: transform .14s var(--ease-pop); }
-.blade-l .blade-bg { clip-path: polygon(100% 52%, 91% 30%, 88% 12%, 66% 8%, 62% 0%, 38% 5%, 30% 0%, 0% 2%, 3% 36%, 0% 45%, 5% 100%, 34% 93%, 40% 100%, 62% 91%, 70% 98%, 86% 88%, 90% 72%); }
-.blade-l .blade-red { inset: -10px 6% -14px -18px; clip-path: polygon(100% 66%, 84% 32%, 76% 0%, 50% 10%, 43% -2%, 0% 12%, 4% 50%, 0% 58%, 8% 100%, 38% 93%, 45% 104%, 70% 92%, 78% 100%); transform-origin: 100% 50%; }
+.blade-bg { inset: 0; background: var(--black); clip-path: polygon(0% 56%, 15% 4%, 100% 0%, 97% 24%, 90% 100%, 13% 92%); transition: background .1s; }
+.blade-red { inset: -12px -46px -16px 5%; background: var(--red); clip-path: polygon(0% 70%, 28% 2%, 100% 8%, 40% 40%, 100% 62%, 88% 100%, 22% 93%); transform-origin: 0 50%; transition: transform .14s var(--ease-pop); }
+.blade-l .blade-bg { clip-path: polygon(100% 56%, 85% 4%, 0% 0%, 3% 24%, 10% 100%, 87% 92%); }
+.blade-l .blade-red { inset: -12px 5% -16px -46px; clip-path: polygon(100% 70%, 72% 2%, 0% 8%, 60% 40%, 0% 62%, 12% 100%, 78% 93%); transform-origin: 100% 50%; }
 .blade-txt { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 18px 0 14%; }
 .blade-l .blade-txt { align-items: flex-end; padding: 0 14% 0 18px; }
 .blade-word { font-family: var(--f-head); font-size: 70px; line-height: .9; letter-spacing: 1px; transform: skewX(-8deg); white-space: nowrap; }
@@ -278,8 +278,8 @@
   .choices { position: relative; left: auto; top: auto; width: 100%; height: auto; transform: none; display: flex; flex-direction: column; gap: 12px; margin-top: 18px; order: 4; }
   .radial-core, .radial-burst { display: none; }
   .blade { position: relative; left: auto !important; top: auto !important; width: 100% !important; height: 80px; transform: rotate(calc(var(--rot) * .15)); }
-  .blade-l .blade-bg { clip-path: polygon(0% 52%, 9% 30%, 12% 12%, 34% 8%, 38% 0%, 62% 5%, 70% 0%, 100% 2%, 97% 36%, 100% 45%, 95% 100%, 66% 93%, 60% 100%, 38% 91%, 30% 98%, 14% 88%, 10% 72%); }
-  .blade-l .blade-red { inset: -10px -18px -14px 6%; clip-path: polygon(0% 66%, 16% 32%, 24% 0%, 50% 10%, 57% -2%, 100% 12%, 96% 50%, 100% 58%, 92% 100%, 62% 93%, 55% 104%, 30% 92%, 22% 100%); }
+  .blade-l .blade-bg { clip-path: polygon(0% 56%, 15% 4%, 100% 0%, 97% 24%, 90% 100%, 13% 92%); }
+  .blade-l .blade-red { inset: -12px -46px -16px 5%; clip-path: polygon(0% 70%, 28% 2%, 100% 8%, 40% 40%, 100% 62%, 88% 100%, 22% 93%); }
   .blade-l .blade-txt { align-items: flex-start; padding: 0 24px 0 17%; }
   .blade-l.on .blade-inner { transform: scale(1.03) translateX(6px); }
   .blade.on .blade-inner { transform: scale(1.03) translateX(6px); }
