@@ -114,15 +114,47 @@ const VOICES = {
   },
   kick: (bus, at, v = 1) => tone(bus, { at, dur: 0.32, from: 140, to: 42, gain: 0.95 * v }),
   crash: (bus, at, v = 1) => noise(bus, { at, dur: 1.1, freq: 5200, q: 0.3, gain: 0.35 * v }),
-  /* paper rip: a crackle of tiny band-passed noise grains that climbs in pitch */
-  tear: (bus, at, v = 1, dur = 1) => {
-    let t = 0;
-    while (t < dur) {
-      const k = t / dur;
-      noise(bus, { at: at + t, dur: 0.02 + Math.random() * 0.05, type: 'bandpass', freq: 1400 + k * 2600 + Math.random() * 900, q: 1.4, gain: (0.18 + Math.random() * 0.3) * v });
-      t += 0.012 + Math.random() * 0.03;
+  /* PAPER RIP: one continuous tear (no clicky gaps). Band-passed noise whose loudness
+     flutters quickly like fibres giving way, rising in pitch, with a crisp edge layer. */
+  rip: (bus, at, v = 1, dur = 0.38) => {
+    const src = ac.createBufferSource();
+    src.buffer = noiseBuf;
+    const bp = ac.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.Q.value = 0.9;
+    bp.frequency.setValueAtTime(700, at);
+    bp.frequency.exponentialRampToValueAtTime(2400, at + dur);
+    const lp = ac.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 5200;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0008, at);
+    let t = at;
+    while (t < at + dur) {
+      // fibres tearing: fast, uneven swells that never drop to silence
+      t += 0.009 + Math.random() * 0.018;
+      g.gain.linearRampToValueAtTime((0.22 + Math.random() * 0.38) * v, t);
     }
+    g.gain.exponentialRampToValueAtTime(0.0008, at + dur + 0.06);
+    src.connect(bp).connect(lp).connect(g).connect(bus);
+    src.start(at, Math.random() * 0.4);
+    src.stop(at + dur + 0.08);
+    // the crisp torn edge on top
+    const edge = ac.createBufferSource();
+    edge.buffer = noiseBuf;
+    const hp = ac.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 4200;
+    const eg = ac.createGain();
+    eg.gain.setValueAtTime(0.0008, at);
+    eg.gain.exponentialRampToValueAtTime(0.09 * v, at + dur * 0.7);
+    eg.gain.exponentialRampToValueAtTime(0.0008, at + dur + 0.04);
+    edge.connect(hp).connect(eg).connect(bus);
+    edge.start(at, Math.random() * 0.4);
+    edge.stop(at + dur + 0.06);
   },
+  /* the title-page tear uses the same paper rip, stretched to the tug length */
+  tear: (bus, at, v = 1, dur = 0.4) => VOICES.rip(bus, at, v, dur),
   /* fast air swipe for slashes */
   whoosh: (bus, at, v = 1) => {
     const src = ac.createBufferSource();
