@@ -12,7 +12,7 @@ export function renderDate() {
     <div class="hud-date">${now.getMonth() + 1}<small>/</small>${now.getDate()}</div>
     <div class="hud-day"><span class="hud-week">${DAYS[now.getDay()]}</span>
       <span class="hud-tod">${tod.icon === 'sun' ? SUN : MOON}${tod.label}</span></div>
-    <div class="hud-meta"><span>${esc(resume.status)}</span><span>🎓 ${esc(resume.school)}</span></div>`;
+    <div class="hud-meta"><span>${esc(resume.status)}</span><span>${esc(resume.school)}</span></div>`;
   return tod;
 }
 

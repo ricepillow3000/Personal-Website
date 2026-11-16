@@ -31,7 +31,7 @@
         <div class="slab title-codename"><span>PIRATE</span></div>
         <p class="title-hook" id="titleHook"></p>
         <button class="press-start" id="pressStart" type="button">PRESS START</button>
-        <a class="quick-link" href="#/quick">⚡ Quick View (1-page resume)</a>
+        <a class="quick-link" href="#/quick">Quick View (1-page resume) ▸</a>
       </div>
     </section>
 
@@ -48,8 +48,8 @@
     <!-- QUICK VIEW -->
     <section class="screen screen-page" id="screen-quick" aria-label="One-page resume">
       <div class="quick-bar no-print">
-        <a class="btn" href="#/board" data-back>◀ Back to the board</a>
-        <a class="btn btn-accent" id="quickPdf" download>⬇ Download PDF</a>
+        <a class="btn" href="#/board" data-back>◂ Back to the board</a>
+        <a class="btn btn-accent" id="quickPdf" download>↓ Download PDF</a>
       </div>
       <article class="paper" id="paper"></article>
     </section>
@@ -59,7 +59,7 @@
   <header class="hud-tl" id="hudDate" aria-label="Date and status"></header>
   <nav class="hud-tr" aria-label="Site controls">
     <button class="hud-btn" id="achBtn" type="button" title="Achievements">★ <span id="achCount">0/7</span></button>
-    <button class="hud-btn" id="soundBtn" type="button" aria-pressed="false" title="Sound (M)"><span class="snd-off">🔇</span><span class="snd-on">🔊</span><span class="sound-tip" id="soundTip">sound?</span></button>
+    <button class="hud-btn" id="soundBtn" type="button" aria-pressed="false" title="Sound (M)"><span class="snd-off"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/></svg></span><span class="snd-on"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="2.2"/></svg></span><span class="sound-tip" id="soundTip">sound?</span></button>
     <button class="hud-btn" id="menuBtn" type="button" title="Menu">MENU</button>
   </nav>
   <button class="hud-bars" id="hudBars" type="button" title="Flip (F)" aria-label="Stats: GPA 3.88, 2 live apps. Press to flip."></button>
@@ -82,7 +82,7 @@
   <div class="punch" aria-hidden="true"><div class="punch-rays"></div><div class="punch-star"></div><div class="punch-text" id="punchText"></div></div>
   <div class="cutin" aria-hidden="true"><div class="cutin-strip"><div class="cutin-eyes" id="cutinEyes"></div><div class="cutin-text" id="cutinText"></div><div class="cutin-flash"></div></div></div>
   <div class="toasts" id="toasts" aria-live="polite"></div>
-  <button class="bee" id="bee" type="button" aria-label="A bee!" hidden>🐝</button>
+  <button class="bee" id="bee" type="button" aria-label="A bee!" hidden><svg viewBox="0 0 44 34" width="46" height="36" aria-hidden="true"><ellipse cx="17" cy="8" rx="8" ry="6" fill="#F5F5F0" stroke="#0B0B0B" stroke-width="2.5" transform="rotate(-25 17 8)"/><ellipse cx="27" cy="8" rx="7" ry="5" fill="#F5F5F0" stroke="#0B0B0B" stroke-width="2.5" transform="rotate(20 27 8)"/><ellipse cx="22" cy="21" rx="15" ry="10" fill="#FFE11A" stroke="#0B0B0B" stroke-width="3"/><path d="M17 12v18M25 12v18" stroke="#0B0B0B" stroke-width="4"/><circle cx="34" cy="19" r="2" fill="#0B0B0B"/><path d="M7 21l-6 2 6 2z" fill="#0B0B0B"/></svg></button>
   <div class="motto-screen" id="motto" aria-hidden="true"></div>
 
   <script type="module" src="/src/main.js"></script>

@@ -45,7 +45,7 @@ export const resume = {
     ],
     fun: [
       { label: 'DRUMS', value: 200, max: 240, text: '200+ BPM' },
-      { label: 'BEE FEAR', value: 1, max: 1, text: 'MAX 🐝' }
+      { label: 'BEE FEAR', value: 1, max: 1, text: 'MAX' }
     ]
   },
 

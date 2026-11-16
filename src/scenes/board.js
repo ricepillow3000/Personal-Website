@@ -127,7 +127,7 @@ export function boardMarkup(ctx) {
           <span class="sticker s1">Dean's List ×2</span>
           <span class="sticker s2">${esc(e.grad)}</span>
         </div>
-        <p class="bubble-say person-facts">${resume.funFacts.map((f, i) => `<span><i aria-hidden="true">${['🥁', '🎸', '🐝'][i] || '★'}</i>${esc(f)}</span>`).join('')}</p>
+        <p class="bubble-say person-facts">${resume.funFacts.map((f, i) => `<span><i class="ff-star" aria-hidden="true"></i>${esc(f)}</span>`).join('')}</p>
       </article>
       <article class="note note-quests card-pop" data-board-item>${pin}
         <div class="note-band"><h3>${kin('SIDE QUESTS', 2)}</h3></div>
@@ -149,8 +149,8 @@ export function boardMarkup(ctx) {
         <p class="calling-sign">— ${esc(resume.codename)} · ${esc(resume.location)}</p>
         <a class="btn-cartoon cta" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect on LinkedIn ↗</a>
         <div class="calling-row">
-          <a class="btn-cartoon" data-nav href="mailto:${esc(L.email)}" data-track="email_click">✉ Email</a>
-          <a class="btn-cartoon alt" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">⬇ PDF</a>
+          <a class="btn-cartoon" data-nav href="mailto:${esc(L.email)}" data-track="email_click">Email</a>
+          <a class="btn-cartoon alt" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">↓ PDF</a>
         </div>
         <span class="calling-status">${esc(resume.status)}</span>
       </article>

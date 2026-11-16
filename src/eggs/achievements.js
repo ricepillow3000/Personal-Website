@@ -4,13 +4,13 @@ import { toast } from '../ui/toast.js';
 import { sfx } from '../audio/audio.js';
 
 export const ACHIEVEMENTS = [
-  { id: 'first-words', icon: '▶', name: 'First Words', hint: 'Every story starts with a button.' },
-  { id: 'case-file', icon: '📁', name: 'Case File', hint: 'Open one of the mission files.' },
-  { id: 'full-recon', icon: '🧵', name: 'Full Recon', hint: 'Light up every red string on the board.' },
-  { id: 'bee', icon: '🐝', name: 'BEE!!', hint: 'Something small and buzzing passes by. Be quick.' },
-  { id: 'off-record', icon: '↻', name: 'Off the Record', hint: 'Those stat bars have a flip side.' },
-  { id: 'inspector', icon: '💻', name: 'Inspector', hint: 'Developers know where to look.' },
-  { id: 'player-2', icon: '🎮', name: 'Player 2', hint: 'Bring your own controller.' }
+  { id: 'first-words', name: 'First Words', hint: 'Every story starts with a button.' },
+  { id: 'case-file', name: 'Case File', hint: 'Open one of the mission files.' },
+  { id: 'full-recon', name: 'Full Recon', hint: 'Light up every red string on the board.' },
+  { id: 'bee', name: 'BEE!!', hint: 'Something small and buzzing passes by. Be quick.' },
+  { id: 'off-record', name: 'Off the Record', hint: 'Those stat bars have a flip side.' },
+  { id: 'inspector', name: 'Inspector', hint: 'Developers know where to look.' },
+  { id: 'player-2', name: 'Player 2', hint: 'Bring your own controller.' }
 ];
 
 const listeners = new Set();
@@ -43,7 +43,7 @@ export function unlock(id) {
 export function listMarkup() {
   return `<ul class="ach-list">${ACHIEVEMENTS.map((a) => {
     const got = store.has('achievements', a.id);
-    return `<li class="${got ? 'got' : ''}"><span class="ach-ico" aria-hidden="true">${got ? a.icon : '?'}</span>
+    return `<li class="${got ? 'got' : ''}"><span class="ach-ico" aria-hidden="true">${got ? '★' : '?'}</span>
       <div><strong>${got ? esc(a.name) : '???'}</strong><span class="hint">${esc(a.hint)}</span></div></li>`;
   }).join('')}</ul>`;
 }

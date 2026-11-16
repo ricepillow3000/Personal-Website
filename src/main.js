@@ -14,7 +14,7 @@ import { store } from './core/store.js';
 import { $, $$, esc, reducedMotion } from './core/util.js';
 import { mountBackdrop } from './fx/backdrop.js';
 import { initClickFx, burst } from './fx/impact.js';
-import { initClearing, hydrateStamps } from './ui/clear.js';
+import { initClearing, hydrateStamps, setReturnFx } from './ui/clear.js';
 import { slashWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate, createBars } from './ui/hud.js';
@@ -148,6 +148,8 @@ $$('.screen').forEach((sc) =>
   }, { passive: true })
 );
 initClearing();
+// coming back from a project: the JOHN cut-in slashes across, then the stamp slams
+setReturnFx((text) => cutIn(text));
 const board = createBoard($('#board'), ctx, {
   onOpenCase: (id, el) => openDossier(id, el),
   onAllStringsLit: () => unlock('full-recon')
