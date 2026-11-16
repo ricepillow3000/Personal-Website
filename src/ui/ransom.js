@@ -9,8 +9,13 @@ export const NAME_SEED = 11;
 /** Builds cut-out "ransom note" letters into el. Medium chaos: ±12° tilt, small hops, 5 fonts. */
 export function ransom(el, text, seed = 7) {
   const rnd = seeded(seed * 9973 + text.length * 31);
-  el.setAttribute('aria-label', text);
+  el.removeAttribute('aria-label');
   el.innerHTML = '';
+  // screen readers read this plain text; the cut-out letters are hidden from them
+  const plain = document.createElement('span');
+  plain.className = 'sr-only';
+  plain.textContent = text;
+  el.appendChild(plain);
   text.split(' ').forEach((word) => {
     const w = document.createElement('span');
     w.className = 'rw';
@@ -44,7 +49,7 @@ export function dropIn(el, delay = 0) {
 }
 
 /** Hover: letters jitter, tilt and flip colors for a few frames, then snap back (hover only, never idle). */
-export function shiver(el) {
+function shiver(el) {
   if (reducedMotion() || el.dataset.shivering) return;
   el.dataset.shivering = '1';
   const letters = [...el.querySelectorAll('.rl')];

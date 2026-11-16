@@ -1,17 +1,13 @@
-import { resume } from '../data/resume.js';
 import { store } from '../core/store.js';
 
-/* Drum-kit sound engine. Off by default; the AudioContext is created on the first
-   click that turns sound on (browser autoplay rules).
-   Until John's e-kit recordings exist, every hit is synthesized here. Setting
-   resume.assets.drumSamples = true swaps in /assets/audio/{name}.ogg. */
+/* Sound engine. Off by default; the AudioContext is created on the first
+   click that turns sound on (browser autoplay rules). Every sound is synthesized here. */
 
 let ac = null;
 let master = null;
 let sfxBus = null;
 let musicBus = null;
 let noiseBuf = null;
-const samples = {};
 let music = null;
 
 const enabled = () => store.get().settings.sound;
@@ -33,31 +29,9 @@ function ensure() {
   noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
   const d = noiseBuf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  if (resume.assets.drumSamples) loadSamples();
   return ac;
 }
 
-async function loadSamples() {
-  await Promise.all(
-    ['hat', 'snare', 'kick', 'crash', 'toms'].map(async (n) => {
-      try {
-        const res = await fetch(`assets/audio/${n}.ogg`);
-        if (res.ok) samples[n] = await ac.decodeAudioData(await res.arrayBuffer());
-      } catch {
-        /* keep the synth fallback */
-      }
-    })
-  );
-}
-
-function playSample(name, bus, gain = 1, at = ac.currentTime) {
-  const src = ac.createBufferSource();
-  src.buffer = samples[name];
-  const g = ac.createGain();
-  g.gain.value = gain;
-  src.connect(g).connect(bus);
-  src.start(at);
-}
 
 /* ---------- synth voices ---------- */
 function noise(bus, { at, dur, type = 'highpass', freq = 7000, q = 0.8, gain = 0.4 }) {
@@ -107,13 +81,11 @@ function tone(bus, { at, dur, from, to, type = 'sine', gain = 0.6 }) {
 
 const VOICES = {
   hat: (bus, at, v = 1) => noise(bus, { at, dur: 0.05, freq: 8000, gain: 0.32 * v }),
-  tick: (bus, at) => noise(bus, { at, dur: 0.025, freq: 9500, gain: 0.12 }),
   snare: (bus, at, v = 1) => {
     noise(bus, { at, dur: 0.16, type: 'bandpass', freq: 2200, q: 0.6, gain: 0.55 * v });
     tone(bus, { at, dur: 0.1, from: 260, to: 160, type: 'triangle', gain: 0.35 * v });
   },
   kick: (bus, at, v = 1) => tone(bus, { at, dur: 0.32, from: 140, to: 42, gain: 0.95 * v }),
-  crash: (bus, at, v = 1) => noise(bus, { at, dur: 1.1, freq: 5200, q: 0.3, gain: 0.35 * v }),
   /* PAPER RIP: one continuous tear (no clicky gaps). Band-passed noise whose loudness
      flutters quickly like fibres giving way, rising in pitch, with a crisp edge layer. */
   rip: (bus, at, v = 1, dur = 0.38) => {
@@ -190,9 +162,9 @@ const VOICES = {
   /* air swipe under the slash wipe */
   swish: (bus, at) => VOICES.whoosh(bus, at, 0.8),
   /* page lands: short wooden "thwack" (higher and shorter than any kick) */
-  thwack: (bus, at, v = 1) => {
-    tone(bus, { at, dur: 0.09, from: 340, to: 150, type: 'triangle', gain: 0.55 * v });
-    noise(bus, { at, dur: 0.06, type: 'bandpass', freq: 1700, q: 1.2, gain: 0.45 * v });
+  thwack: (bus, at, v = 1, vol = 1) => {
+    tone(bus, { at, dur: 0.09, from: 340, to: 150, type: 'triangle', gain: 0.55 * v * vol });
+    noise(bus, { at, dur: 0.06, type: 'bandpass', freq: 1700, q: 1.2, gain: 0.45 * v * vol });
   },
   /* small stamp / sticker landing */
   thunk: (bus, at) => {
@@ -341,18 +313,12 @@ const VOICES = {
 };
 
 /** Play a named SFX. UI uses hover/select/back/toggle/menu*; transitions use swish/thwack/
-    stamp/zip/thunk/sparkle/paper/rip/whip/fanfare/treasure. Drum names stay for the music.
-    `dur` is only used by tear (seconds of ripping). */
-export function sfx(name, dur) {
+    stamp/zip/thunk/sparkle/paper/rip/whip/fanfare/treasure.
+    `arg` is seconds of ripping for rip/tear, or the volume (0-1) for thwack. */
+export function sfx(name, arg) {
   if (!enabled() || !ensure()) return;
   if (ac.state === 'suspended') ac.resume();
-  if (name === 'tick') name = 'hover';
-  const sampleName = name;
-  if (samples[sampleName]) {
-    playSample(sampleName, sfxBus, 1);
-    return;
-  }
-  VOICES[name]?.(sfxBus, ac.currentTime, 1, dur);
+  VOICES[name]?.(sfxBus, ac.currentTime, 1, arg);
 }
 
 /* ---------- music: "Neon Rain" - original acid-jazz night theme, 92 BPM, swung ----------
@@ -649,22 +615,13 @@ function startSynthLoop() {
   return { stop: () => clearInterval(id) };
 }
 
-function startRecordedLoop() {
-  const el = new Audio('assets/audio/loop.ogg');
-  el.loop = true;
-  const node = ac.createMediaElementSource(el);
-  node.connect(musicBus);
-  el.play().catch(() => {});
-  return { stop: () => el.pause() };
-}
-
-export function startMusic() {
+function startMusic() {
   if (!enabled() || !ensure() || music) return;
   if (ac.state === 'suspended') ac.resume();
-  music = resume.assets.drumLoop ? startRecordedLoop() : startSynthLoop();
+  music = startSynthLoop();
 }
 
-export function stopMusic() {
+function stopMusic() {
   music?.stop();
   music = null;
 }

@@ -17,6 +17,7 @@
 .rl.f4 { font-family: var(--f-serif); font-weight: 900; font-style: italic; }
 .ransom-xl { font-size: clamp(64px, 11vw, 150px); }
 .ransom-lg { font-size: clamp(42px, 6.5vw, 88px); margin-bottom: 18px; }
+@media (max-width: 360px) { .ransom-lg { font-size: 34px; } } /* the longest title (DIFFERENT) fits a 320px phone */
 
 /* ============ SLABS, BUTTONS ============ */
 .slab {
@@ -54,14 +55,6 @@
   padding: 16px 22px; font-weight: 600;
   clip-path: polygon(0 8%, 100% 0, 97% 100%, 3% 92%);
   filter: drop-shadow(6px 6px 0 var(--black));
-}
-
-/* ============ STAMPS ============ */
-.stamp {
-  display: inline-block; pointer-events: none;
-  font-family: var(--f-head); line-height: 1; text-align: center; color: var(--red);
-  border: 4px solid var(--red); padding: 3px 9px 2px; transform: rotate(-12deg);
-  background: rgba(245, 245, 240, .82); letter-spacing: 1px;
 }
 
 /* ============ HUD ============ */
@@ -159,7 +152,6 @@ body[data-screen="title"] .keyhints, body[data-mode="quick"] .keyhints { display
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
 .stair-item.on .cursor-star { opacity: 1; animation: spin 1.2s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.stair-item .stamp { position: absolute; right: -24px; top: 0; font-size: 16px; z-index: 3; }
 .menu-teaser { position: absolute; right: var(--gutter); bottom: 16vh; max-width: 380px; font-size: 19px; }
 .menu-close { position: absolute; top: 14px; left: var(--gutter); }
 
@@ -387,7 +379,7 @@ body.scrolled .hud-tl { translate: 0 -260px; transition: translate .18s cubic-be
 
 /* ============ saved progress: CASE LOG chip, CONTINUE line, menu mini stamps ============ */
 .progress-chip {
-  display: inline-flex; align-items: center; gap: 10px; margin-top: 10px; padding: 5px 12px 6px; background: var(--black); color: var(--white);
+  display: inline-grid; grid-auto-flow: column; justify-content: start; align-items: center; gap: 2px 10px; margin-top: 10px; padding: 5px 12px 6px; background: var(--black); color: var(--white);
   border: 3px solid var(--white); box-shadow: 5px 5px 0 var(--red); transform: rotate(-3deg) skew(var(--skew)); cursor: help;
 }
 .progress-chip > * { transform: skew(calc(var(--skew) * -1)); }
@@ -399,6 +391,7 @@ body.scrolled .hud-tl { translate: 0 -260px; transition: translate .18s cubic-be
 .pc-bar i.on { background: var(--red); box-shadow: inset 0 0 0 2px var(--white); }
 .progress-chip.all { background: var(--yellow); color: var(--black); border-color: var(--black); box-shadow: 5px 5px 0 var(--red); }
 .progress-chip.all .pc-label { color: var(--red); }
+.pc-hint { grid-row: 2; grid-column: 1 / span 3; font-family: var(--f-ui); font-style: italic; font-weight: 600; font-size: 12px; letter-spacing: .3px; color: #CFCFCF; }
 .pc-all { font-family: var(--f-head); font-size: 22px; letter-spacing: 1px; }
 .save-line { display: inline-flex; align-items: center; gap: 8px; margin: 14px 0 0; padding: 4px 12px; background: rgba(5, 5, 5, .86); border-left: 4px solid var(--yellow); font-family: var(--f-type); font-size: 15px; color: var(--white); transform: rotate(-1deg); }
 .save-dot { width: 10px; height: 10px; background: var(--yellow); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
@@ -447,3 +440,23 @@ body[data-mode="board"] .hud-tl .hud-meta { display: grid; }
   body[data-mode="board"] .hud-tl, body[data-mode="page"] .hud-tl { display: none; }
   .board-status { display: inline-block; margin-top: 8px; padding: 2px 10px; font-family: var(--f-ui); font-style: italic; font-weight: 700; font-size: 14px; background: var(--white); color: var(--black); transform: rotate(-2deg) skew(var(--skew)); box-shadow: 3px 3px 0 var(--black); }
 }
+
+/* ============ TOP STRIP ============ */
+/* Once you scroll, a black strip with a red edge slides in behind the fixed buttons,
+   so they never sit on top of text. The BOARD button joins the HUD row on wide screens. */
+/* Each screen is its own layer, so the strip lives inside it (under the BOARD / Quick View buttons). */
+.screen::before {
+  content: ""; position: fixed; left: 0; right: 0; top: 0; z-index: 39; height: var(--strip-h, 64px); pointer-events: none;
+  background: linear-gradient(to top, var(--red) 0 4px, var(--black) 4px);
+  clip-path: polygon(0 0, 100% 0, 100% 86%, 64% 100%, 30% 88%, 0 96%);
+  translate: 0 -110%; transition: translate .18s ease-out;
+}
+body.scrolled:is([data-mode="board"], [data-mode="page"], [data-mode="quick"]) .screen.active::before { translate: 0 0; }
+.back-btn { transition: top .18s ease-out; }
+body.scrolled[data-mode="page"] .back-btn { top: 12px; }
+@media (max-width: 760px) {
+  body { --strip-h: 52px; }
+  body[data-mode="page"], body[data-mode="quick"] { --strip-h: 110px; }
+  body.scrolled[data-mode="page"] .back-btn { top: 64px; }
+}
+@media (prefers-reduced-motion: reduce) { .screen::before, .back-btn { transition: none; } }

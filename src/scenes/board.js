@@ -25,7 +25,7 @@ function kin(text, inv = null) {
   const letters = chars
     .map((c, i) => (c === ' ' ? '<span class="k-sp"> </span>' : `<span class="k${i === 0 ? ' k-first' : ''}${i === flip ? ' k-inv' : ''}">${esc(c)}</span>`))
     .join('');
-  return `<span class="kin" aria-label="${esc(text)}"><span aria-hidden="true">${letters}</span></span>`;
+  return `<span class="kin"><span class="sr-only">${esc(text)}</span><span aria-hidden="true">${letters}</span></span>`;
 }
 
 function caseCard(m, i) {
@@ -39,7 +39,7 @@ function caseCard(m, i) {
     <span class="case-grade" aria-label="Difficulty ${esc(m.grade)}"><span>${esc(m.grade)}</span></span>
     <div class="case-top"><span class="case-no">CASE 0${i + 1}</span><span class="case-live">${esc(m.status)}</span></div>
     <h3 class="case-target ransom" data-ransom="${esc(m.target.toUpperCase())}"></h3>
-    <p class="case-name">${esc(m.name)} <span>· ${esc(m.stack.join(' · '))}</span></p>
+    <p class="case-name">${esc(m.name)} <span>${m.stack.map(esc).join(' ·\u00A0')}</span></p>
     <ul class="case-stats">${stickers.map((t, k) => `<li class="sticker s${k}">${esc(t)}</li>`).join('')}</ul>
     <p class="case-brief bubble-say">${esc(m.brief)}</p>
     <div class="case-actions">
@@ -52,17 +52,17 @@ function caseCard(m, i) {
   </article>`;
 }
 
-/* Skills roster: name · big slanted rank · teal rank meter · pink "used in" meter.
+/* Skills roster: name · big slanted level · level meter · pink "used in" meter.
    The proof line shows on the selected row (and is always in the aria-label). */
 function skillTag(s) {
   const max = s.rank === 'MAX';
   const pct = max ? 100 : Number(s.rank) * 10;
   return `<button class="skill" type="button" data-nav data-skill="${s.id}"
-      aria-label="${esc(s.name)}, rank ${esc(s.rank)}, used in ${s.uses.length} project${s.uses.length > 1 ? 's' : ''}. ${esc(s.proof)}">
+      aria-label="${esc(s.name)}, level ${esc(s.rank)}, used in ${s.uses.length} project${s.uses.length > 1 ? 's' : ''}. ${esc(s.proof)}">
     <span class="skill-hl" aria-hidden="true"></span>
     <span class="skill-name">${esc(s.name)}</span>
     <span class="skill-dot" aria-hidden="true">•</span>
-    <span class="skill-stat rank${max ? ' max' : ''}" aria-hidden="true"><small>RK</small><b>${max ? 'MAX' : esc(s.rank)}</b><i style="--v:${pct}%"></i></span>
+    <span class="skill-stat rank${max ? ' max' : ''}" aria-hidden="true"><small>LV</small><b>${max ? 'MAX' : esc(s.rank)}</b><i style="--v:${pct}%"></i></span>
     <span class="skill-stat used" aria-hidden="true"><small>IN</small><b>${s.uses.length}</b><i style="--v:${s.uses.length * 50}%"></i></span>
     <span class="skill-proof">${esc(s.proof)}</span>
     ${pin}
@@ -77,7 +77,7 @@ function roster(skills) {
   </div>`;
 }
 
-export function boardMarkup(ctx) {
+function boardMarkup(ctx) {
   const e = resume.education;
   const L = resume.links;
   const missions = reorder(resume.missions, ctx.company?.order?.missions);
@@ -102,7 +102,7 @@ export function boardMarkup(ctx) {
     <svg class="strings" id="strings" aria-hidden="true"></svg>
 
     <section class="col col-skills" aria-label="Skills">
-      <h2 class="col-label" data-board-item><span class="ransom" data-ransom="SKILLS"></span><small>RK rank · IN projects</small>${(store.get().lit || []).length ? '' : '<span class="try-one" aria-hidden="true">TRY ONE ↓</span>'}</h2>
+      <h2 class="col-label" data-board-item><span class="ransom" data-ransom="SKILLS"></span><small>LV level · IN projects</small>${(store.get().lit || []).length ? '' : '<span class="try-one" aria-hidden="true">TRY ONE ↓</span>'}</h2>
       ${roster(skills)}
     </section>
 
@@ -133,6 +133,9 @@ export function boardMarkup(ctx) {
           .join('')}</ol>
         <a class="btn-cartoon quest-more" href="#/side-quests" data-nav>FULL STORY ▸</a>
       </article>
+    </section>
+
+    <section class="col col-call" aria-label="Contact">
       <article class="calling card-pop" data-board-item aria-label="Calling card">${pin}
         <span class="calling-tape" aria-hidden="true"></span>
         <p class="calling-to">To ${esc(ctx.company ? `the team at ${ctx.company.name}` : 'the one buried in boring resumes')},</p>
@@ -290,6 +293,6 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
     }, 2200);
   }
 
-  return { reveal, relayout, highlight, demo };
+  return { reveal, demo };
 }
 

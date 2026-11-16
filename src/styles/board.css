@@ -45,7 +45,9 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 .board-grid { position: relative; display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 40px; align-items: start; }
 .strings { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; overflow: visible; filter: drop-shadow(1px 2px 0 rgba(5, 5, 5, .85)); }
 .string { fill: none; stroke: #FF3030; stroke-width: 2.6; stroke-linecap: round; opacity: .75; transition: opacity .15s, stroke .15s, stroke-width .15s; }
-.board-focus .string { opacity: .12; }
+/* while a skill is highlighted, the strings come up over the cards so the lit one is never hidden */
+.board-focus .strings { z-index: 3; }
+.board-focus .string { opacity: 0; }
 .board-focus .string.lit { opacity: 1; stroke: #FFFFFF; stroke-width: 4; }
 .col { position: relative; z-index: 2; min-width: 0; }
 .col-label { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px; margin: 0 0 20px; font-weight: 400; }
@@ -131,6 +133,15 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 
 /* right column: index cards + calling card */
 .col-notes { display: grid; gap: 30px; }
+/* wide screens: the calling card closes the middle column, right under the case files
+   (the side columns span both rows, so the middle never leaves an empty gap) */
+@media (min-width: 1101px) {
+  .board-grid { grid-template-rows: auto 1fr; }
+  .col-skills { grid-column: 1; grid-row: 1 / span 2; }
+  .col-cases { grid-column: 2; grid-row: 1; }
+  .col-notes { grid-column: 3; grid-row: 1 / span 2; }
+  .col-call { grid-column: 2; grid-row: 2; justify-self: center; width: min(100%, 440px); }
+}
 .note-about, .note-quests { position: relative; padding: 22px 20px 16px; background: #FFFDF5; color: var(--black); box-shadow: 6px 6px 0 var(--black); font-size: 14px; line-height: 1.45; }
 .note-about { transform: rotate(1.2deg); }
 .note-quests { transform: rotate(-1deg); }
@@ -185,7 +196,6 @@ body[data-mode="board"] .keyhints { display: none; }
 .btn-cartoon:active { transform: skewX(-10deg) translateY(5px); box-shadow: 0 1px 0 var(--red), 0 1px 0 3px var(--black); }
 
 .btn-cartoon.cta { background: var(--white); color: var(--black); font-size: 18px; white-space: nowrap; }
-.btn-cartoon.alt { background: var(--yellow); color: var(--black); }
 
 /* ----- case files, cartoon edition ----- */
 .case.card-pop { padding: 28px 22px 22px; background: #F7F4EA; }
@@ -201,7 +211,7 @@ body[data-mode="board"] .keyhints { display: none; }
   clip-path: polygon(0 12%, 64% 0, 68% 14%, 100% 6%, 90% 50%, 100% 92%, 58% 86%, 52% 100%, 4% 92%, 8% 52%); transform: rotate(-4deg);
 }
 .case-name { font-family: var(--f-head); font-weight: 400; font-size: 16px; letter-spacing: .3px; color: var(--black); }
-.case-name span { font-family: var(--f-body); font-weight: 700; font-size: 12px; color: #555; letter-spacing: 0; }
+.case-name span { display: block; margin-top: 2px; font-family: var(--f-body); font-weight: 700; font-size: 12px; color: #555; letter-spacing: 0; }
 .case-stats { gap: 10px; }
 .case-stats .sticker {
   justify-self: start; font-family: var(--f-head); font-weight: 400; font-size: 18px; letter-spacing: .3px; padding: 5px 12px 4px;
@@ -336,6 +346,7 @@ body[data-mode="board"] .keyhints { display: none; }
 @media (max-width: 1100px) {
   .board-grid { grid-template-columns: 260px minmax(0, 1fr); }
   .col-notes { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .col-call { grid-column: 1 / -1; justify-self: center; width: min(100%, 440px); }
 }
 @media (max-width: 760px) {
   .screen-board { padding-top: 116px; }
@@ -348,14 +359,11 @@ body[data-mode="board"] .keyhints { display: none; }
   .hint-desk { display: none; }
   .hint-phone { display: inline; }
   .col-notes { grid-template-columns: 1fr; }
-  
-  
-  
+
   .col-label { flex-wrap: wrap; }
   .col-label .ransom { font-size: 28px; flex-wrap: nowrap; }
   .card-pop { box-shadow: -6px 6px 0 -3px var(--sheet), -6px 6px 0 1px var(--ink), 7px 8px 0 0 var(--pop), 11px 12px 0 0 var(--ink); }
   .case-grade { right: -8px; }
-  
 }
 
 /* ----- side quest REWARD: bright highlighter text + a red reward tag (no black boxes) ----- */

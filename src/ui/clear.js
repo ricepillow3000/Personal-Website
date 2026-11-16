@@ -50,7 +50,6 @@ export function clearStampMarkup(extra = '') {
 export function hydrateStamps(root = document) {
   root.querySelectorAll('.clear-stamp .cs-word:empty').forEach((w) => {
     ransom(w, 'CLEARED!', 23);
-    w.removeAttribute('aria-label');
     w.onpointerenter = null;
   });
 }
@@ -232,7 +231,7 @@ function stampTransition(landOn) {
 }
 
 /** Mark a project cleared and stamp every place it is shown, with the full transition. */
-export async function markCleared(id, { animate = true } = {}) {
+async function markCleared(id, { animate = true } = {}) {
   if (!validId(id)) return false;
   const first = store.addTo('cleared', id);
   const all = [...document.querySelectorAll(TARGETS(id))];
@@ -242,7 +241,7 @@ export async function markCleared(id, { animate = true } = {}) {
   if (animate && !reducedMotion()) await stampTransition(landOn);
   else stamps.forEach((st) => gsap.set(st, { autoAlpha: 1 }));
   if (first) {
-    const name = document.querySelector(`[data-case="${id}"] .case-target`)?.getAttribute('aria-label') || id.toUpperCase();
+    const name = document.querySelector(`[data-case="${id}"] .case-target .sr-only`)?.textContent.trim() || id.toUpperCase();
     toast(`${name} CLEARED`, 'CASE CLOSED');
   }
   return first;

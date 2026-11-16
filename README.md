@@ -33,19 +33,17 @@ npm test           # build + Playwright tests (desktop + phone)
 ```
 
 ## Controls
-Mouse/touch · Tab or arrows/WASD · Enter · Esc back · `1–2` open a case file · `Q` Quick View · `F` flip the HUD bars ·
+Mouse/touch · Tab or arrows/WASD · Enter · Esc back · `1–2` open a case file · `Q` Quick View · `F` flip the GPA star ·
 `M` sound · game controllers work too.
 
-## Swapping in real assets later
-- **Drums:** see `RECORDING_GUIDE.md`, drop files in `public/assets/audio/`, then set
-  `assets.drumSamples` / `assets.drumLoop` to `true`.
+## Optional
 - **Analytics (optional, cookie-free):** create a GoatCounter site and put its code in `analytics.goatcounter`.
 
 ## How it's built
 Vite + vanilla JavaScript modules + GSAP. The spray-painted wall, the red string and the
-walking crowd are drawn in code (inline SVG + canvas), so the title screen paints without
-downloading any images. Sound is a
-synthesized drum kit (Web Audio) until real recordings are added. CI runs the Playwright
+page rip are drawn in code (inline SVG + CSS), so the title screen paints without
+downloading any images. Every sound effect and the jazzy background theme are
+synthesized live with Web Audio (no audio files). CI runs the Playwright
 suite and Lighthouse budgets on every push; `deploy.yml` publishes `dist/` to GitHub Pages.
 
 The visual style blends pop art, street art and high-contrast anime UI, but every screen,

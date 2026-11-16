@@ -2,14 +2,13 @@ import { store } from './store.js';
 import { resume } from '../data/resume.js';
 
 /* Saved progress (lives in localStorage through the store, so it survives closing the tab):
-   every project cleared (visited its live app or code) + every main section opened. */
-export const SECTIONS = [
+   every project cleared (visited its live app or code) + every page in the MENU opened. */
+const SECTIONS = [
   ['missions', 'Missions'],
   ['skills', 'Skills'],
   ['different', 'What makes me different'],
   ['stats', 'Stats'],
-  ['side-quests', 'Side quests'],
-  ['contact', 'Contact']
+  ['side-quests', 'Side quests']
 ];
 
 export function progress() {

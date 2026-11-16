@@ -33,7 +33,7 @@ import { bindInput, bindGamepad } from './input/input.js';
 /* ---------------------------------------------------------------- setup */
 const company = readCompany();
 const ctx = { company };
-const backdrop = mountBackdrop($('#backdrop'));
+mountBackdrop($('#backdrop'));
 /* "Off the Record": the GPA star on the person card flips to the fun stats */
 function flipGpa() {
   const b = $('#board .gpa-burst');
@@ -79,7 +79,7 @@ function route() {
   return VALID.has(id) ? id : 'title';
 }
 
-export function navigate(id) {
+function navigate(id) {
   const hash = id === 'title' ? '#/' : `#/${id}`;
   if (window.location.hash === hash) show(id);
   else window.location.hash = hash;
@@ -98,7 +98,6 @@ function activate(id) {
   el.classList.add('active');
   el.scrollTop = 0;
   document.body.classList.remove('scrolled');
-  backdrop.setFrozen(false);
   renderKeyHints(mode);
 }
 
@@ -106,7 +105,21 @@ let lastStyle = 'slash';
 /* every menu destination gets its own transition */
 const MENU_STYLE = { missions: 'shatter', skills: 'blinds', different: 'slash', stats: 'flip', 'side-quests': 'stripes', system: 'ink' };
 const WIPES = { slash: slashWipe, blinds: blindsWipe, paper: paperWipe, iris: irisWipe, shatter: shatterWipe, stripes: stripesWipe, flip: flipWipe, ink: inkWipe };
+/* Focus a target once its entrance animation has made it visible (a hidden element can't take focus).
+   Gives up if the visitor has already moved focus somewhere themselves. */
+function focusSoon(el, tries = 16, from = document.activeElement) {
+  if (!el) return;
+  el.focus({ preventScroll: true });
+  if (document.activeElement === el || tries <= 0) return;
+  setTimeout(() => {
+    const now = document.activeElement;
+    if (el.isConnected && (now === document.body || now === null || now === from)) focusSoon(el, tries - 1, from);
+  }, 100);
+}
+
+let navSeq = 0; // a newer navigation cancels whatever an older one still had left to do
 async function show(id) {
+  const tok = ++navSeq;
   const prev = screen;
   const prevPage = pageId;
   if (prev === 'page' && pageId === id) return;
@@ -116,6 +129,7 @@ async function show(id) {
   const mode = modeOf(id);
 
   const swap = () => {
+    if (tok !== navSeq) return;
     activate(id);
     screen = mode === 'page' ? 'page' : id;
     pageId = mode === 'page' ? id : null;
@@ -143,20 +157,22 @@ async function show(id) {
     await WIPES[style](swap);
     lastStyle = style;
   }
+  if (tok !== navSeq) return;
   viaMenu = false;
 
   if (mode === 'title') introTitle();
   if (mode === 'page') {
     // the big title slam only follows the slash; menu/settings pages build in with kinetic letters instead
     if (lastStyle === 'slash' || prev === null) await titlePunch(SECTION_TITLES[id] || id.toUpperCase());
+    if (tok !== navSeq) return;
     $$('#page [data-ransom]').forEach((h, i) => dropIn(h, i * 0.05));
     enter($('#page')); // back button, subtitle and other [data-in] items
     pageIntro?.($('#page')); // each page's own entrance
-    $('#page [data-nav]')?.focus({ preventScroll: true });
+    focusSoon($('#page [data-nav]') || $('#page .back-btn'));
   }
   if (mode === 'quick') {
     track('quick_view');
-    $('#screen-quick .btn')?.focus({ preventScroll: true });
+    focusSoon($('#screen-quick .btn'));
   }
 }
 
@@ -180,7 +196,8 @@ function renderProgress(celebrate) {
   chip.innerHTML = p.all
     ? '<span class="pc-label">CASE LOG</span><span class="pc-all">ALL CLEAR!</span>'
     : `<span class="pc-label">CASE LOG</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
-       <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>`;
+       <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>
+       <span class="pc-hint" aria-hidden="true">clear both cases · open every menu page</span>`;
   if (celebrate && !reducedMotion()) gsap.fromTo(chip, { scale: 1.6, rotation: -12 }, { scale: 1, rotation: -3, duration: 0.5, ease: 'elastic.out(1.4, .4)' });
 }
 let wasAll = progress().all;
@@ -306,9 +323,13 @@ async function openDossier(id, row) {
   sfx('select');
   if (m.bestStat && !cutinShown) {
     cutinShown = true;
+    const at = navSeq;
     await cutIn(`${m.bestStat} CAUGHT`);
+    if (at !== navSeq || !$('#modal').hidden || menu.isOpen()) return; // the visitor moved on during the cut-in
   }
   openModal(dossierMarkup(m));
+  const title = $('#modalPanel [data-ransom]');
+  if (title) ransom(title, title.dataset.ransom, 5); // the file name in cut-out letters
   animateDossier($('#modalPanel'), () => {
     sfx('thwack');
     shake($('#modalPanel'));
@@ -350,11 +371,18 @@ function openModal(html) {
   lastFocus = document.activeElement;
   $('#modalPanel').innerHTML = html;
   $('#modal').hidden = false;
+  setBehindModal(true);
   $('#modalPanel [data-close]')?.focus({ preventScroll: true });
+}
+
+/* While a file is open, the page behind it can't be tabbed into or clicked (a real modal). */
+function setBehindModal(on) {
+  $$('#app, .hud-tl, .hud-tr, #menu, .skip-link').forEach((el) => (el.inert = on));
 }
 
 function closeModal() {
   if ($('#modal').hidden || closing) return false;
+  setBehindModal(false); // before focus goes back: inert elements can't take focus
   const done = () => {
     closing = null;
     $('#modal').hidden = true;
@@ -372,6 +400,22 @@ function closeModal() {
   return true;
 }
 
+/* Tab and Shift+Tab cycle inside the open file instead of escaping to the browser bar. */
+$('#modal').addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab') return;
+  const items = [...$('#modalPanel').querySelectorAll('a[href], button, [tabindex]:not([tabindex="-1"])')].filter((el) => el.offsetParent !== null);
+  if (!items.length) return;
+  const first = items[0];
+  const last = items[items.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+});
+
 $('#modal').addEventListener('click', (e) => {
   if (e.target.id === 'modal' || e.target.closest('[data-close]')) {
     sfx('back');
@@ -388,7 +432,25 @@ $('#achBtn').addEventListener('click', () => {
 
 /* ---------------------------------------------------------------- HUD + sound */
 function syncSoundButton() {
-  $('#soundBtn').setAttribute('aria-pressed', String(store.get().settings.sound));
+  const on = store.get().settings.sound;
+  $('#soundBtn').setAttribute('aria-pressed', String(on));
+  const t = $('#page [data-toggle="sound"]'); // the SYSTEM page toggle, when it is open
+  if (t) {
+    t.setAttribute('aria-pressed', String(on));
+    t.textContent = on ? 'ON' : 'OFF';
+  }
+}
+
+/* Sound was left ON last visit: browsers only allow audio after a gesture, so the music
+   picks back up on the visitor's first click or key press. */
+if (store.get().settings.sound) {
+  const resumeAudio = () => {
+    window.removeEventListener('pointerdown', resumeAudio, true);
+    window.removeEventListener('keydown', resumeAudio, true);
+    if (store.get().settings.sound) setSound(true);
+  };
+  window.addEventListener('pointerdown', resumeAudio, true);
+  window.addEventListener('keydown', resumeAudio, true);
 }
 
 $('#soundBtn').addEventListener('click', () => toggleSound());
@@ -476,7 +538,7 @@ function handle(action, e) {
     case 'right':
       return screen === 'title' ? false : moveFocus(1);
     case 'confirm':
-      if (screen === 'title' && document.activeElement?.tagName !== 'A') {
+      if (screen === 'title' && [document.body, null, $('#pressStart')].includes(document.activeElement)) {
         $('#pressStart').click();
         return true;
       }
@@ -498,7 +560,7 @@ function handle(action, e) {
       toggleSound();
       return true;
     default:
-      if (action.startsWith('hotkey:')) {
+      if (action.startsWith('hotkey:') && $('#modal').hidden) {
         const n = Number(action.split(':')[1]);
         if (screen === 'board' && !menu.isOpen() && n <= resume.missions.length) {
           const b = $$('#board .case-open')[n - 1];

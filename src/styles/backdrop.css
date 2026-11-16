@@ -25,11 +25,8 @@
 @keyframes bd-spin { to { transform: rotate(360deg); } }
 
 /* PRESS START freeze: the wall drains to grey and stops */
-.backdrop.frozen { filter: grayscale(1); }
-.backdrop.frozen *, .backdrop.frozen .bd-drift { animation-play-state: paused !important; }
 
 /* Sections read better over a dimmed wall; Quick View almost hides it. */
-body[data-mode="talk"] .bd-graffiti { opacity: .45; transition: opacity .3s; }
 body[data-mode="page"] .backdrop { filter: brightness(.42); }
 body[data-mode="quick"] .backdrop { filter: brightness(.16); }
 
@@ -39,3 +36,6 @@ body[data-mode="quick"] .backdrop { filter: brightness(.16); }
 }
 body.reduce-motion .backdrop *, body.reduce-motion .backdrop .bd-drift { animation: none !important; }
 body.reduce-motion .bd-layer { transform: none !important; }
+
+/* on tall screens the wall is cropped to its middle, and the arrow would read as a stray white band */
+@media (max-aspect-ratio: 1/1) { .bd-arrow { display: none; } }
