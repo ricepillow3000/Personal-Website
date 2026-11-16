@@ -291,6 +291,43 @@ body[data-mode="board"] .keyhints { display: none; }
 .calling-status { margin-top: 4px; font-size: 12px; font-weight: 800; background: var(--black); color: var(--white); padding: 2px 8px; transform: skewX(-8deg); }
 .calling.card-pop:hover { transform: rotate(0) translate(-3px, -6px) !important; }
 
+
+/* ----- CALLING-CARD STYLE, mixed into other boxes (.cc) ----- */
+.card-pop.cc {
+  --sheet: var(--black); --pop: var(--white);
+  overflow: hidden; background-color: var(--red); color: var(--white); border-color: var(--black);
+  background-image: radial-gradient(rgba(5, 5, 5, .32) 1.6px, transparent 2.2px), linear-gradient(160deg, transparent 58%, rgba(5, 5, 5, .55) 58%);
+  background-size: 9px 9px, 100% 100%;
+}
+.card-pop.cc::before { display: none; }
+.cc-star { position: absolute; right: -50px; bottom: -46px; width: 220px; height: 220px; background: var(--black); opacity: .85; pointer-events: none; transform: rotate(14deg);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.cc > *:not(.cc-star):not(.pin):not(.case-grade):not(.stamp):not(.case-fold) { position: relative; z-index: 1; }
+.cc-banner { margin: 0 -24px 14px; padding: 12px 24px 18px; background: var(--black); clip-path: polygon(0 0, 100% 0, 100% 70%, 76% 100%, 58% 78%, 30% 96%, 0 80%); }
+.cc-banner h3 { margin: 0 !important; color: var(--white) !important; }
+.cc-banner .kin .k-first { color: var(--red) !important; }
+.cc-banner .kin .k-inv { background: var(--white); color: var(--black); }
+
+/* What makes me different, red edition */
+.edge.cc { padding: 0 24px 22px; border-left-width: 4px; }
+.edge.cc ol { position: relative; z-index: 1; }
+.edge.cc li { text-shadow: 1px 1px 0 rgba(5, 5, 5, .6); }
+.edge.cc b { color: var(--yellow); text-shadow: 2px 2px 0 var(--black); }
+
+/* Case 02, red edition */
+.case.cc .case-no { background: var(--white); color: var(--black); }
+.case.cc .case-live { background: var(--black); }
+.case.cc .case-name { color: var(--white); text-shadow: 2px 2px 0 var(--black); }
+.case.cc .case-name span { color: #FFD6D6; }
+.case.cc .case-link { color: var(--white); text-shadow: 1px 1px 0 var(--black); }
+.case.cc .bubble-say, .case.cc .sticker { color: var(--black); text-shadow: none; }
+.case.cc .case-open { background: var(--white); color: var(--black); box-shadow: 0 6px 0 var(--black), 0 6px 0 3px var(--black); }
+.case.cc .case-fold { background: linear-gradient(135deg, #8E0A10 0 48%, var(--black) 48% 54%, transparent 54%); }
+.case.cc.lit { box-shadow: -11px 12px 0 -3px var(--sheet), -11px 12px 0 1px var(--ink), 14px 16px 0 0 #3FE6D0, 22px 25px 0 0 var(--ink); }
+
+/* Skills roster: red halftone corner wedge */
+.roster.card-pop { background-image: linear-gradient(150deg, transparent 72%, var(--red) 72%), radial-gradient(rgba(255, 255, 255, .1) 1.6px, transparent 2.2px); background-size: 100% 100%, 9px 9px; }
+
 /* ===================== PHONES ===================== */
 @media (max-width: 1100px) {
   .board-grid { grid-template-columns: 260px minmax(0, 1fr); }

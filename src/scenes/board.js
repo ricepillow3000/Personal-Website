@@ -30,8 +30,8 @@ function kin(text, inv = null) {
 function caseCard(m, i) {
   const stickers = m.loot.slice(0, 2);
   const opened = store.has('opened', m.id);
-  return `<article class="case card-pop" data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
-    ${pin}
+  return `<article class="case card-pop${i % 2 ? ' cc' : ''}" data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
+    ${pin}${i % 2 ? '<span class="cc-star" aria-hidden="true"></span>' : ''}
     <span class="case-grade" aria-label="Difficulty ${esc(m.grade)}"><span>${esc(m.grade)}</span></span>
     <div class="case-top"><span class="case-no">CASE 0${i + 1}</span><span class="case-live">${esc(m.status)}</span></div>
     <h3 class="case-target ransom" data-ransom="${esc(m.target.toUpperCase())}"></h3>
@@ -103,8 +103,9 @@ export function boardMarkup(ctx) {
     <section class="col col-cases" aria-label="Projects">
       <h2 class="col-label" data-board-item><span class="ransom" data-ransom="CASE FILES"></span><small>2 live apps</small></h2>
       <div class="cases">${missions.map(caseCard).join('')}</div>
-      <div class="edge card-pop dark" data-board-item>${pin}
-        <h3>${kin('WHAT MAKES ME DIFFERENT', 5)}</h3>
+      <div class="edge card-pop cc" data-board-item>${pin}
+        <span class="cc-star" aria-hidden="true"></span>
+        <div class="cc-banner"><h3>${kin('WHAT MAKES ME DIFFERENT', 5)}</h3></div>
         <ol>${resume.different.map((d) => `<li><b>${esc(d.title)}.</b> ${esc(d.fact)}</li>`).join('')}</ol>
       </div>
     </section>
