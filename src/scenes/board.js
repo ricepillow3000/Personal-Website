@@ -133,15 +133,19 @@ export function boardMarkup(ctx) {
           .join('')}</ol>
         <a class="btn-cartoon quest-more" href="#/side-quests" data-nav>FULL STORY ▸</a>
       </article>
-      <article class="calling card-pop dark" data-board-item>${pin}
-        <p class="calling-head">CALLING CARD</p>
-        <p class="calling-name">${kin(resume.name.toUpperCase(), 6)}</p>
-        <p class="calling-status">${esc(resume.status)} · ${esc(resume.location)}</p>
+      <article class="calling card-pop" data-board-item>${pin}
+        <span class="calling-star" aria-hidden="true"></span>
+        <div class="calling-banner"><span>CALLING CARD</span></div>
+        <p class="calling-to">TO: ${esc(ctx.company ? ctx.company.name.toUpperCase() : 'WHOEVER IS READING THIS')}</p>
+        <p class="calling-msg">I direct AI agents, ship real apps and test everything. You know where to find me.</p>
+        <h3 class="calling-name ransom" data-ransom="${esc(resume.name.toUpperCase())}"></h3>
+        <p class="calling-sign">— ${esc(resume.codename)} · ${esc(resume.location)}</p>
         <a class="btn-cartoon cta" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect on LinkedIn ↗</a>
         <div class="calling-row">
           <a class="btn-cartoon" data-nav href="mailto:${esc(L.email)}" data-track="email_click">✉ Email</a>
           <a class="btn-cartoon alt" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">⬇ PDF</a>
         </div>
+        <span class="calling-status">${esc(resume.status)}</span>
       </article>
     </section>
   </div>`;
