@@ -35,7 +35,7 @@ export const resume = {
     dates: 'Aug 2025 — Present',
     grad: 'Class of 2029',
     gpa: '3.88',
-    honors: "Dean's List, Fall 2025 and Spring 2026"
+    honors: "Dean's List: Fall 2025, Spring 2026"
   },
 
   /* HUD bars: real proof by default, fun stats on the flip side. */
@@ -95,11 +95,11 @@ export const resume = {
   /* Ranks 1–10, or 'MAX'. Each one is backed by proof. `uses` = which projects the
      red string on the Heist Board connects it to. */
   skills: [
-    { id: 'agents', name: 'AI Agents (Claude Code)', rank: 9, proof: '3-role agent workflow with an orchestrator, researcher and builder', uses: ['meliona'] },
+    { id: 'agents', name: 'AI Agents (Claude Code)', rank: 9, proof: '3-role agent workflow: orchestrator, researcher, builder', uses: ['meliona'] },
     { id: 'testing', name: 'Testing / QA', rank: 'MAX', proof: '2,000+ automated tests across 2 apps', uses: ['meliona', 'arcas'] },
     { id: 'python', name: 'Python', rank: 8, proof: '7,700+ lines in Meliona · ARCAS backend', uses: ['meliona', 'arcas'] },
     { id: 'aieval', name: 'AI Evaluation', rank: 8, proof: 'Live-data audits · 727/728 checks passed', uses: ['meliona'] },
-    { id: 'cicd', name: 'GitHub Actions (CI/CD)', rank: 7, proof: '6 workflows for linting, security scans and 3 test suites', uses: ['meliona', 'arcas'] },
+    { id: 'cicd', name: 'GitHub Actions (CI/CD)', rank: 7, proof: '6 workflows: lint, security scan, 3 test suites', uses: ['meliona', 'arcas'] },
     { id: 'flask', name: 'Flask', rank: 7, proof: 'ARCAS REST API', uses: ['arcas'] },
     { id: 'git', name: 'Git / GitHub', rank: 7, proof: 'Both projects, public repos', uses: ['meliona', 'arcas'] },
     { id: 'js', name: 'JavaScript', rank: 6, proof: 'Office.js task pane · web UIs', uses: ['meliona', 'arcas'] },

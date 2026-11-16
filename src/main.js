@@ -176,8 +176,8 @@ function renderProgress(celebrate) {
   const p = progress();
   const left = p.items.filter((i) => !i.done).map((i) => i.label);
   chip.classList.toggle('all', p.all);
-  chip.setAttribute('aria-label', p.all ? 'Case log, all clear' : `Case log, ${p.done} of ${p.total}. Still to do, ${left.join(', ')}`);
-  chip.title = p.all ? 'Everything cleared. Thanks for playing.' : `Still to do · ${left.join(' · ')}`;
+  chip.setAttribute('aria-label', p.all ? 'Case log, all clear' : `Case log, ${p.done} of ${p.total}. Still to do: ${left.join(', ')}`);
+  chip.title = p.all ? 'Everything cleared. Thanks for playing.' : `Still to do: ${left.join(' · ')}`;
   chip.innerHTML = p.all
     ? '<span class="pc-label">CASE LOG</span><span class="pc-all">ALL CLEAR!</span>'
     : `<span class="pc-label">CASE LOG</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
