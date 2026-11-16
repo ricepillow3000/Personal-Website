@@ -169,12 +169,14 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
     return { x: r.left + r.width / 2 - g.left, y: r.top + r.height / 2 - g.top };
   }
 
+  let drawnAt = ''; // grid size the strings were last drawn for
   function drawStrings() {
     if (isPhone()) {
       svg.innerHTML = '';
       return;
     }
     const g = grid.getBoundingClientRect();
+    drawnAt = `${Math.round(g.width)}x${Math.round(g.height)}`;
     svg.setAttribute('viewBox', `0 0 ${g.width} ${g.height}`);
     svg.setAttribute('width', g.width);
     svg.setAttribute('height', g.height);
@@ -265,7 +267,15 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
   window.addEventListener('resize', relayout);
   if (document.fonts?.ready) document.fonts.ready.then(relayout);
   // anything that moves the columns (fonts, the calling card, a wrapping line) re-pins the strings
-  if (window.ResizeObserver) new ResizeObserver(relayout).observe(grid);
+  // (only on a real size change: the board appearing at the size it was just drawn for must not
+  // replace the strings mid draw-in animation)
+  if (window.ResizeObserver) {
+    new ResizeObserver(([e]) => {
+      const w = Math.round(e.contentRect.width);
+      const h = Math.round(e.contentRect.height);
+      if (w && h && `${w}x${h}` !== drawnAt) relayout();
+    }).observe(grid);
+  }
 
   function reveal(delay = 0) {
     drawStrings();
