@@ -135,9 +135,10 @@ export function boardMarkup(ctx) {
       </article>
       <article class="calling card-pop" data-board-item aria-label="Calling card">${pin}
         <span class="calling-tape" aria-hidden="true"></span>
-        <p class="calling-to">To ${esc(ctx.company ? ctx.company.name : 'the one reading this')},</p>
-        <h3 class="calling-title ransom" data-ransom="YOUR MOVE."></h3>
-        <p class="calling-msg">Boring resume: fixed. Got a problem like that? I'm easy to find.</p>
+        <p class="calling-to">To ${esc(ctx.company ? `the team at ${ctx.company.name}` : 'the one buried in boring resumes')},</p>
+        <h3 class="calling-title ransom" data-ransom="TAKE NOTICE."></h3>
+        <p class="calling-msg">Resumes have been boring for too long. So I, an AI solutions architect in the making, directed a crew of AI agents to build this one myself. A personal project with one target: your attention.</p>
+        <p class="calling-steal">Consider it stolen.</p>
         <p class="calling-sign">— ${esc(resume.name)}</p>
         <span class="calling-seal" aria-hidden="true"><span>J</span></span>
         <a class="btn-cartoon cta" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">Connect on LinkedIn ↗</a>
