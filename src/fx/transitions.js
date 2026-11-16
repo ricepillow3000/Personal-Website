@@ -131,6 +131,10 @@ export function cutIn(text = '') {
     .fromTo('.cutin-flash', { opacity: 0.9 }, { opacity: 0, duration: 0.2, ease: 'power2.out' }, 0.1)
     .fromTo('#cutinText', { x: 160, skewX: -20, opacity: 0 }, { x: 0, skewX: 0, opacity: 1, duration: 0.16, ease: 'expo.out' }, 0.08)
     .fromTo('#cutinEyes', { x: -30 }, { x: 10, duration: 0.45, ease: 'none' }, 0.1)
+    .add(() => {
+      sfx('snare');
+      shake($('.screen.active') || document.body);
+    }, 0.12)
     .to('.cutin-strip', { xPercent: 130, scaleY: 0.3, duration: 0.16, ease: 'expo.in' }, '+=0.22')
     .set(wrap, { visibility: 'hidden' });
   return track(tl);

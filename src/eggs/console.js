@@ -13,7 +13,7 @@ export function installConsole() {
   ].join('\n');
   try {
     console.log(`%c${art}`, 'color:#E5191C;font:700 12px monospace;');
-    console.log('%cHey dev 👀%c type john.run() to claim a secret.', red, blk);
+    console.log('%cHey dev.%c type john.run() to claim a secret.', red, blk);
   } catch {
     /* consoles can be locked down; never break the page over it */
   }

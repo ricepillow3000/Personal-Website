@@ -174,7 +174,6 @@
 .id-honors { font-family: var(--f-type); font-size: 14px !important; }
 .traits { list-style: none; display: flex; flex-wrap: wrap; gap: 18px; margin: 34px 0 0; padding: 0; max-width: 980px; }
 .trait { display: flex; align-items: center; gap: 10px; background: var(--black); color: var(--white); border: 3px solid var(--white); padding: 10px 16px; font-weight: 700; box-shadow: 6px 6px 0 var(--red); }
-.trait span { font-size: 26px; }
 .trait.t0 { rotate: -2deg; } .trait.t1 { rotate: 1.5deg; background: var(--red); } .trait.t2 { rotate: -1deg; }
 .trait:hover { animation: boil .42s steps(1) infinite; }
 .motto-strip { margin: 34px 0 0; max-width: 980px; padding: 18px 24px; background: var(--red); color: var(--white); font-family: var(--f-type); font-size: 18px; line-height: 1.5; transform: skew(-6deg); box-shadow: 10px 10px 0 var(--black); }

@@ -81,20 +81,44 @@ export function markCleared(id) {
   targets.forEach((t, i) => {
     if (t.querySelector(':scope > .clear-stamp')) return;
     t.insertAdjacentHTML('beforeend', clearStampMarkup());
-    setTimeout(() => slamStamp(t.querySelector(':scope > .clear-stamp')), 250 + i * 120);
+    setTimeout(() => slamStamp(t.querySelector(':scope > .clear-stamp')), 40 + i * 110);
   });
   const name = document.querySelector(`[data-case="${id}"] .case-target`)?.getAttribute('aria-label') || id.toUpperCase();
-  setTimeout(() => toast(`${name} CLEARED`, 'CASE CLOSED'), 400);
+  setTimeout(() => toast(`${name} CLEARED`, 'CASE CLOSED'), 300);
   return true;
 }
 
-function onReturn() {
-  if (document.visibilityState !== 'visible' || !left) return;
+/* main.js hands in the cut-in so this module stays free of scene code */
+let returnFx = null;
+export const setReturnFx = (fn) => (returnFx = fn);
+
+/** Bring the project into view while the cut-in covers the screen (misdirection). */
+function bringIntoView(id) {
+  if (!document.getElementById('modal')?.hidden) return; // the open file shows its own stamp
+  const el = document.querySelector(`.screen.active .case[data-case="${id}"], .screen.active .poster[data-mission="${id}"]`);
+  const r = el?.getBoundingClientRect();
+  if (r && (r.top < 80 || r.bottom > window.innerHeight - 40)) el.scrollIntoView({ block: 'center' });
+}
+
+let returning = false;
+async function onReturn() {
+  if (document.visibilityState !== 'visible' || !left || returning) return;
   const id = pending || readPending();
   left = false;
   pending = null;
   writePending(null);
-  if (id) markCleared(id);
+  if (!id) return;
+  returning = true;
+  try {
+    const first = !isCleared(id);
+    sfx('whoosh');
+    const fx = returnFx?.('WELCOME BACK');
+    setTimeout(() => bringIntoView(id), 60);
+    await fx;
+    if (first) markCleared(id);
+  } finally {
+    returning = false;
+  }
 }
 
 export function initClearing() {

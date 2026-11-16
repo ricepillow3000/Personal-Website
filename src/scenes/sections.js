@@ -8,7 +8,7 @@ import { clearStampMarkup, isCleared } from '../ui/clear.js';
 
 /* Each section returns { title, html, after(root) }. Content comes from resume.js only. */
 
-const back = '<button class="btn back-btn" type="button" data-back>◀ BOARD <kbd>ESC</kbd></button>';
+const back = '<button class="btn back-btn" type="button" data-back>◂ BOARD <kbd>ESC</kbd></button>';
 const head = (title, sub = '') => `
   <div class="page-head"><h2 class="ransom ransom-lg" data-ransom="${esc(title)}"></h2></div>
   ${sub ? `<p class="page-sub" data-in>${sub}</p>` : ''}`;
@@ -41,7 +41,7 @@ function missions(ctx) {
             <span class="poster-target">${esc(m.name)}</span>
             <span class="poster-stack">${esc((m.stack || []).join(' · '))}</span>
             <span class="poster-brief">${esc(m.brief)}</span>
-            <span class="poster-open">OPEN FILE ▶</span>
+            <span class="poster-open">OPEN FILE ▸</span>
             ${cleared(isCleared(m.id))}
           </button></li>`
         )
@@ -57,15 +57,15 @@ export function dossierMarkup(m) {
     <button class="modal-x" type="button" data-close aria-label="Close">✕</button>
     <p class="dossier-code">MISSION FILE · ${esc(m.dates)} · DIFFICULTY ${esc(m.grade)}</p>
     <h2 class="dossier-title" id="modalTitle">${esc(m.target)}</h2>
-    <p class="dossier-sub">${esc(m.name)} — <span style="color:var(--red)">● ${esc(m.status)}</span></p>
+    <p class="dossier-sub">${esc(m.name)} — <span style="color:var(--red)">${esc(m.status)}</span></p>
     <ul class="dossier-stack">${m.stack.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
     <div class="dossier-cols">
       <div><h3>OBJECTIVES</h3><ul class="obj">${m.objectives.map((o) => `<li>${esc(o)}</li>`).join('')}</ul></div>
       <div><h3>LOOT</h3><ul class="loot">${m.loot.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
     </div>
     <div class="dossier-links">
-      <a class="btn" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}" data-clear="${m.id}">▶ Try it live ↗</a>
-      <a class="btn" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}" data-clear="${m.id}">⌥ Code on GitHub ↗</a>
+      <a class="btn" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}" data-clear="${m.id}">Try it live ↗</a>
+      <a class="btn" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}" data-clear="${m.id}">Code on GitHub ↗</a>
     </div>
     <p class="dossier-hint">${isCleared(m.id) ? 'Case cleared. Thanks for checking it out.' : 'Visit the live app or the code to clear this case.'}</p>
     ${isCleared(m.id) ? clearStampMarkup() : ''}
@@ -186,7 +186,6 @@ function different() {
 function stats() {
   const e = resume.education;
   const gpa = Number(e.gpa) || 0;
-  const icons = ['🥁', '🎸', '🐝'];
   return {
     title: 'STATS',
     html: `${watermark('PROFILE')}${back}${head('STATS', 'The person behind the projects.')}
@@ -207,7 +206,7 @@ function stats() {
           </div>
         </div>
       </section>
-      <ul class="traits">${resume.funFacts.map((f, i) => `<li class="trait t${i}" data-in><span aria-hidden="true">${icons[i] || '★'}</span>${esc(f)}</li>`).join('')}</ul>
+      <ul class="traits">${resume.funFacts.map((f, i) => `<li class="trait t${i}" data-in><i class="ff-star" aria-hidden="true"></i>${esc(f)}</li>`).join('')}</ul>
       <blockquote class="motto-strip" data-in>“${esc(resume.motto.text)}”<cite>— ${esc(resume.motto.by)}</cite></blockquote>`,
     intro(root) {
       if (reducedMotion()) return;
@@ -274,9 +273,9 @@ function contact() {
       </div></div>
       <div class="contact-btns" data-in>
         <a class="btn btn-primary" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect on LinkedIn ↗</a>
-        <a class="btn" data-nav href="mailto:${esc(L.email)}" data-track="email_click">✉ ${esc(L.email)}</a>
-        <a class="btn" data-nav href="${esc(L.github)}" target="_blank" rel="noopener" data-track="github_click">⌥ GitHub ↗</a>
-        <a class="btn btn-accent" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">⬇ PDF resume</a>
+        <a class="btn" data-nav href="mailto:${esc(L.email)}" data-track="email_click">${esc(L.email)}</a>
+        <a class="btn" data-nav href="${esc(L.github)}" target="_blank" rel="noopener" data-track="github_click">GitHub ↗</a>
+        <a class="btn btn-accent" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">↓ PDF resume</a>
       </div>`,
     after(root) {
       const card = root.querySelector('#ccard');
@@ -308,8 +307,8 @@ function system() {
       <div class="sys-grid">
         <section class="sys jag light" data-in>
           <h3>RESUME</h3>
-          <div class="row">One-page version <a class="btn" data-nav href="#/quick">⚡ Quick View</a></div>
-          <div class="row">Standard PDF <a class="btn" data-nav href="${esc(resume.links.pdf)}" download data-track="pdf_click">⬇ Download</a></div>
+          <div class="row">One-page version <a class="btn" data-nav href="#/quick">Quick View ▸</a></div>
+          <div class="row">Standard PDF <a class="btn" data-nav href="${esc(resume.links.pdf)}" download data-track="pdf_click">↓ Download</a></div>
         </section>
         <section class="sys jag light" data-in>
           <h3>SETTINGS</h3>
