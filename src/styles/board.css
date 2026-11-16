@@ -302,7 +302,7 @@ body[data-mode="board"] .keyhints { display: none; }
 .card-pop.cc::before { display: none; }
 .cc-star { position: absolute; right: -50px; bottom: -46px; width: 220px; height: 220px; background: var(--black); opacity: .85; pointer-events: none; transform: rotate(14deg);
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
-.cc > *:not(.cc-star):not(.pin):not(.case-grade):not(.stamp):not(.case-fold) { position: relative; z-index: 1; }
+.cc > *:not(.cc-star):not(.cc-chart):not(.pin):not(.case-grade):not(.stamp):not(.case-fold) { position: relative; z-index: 1; }
 .cc-banner { margin: 0 -24px 14px; padding: 12px 24px 18px; background: var(--black); clip-path: polygon(0 0, 100% 0, 100% 70%, 76% 100%, 58% 78%, 30% 96%, 0 80%); }
 .cc-banner h3 { margin: 0 !important; color: var(--white) !important; }
 .cc-banner .kin .k-first { color: var(--red) !important; }
@@ -327,6 +327,25 @@ body[data-mode="board"] .keyhints { display: none; }
 
 /* Skills roster: red halftone corner wedge */
 .roster.card-pop { background-image: linear-gradient(150deg, transparent 72%, var(--red) 72%), radial-gradient(rgba(255, 255, 255, .1) 1.6px, transparent 2.2px); background-size: 100% 100%, 9px 9px; }
+
+
+/* Case 01 (v1): same red family, different interior */
+.case.cc.v1 { background-image: radial-gradient(rgba(5, 5, 5, .3) 1.4px, transparent 2px), linear-gradient(200deg, transparent 60%, rgba(5, 5, 5, .55) 60%); background-size: 7px 7px, 100% 100%; }
+.cc-chart { position: absolute; left: -6px; right: -6px; bottom: -4px; width: calc(100% + 12px); height: 46%; pointer-events: none; }
+.cc-chart polygon { fill: rgba(5, 5, 5, .78); }
+.cc-chart polyline { fill: none; stroke: var(--white); stroke-width: 4; stroke-linejoin: miter; opacity: .5; }
+.case.cc.v1 .case-stats .sticker.s0 { background: var(--white); }
+.case.cc.v1 .case-stats .sticker.s1 { background: #FF4FD8; }
+.case.cc.v1 .case-no { background: var(--black); color: var(--white); outline: 2px solid var(--white); }
+.case.cc.v1 .case-live { background: var(--white); color: var(--red); }
+.case.cc.v1 .bubble-say {
+  border: 0; border-radius: 0; box-shadow: none; padding: 16px 20px; font-family: var(--f-type); font-weight: 700; background: var(--white);
+  clip-path: polygon(0 10%, 8% 0, 20% 8%, 36% 0, 52% 7%, 70% 0, 86% 8%, 100% 2%, 96% 30%, 100% 56%, 95% 80%, 100% 100%, 78% 93%, 60% 100%, 40% 92%, 20% 100%, 4% 92%, 2% 66%, 0 40%);
+  filter: drop-shadow(4px 4px 0 var(--black)); transform: rotate(-1.2deg);
+}
+.case.cc.v1 .bubble-say::before, .case.cc.v1 .bubble-say::after { display: none; }
+.case.cc.v1 .case-name { font-family: var(--f-type); font-weight: 700; letter-spacing: 0; }
+.case.cc.v1 .case-open { background: var(--black); color: var(--white); box-shadow: 0 6px 0 var(--white), 0 6px 0 3px var(--black); }
 
 /* ===================== PHONES ===================== */
 @media (max-width: 1100px) {
