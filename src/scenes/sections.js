@@ -86,30 +86,73 @@ export function animateDossier(root, onLand) {
 
 function skills(ctx) {
   const list = reorder(resume.skills, ctx.company?.order?.skills);
-  const level = (r) => (r === 'MAX' ? 10 : Number(r) || 0);
+  const lv = (r) => (r === 'MAX' ? 10 : Number(r) || 0);
+  const total = resume.missions.length;
   return {
     title: 'SKILLS',
-    html: `${watermark('LEVELS')}${back}${head('SKILLS', 'A drummer’s mixing desk. Every channel is a skill, every level comes with a receipt. 10 is MAX.')}
-      <ol class="desk">${list
-        .map((s, i) => {
-          const lv = level(s.rank);
-          return `<li class="fader ${lv >= 10 ? 'max' : ''}" data-nav tabindex="0" style="--lv:${lv / 10};--d:${(i * 0.37).toFixed(2)}s"
-            aria-label="${esc(s.name)}: rank ${esc(s.rank)}. ${esc(s.proof)}">
-            <span class="fader-clip" aria-hidden="true">CLIP</span>
-            <span class="fader-val" aria-hidden="true">${esc(s.rank)}</span>
-            <span class="fader-track" aria-hidden="true"><span class="fader-fill"></span><span class="fader-knob"></span></span>
-            <span class="fader-ch" aria-hidden="true">CH ${String(i + 1).padStart(2, '0')}</span>
-            <span class="fader-name" aria-hidden="true">${esc(s.name)}</span>
-            <span class="fader-proof" aria-hidden="true">${esc(s.proof)}</span>
-          </li>`;
-        })
-        .join('')}</ol>`,
+    html: `${watermark('LEVELS')}${back}${head('SKILLS', 'Level = how deep I go. IN = how many live projects prove it.')}
+      <div class="crew">
+        <div class="crew-star" aria-hidden="true"></div>
+        <div class="crew-tabs" aria-hidden="true"><span class="tab-a">THE SKILL SET</span><span class="tab-b">RANKS</span><span class="tab-c">RECEIPTS</span></div>
+        <div class="crew-board">
+        <span class="crew-cursor" aria-hidden="true"><i></i></span>
+        <ol class="crew-list">
+          ${list
+            .map((s, i) => {
+              const n = lv(s.rank);
+              const tag = i === 0 ? '<span class="crew-tag t-core" aria-hidden="true">CORE</span>' : i === 3 ? '<span class="crew-tag t-kit" aria-hidden="true">KIT</span>' : '';
+              return `<li class="crew-row" data-nav tabindex="0" data-proof="${esc(s.proof)}" data-name="${esc(s.name)}"
+                aria-label="${esc(s.name)}: level ${esc(s.rank)}, used in ${s.uses.length} of ${total} projects. ${esc(s.proof)}">
+                ${tag}
+                <span class="crew-name" aria-hidden="true">${esc(s.name)}</span>
+                <span class="crew-dot" aria-hidden="true">•</span>
+                <span class="crew-lv" aria-hidden="true"><small>LV</small>${n >= 10 ? 'MAX' : n}</span>
+                <span class="crew-m rk" aria-hidden="true"><small>RK</small><b>${n * 10}</b><i style="--v:${n * 10}%"></i></span>
+                <span class="crew-m in" aria-hidden="true"><small>IN</small><b>${s.uses.length}/${total}</b><i style="--v:${(s.uses.length / total) * 100}%"></i></span>
+              </li>`;
+            })
+            .join('')}
+        </ol>
+        </div>
+        <div class="crew-side" aria-hidden="true">
+          <p class="crew-say"><b class="crew-say-name"></b><span class="crew-say-proof"></span></p>
+          <div class="ransom crew-word" data-ransom="RECEIPTS"></div>
+        </div>
+      </div>`,
+    after(root) {
+      const rows = [...root.querySelectorAll('.crew-row')];
+      const cursor = root.querySelector('.crew-cursor');
+      const say = root.querySelector('.crew-say');
+      let current = null;
+      const select = (row, instant) => {
+        if (!row || row === current) return;
+        current = row;
+        rows.forEach((r) => r.classList.toggle('on', r === row));
+        say.querySelector('.crew-say-name').textContent = row.dataset.name;
+        say.querySelector('.crew-say-proof').textContent = row.dataset.proof;
+        const to = { y: row.offsetTop, height: row.offsetHeight };
+        if (instant || reducedMotion()) {
+          gsap.set(cursor, to);
+          return;
+        }
+        gsap.to(cursor, { ...to, duration: 0.2, ease: 'back.out(2.2)', overwrite: true });
+        gsap.fromTo(cursor.firstElementChild, { scaleX: 0.6 }, { scaleX: 1, duration: 0.22, ease: 'back.out(2.6)' });
+        gsap.fromTo(say, { scale: 0.7, rotation: -6 }, { scale: 1, rotation: -3, duration: 0.24, ease: 'back.out(2.8)' });
+        gsap.fromTo(row.querySelectorAll('.crew-m i'), { scaleX: 0 }, { scaleX: 1, duration: 0.26, ease: 'back.out(2)', stagger: 0.04 });
+      };
+      rows.forEach((r) => {
+        r.addEventListener('pointerenter', () => select(r));
+        r.addEventListener('focus', () => select(r));
+      });
+      requestAnimationFrame(() => select(rows[0], true));
+      window.addEventListener('resize', () => current && gsap.set(cursor, { y: current.offsetTop, height: current.offsetHeight }), { passive: true });
+    },
     intro(root) {
       if (reducedMotion()) return;
-      const faders = root.querySelectorAll('.fader');
-      slamIn(faders, { y: 90, autoAlpha: 0 }, { stagger: 0.045 });
-      gsap.from(root.querySelectorAll('.fader-fill'), { scaleY: 0, duration: 0.5, ease: 'back.out(2.2)', stagger: 0.045, delay: 0.12, clearProps: 'transform' });
-      gsap.from(root.querySelectorAll('.fader-knob'), { bottom: '0%', duration: 0.5, ease: 'back.out(2.2)', stagger: 0.045, delay: 0.12, clearProps: 'bottom' });
+      slamIn(root.querySelectorAll('.crew-row'), { x: 160, skewX: -22, autoAlpha: 0 }, { stagger: 0.04, duration: 0.26 });
+      slamIn(root.querySelectorAll('.crew-tabs span'), { y: -60, rotation: -12, autoAlpha: 0 }, { stagger: 0.06 });
+      gsap.from(root.querySelector('.crew-star'), { scale: 0, rotation: -180, duration: 0.5, ease: 'back.out(1.8)', clearProps: 'transform' });
+      gsap.from(root.querySelector('.crew-cursor i'), { scaleX: 0, duration: 0.3, ease: 'back.out(2.4)', delay: 0.25 });
     }
   };
 }
