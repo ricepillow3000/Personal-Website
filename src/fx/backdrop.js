@@ -94,7 +94,7 @@ function graffitiLayer() {
     ${poly(posterA, 'url(#dotsR)')}
     ${poly(star(1260, 610, 88), C.black)}
     <text x="1260" y="770" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="64" fill="${C.black}" letter-spacing="4">ATL</text>
-    ${tape(1104, 456, -18)}${tape(1340, 452, 14)}
+    ${tape(1104, 456, -18)}<g class="atl-tape">${tape(1340, 452, 14)}</g>
   </g>
   <!-- torn poster B: black paper, white halftone corner -->
   <g transform="rotate(-7 265 205)">

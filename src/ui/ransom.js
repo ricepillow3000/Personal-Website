@@ -43,17 +43,24 @@ export function dropIn(el, delay = 0) {
   });
 }
 
-/** Hover shiver: tiny random shake that settles (hover only, never idle). */
+/** Hover: letters jitter, tilt and flip colors for a few frames, then snap back (hover only, never idle). */
 export function shiver(el) {
   if (reducedMotion() || el.dataset.shivering) return;
   el.dataset.shivering = '1';
-  const letters = el.querySelectorAll('.rl');
-  const r = () => gsap.utils.random(-3, 3);
+  const letters = [...el.querySelectorAll('.rl')];
+  const flip = letters.filter(() => Math.random() < 0.45);
+  flip.forEach((l) => l.classList.add('rl-inv'));
+  const r = () => gsap.utils.random(-4, 4);
+  const t = () => gsap.utils.random(-14, 14);
   gsap.to(letters, {
-    keyframes: [{ x: r, y: r }, { x: r, y: r }, { x: r, y: r }, { x: 0, y: 0 }],
-    duration: 0.22,
-    ease: 'none',
-    stagger: 0.008,
-    onComplete: () => delete el.dataset.shivering
+    keyframes: [{ x: r, y: r, rotation: t }, { x: r, y: r, rotation: t }, { x: 0, y: 0, rotation: 0 }],
+    duration: 0.24,
+    ease: 'steps(3)',
+    stagger: 0.012,
+    onComplete: () => {
+      flip.forEach((l) => l.classList.remove('rl-inv'));
+      gsap.set(letters, { clearProps: 'transform' });
+      delete el.dataset.shivering;
+    }
   });
 }

@@ -1,5 +1,6 @@
 import { gsap } from 'gsap';
 import { reducedMotion } from '../core/util.js';
+import { sfx } from '../audio/audio.js';
 
 /* Click "hit" effects: a sharp starburst, flying shards and a ring at the click point,
    plus a squash-and-spring on the button itself. One shared layer, nodes recycled. */
@@ -73,6 +74,14 @@ export function initClickFx() {
     squash(el);
     burst(e.clientX, e.clientY, el.matches('.btn-primary, .cta, #pressStart') ? 1.35 : 1);
   }, { passive: true });
+
+  // Moving focus with the keyboard/gamepad: the newly selected thing pops with a tick.
+  document.addEventListener('focusin', (e) => {
+    const el = e.target;
+    if (reducedMotion() || !el.matches?.(':focus-visible') || !el.animate) return;
+    el.animate([{ scale: '1' }, { scale: '1.09' }, { scale: '0.98' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1)' });
+    sfx('tick');
+  });
 
   // Keyboard presses (Enter/Space) fire click with detail 0: burst from the element's center.
   document.addEventListener('click', (e) => {

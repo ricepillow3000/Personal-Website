@@ -97,13 +97,40 @@ const VOICES = {
   },
   kick: (bus, at, v = 1) => tone(bus, { at, dur: 0.32, from: 140, to: 42, gain: 0.95 * v }),
   crash: (bus, at, v = 1) => noise(bus, { at, dur: 1.1, freq: 5200, q: 0.3, gain: 0.35 * v }),
+  /* paper rip: a crackle of tiny band-passed noise grains that climbs in pitch */
+  tear: (bus, at, v = 1, dur = 1) => {
+    let t = 0;
+    while (t < dur) {
+      const k = t / dur;
+      noise(bus, { at: at + t, dur: 0.02 + Math.random() * 0.05, type: 'bandpass', freq: 1400 + k * 2600 + Math.random() * 900, q: 1.4, gain: (0.18 + Math.random() * 0.3) * v });
+      t += 0.012 + Math.random() * 0.03;
+    }
+  },
+  /* fast air swipe for slashes */
+  whoosh: (bus, at, v = 1) => {
+    const src = ac.createBufferSource();
+    src.buffer = noiseBuf;
+    const f = ac.createBiquadFilter();
+    f.type = 'bandpass';
+    f.Q.value = 0.9;
+    f.frequency.setValueAtTime(500, at);
+    f.frequency.exponentialRampToValueAtTime(4200, at + 0.2);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0008, at);
+    g.gain.exponentialRampToValueAtTime(0.4 * v, at + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.0008, at + 0.24);
+    src.connect(f).connect(g).connect(bus);
+    src.start(at, Math.random() * 0.5);
+    src.stop(at + 0.26);
+  },
   toms: (bus, at) => {
     [220, 170, 130, 100].forEach((f, i) => tone(bus, { at: at + i * 0.07, dur: 0.22, from: f, to: f * 0.6, gain: 0.55 }));
   }
 };
 
-/** Play a named drum SFX: hat | tick | snare | kick | crash | toms */
-export function sfx(name) {
+/** Play a named SFX: hat | tick | snare | kick | crash | toms | tear | whoosh.
+    `dur` is only used by tear (seconds of ripping). */
+export function sfx(name, dur) {
   if (!enabled() || !ensure()) return;
   if (ac.state === 'suspended') ac.resume();
   const sampleName = name === 'tick' ? 'hat' : name;
@@ -111,7 +138,7 @@ export function sfx(name) {
     playSample(sampleName, sfxBus, name === 'tick' ? 0.25 : 1);
     return;
   }
-  VOICES[name]?.(sfxBus, ac.currentTime);
+  VOICES[name]?.(sfxBus, ac.currentTime, 1, dur);
 }
 
 /* ---------- music: lo-fi city night, 85 BPM, 16 bars ---------- */

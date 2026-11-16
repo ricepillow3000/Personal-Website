@@ -5,6 +5,7 @@ import './styles/scenes.css';
 import './styles/print.css';
 import './styles/backdrop.css';
 import './styles/board.css';
+import './styles/pages.css';
 
 import { gsap } from 'gsap';
 import { resume } from './data/resume.js';
@@ -101,7 +102,7 @@ async function show(id) {
     swap();
   } else if (prev === 'title' && id === 'board' && pendingStart) {
     pendingStart = false;
-    revealDelay = 0.36; // cards slam in as the torn halves fly away
+    revealDelay = 1.3; // cards slam in on the frame the torn pieces are yanked away
     await ripTransition(swap);
   } else {
     await slashWipe(swap);
@@ -110,7 +111,9 @@ async function show(id) {
   if (mode === 'title') introTitle();
   if (mode === 'page') {
     await titlePunch(SECTION_RENDERERS[id](ctx).title);
-    enter($('#page'));
+    $$('#page [data-ransom]').forEach((h, i) => dropIn(h, i * 0.05));
+    enter($('#page')); // back button, subtitle and other [data-in] items
+    pageIntro?.($('#page')); // each page's own entrance
     $('#page [data-nav]')?.focus({ preventScroll: true });
   }
   if (mode === 'quick') {
@@ -161,8 +164,15 @@ function onBee() {
 }
 
 /* ---------------------------------------------------------------- section pages */
+let pageIntro = null;
+/* Each page gets its own visual system: tag the page root with its id. */
+function root0Class(id) {
+  $('#page').className = `page-inner pg-${id}`;
+}
 function renderPage(id) {
   const r = SECTION_RENDERERS[id](ctx);
+  pageIntro = r.intro || null;
+  root0Class(id);
   const root = $('#page');
   root.innerHTML = r.html;
   root.querySelectorAll('[data-ransom]').forEach((h, i) => ransom(h, h.dataset.ransom, i + id.length));
@@ -183,8 +193,7 @@ async function openDossier(id, row) {
     await cutIn(`${m.bestStat} CAUGHT`);
   }
   openModal(dossierMarkup(m));
-  const tl = animateDossier($('#modalPanel'));
-  tl.eventCallback?.('onComplete', () => {
+  animateDossier($('#modalPanel'), () => {
     sfx('crash');
     shake($('#modalPanel'));
     const st = $('#modalPanel .stamp-big');
