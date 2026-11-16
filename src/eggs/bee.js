@@ -1,17 +1,17 @@
 import { gsap } from 'gsap';
 import { $, reducedMotion } from '../core/util.js';
 
-/* Once per visit, 30–90s into the conversation, a bee buzzes across the scene.
+/* Once per visit, 30–90s after the board opens, a bee buzzes across the screen.
    Click it before it leaves → onCatch(). Nobody clicks → it just flies away. */
 let armed = false;
 let flying = false;
 
-export function armBee(isTalkScreen, onCatch) {
+export function armBee(isOnBoard, onCatch) {
   if (armed) return;
   armed = true;
   const delay = 30000 + Math.random() * 60000;
   const tryFly = () => {
-    if (!isTalkScreen() || document.hidden) {
+    if (!isOnBoard() || document.hidden) {
       setTimeout(tryFly, 4000);
       return;
     }

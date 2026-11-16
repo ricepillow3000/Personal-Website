@@ -47,7 +47,6 @@ function flipGpa() {
 document.addEventListener('click', (e) => {
   if (e.target.closest?.('.gpa-burst')) flipGpa();
 });
-const bars = { spike: () => {}, flip: flipGpa };
 /* how the next screen change should look; the menu asks for blinds */
 let viaMenu = false;
 const menu = createMenu((id) => {
@@ -275,7 +274,6 @@ function enterBoard() {
 
 function onBee() {
   unlock('bee');
-  bars.spike();
   shake();
   toast('BEE!! Get it away!', 'JOHN');
 }
@@ -494,7 +492,7 @@ function handle(action, e) {
       navigate('quick');
       return true;
     case 'flip':
-      bars.flip();
+      flipGpa();
       return true;
     case 'mute':
       toggleSound();

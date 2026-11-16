@@ -201,25 +201,6 @@ const VOICES = {
   },
   /* glitter after a hit */
   sparkle: (bus, at) => [2637, 3520, 3136, 4186].forEach((f, i) => tone(bus, { at: at + i * 0.04, dur: 0.09, from: f, to: f, type: 'triangle', gain: 0.08 })),
-  /* rising suck-in before a big hit (anticipation) */
-  riser: (bus, at) => {
-    const o = ac.createOscillator();
-    o.type = 'sawtooth';
-    o.frequency.setValueAtTime(140, at);
-    o.frequency.exponentialRampToValueAtTime(900, at + 0.24);
-    const f = ac.createBiquadFilter();
-    f.type = 'lowpass';
-    f.frequency.setValueAtTime(400, at);
-    f.frequency.exponentialRampToValueAtTime(3500, at + 0.24);
-    const g = ac.createGain();
-    g.gain.setValueAtTime(0.0008, at);
-    g.gain.exponentialRampToValueAtTime(0.16, at + 0.2);
-    g.gain.exponentialRampToValueAtTime(0.0008, at + 0.27);
-    o.connect(f).connect(g).connect(bus);
-    o.start(at);
-    o.stop(at + 0.3);
-    VOICES.whoosh(bus, at + 0.04, 0.7);
-  },
   /* the big CLEARED! stamp: deep sub drop + metal "KLANG" + paper smack, then a cartoon victory sting */
   stamp: (bus, at) => {
     tone(bus, { at, dur: 0.7, from: 95, to: 28, type: 'sine', gain: 1.0 }); // sub drop, longer and deeper than a kick
@@ -248,8 +229,6 @@ const VOICES = {
   },
   /* cartoon "zip" for things flying across the screen */
   zip: (bus, at) => tone(bus, { at, dur: 0.2, from: 2600, to: 320, type: 'triangle', gain: 0.18 }),
-  /* ratchet clicks for the blinds transition */
-  ratchet: (bus, at) => { for (let i = 0; i < 6; i++) tone(bus, { at: at + i * 0.028, dur: 0.012, from: 1100 + i * 140, to: 1100 + i * 140, type: 'square', gain: 0.07 }); },
   /* paper sheet sliding */
   paper: (bus, at) => {
     const src = ac.createBufferSource();
@@ -339,8 +318,6 @@ const VOICES = {
     [2637, 3136, 3951].forEach((f, i) => tone(bus, { at: t + 0.52 + i * 0.06, dur: 0.2, from: f, to: f, type: 'sine', gain: 0.05 }));
     tone(bus, { at: t + 0.48, dur: 0.45, from: 98, to: 98, type: 'triangle', gain: 0.18 }); // bass G under the last note
   },
-  /* achievement chime */
-  chime: (bus, at) => [1319, 1976].forEach((f, i) => tone(bus, { at: at + i * 0.09, dur: 0.3, from: f, to: f, type: 'sine', gain: 0.2 })),
   /* WHIP: a lash whooshes in and CRACKS at at+0.11 (schedule it 0.11s before the hit) */
   whip: (bus, at, v = 1) => {
     sweep(bus, at, 450, 5200, 0.11, 0.55 * v, 1.1);
@@ -350,12 +327,6 @@ const VOICES = {
     tone(bus, { at: c, dur: 0.035, from: 2600, to: 900, type: 'square', gain: 0.12 * v });
     tone(bus, { at: c, dur: 0.1, from: 190, to: 60, type: 'sine', gain: 0.7 * v }); // body
     noise(bus, { at: c + 0.045, dur: 0.18, type: 'bandpass', freq: 2400, q: 2, gain: 0.12 * v }); // slap-back
-  },
-  /* glass shards locking: bright tinkle + crack */
-  glass: (bus, at) => {
-    noise(bus, { at, dur: 0.03, type: 'highpass', freq: 3000, q: 0.5, gain: 0.8 });
-    [3520, 4699, 5274, 6272].forEach((f, i) => tone(bus, { at: at + 0.01 + i * 0.022, dur: 0.18, from: f, to: f * 0.99, type: 'sine', gain: 0.07 }));
-    tone(bus, { at, dur: 0.08, from: 260, to: 120, type: 'triangle', gain: 0.35 });
   },
   /* lighter lash for things flying across the screen */
   whipSmall: (bus, at) => VOICES.whip(bus, at, 0.5),
@@ -370,7 +341,7 @@ const VOICES = {
 };
 
 /** Play a named SFX. UI uses hover/select/back/toggle/menu*; transitions use swish/thwack/
-    riser/stamp/zip/thunk/sparkle/ratchet/paper/tear/chime. Drum names stay for the music.
+    stamp/zip/thunk/sparkle/paper/rip/whip/fanfare/treasure. Drum names stay for the music.
     `dur` is only used by tear (seconds of ripping). */
 export function sfx(name, dur) {
   if (!enabled() || !ensure()) return;
@@ -703,12 +674,6 @@ export function setMusicVolume(v) {
   if (musicBus) musicBus.gain.setTargetAtTime(v * 0.6, ac.currentTime, 0.05);
 }
 
-/** Music gets quieter while John's lines type. */
-export function duck(on) {
-  if (!musicBus) return;
-  const v = store.get().settings.music * 0.6;
-  musicBus.gain.setTargetAtTime(on ? v * 0.45 : v, ac.currentTime, 0.12);
-}
 
 export function setSound(on) {
   store.setSetting('sound', on);

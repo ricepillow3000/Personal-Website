@@ -9,7 +9,7 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 .kin .k { display: inline-block; }
 .kin .k-first { font-size: 1.32em; line-height: .8; }
 .kin .k-inv { background: var(--black); color: var(--white); padding: 0 .07em; margin: 0 .03em; transform: rotate(-5deg); }
-.edge .kin .k-inv, .calling .kin .k-inv { background: var(--white); color: var(--black); }
+ .calling .kin .k-inv { background: var(--white); color: var(--black); }
 .kin .k-sp { display: inline-block; width: .28em; }
 
 /* pins */
@@ -121,16 +121,13 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 .case-open { font-size: 18px !important; padding: 5px 12px 4px !important; }
 .case-open { font-size: 20px; box-shadow: 4px 4px 0 var(--red); }
 .case-link { font-weight: 800; font-size: 14px; color: var(--black); text-underline-offset: 3px; }
-.case .stamp-cleared { right: 18px; top: 58px; font-size: 18px; }
+
 .case.lit { transform: rotate(0) scale(1.02); box-shadow: 8px 8px 0 var(--red); }
 .board-focus .case:not(.lit) { opacity: .78; }
 
-.edge { position: relative; margin-top: 34px; padding: 22px 24px 18px; background: var(--black); color: var(--white); border-left: 8px solid var(--red); transform: rotate(-.6deg); box-shadow: 6px 6px 0 rgba(0, 0, 0, .4); }
-.edge h3, .note-about h3, .note-quests h3 { margin: 0 0 12px; font-size: 30px; font-weight: 400; color: var(--black); }
-.edge h3 { color: var(--white); }
-.edge h3 .k-first, .note-about h3 .k-first, .note-quests h3 .k-first { color: var(--red); }
-.edge ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14.5px; line-height: 1.45; }
-.edge b { color: var(--yellow); font-family: var(--f-head); font-weight: 400; font-size: 16px; letter-spacing: .4px; }
+ .note-about h3, .note-quests h3 { margin: 0 0 12px; font-size: 30px; font-weight: 400; color: var(--black); }
+
+ .note-about h3 .k-first, .note-quests h3 .k-first { color: var(--red); }
 
 /* right column: index cards + calling card */
 .col-notes { display: grid; gap: 30px; }
@@ -138,14 +135,12 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 .note-about { transform: rotate(1.2deg); }
 .note-quests { transform: rotate(-1deg); }
 .note-about p { margin: 0 0 8px; }
-.about-stats { display: flex; gap: 20px; margin: 4px 0 8px; }
-.about-stats span { font-family: var(--f-menu); font-size: 14px; letter-spacing: 1px; line-height: 1; transform: skewX(-9deg); }
-.about-stats b { display: block; font-family: var(--f-head); font-weight: 400; font-size: 34px; color: var(--red); }
+
 .note-about ul, .note-quests ul { margin: 0; padding-left: 18px; }
 .note-quests li { margin-bottom: 6px; }
 .note-quests li b { font-family: var(--f-head); font-weight: 400; font-size: 16px; letter-spacing: .4px; }
 .note-quests li span { color: #555; font-size: 13px; }
-.note-more { display: inline-block; margin-top: 4px; font-weight: 800; color: var(--red-dark); }
+
 .calling {
   position: relative; padding: 20px 20px 18px; background: var(--black); color: var(--white); border: 4px solid var(--white);
   box-shadow: 8px 8px 0 var(--red); transform: rotate(.8deg); display: grid; gap: 8px; justify-items: start;
@@ -154,7 +149,6 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 
 /* keep the HUD bars from covering the board on shorter screens */
 body[data-mode="board"] .keyhints { display: none; }
-
 
 /* ===================== CARTOON CARD KIT =====================
    Shared by every box on the board so it reads as one illustrated piece:
@@ -177,10 +171,9 @@ body[data-mode="board"] .keyhints { display: none; }
   transform: rotate(0deg) translate(-3px, -6px) !important;
   box-shadow: -11px 12px 0 -3px var(--sheet), -11px 12px 0 1px var(--ink), 14px 16px 0 0 var(--pop), 22px 25px 0 0 var(--ink);
 }
-.ruled { background-image: repeating-linear-gradient(180deg, transparent 0 25px, rgba(0, 90, 180, .13) 25px 26px); background-color: #FFFDF5; }
+
 .tape { position: absolute; top: -14px; left: 14%; width: 86px; height: 26px; z-index: 4; background: rgba(255, 255, 255, .62); border: 1px solid rgba(0, 0, 0, .12); transform: rotate(-5deg); }
 .roster.card-pop { transform: rotate(-.6deg); padding: 20px 28px 20px 20px; }
-.edge.card-pop { border-left-width: 4px; }
 
 /* cartoon buttons: chunky, press down when clicked */
 .btn-cartoon {
@@ -222,7 +215,6 @@ body[data-mode="board"] .keyhints { display: none; }
 .case-fold { position: absolute; right: -4px; bottom: -4px; width: 34px; height: 34px; background: linear-gradient(135deg, #CFC8B4 0 48%, var(--black) 48% 54%, transparent 54%); pointer-events: none; }
 .case-link { font-family: var(--f-head); font-weight: 400; font-size: 15px; letter-spacing: .4px; }
 
-
 /* ----- THE PERSON + SIDE QUESTS, cartoon edition ----- */
 .note-about.card-pop, .note-quests.card-pop { padding: 0 18px 20px; background: #F7F4EA; overflow: visible; }
 .note-band {
@@ -258,11 +250,9 @@ body[data-mode="board"] .keyhints { display: none; }
 .quest-no span { font-family: var(--f-head); font-size: 22px; color: var(--white); transform: skewX(-10deg); -webkit-text-stroke: 1.5px var(--black); paint-order: stroke fill; text-shadow: 2px 2px 0 var(--black); }
 .quest-title { display: block; font-family: var(--f-head); font-weight: 400; font-size: 18px; line-height: 1.05; letter-spacing: .3px; transform: skewX(-8deg); transform-origin: left; }
 .quest-place { display: block; font-size: 12px; font-weight: 800; color: #555; margin: 2px 0 6px; }
-.quest-lesson { display: block; margin-top: 4px; font-size: 13px; font-weight: 800; line-height: 1.5; color: var(--black); }
-.quest-done { position: absolute; top: 8px; right: 8px; font-family: var(--f-head); font-size: 12px; letter-spacing: 1px; color: var(--red); border: 3px solid var(--red); background: var(--white); padding: 1px 6px; transform: rotate(10deg); }
+
 .quest-more { font-size: 16px !important; text-decoration: none; }
 .quest .quest-title, .quest .quest-place { padding-right: 58px; }
-
 
 /* ----- CALLING CARD: a cream paper notice (deliberately unlike the red/black menu) ----- */
 .calling.card-pop {
@@ -294,7 +284,6 @@ body[data-mode="board"] .keyhints { display: none; }
 .calling-row a:hover, .calling-row a:focus-visible { color: var(--red); }
 .calling.card-pop:hover { transform: rotate(0) translate(-3px, -6px) !important; }
 
-
 /* ----- CALLING-CARD STYLE, mixed into other boxes (.cc) ----- */
 .card-pop.cc {
   --sheet: var(--black); --pop: var(--white);
@@ -306,16 +295,8 @@ body[data-mode="board"] .keyhints { display: none; }
 .cc-star { position: absolute; right: -50px; bottom: -46px; width: 220px; height: 220px; background: var(--black); opacity: .85; pointer-events: none; transform: rotate(14deg);
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
 .cc > *:not(.cc-star):not(.cc-chart):not(.cc-bolt):not(.pin):not(.case-grade):not(.stamp):not(.case-fold):not(.clear-stamp):not(.cc-deco) { position: relative; z-index: 1; }
-.cc-banner { margin: 0 -24px 14px; padding: 12px 24px 18px; background: var(--black); clip-path: polygon(0 0, 100% 0, 100% 70%, 76% 100%, 58% 78%, 30% 96%, 0 80%); }
-.cc-banner h3 { margin: 0 !important; color: var(--white) !important; }
-.cc-banner .kin .k-first { color: var(--red) !important; }
-.cc-banner .kin .k-inv { background: var(--white); color: var(--black); }
 
 /* What makes me different, red edition */
-.edge.cc { padding: 0 24px 22px; border-left-width: 4px; }
-.edge.cc ol { position: relative; z-index: 1; }
-.edge.cc li { text-shadow: 1px 1px 0 rgba(5, 5, 5, .6); }
-.edge.cc b { color: var(--yellow); text-shadow: 2px 2px 0 var(--black); }
 
 /* Case 02, red edition */
 .case.cc .case-no { background: var(--white); color: var(--black); }
@@ -330,7 +311,6 @@ body[data-mode="board"] .keyhints { display: none; }
 
 /* Skills roster: red halftone corner wedge */
 .roster.card-pop { background-image: linear-gradient(150deg, transparent 72%, var(--red) 72%), radial-gradient(rgba(255, 255, 255, .1) 1.6px, transparent 2.2px); background-size: 100% 100%, 9px 9px; }
-
 
 /* Case 01 (v1): same red family, different interior */
 .case.cc.v1 { background-image: radial-gradient(rgba(5, 5, 5, .3) 1.4px, transparent 2px), linear-gradient(200deg, transparent 60%, rgba(5, 5, 5, .55) 60%); background-size: 7px 7px, 100% 100%; }
@@ -350,28 +330,7 @@ body[data-mode="board"] .keyhints { display: none; }
 .case.cc.v1 .case-name { font-family: var(--f-type); font-weight: 700; letter-spacing: 0; }
 .case.cc.v1 .case-open { background: var(--black); color: var(--white); box-shadow: 0 6px 0 var(--white), 0 6px 0 3px var(--black); }
 
-
 /* What makes me different: own interior (white banner, bolt watermark, tile grid) */
-.edge.edge-v { background-image: radial-gradient(rgba(5, 5, 5, .28) 1.8px, transparent 2.4px), linear-gradient(110deg, rgba(5, 5, 5, .5) 0 18%, transparent 18%); background-size: 11px 11px, 100% 100%; }
-.cc-bolt { position: absolute; right: 4%; top: 6%; width: 170px; height: 270px; pointer-events: none; transform: rotate(12deg); }
-.cc-bolt polygon { fill: rgba(5, 5, 5, .55); stroke: rgba(255, 255, 255, .35); stroke-width: 2; }
-.cc-banner.light { background: var(--white); }
-.cc-banner.light h3 { color: var(--black) !important; }
-.cc-banner.light .kin .k-inv { background: var(--black); color: var(--white); }
-.edge-grid { list-style: none; margin: 0; padding: 0 !important; display: grid !important; grid-template-columns: 1fr 1fr; gap: 16px 18px !important; }
-.edge-tile {
-  position: relative; padding: 14px 14px 12px 48px; background: var(--black); color: var(--white); border: 3px solid var(--white);
-  box-shadow: 5px 5px 0 var(--black); transform: rotate(var(--et, -1deg)) skewX(-3deg); text-shadow: none !important; transition: transform .15s var(--ease-pop);
-}
-.edge-tile:nth-child(2) { --et: 1.2deg; }
-.edge-tile:nth-child(3) { --et: .6deg; }
-.edge-tile:nth-child(4) { --et: -1.4deg; }
-.edge-tile:hover { transform: rotate(0) skewX(-3deg) scale(1.03); }
-.edge-no { position: absolute; left: -16px; top: -16px; width: 52px; height: 52px; display: grid; place-items: center; background: var(--yellow);
-  clip-path: polygon(50% 0, 63% 26%, 95% 20%, 76% 46%, 100% 70%, 68% 72%, 62% 100%, 46% 78%, 18% 96%, 24% 66%, 0 48%, 28% 36%, 14% 8%, 40% 22%); }
-.edge-no span { font-family: var(--f-head); font-size: 24px; color: var(--black); transform: skewX(-10deg); }
-.edge-tile b { display: block; margin-bottom: 4px; color: var(--yellow) !important; font-family: var(--f-head) !important; font-weight: 400; font-size: 19px !important; line-height: 1.05; text-shadow: none !important; }
-.edge-fact { display: block; font-size: 13.5px; line-height: 1.4; color: #EDEDED; }
 
 /* ===================== PHONES ===================== */
 @media (max-width: 1100px) {
@@ -389,26 +348,24 @@ body[data-mode="board"] .keyhints { display: none; }
   .hint-desk { display: none; }
   .hint-phone { display: inline; }
   .col-notes { grid-template-columns: 1fr; }
-  .edge-grid { grid-template-columns: 1fr; }
-  .cc-banner h3 { font-size: 23px !important; }
-  .cc-banner .kin { white-space: normal; }
+  
+  
+  
   .col-label { flex-wrap: wrap; }
   .col-label .ransom { font-size: 28px; flex-wrap: nowrap; }
   .card-pop { box-shadow: -6px 6px 0 -3px var(--sheet), -6px 6px 0 1px var(--ink), 7px 8px 0 0 var(--pop), 11px 12px 0 0 var(--ink); }
   .case-grade { right: -8px; }
-  body[data-mode="board"] .hud-bars { display: none; }
+  
 }
 
 /* ----- side quest REWARD: bright highlighter text + a red reward tag (no black boxes) ----- */
 .ql-tag { display: inline-block; margin-right: 6px; padding: 0 7px; font-family: var(--f-head); font-weight: 400; font-size: 12px; letter-spacing: 1px; background: var(--red); color: var(--white); transform: rotate(-4deg) skewX(-10deg); box-shadow: 2px 2px 0 var(--black); vertical-align: 1px; }
 .ql-text { background: linear-gradient(transparent 14%, var(--yellow) 14% 90%, transparent 90%); -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 0 3px; }
-.note-quests .quest .quest-lesson, .note-quests .quest .quest-lesson .ql-text { color: var(--black); font-size: 13px; }
-.note-quests .quest .quest-lesson .ql-tag { color: var(--white); font-size: 12px; }
 
 /* ----- fit pass: nothing on the cards gets cropped any more ----- */
 .cc { overflow: visible !important; }
 .cc-deco { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
-.case .pin, .edge .pin { top: -12px; z-index: 6; }
+.case .pin{ top: -12px; z-index: 6; }
 .case-grade { top: -26px; right: -18px; }
 /* tighter cards (~10% shorter): less padding and spacing, cards size to their own content */
 .case.card-pop { padding: 22px 20px 18px; }
@@ -420,7 +377,7 @@ body[data-mode="board"] .keyhints { display: none; }
 .case.cc:has(> .clear-stamp) { padding-bottom: 58px; }
 .case > .clear-stamp, .case.cc > .clear-stamp { right: 10px; bottom: 8px; }
 /* the GPA / apps box repeats what the board already shows, and covered the skills list */
-body[data-mode="board"] .hud-bars { display: none; }
+
 @media (max-width: 760px) {
   .case-grade { right: -2px; top: -22px; width: 78px; height: 78px; }
   .case-grade span { width: 66px; height: 66px; font-size: 34px; }

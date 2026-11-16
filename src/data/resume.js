@@ -38,18 +38,6 @@ export const resume = {
     honors: "Dean's List: Fall 2025, Spring 2026"
   },
 
-  /* HUD bars: real proof by default, fun stats on the flip side. */
-  bars: {
-    proof: [
-      { label: 'GPA', value: 3.88, max: 4, text: '3.88' },
-      { label: 'APPS', value: 2, max: 2, text: '2 LIVE' }
-    ],
-    fun: [
-      { label: 'DRUMS', value: 200, max: 240, text: '200+ BPM' },
-      { label: 'BEE FEAR', value: 1, max: 1, text: 'MAX' }
-    ]
-  },
-
   missions: [
     {
       id: 'meliona',

@@ -63,7 +63,6 @@
   border: 4px solid var(--red); padding: 3px 9px 2px; transform: rotate(-12deg);
   background: rgba(245, 245, 240, .82); letter-spacing: 1px;
 }
-.stamp-cleared { position: absolute; font-size: 18px; }
 
 /* ============ HUD ============ */
 .hud-tl {
@@ -107,31 +106,6 @@ body[data-screen="title"] .hud-tl .hud-meta { display: none; }
 .wiggle { animation: wiggle .6s ease 2; }
 @keyframes wiggle { 25% { transform: skew(var(--skew)) rotate(-12deg) scale(1.15); } 75% { transform: skew(var(--skew)) rotate(10deg) scale(1.15); } }
 body[data-screen="title"] #menuBtn, body[data-screen="title"] #achBtn { display: none; }
-
-.hud-bars {
-  position: fixed; left: var(--gutter); bottom: 14px; z-index: 40; width: 270px;
-  border: 0; padding: 0; background: none; text-align: left; perspective: 600px;
-}
-.bars-card { position: relative; transform-style: preserve-3d; transition: transform .4s var(--ease-pop); }
-.hud-bars.flipped .bars-card { transform: rotateX(180deg); }
-.bars-face {
-  backface-visibility: hidden; -webkit-backface-visibility: hidden;
-  background: var(--black); padding: 8px 14px 9px; transform: skew(var(--skew));
-  box-shadow: 5px 5px 0 var(--white); display: grid; gap: 5px;
-}
-.bars-back { position: absolute; inset: 0; transform: rotateX(180deg) skew(var(--skew)); box-shadow: 5px 5px 0 var(--yellow); }
-.bar-row { display: grid; grid-template-columns: 74px 1fr; align-items: baseline; gap: 0 8px; transform: skew(calc(var(--skew) * -1)); }
-.bar-label { font-family: var(--f-serif); font-weight: 900; font-size: 15px; line-height: 1; }
-.bar-track { grid-column: 2; height: 4px; background: #2f2f2f; overflow: hidden; margin-top: 2px; }
-.bar-fill { display: block; height: 100%; background: #3FE6D0; }
-.bar-row.c1 .bar-fill { background: #FF4FD8; }
-.bar-row.c0 .bar-val { color: #3FE6D0; }
-.bar-row.c1 .bar-val { color: #FF4FD8; }
-.bars-back .bar-fill { background: var(--yellow) !important; }
-.bars-back .bar-val { color: var(--yellow) !important; }
-.bar-val { font-family: var(--f-head); font-size: 24px; line-height: 1; color: var(--yellow); white-space: nowrap; transform: skewX(-12deg); }
-.bars-flip-hint { position: absolute; right: -8px; top: -12px; font-size: 14px; background: var(--white); color: var(--black); border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; font-weight: 800; transform: none; box-shadow: 2px 2px 0 var(--black); }
-body[data-screen="title"] .hud-bars, body[data-mode="page"] .hud-bars, body[data-mode="quick"] .hud-bars { display: none; }
 
 .keyhints {
   position: fixed; right: var(--gutter); bottom: 12px; z-index: 39; pointer-events: none;
@@ -327,9 +301,8 @@ body.reduce-motion .cs-star { animation: none; }
 }
 
 /* ============ HUD gets out of the way while scrolling ============ */
-.hud-tl, .hud-bars { transition: translate .2s cubic-bezier(.6, -.5, .7, 1), transform .3s, opacity .3s; }
+.hud-tl{ transition: translate .2s cubic-bezier(.6, -.5, .7, 1), transform .3s, opacity .3s; }
 body.scrolled .hud-tl { translate: 0 -260px; transition: translate .18s cubic-bezier(.6, -.6, .8, .6), transform .3s, opacity .3s; }
-body.scrolled .hud-bars { translate: calc(-100% - 60px) 0; pointer-events: none; }
 
 /* small star bullet (replaces emoji icons) */
 .ff-star { display: inline-block; flex: none; width: 14px; height: 14px; margin-right: 8px; vertical-align: -1px; background: var(--red);
@@ -441,9 +414,9 @@ body.scrolled .hud-bars { translate: calc(-100% - 60px) 0; pointer-events: none;
 body { font-weight: 500; letter-spacing: .15px; }
 b, strong { font-weight: 700; }
 .skill-name { font-family: var(--f-ui) !important; font-style: italic; font-weight: 700 !important; font-size: 18px !important; text-transform: uppercase; letter-spacing: .4px; }
-.bar-label { font-family: var(--f-ui) !important; font-style: italic; font-weight: 800 !important; letter-spacing: .5px; }
+
 .crew-name { font-family: var(--f-ui); font-style: italic; font-weight: 700; font-size: 21px; text-transform: uppercase; letter-spacing: .4px; }
-.person-degree, .id-info p, .panel p, .stop-card ul, .poster-brief, .bubble-say, .edge-tile p, .quest-place, .person-facts { font-family: var(--f-body); }
+.person-degree, .id-info p, .panel p, .stop-card ul, .poster-brief, .bubble-say, .quest-place, .person-facts { font-family: var(--f-body); }
 .quest-place, .case-name span { font-family: var(--f-ui); font-style: italic; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
 .ql-text { font-family: var(--f-ui); font-style: italic; font-weight: 700; letter-spacing: .3px; font-size: 14.5px; }
 .calling-row, .crew-say, .id-chips, .trait { font-family: var(--f-ui); font-weight: 700; letter-spacing: .3px; }
