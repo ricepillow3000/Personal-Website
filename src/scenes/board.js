@@ -107,10 +107,13 @@ export function boardMarkup(ctx) {
     <section class="col col-cases" aria-label="Projects">
       <h2 class="col-label" data-board-item><span class="ransom" data-ransom="CASE FILES"></span><small>2 live apps</small></h2>
       <div class="cases">${missions.map(caseCard).join('')}</div>
-      <div class="edge card-pop cc" data-board-item>${pin}
-        <span class="cc-star" aria-hidden="true"></span>
-        <div class="cc-banner"><h3>${kin('WHAT MAKES ME DIFFERENT', 5)}</h3></div>
-        <ol>${resume.different.map((d) => `<li><b>${esc(d.title)}.</b> ${esc(d.fact)}</li>`).join('')}</ol>
+      <div class="edge card-pop cc edge-v" data-board-item>${pin}
+        <svg class="cc-bolt" viewBox="0 0 100 160" aria-hidden="true"><polygon points="62,0 14,88 46,88 30,160 88,62 54,62 76,0"/></svg>
+        <div class="cc-banner light"><h3>${kin('WHAT MAKES ME DIFFERENT', 5)}</h3></div>
+        <ol class="edge-grid">${resume.different
+          .map((d, i) => `<li class="edge-tile"><span class="edge-no" aria-hidden="true"><span>${i + 1}</span></span>
+            <b>${esc(d.title)}</b><span class="edge-fact">${esc(d.fact)}</span></li>`)
+          .join('')}</ol>
       </div>
     </section>
 
