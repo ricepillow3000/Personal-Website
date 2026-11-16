@@ -231,7 +231,7 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
 
   root.querySelectorAll('.skill').forEach((el) => {
     const on = () => {
-      sfx('hat');
+      sfx('hover');
       highlight('skill', el.dataset.skill);
     };
     el.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && on());

@@ -69,7 +69,7 @@ export function slashWipe(swap) {
   const tl = gsap.timeline();
   tl.set(wipe, { visibility: 'visible' })
     .add(() => {
-      sfx('whoosh');
+      sfx('swish');
       parallaxWhip(dir);
     }, 0)
     .to(old, { x: X(-120), skewX: X(12), duration: 0.22, ease: 'power3.in' }, 0)
@@ -81,7 +81,7 @@ export function slashWipe(swap) {
     .add(() => {
       if (old) gsap.set(old, { clearProps: 'transform' });
       swap();
-      sfx('kick');
+      sfx('thwack', 0.6);
       whipIn($('.screen.active'), dir);
     }, 0.27)
     .to(black, { xPercent: X(120), duration: 0.3, ease: 'expo.out' }, 0.31)
@@ -103,7 +103,7 @@ export function titlePunch(text) {
     .fromTo(star, { scale: 0.1, rotation: -40 }, { scale: 1, rotation: 0, duration: 0.14, ease: 'expo.out' }, 0.03)
     .fromTo('#punchText', { scale: 3.2, rotation: -22, x: 0 }, { scale: 1, rotation: -8, duration: 0.14, ease: 'power4.in' }, 0.06)
     .add(() => {
-      sfx('snare');
+      sfx('thwack');
       shake(punch);
     }, 0.2)
     .to('#punchText', { scale: 1.08, duration: 0.06, ease: 'power2.out' }, 0.2)
@@ -132,7 +132,7 @@ export function cutIn(text = '') {
     .fromTo('#cutinText', { x: 160, skewX: -20, opacity: 0 }, { x: 0, skewX: 0, opacity: 1, duration: 0.16, ease: 'expo.out' }, 0.08)
     .fromTo('#cutinEyes', { x: -30 }, { x: 10, duration: 0.45, ease: 'none' }, 0.1)
     .add(() => {
-      sfx('snare');
+      sfx('thwack', 0.8);
       shake($('.screen.active') || document.body);
     }, 0.12)
     .to('.cutin-strip', { xPercent: 130, scaleY: 0.3, duration: 0.16, ease: 'expo.in' }, '+=0.22')
@@ -291,7 +291,8 @@ export function ripTransition(swap) {
   tug(1, 0.38, 0.84); //   all the way to the top-left
   tl.to(tip, { scale: 0, duration: 0.1, ease: 'power2.in' }, 1.22)
     .to(st, { g: 1.9, duration: 0.08, ease: 'power2.out', onUpdate: draw }, 1.22) // anticipation: pieces pull apart
-    .add(() => sfx('kick'), 1.3)
+    .add(() => sfx('zip'), 1.26)
+    .add(() => sfx('thwack'), 1.42)
     .to(up.wrap, { x: W * 0.12, y: -H * 0.95, rotation: 13, transformOrigin: '0% 0%', duration: 0.38, ease: 'power4.in' }, 1.3)
     .to(low.wrap, { x: -W * 0.06, y: H * 1.05, rotation: -7, transformOrigin: '100% 100%', duration: 0.42, ease: 'power4.in' }, 1.33);
   return track(tl);
@@ -318,10 +319,92 @@ export function slam(el) {
   gsap.timeline()
     .fromTo(el, { scale: 3.4, opacity: 0, rotation: -40 }, { scale: 0.92, opacity: 1, rotation: -12, duration: 0.16, ease: 'power4.in' })
     .add(() => {
-      sfx('snare');
+      sfx('thunk');
       const r = el.getBoundingClientRect();
       burst(r.left + r.width / 2, r.top + r.height / 2, 1.1);
       shake(el.parentElement);
     })
     .to(el, { scale: 1, duration: 0.3, ease: 'elastic.out(1.4, .4)' });
+}
+
+
+/* ---------------------------------------------------------------------------------
+   Variety: not every move uses the slash. Each kind of destination has its own wipe.
+   --------------------------------------------------------------------------------- */
+function layer(cls, html) {
+  let el = document.querySelector(`.${cls}`);
+  if (!el) {
+    el = document.createElement('div');
+    el.className = `fxw ${cls}`;
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = html;
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+/** BLINDS (menu + settings): slanted slats snap shut from alternating sides, then open. (~0.6s) */
+export function blindsWipe(swap) {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const N = 7;
+  const el = layer('blinds', Array.from({ length: N }, (_, i) => `<i style="--i:${i}"></i>`).join(''));
+  const slats = [...el.children];
+  const tl = gsap.timeline();
+  tl.set(el, { visibility: 'visible' })
+    .add(() => sfx('ratchet'), 0)
+    .fromTo(slats, { xPercent: (i) => (i % 2 ? 110 : -110) }, { xPercent: 0, duration: 0.2, ease: 'power4.in', stagger: 0.025 }, 0)
+    .add(() => {
+      swap();
+      sfx('thunk');
+      shake(el);
+    }, 0.36)
+    .to(slats, { xPercent: (i) => (i % 2 ? -110 : 110), duration: 0.24, ease: 'expo.out', stagger: { each: 0.025, from: 'end' } }, 0.42)
+    .set(el, { visibility: 'hidden' });
+  return track(tl);
+}
+
+/** PAPER (Quick View): a white sheet with a torn top edge slides up over the screen and off. (~0.65s) */
+export function paperWipe(swap) {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const el = layer('paperw', '<div class="paperw-sheet"><span class="paperw-lines"></span></div>');
+  const sheet = el.firstElementChild;
+  const tl = gsap.timeline();
+  tl.set(el, { visibility: 'visible' })
+    .add(() => sfx('paper'), 0)
+    .fromTo(sheet, { yPercent: 115, rotation: 4 }, { yPercent: 0, rotation: 0, duration: 0.26, ease: 'power3.in' }, 0)
+    .add(() => {
+      swap();
+      sfx('thunk');
+    }, 0.27)
+    .to(sheet, { yPercent: -120, rotation: -3, duration: 0.32, ease: 'expo.in' }, 0.34)
+    .set(el, { visibility: 'hidden' });
+  return track(tl);
+}
+
+/** STAR IRIS (back to the board): a black star spins open over the screen, then spins away. (~0.6s) */
+export function irisWipe(swap) {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const el = layer('iris', '<div class="iris-star"></div><div class="iris-star red"></div>');
+  const [black, red] = el.children;
+  const tl = gsap.timeline();
+  tl.set(el, { visibility: 'visible' })
+    .add(() => sfx('back'), 0)
+    .fromTo(red, { scale: 0, rotation: -90 }, { scale: 1.15, rotation: 0, duration: 0.22, ease: 'power3.in' }, 0)
+    .fromTo(black, { scale: 0, rotation: -120 }, { scale: 1, rotation: 0, duration: 0.24, ease: 'power3.in' }, 0.04)
+    .add(() => {
+      swap();
+      sfx('thwack', 0.7);
+    }, 0.29)
+    .to([black, red], { scale: 0, rotation: 140, duration: 0.28, ease: 'expo.in', stagger: 0.04 }, 0.34)
+    .set(el, { visibility: 'hidden' });
+  return track(tl);
 }
