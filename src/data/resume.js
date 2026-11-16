@@ -146,7 +146,7 @@ export const resume = {
     }
   ],
 
-  funFacts: ['I play drums (200+ BPM on a good day).', 'Favorite band: Pierce the Veil.', 'Genuinely scared of bees and wasps.'],
+  funFacts: ['I play drums (200+ BPM on a good day).', 'I love Pierce The Veil.', 'Genuinely scared of bees and wasps.'],
 
   skillsLine: ['Python', 'JavaScript', 'Flask', 'Docker', 'Git', 'GitHub Actions (CI/CD)', 'Claude Code (multi-agent workflows)', 'AI Evaluation'],
 

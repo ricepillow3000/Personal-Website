@@ -122,7 +122,7 @@ export function boardMarkup(ctx) {
           <span class="sticker s1">Dean's List ×2</span>
           <span class="sticker s2">${esc(e.grad)}</span>
         </div>
-        <p class="bubble-say person-facts">${[resume.funFacts[0], resume.funFacts[2]].filter(Boolean).map((f) => `<span><i class="ff-star" aria-hidden="true"></i>${esc(f)}</span>`).join('')}</p>
+        <p class="bubble-say person-facts">${resume.funFacts.map((f) => `<span><i class="ff-star" aria-hidden="true"></i>${esc(f)}</span>`).join('')}</p>
       </article>
       <article class="note note-quests card-pop" data-board-item>${pin}
         <div class="note-band"><h3>${kin('SIDE QUESTS', 2)}</h3></div>
