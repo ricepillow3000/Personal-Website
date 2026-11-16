@@ -84,7 +84,7 @@ export function boardMarkup(ctx) {
   const skills = reorder(resume.skills, ctx.company?.order?.skills);
   const note = ctx.company
     ? `<aside class="note note-company card-pop" data-board-item>${pin}<b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you. Pick any skill to see where I used it.</aside>`
-    : `<aside class="note note-hint card-pop" data-board-item>${pin}<b>How to read this board:</b> <span class="hint-desk">hover any skill. The red string shows which project proves it.</span><span class="hint-phone">tap any skill to light up the project that proves it.</span></aside>`;
+    : `<aside class="note note-hint note-case0 card-pop" data-board-item>${pin}<b class="c0-tag">CASE 00 · THIS SITE</b> Resumes are boring, so I directed 3 AI agents to build mine as a game. <span class="hint-desk">Hover a skill: the string finds the proof.</span><span class="hint-phone">Tap a skill: it lights the proof.</span></aside>`;
 
   return `
   <header class="board-head" data-board-item>
@@ -92,6 +92,7 @@ export function boardMarkup(ctx) {
       <h1 class="ransom" id="boardName"></h1>
       <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
       <div class="progress-chip" id="progressChip" role="status"></div>
+      <span class="board-status">${esc(resume.status)} · GSU · ${esc(resume.education.grad)}</span>
     </div>
     <p class="board-hook">${esc(resume.role)}. ${esc(resume.hook)}</p>
     ${note}
@@ -101,21 +102,13 @@ export function boardMarkup(ctx) {
     <svg class="strings" id="strings" aria-hidden="true"></svg>
 
     <section class="col col-skills" aria-label="Skills">
-      <h2 class="col-label" data-board-item><span class="ransom" data-ransom="SKILLS"></span><small>rank · proof</small></h2>
+      <h2 class="col-label" data-board-item><span class="ransom" data-ransom="SKILLS"></span><small>RK rank · IN projects</small>${(store.get().lit || []).length ? '' : '<span class="try-one" aria-hidden="true">TRY ONE ↓</span>'}</h2>
       ${roster(skills)}
     </section>
 
     <section class="col col-cases" aria-label="Projects">
       <h2 class="col-label" data-board-item><span class="ransom" data-ransom="CASE FILES"></span><small>2 live apps</small></h2>
       <div class="cases">${missions.map(caseCard).join('')}</div>
-      <div class="edge card-pop cc edge-v" data-board-item>${pin}
-        <span class="cc-deco" aria-hidden="true"><svg class="cc-bolt" viewBox="0 0 100 160"><polygon points="62,0 14,88 46,88 30,160 88,62 54,62 76,0"/></svg></span>
-        <div class="cc-banner light"><h3>${kin('WHAT MAKES ME DIFFERENT', 5)}</h3></div>
-        <ol class="edge-grid">${resume.different
-          .map((d, i) => `<li class="edge-tile"><span class="edge-no" aria-hidden="true"><span>${i + 1}</span></span>
-            <b>${esc(d.title)}</b><span class="edge-fact">${esc(d.fact)}</span></li>`)
-          .join('')}</ol>
-      </div>
     </section>
 
     <section class="col col-notes" aria-label="About and contact">
@@ -129,16 +122,14 @@ export function boardMarkup(ctx) {
           <span class="sticker s1">Dean's List ×2</span>
           <span class="sticker s2">${esc(e.grad)}</span>
         </div>
-        <p class="bubble-say person-facts">${resume.funFacts.map((f, i) => `<span><i class="ff-star" aria-hidden="true"></i>${esc(f)}</span>`).join('')}</p>
+        <p class="bubble-say person-facts">${[resume.funFacts[0], resume.funFacts[2]].filter(Boolean).map((f) => `<span><i class="ff-star" aria-hidden="true"></i>${esc(f)}</span>`).join('')}</p>
       </article>
       <article class="note note-quests card-pop" data-board-item>${pin}
         <div class="note-band"><h3>${kin('SIDE QUESTS', 2)}</h3></div>
         <ol class="quest-log">${resume.sideQuests
-          .map((q, i) => `<li class="quest">
+          .map((q, i) => `<li class="quest quest-mini">
             <span class="quest-no" aria-hidden="true"><span>${i + 1}</span></span>
-            <div><b class="quest-title">${esc(q.title)}</b><span class="quest-place">${esc(q.place)}</span>
-            <span class="quest-lesson"><b class="ql-tag">REWARD ★</b><span class="ql-text">${esc(q.lesson)}</span></span></div>
-            <span class="quest-done" aria-hidden="true">CLEAR</span></li>`)
+            <div><b class="quest-title">${esc(q.title)}</b><span class="quest-place">${esc(q.place)}</span></div></li>`)
           .join('')}</ol>
         <a class="btn-cartoon quest-more" href="#/side-quests" data-nav>FULL STORY ▸</a>
       </article>
@@ -146,7 +137,7 @@ export function boardMarkup(ctx) {
         <span class="calling-tape" aria-hidden="true"></span>
         <p class="calling-to">To ${esc(ctx.company ? ctx.company.name : 'the one reading this')},</p>
         <h3 class="calling-title ransom" data-ransom="YOUR MOVE."></h3>
-        <p class="calling-msg">You've seen the cases. You've seen the receipts. If you want to talk, I'm easy to find.</p>
+        <p class="calling-msg">Boring resume: fixed. Got a problem like that? I'm easy to find.</p>
         <p class="calling-sign">— ${esc(resume.name)}</p>
         <span class="calling-seal" aria-hidden="true"><span>J</span></span>
         <a class="btn-cartoon cta" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">Connect on LinkedIn ↗</a>
@@ -201,7 +192,7 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
   }
 
   /* ---------- highlight logic ---------- */
-  function highlight(kind, id) {
+  function highlight(kind, id, { silent = false } = {}) {
     root.classList.toggle('board-focus', Boolean(id));
     root.querySelectorAll('.string').forEach((p) => p.classList.toggle('lit', Boolean(id) && p.dataset[kind] === id));
     const skills = new Set();
@@ -216,7 +207,8 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
     }
     root.querySelectorAll('[data-skill].skill').forEach((el) => el.classList.toggle('lit', skills.has(el.dataset.skill)));
     root.querySelectorAll('.case').forEach((el) => el.classList.toggle('lit', cases.has(el.dataset.case)));
-    if (kind === 'skill' && id && !lit.has(id)) {
+    if (kind === 'skill' && id && !silent) root.querySelector('.try-one')?.remove();
+    if (kind === 'skill' && id && !lit.has(id) && !silent) {
       lit.add(id);
       store.addTo('lit', id);
       if (resume.skills.every((s) => lit.has(s.id))) onAllStringsLit?.();
@@ -288,7 +280,16 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
     return tl;
   }
 
-  return { reveal, relayout, highlight };
+  /* first visit: the board shows how it works by lighting one string by itself */
+  function demo(id = resume.skills[0].id) {
+    if ((store.get().lit || []).length) return;
+    highlight('skill', id, { silent: true });
+    setTimeout(() => {
+      if (!root.querySelector('.skill.lit:hover')) highlight(null, null, { silent: true });
+    }, 2200);
+  }
+
+  return { reveal, relayout, highlight, demo };
 }
 
 export const caseEl = (id) => $(`.case[data-case="${id}"]`);
