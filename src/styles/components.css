@@ -265,7 +265,7 @@ body[data-screen="title"] .keyhints, body[data-mode="quick"] .keyhints { display
 .shake { animation: shake .3s; }
 @keyframes shake { 20% { transform: translate(-6px, 4px); } 40% { transform: translate(6px, -4px); } 60% { transform: translate(-4px, -2px); } 80% { transform: translate(3px, 3px); } }
 
-.bee { position: fixed; left: 0; top: 0; z-index: 60; border: 0; background: none; line-height: 1; padding: 10px; }
+.bee { position: fixed; left: 0; top: 0; z-index: 60; border: 0; background: none; line-height: 1; padding: 22px; cursor: pointer; touch-action: none; }
 
 .motto-screen {
   position: fixed; inset: 0; z-index: 150; background: var(--black); display: none; place-items: center; padding: 24px;

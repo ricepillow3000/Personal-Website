@@ -115,7 +115,7 @@ function graffitiLayer() {
 
 /* =========================================================================
    LAYER 3 — FOREGROUND: broken-glass shards in the corners, big halftone,
-   white speed slashes. Asymmetric and jagged on purpose.
+   asymmetric and jagged on purpose.
    ========================================================================= */
 function shardLayer() {
   const shardTL = [[-20, -20], [380, -20], [120, 130], [-20, 260]];
@@ -128,11 +128,6 @@ function shardLayer() {
   ${poly(shardBR, C.black)}
   <path d="M1180 920 L 1420 700 L 1620 580 M1420 700 L 1520 920 M1420 700 L 1600 760" fill="none" stroke="${C.white}" stroke-width="3"/>
   ${poly(shardBL, 'url(#dotsB)')}
-  <g class="slashes">
-    ${poly([[-60, 520], [520, 470], [-60, 532]], C.white)}
-    ${poly([[1660, 300], [1080, 350], [1660, 312]], C.white)}
-    ${poly([[900, 900], [1300, 640], [1312, 650], [930, 900]], C.white, 'opacity=".9"')}
-  </g>
 </svg>`;
 }
 

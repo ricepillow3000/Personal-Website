@@ -22,7 +22,7 @@ import { renderDate } from './ui/hud.js';
 import { createBoard } from './scenes/board.js';
 import { toast } from './ui/toast.js';
 import { createMenu, MENU_ITEMS } from './scenes/menu.js';
-import { SECTION_RENDERERS, dossierMarkup, animateDossier } from './scenes/sections.js';
+import { SECTION_RENDERERS, SECTION_TITLES, dossierMarkup, animateDossier } from './scenes/sections.js';
 import { renderQuickView } from './scenes/quickview.js';
 import { sfx, setSound, setMusicVolume } from './audio/audio.js';
 import { unlock, refreshCounter, listMarkup } from './eggs/achievements.js';
@@ -149,7 +149,7 @@ async function show(id) {
   if (mode === 'title') introTitle();
   if (mode === 'page') {
     // the big title slam only follows the slash; menu/settings pages build in with kinetic letters instead
-    if (lastStyle === 'slash' || prev === null) await titlePunch(SECTION_RENDERERS[id](ctx).title);
+    if (lastStyle === 'slash' || prev === null) await titlePunch(SECTION_TITLES[id] || id.toUpperCase());
     $$('#page [data-ransom]').forEach((h, i) => dropIn(h, i * 0.05));
     enter($('#page')); // back button, subtitle and other [data-in] items
     pageIntro?.($('#page')); // each page's own entrance
@@ -532,7 +532,8 @@ function track(name) {
 if (resume.analytics.goatcounter) {
   const s = document.createElement('script');
   s.async = true;
-  s.src = '//gc.zgo.at/count.js';
+  s.src = 'https://gc.zgo.at/count.js';
+  s.crossOrigin = 'anonymous';
   s.dataset.goatcounter = `https://${resume.analytics.goatcounter}.goatcounter.com/count`;
   document.head.appendChild(s);
   if (company) s.addEventListener('load', () => track(`company:${company.key}`));

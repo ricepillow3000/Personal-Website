@@ -5,6 +5,7 @@ import { ransom } from './ransom.js';
 import { burst } from '../fx/impact.js';
 import { sfx } from '../audio/audio.js';
 import { toast } from './toast.js';
+import { resume } from '../data/resume.js';
 
 /* A project only counts as CLEARED after the visitor actually goes to it:
    they press its Live/Code link (data-clear="<id>"), leave for the project,
@@ -15,9 +16,12 @@ const KEY = 'clear-pending';
 let pending = null;
 let left = false;
 
+const MISSION_IDS = new Set(resume.missions.map((m) => m.id));
+const validId = (v) => (typeof v === 'string' && MISSION_IDS.has(v) ? v : null);
+
 function readPending() {
   try {
-    return window.sessionStorage.getItem(KEY);
+    return validId(window.sessionStorage.getItem(KEY));
   } catch {
     return null;
   }
@@ -229,6 +233,7 @@ function stampTransition(landOn) {
 
 /** Mark a project cleared and stamp every place it is shown, with the full transition. */
 export async function markCleared(id, { animate = true } = {}) {
+  if (!validId(id)) return false;
   const first = store.addTo('cleared', id);
   const all = [...document.querySelectorAll(TARGETS(id))];
   const target = mainTarget(id);
@@ -264,7 +269,8 @@ export function initClearing() {
   document.addEventListener('click', (e) => {
     const a = e.target.closest?.('a[data-clear]');
     if (!a) return;
-    pending = a.dataset.clear;
+    pending = validId(a.dataset.clear);
+    if (!pending) return;
     left = false;
     writePending(pending);
   }, true);

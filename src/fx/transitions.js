@@ -148,7 +148,7 @@ function snapshotTitle() {
   [$('#backdrop'), $('#screen-title'), $('.hud-tl'), $('.hud-tr')].filter(Boolean).forEach((src) => {
     const copy = src.cloneNode(true);
     // only the few things that move or hide by screen state are read (cheap: no full-page style pass)
-    const MOVING = '.bd-drift, .spin-slow, .slashes polygon, .press-start';
+    const MOVING = '.bd-drift, .spin-slow, .press-start';
     const live = src.querySelectorAll(MOVING);
     const dead = copy.querySelectorAll(MOVING);
     live.forEach((el, i) => {
