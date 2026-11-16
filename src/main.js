@@ -11,9 +11,9 @@ import { resume } from './data/resume.js';
 import { readCompany } from './data/companies.js';
 import { store } from './core/store.js';
 import { $, $$, esc, reducedMotion } from './core/util.js';
-import { createCity } from './fx/city.js';
 import { mountBackdrop } from './fx/backdrop.js';
-import { slashWipe, titlePunch, startSequence, cutIn, enter, skipCurrent, isAnimating, shake, slam } from './fx/transitions.js';
+import { initClickFx, burst } from './fx/impact.js';
+import { slashWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake, slam } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate, createBars } from './ui/hud.js';
 import { createBoard } from './scenes/board.js';
@@ -31,7 +31,6 @@ import { bindInput, bindGamepad } from './input/input.js';
 const company = readCompany();
 const ctx = { company };
 const backdrop = mountBackdrop($('#backdrop'));
-const city = createCity($('#city'));
 const bars = createBars(() => unlock('off-record'));
 const menu = createMenu((id) => navigate(id));
 renderDate();
@@ -77,7 +76,6 @@ function activate(id) {
   const el = mode === 'page' ? $('#screen-page') : $(`#screen-${mode}`);
   el.classList.add('active');
   el.scrollTop = 0;
-  city.setMode(mode === 'title' ? 'title' : 'page');
   backdrop.setFrozen(false);
   renderKeyHints(mode);
 }
@@ -96,19 +94,20 @@ async function show(id) {
     screen = mode === 'page' ? 'page' : id;
     pageId = mode === 'page' ? id : null;
     if (mode === 'page') renderPage(id);
+    if (mode === 'board') enterBoard();
   };
 
   if (prev === null) {
     swap();
   } else if (prev === 'title' && id === 'board' && pendingStart) {
     pendingStart = false;
-    await startSequence(city, swap, backdrop);
+    revealDelay = 0.36; // cards slam in as the torn halves fly away
+    await ripTransition(swap);
   } else {
     await slashWipe(swap);
   }
 
   if (mode === 'title') introTitle();
-  if (mode === 'board') enterBoard();
   if (mode === 'page') {
     await titlePunch(SECTION_RENDERERS[id](ctx).title);
     enter($('#page'));
@@ -135,14 +134,17 @@ $('#pressStart').addEventListener('click', () => {
 });
 
 /* ---------------------------------------------------------------- heist board */
+initClickFx();
 const board = createBoard($('#board'), ctx, {
   onOpenCase: (id, el) => openDossier(id, el),
   onAllStringsLit: () => unlock('full-recon')
 });
 
 let boardSeen = false;
+let revealDelay = 0;
 function enterBoard() {
-  board.reveal();
+  board.reveal(revealDelay);
+  revealDelay = 0;
   $('#board .case-open')?.focus({ preventScroll: true });
   if (!boardSeen) {
     boardSeen = true;
@@ -185,6 +187,11 @@ async function openDossier(id, row) {
   tl.eventCallback?.('onComplete', () => {
     sfx('crash');
     shake($('#modalPanel'));
+    const st = $('#modalPanel .stamp-big');
+    if (st) {
+      const r = st.getBoundingClientRect();
+      burst(r.left + r.width / 2, r.top + r.height / 2, 1.6);
+    }
   });
   if (reducedMotion()) sfx('crash');
   if (store.addTo('opened', id) && !row.querySelector('.stamp')) {
@@ -204,13 +211,19 @@ function toggleSetting(b) {
   } else {
     store.setSetting('reduceMotion', on);
     document.body.classList.toggle('reduce-motion', on);
-    city.restart();
   }
   sfx('snare');
 }
 
 /* ---------------------------------------------------------------- modal */
+let closing = null;
 function openModal(html) {
+  if (closing) {
+    closing.kill();
+    closing = null;
+    $('#modal').classList.remove('closing');
+    gsap.set('#modalPanel', { clearProps: 'all' });
+  }
   lastFocus = document.activeElement;
   $('#modalPanel').innerHTML = html;
   $('#modal').hidden = false;
@@ -218,10 +231,21 @@ function openModal(html) {
 }
 
 function closeModal() {
-  if ($('#modal').hidden) return false;
-  $('#modal').hidden = true;
-  $('#modalPanel').innerHTML = '';
+  if ($('#modal').hidden || closing) return false;
+  const done = () => {
+    closing = null;
+    $('#modal').hidden = true;
+    $('#modal').classList.remove('closing');
+    $('#modalPanel').innerHTML = '';
+    gsap.set('#modalPanel', { clearProps: 'all' });
+  };
   lastFocus?.focus?.({ preventScroll: true });
+  if (reducedMotion()) {
+    done();
+    return true;
+  }
+  $('#modal').classList.add('closing');
+  closing = gsap.to('#modalPanel', { scale: 0.82, rotation: 4, y: 40, opacity: 0, duration: 0.16, ease: 'power3.in', onComplete: done });
   return true;
 }
 

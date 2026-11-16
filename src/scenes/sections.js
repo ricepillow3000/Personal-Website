@@ -60,10 +60,12 @@ export function dossierMarkup(m) {
 export function animateDossier(root) {
   if (reducedMotion()) return gsap.timeline();
   const tl = gsap.timeline();
-  tl.from(root.querySelector('.dossier'), { clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)', duration: 0.35, ease: 'power3.out' })
-    .from(root.querySelectorAll('.obj li'), { x: -30, opacity: 0, duration: 0.22, stagger: 0.12 }, '-=0.05')
-    .from(root.querySelectorAll('.loot li'), { scale: 0.3, rotation: -14, opacity: 0, duration: 0.25, ease: 'back.out(2.4)', stagger: 0.08 }, '-=0.2')
-    .from(root.querySelector('.stamp-big'), { scale: 3.2, opacity: 0, rotation: -50, duration: 0.25, ease: 'back.out(1.6)' }, '+=0.05');
+  tl.fromTo(root, { scale: 1.25, rotation: -5, y: -50, opacity: 0 }, { scale: 1, rotation: 0, y: 0, opacity: 1, duration: 0.2, ease: 'power4.in', clearProps: 'transform,opacity' })
+    .from(root.querySelector('.dossier'), { clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)', duration: 0.3, ease: 'expo.out' }, 0.14)
+    .from(root.querySelectorAll('.obj li'), { x: -50, skewX: -18, opacity: 0, duration: 0.24, ease: 'expo.out', stagger: 0.08 }, '-=0.12')
+    .from(root.querySelectorAll('.loot li'), { scale: 0.2, rotation: -20, opacity: 0, duration: 0.3, ease: 'back.out(3)', stagger: 0.06 }, '-=0.18')
+    .fromTo(root.querySelector('.stamp-big'), { scale: 3.6, opacity: 0, rotation: -50 }, { scale: 0.92, opacity: 1, rotation: -12, duration: 0.16, ease: 'power4.in' }, '+=0.02')
+    .to(root.querySelector('.stamp-big'), { scale: 1, duration: 0.3, ease: 'elastic.out(1.4, .4)' });
   return tl;
 }
 
