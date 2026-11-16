@@ -225,7 +225,7 @@ function sideQuests() {
   for (let i = 0; i < n; i++) d += ` C ${i % 2 ? 90 : 10} ${i * 100 + 35}, ${i % 2 ? 10 : 90} ${i * 100 + 65}, 50 ${i * 100 + 100}`;
   return {
     title: 'SIDE QUESTS',
-    html: `${watermark('ROUTE')}${back}${head('SIDE QUESTS', 'Not everything I learned came from a keyboard. Follow the route.')}
+    html: `${watermark('ROUTE')}${back}${head('SIDE QUESTS', 'Not everything I learned came from a keyboard.')}
       <div class="route" style="--n:${n}">
         <svg class="route-line" viewBox="0 0 100 ${n * 100}" preserveAspectRatio="none" aria-hidden="true">
           <path class="route-under" d="${d}" pathLength="1"/><path class="route-dash" d="${d}"/>
@@ -236,7 +236,7 @@ function sideQuests() {
             <span class="stop-pin" aria-hidden="true">${i + 1}</span>
             <div class="stop-card">
               <div class="stop-head"><span class="stop-title">${esc(q.title)}</span><span class="stop-meta">${esc(q.place)} · ${esc(q.dates)}</span></div>
-              <ul>${q.did.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+              <p class="stop-stat"><b>${esc(q.stat[0])}</b><span>${esc(q.stat[1])}</span></p>
               <span class="lesson"><b class="ql-tag">REWARD ★</b><span class="ql-text">${esc(q.lesson)}</span></span>
               <span class="stop-clear" aria-hidden="true">CLEAR</span>
             </div></article>`
