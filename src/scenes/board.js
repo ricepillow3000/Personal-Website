@@ -30,8 +30,8 @@ function kin(text, inv = null) {
 function caseCard(m, i) {
   const stickers = m.loot.slice(0, 2);
   const opened = store.has('opened', m.id);
-  return `<article class="case card-pop${i % 2 ? ' cc' : ''}" data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
-    ${pin}${i % 2 ? '<span class="cc-star" aria-hidden="true"></span>' : ''}
+  return `<article class="case card-pop cc" data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
+    ${pin}<span class="cc-star" aria-hidden="true"></span>
     <span class="case-grade" aria-label="Difficulty ${esc(m.grade)}"><span>${esc(m.grade)}</span></span>
     <div class="case-top"><span class="case-no">CASE 0${i + 1}</span><span class="case-live">${esc(m.status)}</span></div>
     <h3 class="case-target ransom" data-ransom="${esc(m.target.toUpperCase())}"></h3>
