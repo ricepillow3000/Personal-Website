@@ -41,7 +41,7 @@ export const resume = {
   bars: {
     proof: [
       { label: 'GPA', value: 3.88, max: 4, text: '3.88' },
-      { label: 'CHECKS', value: 727, max: 728, text: '727/728' }
+      { label: 'APPS', value: 2, max: 2, text: '2 LIVE' }
     ],
     fun: [
       { label: 'DRUMS', value: 200, max: 240, text: '200+ BPM' },

@@ -4,6 +4,7 @@ import { reorder } from '../data/companies.js';
 import { store } from '../core/store.js';
 import { esc, reducedMotion } from '../core/util.js';
 import { listMarkup, allFound } from '../eggs/achievements.js';
+import { clearStampMarkup, isCleared } from '../ui/clear.js';
 
 /* Each section returns { title, html, after(root) }. Content comes from resume.js only. */
 
@@ -11,7 +12,7 @@ const back = '<button class="btn back-btn" type="button" data-back>◀ BOARD <kb
 const head = (title, sub = '') => `
   <div class="page-head"><h2 class="ransom ransom-lg" data-ransom="${esc(title)}"></h2></div>
   ${sub ? `<p class="page-sub" data-in>${sub}</p>` : ''}`;
-const cleared = (on) => (on ? '<span class="stamp stamp-cleared">CLEARED!</span>' : '');
+const cleared = (on) => (on ? clearStampMarkup() : '');
 
 /* Highlight numbers in a sentence with the yellow marker. */
 const mark = (text) =>
@@ -41,7 +42,7 @@ function missions(ctx) {
             <span class="poster-stack">${esc((m.stack || []).join(' · '))}</span>
             <span class="poster-brief">${esc(m.brief)}</span>
             <span class="poster-open">OPEN FILE ▶</span>
-            ${cleared(store.has('opened', m.id))}
+            ${cleared(isCleared(m.id))}
           </button></li>`
         )
         .join('')}</ul>`,
@@ -52,7 +53,7 @@ function missions(ctx) {
 }
 
 export function dossierMarkup(m) {
-  return `<div class="dossier">
+  return `<div class="dossier" data-id="${m.id}">
     <button class="modal-x" type="button" data-close aria-label="Close">✕</button>
     <p class="dossier-code">MISSION FILE · ${esc(m.dates)} · DIFFICULTY ${esc(m.grade)}</p>
     <h2 class="dossier-title" id="modalTitle">${esc(m.target)}</h2>
@@ -63,10 +64,11 @@ export function dossierMarkup(m) {
       <div><h3>LOOT</h3><ul class="loot">${m.loot.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
     </div>
     <div class="dossier-links">
-      <a class="btn" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}">▶ Try it live ↗</a>
-      <a class="btn" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}">⌥ Code on GitHub ↗</a>
+      <a class="btn" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}" data-clear="${m.id}">▶ Try it live ↗</a>
+      <a class="btn" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}" data-clear="${m.id}">⌥ Code on GitHub ↗</a>
     </div>
-    <div class="stamp stamp-big">MISSION<br>COMPLETE</div>
+    <p class="dossier-hint">${isCleared(m.id) ? 'Case cleared. Thanks for checking it out.' : 'Visit the live app or the code to clear this case.'}</p>
+    ${isCleared(m.id) ? clearStampMarkup() : ''}
   </div>`;
 }
 
@@ -78,9 +80,7 @@ export function animateDossier(root, onLand) {
     .from(root.querySelector('.dossier'), { clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)', duration: 0.3, ease: 'expo.out' }, 0.14)
     .from(root.querySelectorAll('.obj li'), { x: -50, skewX: -18, opacity: 0, duration: 0.24, ease: 'expo.out', stagger: 0.08 }, '-=0.12')
     .from(root.querySelectorAll('.loot li'), { scale: 0.2, rotation: -20, opacity: 0, duration: 0.3, ease: 'back.out(3)', stagger: 0.06 }, '-=0.18')
-    .fromTo(root.querySelector('.stamp-big'), { scale: 3.6, opacity: 0, rotation: -50 }, { scale: 0.92, opacity: 1, rotation: -12, duration: 0.16, ease: 'power4.in' }, '+=0.02')
-    .add(() => onLand?.())
-    .to(root.querySelector('.stamp-big'), { scale: 1, duration: 0.3, ease: 'elastic.out(1.4, .4)' });
+    .add(() => onLand?.());
   return tl;
 }
 
@@ -186,7 +186,6 @@ function different() {
 function stats() {
   const e = resume.education;
   const gpa = Number(e.gpa) || 0;
-  const angle = -90 + 180 * Math.min(1, gpa / 4);
   const icons = ['🥁', '🎸', '🐝'];
   return {
     title: 'STATS',
@@ -194,18 +193,11 @@ function stats() {
       <section class="idcard" data-in>
         <div class="id-band"><span>ID · ${esc(resume.codename)}</span><span>${esc(resume.location)}</span></div>
         <div class="id-body">
-          <figure class="gauge" aria-label="GPA ${esc(e.gpa)} out of 4.0">
-            <svg viewBox="0 0 220 130" aria-hidden="true">
-              <path class="g-bg" d="M20 115 A90 90 0 0 1 200 115" pathLength="100"/>
-              <path class="g-fill" d="M20 115 A90 90 0 0 1 200 115" pathLength="100" style="--to:${(100 - Math.min(1, gpa / 4) * 100).toFixed(1)}"/>
-              ${Array.from({ length: 9 }, (_, i) => {
-                const a = Math.PI * (1 - i / 8);
-                return `<line class="g-tick" x1="${110 + Math.cos(a) * 76}" y1="${115 - Math.sin(a) * 76}" x2="${110 + Math.cos(a) * 66}" y2="${115 - Math.sin(a) * 66}"/>`;
-              }).join('')}
-              <g class="g-wobble"><g class="g-needle" style="--a:${angle.toFixed(1)}deg"><polygon points="106,115 110,32 114,115"/></g></g>
-              <circle cx="110" cy="115" r="11" class="g-hub"/>
-            </svg>
-            <figcaption><b>${esc(e.gpa)}</b><span>GPA / 4.00</span></figcaption>
+          <figure class="gpa-card" aria-label="GPA ${esc(e.gpa)} out of 4.00">
+            <span class="gpa-tag" aria-hidden="true">GPA</span>
+            <div class="gpa-num" aria-hidden="true"><b data-to="${esc(e.gpa)}">${esc(e.gpa)}</b><span>/ 4.00</span></div>
+            <div class="gpa-bar" aria-hidden="true" style="--v:${(Math.min(1, gpa / 4) * 100).toFixed(1)}%"><i></i></div>
+            <span class="gpa-note" aria-hidden="true">DEAN’S LIST · FALL 25 · SPRING 26</span>
           </figure>
           <div class="id-info">
             <h3>${esc(e.school)}</h3>
@@ -219,9 +211,11 @@ function stats() {
       <blockquote class="motto-strip" data-in>“${esc(resume.motto.text)}”<cite>— ${esc(resume.motto.by)}</cite></blockquote>`,
     intro(root) {
       if (reducedMotion()) return;
-      const needle = root.querySelector('.g-needle');
-      gsap.fromTo(needle, { rotation: -90, svgOrigin: '110 115' }, { rotation: angle, svgOrigin: '110 115', duration: 1.1, ease: 'elastic.out(1.1, .35)', delay: 0.15 });
-      gsap.fromTo(root.querySelector('.g-fill'), { strokeDashoffset: 100 }, { strokeDashoffset: 100 - Math.min(1, gpa / 4) * 100, duration: 0.7, ease: 'expo.out', delay: 0.15 });
+      const num = root.querySelector('.gpa-num b');
+      const v = { n: 0 };
+      gsap.to(v, { n: gpa, duration: 0.7, ease: 'power3.out', delay: 0.1, onUpdate: () => (num.textContent = v.n.toFixed(2)) });
+      gsap.from(root.querySelector('.gpa-bar i'), { scaleX: 0, duration: 0.6, ease: 'back.out(1.8)', delay: 0.15, clearProps: 'transform' });
+      gsap.from(root.querySelector('.gpa-tag'), { scale: 2.4, rotation: -30, duration: 0.3, ease: 'back.out(2.5)', delay: 0.05, clearProps: 'transform' });
     }
   };
 }

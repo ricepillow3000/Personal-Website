@@ -272,3 +272,41 @@ body[data-screen="title"] .keyhints, body[data-mode="quick"] .keyhints { display
   .btn:hover, .btn:focus-visible, .stair-item:hover, .stair-item:focus-visible { animation: none; }
 }
 body.reduce-motion .btn-cartoon, body.reduce-motion .press-start, body.reduce-motion .btn, body.reduce-motion .stair-item { animation: none !important; }
+
+/* ============ CLEARED! stamp (earned by visiting a project) ============ */
+.clear-stamp {
+  position: absolute; right: 8px; top: 44%; z-index: 6; display: grid; place-items: center;
+  padding: 10px 14px; rotate: -10deg; pointer-events: none;
+}
+.cs-burst {
+  position: absolute; inset: -6px -10px; background: var(--red);
+  clip-path: polygon(0 22%, 9% 0, 22% 14%, 38% 2%, 50% 16%, 66% 0, 78% 14%, 94% 4%, 100% 34%, 92% 50%, 100% 72%, 88% 100%, 72% 86%, 56% 100%, 42% 86%, 26% 100%, 12% 88%, 0 96%, 6% 62%, 0 46%);
+}
+.cs-slab { position: relative; background: var(--black); border: 3px solid var(--white); padding: 4px 10px 2px 12px; transform: skewX(-12deg); box-shadow: 4px 4px 0 var(--black); }
+.cs-word { display: block; font-size: 26px; transform: skewX(12deg); white-space: nowrap; }
+.cs-word .rw { margin-right: 0; }
+.cs-star {
+  position: absolute; right: -10px; top: -14px; width: 34px; height: 34px; background: var(--yellow);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: csSpin 2.4s steps(8) infinite;
+}
+@keyframes csSpin { to { rotate: 360deg; } }
+.case.cc > .clear-stamp, .case > .clear-stamp { position: absolute; z-index: 7; right: 4px; top: auto; bottom: 2px; }
+.case > .clear-stamp .cs-word { font-size: 20px; }
+.case.cc:has(> .clear-stamp) { padding-bottom: 66px; }
+.poster > .clear-stamp { top: auto; bottom: 10px; right: 14px; }
+.dossier { position: relative; }
+.dossier > .clear-stamp { top: 54px; right: 34px; }
+.dossier-hint { margin: 12px 0 0; font-family: var(--f-type); font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .cs-star { animation: none; } }
+body.reduce-motion .cs-star { animation: none; }
+@media (max-width: 760px) {
+  .clear-stamp { padding: 8px 10px; }
+  .cs-word { font-size: 20px; }
+  .dossier > .clear-stamp { top: 8px; right: 54px; }
+}
+
+/* ============ HUD gets out of the way while scrolling ============ */
+.hud-tl, .hud-bars { transition: translate .2s cubic-bezier(.6, -.5, .7, 1), transform .3s, opacity .3s; }
+body.scrolled .hud-tl { translate: 0 -260px; transition: translate .18s cubic-bezier(.6, -.6, .8, .6), transform .3s, opacity .3s; }
+body.scrolled .hud-bars { translate: calc(-100% - 60px) 0; pointer-events: none; }

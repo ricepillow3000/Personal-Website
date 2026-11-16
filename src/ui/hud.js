@@ -41,7 +41,7 @@ export function createBars(onFirstFlip) {
     clearTimeout(timer);
     timer = setTimeout(() => {
       el.classList.remove('flipped');
-      el.setAttribute('aria-label', 'Stats: GPA 3.88, checks 727 of 728. Press to flip.');
+      el.setAttribute('aria-label', 'Stats: GPA 3.88, 2 live apps. Press to flip.');
     }, 4000);
   };
   el.addEventListener('click', flip);
