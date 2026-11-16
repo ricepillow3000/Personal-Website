@@ -46,15 +46,29 @@ function caseCard(m, i) {
   </article>`;
 }
 
-function skillTag(s, i) {
+/* Skills roster: name · big slanted rank · teal rank meter · pink "used in" meter.
+   The proof line shows on the selected row (and is always in the aria-label). */
+function skillTag(s) {
   const max = s.rank === 'MAX';
-  return `<button class="skill" type="button" data-nav data-skill="${s.id}" style="--tilt:${(i % 3) - 1}deg"
-      aria-label="${esc(s.name)}, rank ${esc(s.rank)}. ${esc(s.proof)}">
-    <span class="skill-name">${kin(s.name)}</span>
-    <span class="skill-rank${max ? ' max' : ''}">${max ? 'MAX' : `R${esc(s.rank)}`}</span>
+  const pct = max ? 100 : Number(s.rank) * 10;
+  return `<button class="skill" type="button" data-nav data-skill="${s.id}"
+      aria-label="${esc(s.name)}, rank ${esc(s.rank)}, used in ${s.uses.length} project${s.uses.length > 1 ? 's' : ''}. ${esc(s.proof)}">
+    <span class="skill-hl" aria-hidden="true"></span>
+    <span class="skill-name">${esc(s.name)}</span>
+    <span class="skill-dot" aria-hidden="true">•</span>
+    <span class="skill-stat rank${max ? ' max' : ''}" aria-hidden="true"><small>RK</small><b>${max ? 'MAX' : esc(s.rank)}</b><i style="--v:${pct}%"></i></span>
+    <span class="skill-stat used" aria-hidden="true"><small>IN</small><b>${s.uses.length}</b><i style="--v:${s.uses.length * 50}%"></i></span>
     <span class="skill-proof">${esc(s.proof)}</span>
     ${pin}
   </button>`;
+}
+
+function roster(skills) {
+  const badge = (t, cls) => `<div class="roster-badge ${cls}" aria-hidden="true"><span>${t}</span></div>`;
+  return `<div class="roster">
+    ${badge('CORE', 'b-core')}${skills.slice(0, 3).map(skillTag).join('')}
+    ${badge('KIT', 'b-kit')}${skills.slice(3).map(skillTag).join('')}
+  </div>`;
 }
 
 export function boardMarkup(ctx) {
@@ -81,7 +95,7 @@ export function boardMarkup(ctx) {
 
     <section class="col col-skills" aria-label="Skills">
       <h2 class="col-label" data-board-item><span class="ransom" data-ransom="SKILLS"></span><small>rank · proof</small></h2>
-      <div class="skills-list">${skills.map(skillTag).join('')}</div>
+      ${roster(skills)}
     </section>
 
     <section class="col col-cases" aria-label="Projects">
