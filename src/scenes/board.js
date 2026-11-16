@@ -1,7 +1,7 @@
 import { gsap } from 'gsap';
+import { clearStampMarkup, isCleared } from '../ui/clear.js';
 import { resume } from '../data/resume.js';
 import { reorder } from '../data/companies.js';
-import { store } from '../core/store.js';
 import { $, esc, reducedMotion, isPhone } from '../core/util.js';
 import { ransom, NAME_SEED } from '../ui/ransom.js';
 import { sfx } from '../audio/audio.js';
@@ -29,7 +29,6 @@ function kin(text, inv = null) {
 
 function caseCard(m, i) {
   const stickers = m.loot.slice(0, 2);
-  const opened = store.has('opened', m.id);
   const v = i % 2 ? 'v2' : 'v1';
   const mark = v === 'v1'
     ? `<svg class="cc-chart" viewBox="0 0 300 200" aria-hidden="true"><polygon points="0,200 0,150 40,120 70,140 105,80 140,110 175,40 205,75 240,20 270,55 300,10 300,200"/><polyline points="0,150 40,120 70,140 105,80 140,110 175,40 205,75 240,20 270,55 300,10"/></svg>`
@@ -44,11 +43,11 @@ function caseCard(m, i) {
     <p class="case-brief bubble-say">${esc(m.brief)}</p>
     <div class="case-actions">
       <button class="btn-cartoon case-open" type="button" data-nav data-open="${m.id}">OPEN FILE ▸</button>
-      <a class="case-link" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}">Live ↗</a>
-      <a class="case-link" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}">Code ↗</a>
+      <a class="case-link" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}" data-clear="${m.id}">Live ↗</a>
+      <a class="case-link" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}" data-clear="${m.id}">Code ↗</a>
     </div>
     <span class="case-fold" aria-hidden="true"></span>
-    ${opened ? '<span class="stamp stamp-cleared">CLEARED!</span>' : ''}
+    ${isCleared(m.id) ? clearStampMarkup() : ''}
   </article>`;
 }
 

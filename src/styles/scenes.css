@@ -144,7 +144,6 @@
 .loot li { background: var(--yellow); border: 2px solid var(--black); padding: 4px 10px; font-weight: 800; transform: skew(-6deg); box-shadow: 3px 3px 0 var(--black); }
 .dossier-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 22px; }
 .dossier-links .btn { box-shadow: 5px 5px 0 var(--red); }
-.dossier .stamp-big { position: absolute; right: 26px; top: 64px; font-size: 26px; padding: 6px 12px; border-width: 5px; background: rgba(245, 245, 240, .6); }
 
 /* SKILLS ranked list */
 .ranks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; max-width: 980px; }
@@ -300,8 +299,7 @@
   .rank-row:nth-child(odd) { margin-left: 0; }
   .rank-proof { grid-column: 1 / -1; }
   .modal-panel { padding: 30px 20px 26px; }
-  .dossier .stamp-big { top: auto; bottom: 18px; right: 14px; font-size: 18px; }
-  .paper header { padding: 22px 20px 28px; }
+    .paper header { padding: 22px 20px 28px; }
   .paper-body { gap: 0; padding: 8px 20px 26px; }
   .stair { top: 90px; }
   .stair li { margin-left: calc(var(--i) * 3vw); }

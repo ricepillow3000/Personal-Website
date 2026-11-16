@@ -6,6 +6,7 @@ const KEY = 'jn-resume-v1';
 const defaults = () => ({
   visited: [],
   opened: [],
+  cleared: [],
   achievements: [],
   settings: { sound: false, music: 0.5, reduceMotion: null }
 });
@@ -41,12 +42,13 @@ export const store = {
     return () => listeners.delete(fn);
   },
   addTo(list, value) {
+    if (!Array.isArray(state[list])) state[list] = [];
     if (state[list].includes(value)) return false;
     state[list].push(value);
     save();
     return true;
   },
-  has: (list, value) => state[list].includes(value),
+  has: (list, value) => Array.isArray(state[list]) && state[list].includes(value),
   setSetting(name, value) {
     state.settings[name] = value;
     save();

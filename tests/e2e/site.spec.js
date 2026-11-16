@@ -69,7 +69,27 @@ test('case file opens a dossier with objectives, loot and live links', async ({ 
   await expect(modal.locator('a[href*="excel-anomaly-hunter"]')).toHaveCount(2);
   await page.keyboard.press('Escape');
   await expect(modal).toBeHidden();
-  await expect(page.locator('.case[data-case="arcas"] .stamp')).toHaveText('CLEARED!');
+  // just opening the file does NOT clear the case
+  await expect(page.locator('.case[data-case="arcas"] .clear-stamp')).toHaveCount(0);
+});
+
+test('a case is CLEARED only after visiting its project link and coming back', async ({ page, context }) => {
+  await context.route(/excel-anomaly-hunter/, (r) => r.fulfill({ body: 'project page' }));
+  await openBoard(page);
+  const card = page.locator('.case[data-case="arcas"]');
+  const [popup] = await Promise.all([context.waitForEvent('page'), card.locator('a[data-clear]').first().click()]);
+  await popup.close();
+  // simulate the visitor leaving and coming back to this tab
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('blur'));
+    window.dispatchEvent(new Event('focus'));
+  });
+  await expect(card.locator('.clear-stamp')).toHaveCount(1);
+  await expect(card.locator('.clear-stamp')).toHaveAttribute('aria-label', 'Cleared');
+  await expect(page.locator('.case[data-case="meliona"] .clear-stamp')).toHaveCount(0);
+  // it stays cleared after a reload
+  await page.reload();
+  await expect(page.locator('.case[data-case="arcas"] .clear-stamp')).toHaveCount(1);
 });
 
 test('?company=Google pins a personal note and reorders', async ({ page }) => {

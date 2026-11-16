@@ -14,7 +14,8 @@ import { store } from './core/store.js';
 import { $, $$, esc, reducedMotion } from './core/util.js';
 import { mountBackdrop } from './fx/backdrop.js';
 import { initClickFx, burst } from './fx/impact.js';
-import { slashWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake, slam } from './fx/transitions.js';
+import { initClearing, hydrateStamps } from './ui/clear.js';
+import { slashWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate, createBars } from './ui/hud.js';
 import { createBoard } from './scenes/board.js';
@@ -77,6 +78,7 @@ function activate(id) {
   const el = mode === 'page' ? $('#screen-page') : $(`#screen-${mode}`);
   el.classList.add('active');
   el.scrollTop = 0;
+  document.body.classList.remove('scrolled');
   backdrop.setFrozen(false);
   renderKeyHints(mode);
 }
@@ -138,10 +140,19 @@ $('#pressStart').addEventListener('click', () => {
 
 /* ---------------------------------------------------------------- heist board */
 initClickFx();
+/* Once you scroll, the date (top-left) and stat box (bottom-left) slide away so they
+   never sit on top of text; they snap back when you return to the top. */
+$$('.screen').forEach((sc) =>
+  sc.addEventListener('scroll', () => {
+    if (sc.classList.contains('active')) document.body.classList.toggle('scrolled', sc.scrollTop > 30);
+  }, { passive: true })
+);
+initClearing();
 const board = createBoard($('#board'), ctx, {
   onOpenCase: (id, el) => openDossier(id, el),
   onAllStringsLit: () => unlock('full-recon')
 });
+hydrateStamps($('#board'));
 
 let boardSeen = false;
 let revealDelay = 0;
@@ -180,6 +191,7 @@ function renderPage(id) {
   root.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('click', () => toggleSetting(b)));
   root.querySelector('#musicVol')?.addEventListener('input', (e) => setMusicVolume(Number(e.target.value)));
   r.after?.(root);
+  hydrateStamps(root);
   if (id === 'contact') sfx('toms');
   store.addTo('visited', id);
 }
@@ -194,19 +206,17 @@ async function openDossier(id, row) {
   }
   openModal(dossierMarkup(m));
   animateDossier($('#modalPanel'), () => {
-    sfx('crash');
+    sfx('snare');
     shake($('#modalPanel'));
-    const st = $('#modalPanel .stamp-big');
+    const st = $('#modalPanel .loot li:last-child');
     if (st) {
       const r = st.getBoundingClientRect();
-      burst(r.left + r.width / 2, r.top + r.height / 2, 1.6);
+      burst(r.left + r.width / 2, r.top + r.height / 2, 1.2);
     }
   });
   if (reducedMotion()) sfx('crash');
-  if (store.addTo('opened', id) && !row.querySelector('.stamp')) {
-    row.insertAdjacentHTML('beforeend', '<span class="stamp stamp-cleared">CLEARED!</span>');
-    slam(row.querySelector('.stamp'));
-  }
+  store.addTo('opened', id);
+  hydrateStamps($('#modalPanel'));
   unlock('case-file');
 }
 
