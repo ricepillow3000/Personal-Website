@@ -19,9 +19,9 @@ export function renderDate() {
 function rows(list) {
   return list
     .map(
-      (b) => `<div class="bar-row"><span class="bar-label">${esc(b.label)}</span>
-      <span class="bar-track"><span class="bar-fill" style="width:${Math.min(100, (b.value / b.max) * 100).toFixed(1)}%"></span></span>
-      <span class="bar-val">${esc(b.text)}</span></div>`
+      (b, i) => `<div class="bar-row c${i}"><span class="bar-label">${esc(b.label)}</span>
+      <span class="bar-val">${esc(b.text)}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${Math.min(100, (b.value / b.max) * 100).toFixed(1)}%"></span></span></div>`
     )
     .join('');
 }
