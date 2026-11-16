@@ -2,7 +2,7 @@
    Street-art wall — 3-layer parallax background (pure inline SVG + CSS).
    Original artwork in a graffiti / pop-art / high-contrast style:
    a crimson → black spray-paint fade on concrete, stencil stars,
-   torn posters, tape, scribble tags and broken-glass shards.
+   torn posters, tape and broken-glass shards.
    Palette: crimson #E60012 / #D80000, black #050505, white #FFFFFF
    (spray fades are the only gradients — they read as aerosol overspray).
    Geometry lives in a 1600×900 box; `xMidYMid slice` covers 100vw × 100vh.
@@ -68,7 +68,7 @@ function wallLayer() {
 
 /* =========================================================================
    LAYER 2 — GRAFFITI: stencil stars,
-   torn posters with tape, a swoosh arrow, scribble tags, X marks.
+   torn posters with tape, a swoosh arrow.
    ========================================================================= */
 function graffitiLayer() {
   const posterA = torn(1120, 470, 280, 330, 11);
@@ -108,10 +108,6 @@ function graffitiLayer() {
   <path d="M520 420 C 700 330, 900 330, 1040 400 L 1060 360 L 1130 460 L 1010 488 L 1028 446 C 900 392, 720 400, 560 470 Z"
     fill="${C.white}" stroke="${C.black}" stroke-width="10" stroke-linejoin="round" paint-order="stroke"/>
 
-  <!-- scribble tags + X marks -->
-  <path d="M760 210 c 20 -40 40 40 60 0 s 30 -30 44 10 s 26 -40 50 -6 M780 236 l 120 -10" fill="none" stroke="${C.white}" stroke-width="5" stroke-linecap="round" opacity=".85"/>
-  <path d="M1460 400 l 40 40 m 0 -40 l -40 40 M90 420 l 34 34 m 0 -34 l -34 34" stroke="${C.white}" stroke-width="8" stroke-linecap="round"/>
-  <path d="M600 600 v 40 m 12 -40 v 40 m 12 -40 v 40 m 12 -40 v 40 m -50 26 l 60 -32" stroke="${C.black}" stroke-width="5" stroke-linecap="round"/>
   <!-- crown tag outline -->
   <path d="M1360 120 l 16 -42 l 18 28 l 18 -36 l 18 36 l 18 -28 l 16 42 Z" fill="none" stroke="${C.white}" stroke-width="5" stroke-linejoin="round"/>
 </svg>`;
