@@ -123,19 +123,118 @@ const VOICES = {
     src.start(at, Math.random() * 0.5);
     src.stop(at + 0.26);
   },
+  /* ---------- UI + transition sounds: deliberately NOT drum sounds, so they never
+     blend into the drum music. Cartoon pops, blips, paper and metal. ---------- */
+  hover: (bus, at) => tone(bus, { at, dur: 0.045, from: 1500, to: 2100, type: 'triangle', gain: 0.11 }),
+  select: (bus, at) => {
+    tone(bus, { at, dur: 0.07, from: 480, to: 1250, type: 'triangle', gain: 0.36 }); // cartoon "pop"
+    tone(bus, { at: at + 0.045, dur: 0.09, from: 1250, to: 1300, type: 'sine', gain: 0.18 });
+    noise(bus, { at, dur: 0.015, type: 'bandpass', freq: 3200, q: 2, gain: 0.25 }); // tiny paper click
+  },
+  back: (bus, at) => tone(bus, { at, dur: 0.14, from: 760, to: 240, type: 'triangle', gain: 0.3 }), // "bwoop"
+  toggle: (bus, at) => {
+    tone(bus, { at, dur: 0.05, from: 880, to: 900, type: 'square', gain: 0.07 });
+    tone(bus, { at: at + 0.06, dur: 0.07, from: 1320, to: 1340, type: 'square', gain: 0.07 });
+  },
+  menuOpen: (bus, at) => [523, 659, 784, 1047].forEach((f, i) => tone(bus, { at: at + i * 0.035, dur: 0.12, from: f, to: f * 1.01, type: 'triangle', gain: 0.2 })),
+  menuClose: (bus, at) => [1047, 784, 523].forEach((f, i) => tone(bus, { at: at + i * 0.03, dur: 0.08, from: f, to: f * 0.98, type: 'triangle', gain: 0.16 })),
+  /* air swipe under the slash wipe */
+  swish: (bus, at) => VOICES.whoosh(bus, at, 0.8),
+  /* page lands: short wooden "thwack" (higher and shorter than any kick) */
+  thwack: (bus, at, v = 1) => {
+    tone(bus, { at, dur: 0.09, from: 340, to: 150, type: 'triangle', gain: 0.55 * v });
+    noise(bus, { at, dur: 0.06, type: 'bandpass', freq: 1700, q: 1.2, gain: 0.45 * v });
+  },
+  /* small stamp / sticker landing */
+  thunk: (bus, at) => {
+    tone(bus, { at, dur: 0.07, from: 620, to: 330, type: 'sine', gain: 0.5 });
+    noise(bus, { at, dur: 0.04, type: 'bandpass', freq: 1900, q: 1.5, gain: 0.3 });
+  },
+  /* glitter after a hit */
+  sparkle: (bus, at) => [2637, 3520, 3136, 4186].forEach((f, i) => tone(bus, { at: at + i * 0.04, dur: 0.09, from: f, to: f, type: 'triangle', gain: 0.08 })),
+  /* rising suck-in before a big hit (anticipation) */
+  riser: (bus, at) => {
+    const o = ac.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(140, at);
+    o.frequency.exponentialRampToValueAtTime(900, at + 0.24);
+    const f = ac.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(400, at);
+    f.frequency.exponentialRampToValueAtTime(3500, at + 0.24);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0008, at);
+    g.gain.exponentialRampToValueAtTime(0.16, at + 0.2);
+    g.gain.exponentialRampToValueAtTime(0.0008, at + 0.27);
+    o.connect(f).connect(g).connect(bus);
+    o.start(at);
+    o.stop(at + 0.3);
+    VOICES.whoosh(bus, at + 0.04, 0.7);
+  },
+  /* the big CLEARED! stamp: deep sub drop + metal "KLANG" + paper smack, then a cartoon victory sting */
+  stamp: (bus, at) => {
+    tone(bus, { at, dur: 0.7, from: 95, to: 28, type: 'sine', gain: 1.0 }); // sub drop, longer and deeper than a kick
+    [233, 330, 466, 587].forEach((f, i) => tone(bus, { at, dur: 0.42 - i * 0.05, from: f * 1.06, to: f, type: 'square', gain: 0.07 })); // inharmonic metal clang
+    noise(bus, { at, dur: 0.12, type: 'lowpass', freq: 2600, q: 0.7, gain: 0.7 }); // paper/ink smack
+    noise(bus, { at: at + 0.01, dur: 0.35, type: 'bandpass', freq: 900, q: 3, gain: 0.25 }); // ring-out
+    // victory sting: quick rising arpeggio that lands on a held, wobbling top note
+    [784, 1047, 1319].forEach((f, i) => tone(bus, { at: at + 0.14 + i * 0.05, dur: 0.1, from: f, to: f, type: 'triangle', gain: 0.22 }));
+    const o = ac.createOscillator();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(1568, at + 0.29);
+    const lfo = ac.createOscillator();
+    lfo.frequency.value = 9;
+    const lg = ac.createGain();
+    lg.gain.value = 18;
+    lfo.connect(lg).connect(o.frequency);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0008, at + 0.29);
+    g.gain.exponentialRampToValueAtTime(0.22, at + 0.31);
+    g.gain.exponentialRampToValueAtTime(0.0008, at + 0.75);
+    o.connect(g).connect(bus);
+    o.start(at + 0.29);
+    lfo.start(at + 0.29);
+    o.stop(at + 0.8);
+    lfo.stop(at + 0.8);
+  },
+  /* cartoon "zip" for things flying across the screen */
+  zip: (bus, at) => tone(bus, { at, dur: 0.2, from: 2600, to: 320, type: 'triangle', gain: 0.18 }),
+  /* ratchet clicks for the blinds transition */
+  ratchet: (bus, at) => { for (let i = 0; i < 6; i++) tone(bus, { at: at + i * 0.028, dur: 0.012, from: 1100 + i * 140, to: 1100 + i * 140, type: 'square', gain: 0.07 }); },
+  /* paper sheet sliding */
+  paper: (bus, at) => {
+    const src = ac.createBufferSource();
+    src.buffer = noiseBuf;
+    const f = ac.createBiquadFilter();
+    f.type = 'bandpass';
+    f.Q.value = 1.4;
+    f.frequency.setValueAtTime(900, at);
+    f.frequency.exponentialRampToValueAtTime(2600, at + 0.3);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0008, at);
+    g.gain.exponentialRampToValueAtTime(0.22, at + 0.06);
+    g.gain.exponentialRampToValueAtTime(0.0008, at + 0.32);
+    src.connect(f).connect(g).connect(bus);
+    src.start(at, Math.random() * 0.5);
+    src.stop(at + 0.34);
+  },
+  /* achievement chime */
+  chime: (bus, at) => [1319, 1976].forEach((f, i) => tone(bus, { at: at + i * 0.09, dur: 0.3, from: f, to: f, type: 'sine', gain: 0.2 })),
   toms: (bus, at) => {
     [220, 170, 130, 100].forEach((f, i) => tone(bus, { at: at + i * 0.07, dur: 0.22, from: f, to: f * 0.6, gain: 0.55 }));
   }
 };
 
-/** Play a named SFX: hat | tick | snare | kick | crash | toms | tear | whoosh.
+/** Play a named SFX. UI uses hover/select/back/toggle/menu*; transitions use swish/thwack/
+    riser/stamp/zip/thunk/sparkle/ratchet/paper/tear/chime. Drum names stay for the music.
     `dur` is only used by tear (seconds of ripping). */
 export function sfx(name, dur) {
   if (!enabled() || !ensure()) return;
   if (ac.state === 'suspended') ac.resume();
-  const sampleName = name === 'tick' ? 'hat' : name;
+  if (name === 'tick') name = 'hover';
+  const sampleName = name;
   if (samples[sampleName]) {
-    playSample(sampleName, sfxBus, name === 'tick' ? 0.25 : 1);
+    playSample(sampleName, sfxBus, 1);
     return;
   }
   VOICES[name]?.(sfxBus, ac.currentTime, 1, dur);

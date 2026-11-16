@@ -33,7 +33,7 @@ export function unlock(id) {
   const a = ACHIEVEMENTS.find((x) => x.id === id);
   if (!a || !store.addTo('achievements', id)) return false;
   toast(a.name);
-  sfx('crash');
+  sfx('chime');
   refreshCounter();
   listeners.forEach((fn) => fn(a));
   if (allFound()) setTimeout(() => toast('Behind the scenes unlocked — check SYSTEM', 'ALL SECRETS FOUND'), 1200);

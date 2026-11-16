@@ -15,7 +15,7 @@ import { $, $$, esc, reducedMotion } from './core/util.js';
 import { mountBackdrop } from './fx/backdrop.js';
 import { initClickFx, burst } from './fx/impact.js';
 import { initClearing, hydrateStamps } from './ui/clear.js';
-import { slashWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
+import { slashWipe, blindsWipe, paperWipe, irisWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate, createBars } from './ui/hud.js';
 import { createBoard } from './scenes/board.js';
@@ -34,7 +34,12 @@ const company = readCompany();
 const ctx = { company };
 const backdrop = mountBackdrop($('#backdrop'));
 const bars = createBars(() => unlock('off-record'));
-const menu = createMenu((id) => navigate(id));
+/* how the next screen change should look; the menu asks for blinds */
+let viaMenu = false;
+const menu = createMenu((id) => {
+  viaMenu = true;
+  navigate(id);
+});
 renderDate();
 
 let screen = null; // title | talk | page | quick
@@ -83,12 +88,13 @@ function activate(id) {
   renderKeyHints(mode);
 }
 
+let lastStyle = 'slash';
 async function show(id) {
   const prev = screen;
   const prevPage = pageId;
   if (prev === 'page' && pageId === id) return;
   if (prev === id && id !== 'page') return;
-  menu.close();
+  menu.close(false);
   closeModal();
   const mode = modeOf(id);
 
@@ -107,12 +113,17 @@ async function show(id) {
     revealDelay = 1.3; // cards slam in on the frame the torn pieces are yanked away
     await ripTransition(swap);
   } else {
-    await slashWipe(swap);
+    // mix it up: each kind of move has its own wipe
+    const style = viaMenu || id === 'system' || id === 'secret' ? 'blinds' : mode === 'quick' ? 'paper' : mode === 'board' && prev !== 'title' ? 'iris' : 'slash';
+    await { blinds: blindsWipe, paper: paperWipe, iris: irisWipe, slash: slashWipe }[style](swap);
+    lastStyle = style;
   }
+  viaMenu = false;
 
   if (mode === 'title') introTitle();
   if (mode === 'page') {
-    await titlePunch(SECTION_RENDERERS[id](ctx).title);
+    // the big title slam only follows the slash; menu/settings pages build in with kinetic letters instead
+    if (lastStyle === 'slash' || prev === null) await titlePunch(SECTION_RENDERERS[id](ctx).title);
     $$('#page [data-ransom]').forEach((h, i) => dropIn(h, i * 0.05));
     enter($('#page')); // back button, subtitle and other [data-in] items
     pageIntro?.($('#page')); // each page's own entrance
@@ -132,7 +143,7 @@ function introTitle() {
 }
 
 $('#pressStart').addEventListener('click', () => {
-  sfx('snare');
+  sfx('select');
   unlock('first-words');
   pendingStart = true;
   navigate('board');
@@ -192,21 +203,21 @@ function renderPage(id) {
   root.querySelector('#musicVol')?.addEventListener('input', (e) => setMusicVolume(Number(e.target.value)));
   r.after?.(root);
   hydrateStamps(root);
-  if (id === 'contact') sfx('toms');
+  if (id === 'contact') sfx('sparkle');
   store.addTo('visited', id);
 }
 
 let cutinShown = false;
 async function openDossier(id, row) {
   const m = resume.missions.find((x) => x.id === id);
-  sfx('snare');
+  sfx('select');
   if (m.bestStat && !cutinShown) {
     cutinShown = true;
     await cutIn(`${m.bestStat} CAUGHT`);
   }
   openModal(dossierMarkup(m));
   animateDossier($('#modalPanel'), () => {
-    sfx('snare');
+    sfx('thwack');
     shake($('#modalPanel'));
     const st = $('#modalPanel .loot li:last-child');
     if (st) {
@@ -214,7 +225,7 @@ async function openDossier(id, row) {
       burst(r.left + r.width / 2, r.top + r.height / 2, 1.2);
     }
   });
-  if (reducedMotion()) sfx('crash');
+  if (reducedMotion()) sfx('thwack');
   store.addTo('opened', id);
   hydrateStamps($('#modalPanel'));
   unlock('case-file');
@@ -231,7 +242,7 @@ function toggleSetting(b) {
     store.setSetting('reduceMotion', on);
     document.body.classList.toggle('reduce-motion', on);
   }
-  sfx('snare');
+  sfx('toggle');
 }
 
 /* ---------------------------------------------------------------- modal */
@@ -270,13 +281,13 @@ function closeModal() {
 
 $('#modal').addEventListener('click', (e) => {
   if (e.target.id === 'modal' || e.target.closest('[data-close]')) {
-    sfx('kick');
+    sfx('back');
     closeModal();
   }
 });
 
 $('#achBtn').addEventListener('click', () => {
-  sfx('snare');
+  sfx('select');
   openModal(`<button class="modal-x" type="button" data-close aria-label="Close">✕</button>
     <h2 class="dossier-title" id="modalTitle" style="margin-bottom:12px">ACHIEVEMENTS</h2>${listMarkup()}
     <p style="margin:14px 0 0;font-size:14px">All 7 unlock a behind-the-scenes card in SYSTEM.</p>`);
@@ -292,7 +303,7 @@ function toggleSound() {
   const on = !store.get().settings.sound;
   setSound(on);
   syncSoundButton();
-  if (on) sfx('snare');
+  if (on) sfx('toggle');
 }
 
 let hinted = false;
@@ -305,7 +316,6 @@ function soundHint() {
 }
 
 $('#menuBtn').addEventListener('click', () => {
-  sfx('snare');
   menu.isOpen() ? menu.close() : menu.open();
 });
 
@@ -327,7 +337,7 @@ function back() {
     return true;
   }
   if (screen === 'page' || screen === 'quick') {
-    sfx('kick');
+    sfx('back');
     navigate('board');
     return true;
   }
@@ -360,7 +370,6 @@ function moveFocus(dir) {
   const next = items[(i + dir + items.length) % items.length] || items[0];
   next.focus();
   if (!menu.isOpen()) next.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
-  sfx('hat');
   return true;
 }
 

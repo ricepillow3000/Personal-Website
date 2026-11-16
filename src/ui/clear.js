@@ -82,70 +82,146 @@ function shakeEl(el) {
   el.classList.add('shake');
 }
 
-/** Full-screen stamp transition: rays snap in, a giant CLEARED! slams down in the middle,
-    the page scrolls to the project behind the rays, then the stamp flies onto it and lands. */
+/* Torn-paper confetti: red, white, black and yellow scraps that burst out and fall with gravity. */
+let confettiLayer = null;
+function confetti(x, y, n, spread) {
+  if (!confettiLayer) {
+    confettiLayer = document.createElement('div');
+    confettiLayer.className = 'clear-confetti';
+    confettiLayer.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(confettiLayer);
+  }
+  const colors = ['#E5191C', '#F5F5F0', '#0B0B0B', '#FFE11A', '#F5F5F0'];
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('i');
+    const w = gsap.utils.random(8, 22);
+    p.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${w * gsap.utils.random(0.35, 0.8)}px;background:${colors[i % colors.length]}`;
+    confettiLayer.appendChild(p);
+    const ang = gsap.utils.random(0, Math.PI * 2);
+    const dist = gsap.utils.random(0.35, 1) * spread;
+    const dur = gsap.utils.random(0.8, 1.3);
+    gsap.timeline({ onComplete: () => p.remove() })
+      .to(p, { x: Math.cos(ang) * dist, duration: dur, ease: 'power2.out' }, 0)
+      .to(p, { y: Math.sin(ang) * dist * 0.7 - spread * 0.25, duration: dur * 0.4, ease: 'power2.out' }, 0)
+      .to(p, { y: `+=${window.innerHeight * 0.7}`, duration: dur * 0.6, ease: 'power2.in' }, dur * 0.4)
+      .to(p, { rotation: gsap.utils.random(-900, 900), duration: dur, ease: 'none' }, 0);
+  }
+}
+
+/** Full-screen stamp transition (~1.3s):
+    1. a rising "whoom", spinning rays and two CASE CLOSED bands sweep in;
+    2. a giant cut-out CLEARED! drops and hits: deep boom + metal clang + victory sting,
+       white flash, shockwave ring, speed lines, misprint colour split, paper confetti;
+    3. while the rays cover everything, the page scrolls to the project;
+    4. the bands whip out, the rays snap shut and the stamp zips onto the project
+       with a motion trail, landing with a thunk, sparkles and a little confetti. */
 function stampTransition(landOn) {
   return new Promise((resolve) => {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const band = '<span>CASE CLOSED ★ CASE CLOSED ★ CASE CLOSED ★ CASE CLOSED ★ CASE CLOSED ★ </span>';
     const fx = document.createElement('div');
     fx.className = 'clear-fx';
     fx.setAttribute('aria-hidden', 'true');
-    fx.innerHTML = `<div class="clear-fx-rays"></div><div class="clear-fx-flash"></div>${clearStampMarkup('big')}`;
+    fx.innerHTML = `<div class="clear-fx-rays"></div>
+      <div class="clear-fx-band b1">${band}${band}</div><div class="clear-fx-band b2">${band}${band}</div>
+      <div class="clear-fx-lines"></div><div class="clear-fx-ring"></div><div class="clear-fx-flash"></div>
+      ${clearStampMarkup('big')}`;
     document.body.appendChild(fx);
     hydrateStamps(fx);
-    const big = fx.querySelector('.clear-stamp');
-    const rays = fx.querySelector('.clear-fx-rays');
-    const flash = fx.querySelector('.clear-fx-flash');
+    const $f = (c) => fx.querySelector(c);
+    const big = $f('.clear-stamp');
+    const rays = $f('.clear-fx-rays');
+    const bands = [$f('.b1'), $f('.b2')];
+    const lines = $f('.clear-fx-lines');
+    const ring = $f('.clear-fx-ring');
+    const flash = $f('.clear-fx-flash');
     if (landOn) gsap.set(landOn, { autoAlpha: 0 });
 
+    const HIT = 0.27;
+    const OUT = 0.88;
     const tl = gsap.timeline({
       onComplete: () => {
         fx.remove();
         resolve();
       }
     });
-    tl.add(() => sfx('whoosh'), 0)
-      .fromTo(rays, { autoAlpha: 0, rotation: -35, scale: 0.6 }, { autoAlpha: 1, rotation: 0, scale: 1, duration: 0.22, ease: 'expo.out' }, 0)
-      .fromTo(big, { scale: 4.4, rotation: -48, autoAlpha: 0 }, { scale: 0.9, rotation: -10, autoAlpha: 1, duration: 0.17, ease: 'power4.in' }, 0.05)
+    // 1. build-up
+    tl.add(() => sfx('riser'), 0)
+      .fromTo(rays, { autoAlpha: 0, rotation: -40, scale: 0.55 }, { autoAlpha: 1, rotation: 0, scale: 1, duration: 0.24, ease: 'expo.out' }, 0)
+      .to(rays, { rotation: 30, duration: 1, ease: 'none' }, 0.24)
+      .fromTo(bands[0], { xPercent: -110 }, { xPercent: 0, duration: 0.22, ease: 'power4.out' }, 0.02)
+      .fromTo(bands[1], { xPercent: 110 }, { xPercent: 0, duration: 0.22, ease: 'power4.out' }, 0.06)
+      .fromTo(big, { scale: 5.2, rotation: -55, autoAlpha: 0 }, { scale: 0.86, rotation: -10, autoAlpha: 1, duration: HIT - 0.1, ease: 'power4.in' }, 0.1)
+      // 2. impact
       .add(() => {
-        sfx('crash');
-        burst(window.innerWidth / 2, window.innerHeight / 2, 2.6);
+        sfx('stamp');
+        burst(W / 2, H / 2, 2.8);
         shakeEl(fx);
-      }, 0.22)
-      .fromTo(flash, { autoAlpha: 0.85 }, { autoAlpha: 0, duration: 0.18, ease: 'power2.out' }, 0.22)
-      .to(big, { scale: 1, duration: 0.35, ease: 'elastic.out(1.5, .4)' }, 0.22)
-      .fromTo(big.querySelectorAll('.rl'), { y: -26, rotation: () => gsap.utils.random(-35, 35) }, { y: 0, rotation: 0, duration: 0.3, ease: 'back.out(3)', stagger: 0.03 }, 0.22)
-      // the rays cover everything: bring the project into view behind them
-      .add(() => landOn?.closest('.case, .poster')?.scrollIntoView({ block: 'center' }), 0.5);
+        confetti(W / 2, H / 2, 26, Math.min(W, H) * 0.75);
+      }, HIT)
+      .fromTo(flash, { autoAlpha: 0.9 }, { autoAlpha: 0, duration: 0.2, ease: 'power2.out' }, HIT)
+      .fromTo(ring, { scale: 0.2, autoAlpha: 1 }, { scale: 2.6, autoAlpha: 0, duration: 0.5, ease: 'expo.out' }, HIT)
+      .fromTo(lines, { scale: 0.45, autoAlpha: 1 }, { scale: 1.35, duration: 0.3, ease: 'expo.out' }, HIT)
+      .set(lines, { autoAlpha: 0 }, HIT + 0.3)
+      .to(big, { scale: 1, duration: 0.4, ease: 'elastic.out(1.6, .35)' }, HIT)
+      .fromTo(big, { '--mx': '20px' }, { '--mx': '0px', duration: 0.55, ease: 'elastic.out(1, .3)' }, HIT)
+      .fromTo(big.querySelectorAll('.rl'), { y: -30, rotation: () => gsap.utils.random(-40, 40) }, { y: 0, rotation: 0, duration: 0.32, ease: 'back.out(3.2)', stagger: 0.03 }, HIT)
+      // hold: the stamp "boils" like a hand-drawn frame
+      .to(big, { rotation: -8.5, duration: 0.08, ease: 'steps(1)', yoyo: true, repeat: 5 }, HIT + 0.3)
+      // 3. behind the rays, bring the project into view
+      .add(() => landOn?.closest('.case, .poster')?.scrollIntoView({ block: 'center' }), 0.6)
+      // 4. exit
+      .to(bands[0], { xPercent: 110, duration: 0.18, ease: 'power3.in' }, OUT)
+      .to(bands[1], { xPercent: -110, duration: 0.18, ease: 'power3.in' }, OUT + 0.02)
+      .to(rays, { scaleY: 0, duration: 0.16, ease: 'power3.in' }, OUT + 0.04);
 
     if (landOn) {
-      // the giant stamp flies onto the project's stamp and lands there
       tl.add(() => {
+        sfx('zip');
         const a = big.getBoundingClientRect();
         const b = landOn.getBoundingClientRect();
-        gsap.to(big, {
+        const to = {
           x: b.left + b.width / 2 - (a.left + a.width / 2),
           y: b.top + b.height / 2 - (a.top + a.height / 2),
           scale: Math.max(0.15, b.width / a.width),
           rotation: -10,
           duration: 0.3,
           ease: 'power3.in'
+        };
+        // motion trail: two fading copies follow a beat behind
+        [0.45, 0.22].forEach((op, i) => {
+          const g = big.cloneNode(true);
+          g.classList.add('ghost');
+          g.style.opacity = op;
+          g.style.left = `${big.offsetLeft}px`;
+          g.style.top = `${big.offsetTop}px`;
+          big.before(g);
+          gsap.set(g, { x: gsap.getProperty(big, 'x'), y: gsap.getProperty(big, 'y'), scale: gsap.getProperty(big, 'scale'), rotation: gsap.getProperty(big, 'rotation') });
+          gsap.to(g, { ...to, delay: 0.035 * (i + 1) });
         });
-      }, 0.7)
-        .to(rays, { scaleY: 0, duration: 0.16, ease: 'power3.in' }, 0.72)
+        gsap.to(big, to);
+      }, OUT)
         .add(() => {
-          gsap.set(big, { autoAlpha: 0 });
+          fx.querySelectorAll('.clear-stamp').forEach((n) => (n.style.visibility = 'hidden'));
           gsap.set(landOn, { autoAlpha: 1 });
-          sfx('snare');
+          sfx('thunk');
+          sfx('sparkle');
           const r = landOn.getBoundingClientRect();
-          burst(r.left + r.width / 2, r.top + r.height / 2, 1.5);
+          const cx = r.left + r.width / 2;
+          const cy = r.top + r.height / 2;
+          burst(cx, cy, 1.6);
+          confetti(cx, cy, 10, 160);
           shakeEl(landOn.closest('.case, .poster, .dossier'));
-          gsap.fromTo(landOn, { scale: 1.35 }, { scale: 1, duration: 0.4, ease: 'elastic.out(1.4, .4)' });
-        }, 1.0)
-        .to({}, { duration: 0.05 }, 1.0);
+          gsap.fromTo(landOn, { scale: 1.45 }, { scale: 1, duration: 0.45, ease: 'elastic.out(1.4, .4)' });
+          gsap.fromTo(landOn, { '--glow': 1 }, { '--glow': 0, duration: 0.6, ease: 'power2.out' });
+        }, OUT + 0.3)
+        .to({}, { duration: 0.08 }, OUT + 0.3);
     } else {
-      // this project isn't on screen: the stamp whips away
-      tl.to(big, { x: window.innerWidth, skewX: 25, duration: 0.18, ease: 'power3.in' }, 0.8)
-        .to(rays, { scaleY: 0, duration: 0.14, ease: 'power3.in' }, 0.84);
+      // the project isn't on screen: the stamp spins off with the bands
+      tl.add(() => sfx('zip'), OUT)
+        .to(big, { x: W, rotation: 25, skewX: 20, duration: 0.2, ease: 'power3.in' }, OUT)
+        .add(() => sfx('sparkle'), OUT + 0.18);
     }
   });
 }
