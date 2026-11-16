@@ -110,16 +110,28 @@ export function boardMarkup(ctx) {
     </section>
 
     <section class="col col-notes" aria-label="About and contact">
-      <article class="note note-about card-pop ruled" data-board-item><span class="tape" aria-hidden="true"></span>${pin}
-        <h3>${kin('THE PERSON', 4)}</h3>
-        <p><b>${esc(e.school)}</b><br>${esc(e.degree)}<br>${esc(e.concentration)} · ${esc(e.grad)}</p>
-        <div class="about-stats"><span><b>${esc(e.gpa)}</b>GPA</span><span><b>×2</b>Dean's List</span></div>
-        <ul>${resume.funFacts.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>
+      <article class="note note-about card-pop" data-board-item>${pin}
+        <div class="note-band"><h3>${kin('THE PERSON', 4)}</h3></div>
+        <span class="gpa-burst" aria-label="GPA ${esc(e.gpa)}"><span><b>${esc(e.gpa)}</b><small>GPA</small></span></span>
+        <p class="person-school">${esc(e.school.toUpperCase())}</p>
+        <p class="person-degree">${esc(e.degree)}</p>
+        <div class="person-tags">
+          <span class="sticker s0">${esc(e.concentration)}</span>
+          <span class="sticker s1">Dean's List ×2</span>
+          <span class="sticker s2">${esc(e.grad)}</span>
+        </div>
+        <p class="bubble-say person-facts">${resume.funFacts.map((f, i) => `<span><i aria-hidden="true">${['🥁', '🎸', '🐝'][i] || '★'}</i>${esc(f)}</span>`).join('')}</p>
       </article>
-      <article class="note note-quests card-pop ruled" data-board-item><span class="tape" aria-hidden="true"></span>${pin}
-        <h3>${kin('SIDE QUESTS', 2)}</h3>
-        <ul>${resume.sideQuests.map((q) => `<li><b>${esc(q.title)}</b>, ${esc(q.place)}<br><span>${esc(q.lesson)}</span></li>`).join('')}</ul>
-        <a class="note-more" href="#/side-quests" data-nav>Full story ▸</a>
+      <article class="note note-quests card-pop" data-board-item>${pin}
+        <div class="note-band"><h3>${kin('SIDE QUESTS', 2)}</h3></div>
+        <ol class="quest-log">${resume.sideQuests
+          .map((q, i) => `<li class="quest">
+            <span class="quest-no" aria-hidden="true"><span>${i + 1}</span></span>
+            <div><b class="quest-title">${esc(q.title)}</b><span class="quest-place">${esc(q.place)}</span>
+            <span class="quest-lesson">${esc(q.lesson)}</span></div>
+            <span class="quest-done" aria-hidden="true">CLEAR</span></li>`)
+          .join('')}</ol>
+        <a class="btn-cartoon quest-more" href="#/side-quests" data-nav>FULL STORY ▸</a>
       </article>
       <article class="calling card-pop dark" data-board-item>${pin}
         <p class="calling-head">CALLING CARD</p>
