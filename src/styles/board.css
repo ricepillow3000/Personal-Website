@@ -387,6 +387,8 @@ body[data-mode="board"] .keyhints { display: none; }
   .hint-phone { display: inline; }
   .col-notes { grid-template-columns: 1fr; }
   .edge-grid { grid-template-columns: 1fr; }
+  .cc-banner h3 { font-size: 23px !important; }
+  .cc-banner .kin { white-space: normal; }
   .col-label { flex-wrap: wrap; }
   .col-label .ransom { font-size: 28px; flex-wrap: nowrap; }
   .card-pop { box-shadow: -6px 6px 0 -3px var(--sheet), -6px 6px 0 1px var(--ink), 7px 8px 0 0 var(--pop), 11px 12px 0 0 var(--ink); }
