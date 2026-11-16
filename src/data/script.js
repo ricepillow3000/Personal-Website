@@ -26,8 +26,18 @@ export const script = {
   },
   page1: ['built', 'skills', 'different', 'pdf'],
   page2: ['about', 'team', 'connect'],
-  moreLabel: 'Something else...',
-  backLabel: '← Back',
+
+  /* The radial burst menu: one blade per choice. word = big label,
+     sub = small line under it, inv = index of the letter flipped to black-on-white. */
+  radial: {
+    built: { word: 'MISSIONS', sub: "Projects I've built", inv: 3 },
+    skills: { word: 'SKILLS', sub: 'What I can actually do', inv: 2 },
+    different: { word: 'EDGE', sub: 'What makes me different', inv: 1 },
+    pdf: { word: 'RESUME', sub: "I'm busy. Just the PDF", inv: 2 },
+    about: { word: 'STATS', sub: 'Who I am', inv: 2 },
+    team: { word: 'LEADER', sub: 'Ever led a team?', inv: 2 },
+    connect: { word: 'CONTACT', sub: "Let's connect", inv: 4 }
+  },
 
   returns: {
     missions: { expr: 'smirk', text: '199 of 201 errors caught. Not bad, right? Want to see the skills behind it?' },

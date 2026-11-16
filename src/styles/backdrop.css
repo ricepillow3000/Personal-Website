@@ -33,7 +33,7 @@
 .backdrop.frozen *, .backdrop.frozen .bd-drift { animation-play-state: paused !important; }
 
 /* Sections read better over a dimmed wall; Quick View almost hides it. */
-body[data-mode="talk"] .bd-graffiti { opacity: .72; transition: opacity .3s; }
+body[data-mode="talk"] .bd-graffiti { opacity: .45; transition: opacity .3s; }
 body[data-mode="page"] .backdrop { filter: brightness(.42); }
 body[data-mode="quick"] .backdrop { filter: brightness(.16); }
 
