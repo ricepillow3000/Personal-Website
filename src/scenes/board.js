@@ -84,7 +84,7 @@ export function boardMarkup(ctx) {
   const skills = reorder(resume.skills, ctx.company?.order?.skills);
   const note = ctx.company
     ? `<aside class="note note-company card-pop" data-board-item>${pin}<b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you. Pick any skill to see where I used it.</aside>`
-    : `<aside class="note note-hint note-case0 card-pop" data-board-item>${pin}<b class="c0-tag">CASE 00 · THIS SITE</b> Resumes are boring, so I directed 3 AI agents to build mine as a game. <span class="hint-desk">Hover a skill: the string finds the proof.</span><span class="hint-phone">Tap a skill: it lights the proof.</span></aside>`;
+    : `<aside class="note note-hint note-case0 card-pop" data-board-item>${pin}<b class="c0-tag">CASE 00 · THIS SITE</b> Resumes are boring, so I directed 3 AI agents to build mine as a game. <span class="hint-desk">Hover a skill and the string finds the proof.</span><span class="hint-phone">Tap a skill and it lights the proof.</span></aside>`;
 
   return `
   <header class="board-head" data-board-item>
@@ -137,7 +137,7 @@ export function boardMarkup(ctx) {
         <span class="calling-tape" aria-hidden="true"></span>
         <p class="calling-to">To ${esc(ctx.company ? `the team at ${ctx.company.name}` : 'the one buried in boring resumes')},</p>
         <h3 class="calling-title ransom" data-ransom="TAKE NOTICE."></h3>
-        <p class="calling-msg">Resumes have been boring for too long. So I, an AI solutions architect in the making, directed a crew of AI agents to build this one myself. A personal project with one target: your attention.</p>
+        <p class="calling-msg">Resumes have been boring for too long. So I, an AI solutions engineer, directed a crew of AI agents to build this one myself. A personal project with one target, your attention.</p>
         <p class="calling-steal">Consider it stolen.</p>
         <p class="calling-sign">— ${esc(resume.name)}</p>
         <span class="calling-seal" aria-hidden="true"><span>J</span></span>

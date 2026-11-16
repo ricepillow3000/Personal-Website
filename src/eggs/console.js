@@ -27,7 +27,7 @@ export function installConsole() {
         '> builder agent ............ online',
         '> test suite ............... 727/728 passed',
         '> status ................... open to opportunities',
-        '> achievement unlocked: Inspector'
+        '> achievement unlocked, Inspector'
       ];
       lines.forEach((l, i) => setTimeout(() => console.log(`%c${l}`, i === lines.length - 1 ? blk : 'color:#9a9a96;font:12px monospace;'), i * 120));
       unlock('inspector');

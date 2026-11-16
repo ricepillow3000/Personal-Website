@@ -329,9 +329,9 @@ function secret() {
     title: 'BEHIND THE SCENES',
     html: `${back}${head('BEHIND THE SCENES', 'You found every secret. Here is how this site was made.')}
       <div class="sq-list bts">
-        <article class="sq jag light" data-in><h3>THE CREW</h3><p>Same workflow as my projects: an orchestrator agent planned it, a researcher agent checked the details, a builder agent wrote the code, and I directed and reviewed every step. Every click path is covered by automated browser tests.</p></article>
-        <article class="sq jag light" data-in><h3>THE ART</h3><p>Everything you see is code: the spray-painted wall, the torn posters, the stickers and the page rip are inline SVG and CSS. No images were downloaded to make the title screen appear.</p></article>
-        <article class="sq jag light" data-in><h3>THE SOUND</h3><p>Every click is a drum hit. I play drums, so the plan is my own e-kit recordings; until then the kit is synthesized in the browser.</p></article>
+        <article class="sq jag light" data-in><h3>THE CREW</h3><p>Same workflow as my projects. An orchestrator agent planned it, a researcher agent checked the details, a builder agent wrote the code, and I directed and reviewed every step. Every click path is covered by automated browser tests.</p></article>
+        <article class="sq jag light" data-in><h3>THE ART</h3><p>Everything you see is code. The spray-painted wall, the torn posters, the stickers and the page rip are all inline SVG and CSS. No images were downloaded to make the title screen appear.</p></article>
+        <article class="sq jag light" data-in><h3>THE SOUND</h3><p>Every click is a drum hit. I play drums, so the plan is my own e-kit recordings. Until then the kit is synthesized in the browser.</p></article>
         <article class="sq jag light" data-in><blockquote class="motto" style="margin:0">“${esc(resume.motto.text)}”<cite>— ${esc(resume.motto.by)}</cite></blockquote></article>
       </div>`
   };
