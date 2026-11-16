@@ -225,6 +225,46 @@ body[data-mode="board"] .keyhints { display: none; }
 .case-fold { position: absolute; right: -4px; bottom: -4px; width: 34px; height: 34px; background: linear-gradient(135deg, #CFC8B4 0 48%, var(--black) 48% 54%, transparent 54%); pointer-events: none; }
 .case-link { font-family: var(--f-head); font-weight: 400; font-size: 15px; letter-spacing: .4px; }
 
+
+/* ----- THE PERSON + SIDE QUESTS, cartoon edition ----- */
+.note-about.card-pop, .note-quests.card-pop { padding: 0 18px 20px; background: #F7F4EA; overflow: visible; }
+.note-band {
+  margin: 0 -18px 14px; padding: 14px 18px 18px; background: var(--black);
+  clip-path: polygon(0 0, 100% 0, 100% 74%, 82% 86%, 64% 72%, 40% 100%, 22% 80%, 0 92%);
+}
+.note-band h3 { margin: 0 !important; font-size: 30px !important; color: var(--white) !important; }
+.note-band .kin .k-inv { background: var(--white); color: var(--black); }
+.note-quests .note-band { background: var(--red); }
+.note-quests .note-band h3 .k-first { color: var(--black) !important; }
+.gpa-burst { position: absolute; top: -18px; right: -24px; z-index: 5; width: 96px; height: 96px; display: grid; place-items: center; transform: rotate(10deg);
+  background: var(--black); clip-path: polygon(50% 0, 60% 22%, 82% 9%, 78% 33%, 100% 37%, 82% 52%, 97% 72%, 73% 72%, 70% 96%, 52% 80%, 34% 100%, 29% 76%, 4% 78%, 17% 57%, 0 40%, 22% 33%, 15% 9%, 39% 20%); transition: transform .3s var(--ease-pop); }
+.gpa-burst > span { width: 82px; height: 82px; display: grid; place-items: center; align-content: center; background: #3FE6D0; clip-path: inherit; line-height: .9; }
+.gpa-burst b { font-family: var(--f-head); font-weight: 400; font-size: 25px; color: var(--black); transform: skewX(-10deg); }
+.gpa-burst small { font-family: var(--f-head); font-size: 11px; letter-spacing: 1px; color: var(--black); }
+.note-about:hover .gpa-burst { transform: rotate(-8deg) scale(1.1); }
+.person-school { margin: 0; font-family: var(--f-head); font-size: 22px; line-height: 1; letter-spacing: .4px; transform: skewX(-8deg); padding-right: 54px; }
+.person-degree { margin: 4px 0 12px; font-size: 13px; font-weight: 700; color: #444; line-height: 1.35; }
+.person-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.person-tags .sticker { font-family: var(--f-head); font-size: 14px; letter-spacing: .3px; padding: 3px 9px 2px; border: 3px solid var(--black); box-shadow: 3px 3px 0 var(--black); transform: rotate(-2deg) skewX(-6deg); }
+.person-tags .s0 { background: var(--yellow); }
+.person-tags .s1 { background: #FF4FD8; color: var(--black); transform: rotate(2deg) skewX(-6deg); }
+.person-tags .s2 { background: var(--white); }
+.person-facts { display: grid; gap: 6px; margin-bottom: 4px; font-size: 13.5px; line-height: 1.35; }
+.person-facts i { font-style: normal; margin-right: 6px; }
+
+.quest-log { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 12px; }
+.quest { position: relative; display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: start; padding: 8px 10px 10px 6px; background: var(--white); border: 3px solid var(--black); box-shadow: 4px 4px 0 var(--black); transform: rotate(var(--qt, -.8deg)); transition: transform .15s var(--ease-pop); }
+.quest:nth-child(2) { --qt: .9deg; }
+.quest:nth-child(3) { --qt: -.4deg; }
+.quest:hover { transform: rotate(0) translateX(4px); }
+.quest-no { width: 40px; height: 40px; display: grid; place-items: center; background: var(--red); clip-path: polygon(50% 0, 63% 26%, 95% 20%, 76% 46%, 100% 70%, 68% 72%, 62% 100%, 46% 78%, 18% 96%, 24% 66%, 0 48%, 28% 36%, 14% 8%, 40% 22%); }
+.quest-no span { font-family: var(--f-head); font-size: 22px; color: var(--white); transform: skewX(-10deg); -webkit-text-stroke: 1.5px var(--black); paint-order: stroke fill; text-shadow: 2px 2px 0 var(--black); }
+.quest-title { display: block; font-family: var(--f-head); font-weight: 400; font-size: 18px; line-height: 1.05; letter-spacing: .3px; transform: skewX(-8deg); transform-origin: left; }
+.quest-place { display: block; font-size: 12px; font-weight: 800; color: #555; margin: 2px 0 6px; }
+.quest-lesson { display: block; font-size: 12.5px; font-weight: 600; line-height: 1.35; padding: 5px 8px; background: var(--black); color: var(--white); transform: skewX(-4deg); }
+.quest-done { position: absolute; top: -10px; right: -8px; font-family: var(--f-head); font-size: 12px; letter-spacing: 1px; color: var(--red); border: 3px solid var(--red); background: var(--white); padding: 1px 6px; transform: rotate(10deg); }
+.quest-more { font-size: 16px !important; text-decoration: none; }
+
 /* ===================== PHONES ===================== */
 @media (max-width: 1100px) {
   .board-grid { grid-template-columns: 260px minmax(0, 1fr); }
