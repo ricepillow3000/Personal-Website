@@ -105,7 +105,7 @@ function graffitiLayer() {
   </g>
 
   <!-- swoosh arrow (wildstyle-ish), white with black outline -->
-  <path d="M520 420 C 700 330, 900 330, 1040 400 L 1060 360 L 1130 460 L 1010 488 L 1028 446 C 900 392, 720 400, 560 470 Z"
+  <path class="bd-arrow" d="M520 420 C 700 330, 900 330, 1040 400 L 1060 360 L 1130 460 L 1010 488 L 1028 446 C 900 392, 720 400, 560 470 Z"
     fill="${C.white}" stroke="${C.black}" stroke-width="10" stroke-linejoin="round" paint-order="stroke"/>
 
   <!-- crown tag outline -->
@@ -134,7 +134,7 @@ function shardLayer() {
 /* =========================================================================
    Mount + motion: shared drift (nearer layers move further) + pointer parallax.
    ========================================================================= */
-export function mountBackdrop(el, { interactive = true } = {}) {
+export function mountBackdrop(el) {
   el.classList.add('backdrop');
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `
@@ -142,7 +142,7 @@ export function mountBackdrop(el, { interactive = true } = {}) {
     <div class="bd-layer bd-graffiti"><div class="bd-drift">${graffitiLayer()}</div></div>
     <div class="bd-layer bd-shards"><div class="bd-drift">${shardLayer()}</div></div>`;
 
-  if (interactive && window.matchMedia('(pointer: fine)').matches) {
+  if (window.matchMedia('(pointer: fine)').matches) {
     let raf = 0;
     let tx = 0;
     let ty = 0;
@@ -157,11 +157,4 @@ export function mountBackdrop(el, { interactive = true } = {}) {
       });
     }, { passive: true });
   }
-
-  return {
-    el,
-    setFrozen(on) {
-      el.classList.toggle('frozen', on);
-    }
-  };
 }

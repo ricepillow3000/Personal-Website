@@ -18,7 +18,8 @@ async function openBoard(page, url = '/#/board') {
 test('title → PRESS START → the heist board', async ({ page }) => {
   const errors = errorsOf(page);
   await page.goto('/');
-  await expect(page.locator('#titleName')).toHaveAttribute('aria-label', 'JOHN');
+  await expect(page.locator('#titleName')).toHaveAccessibleName('JOHN');
+  await expect(page.getByRole('heading', { name: 'JOHN' })).toBeVisible();
   await page.locator('#pressStart').click();
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
   await expect(page.locator('#board .case')).toHaveCount(2);
@@ -256,19 +257,120 @@ test('hostile ?company= values render as plain text', async ({ page }) => {
 test('progress is saved: returning visitors CONTINUE with their case log', async ({ page }) => {
   await page.goto('/#/skills');
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'skills');
-  await page.goto('/#/contact');
-  await expect(page.locator('body')).toHaveAttribute('data-screen', 'contact');
+  await page.goto('/#/stats');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'stats');
   await page.goto('/#/');
   await page.reload();
   await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
-  await expect(page.locator('#saveLine')).toContainText('2/8 cleared');
+  await expect(page.locator('#saveLine')).toContainText('2/7 cleared');
   await page.locator('#pressStart').click();
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
-  await expect(page.locator('#progressChip')).toContainText('2/8');
+  await expect(page.locator('#progressChip')).toContainText('2/7');
   // starting over wipes the save
   await page.goto('/#/');
   await page.reload();
   await page.locator('.save-reset').click();
   await expect(page.locator('#pressStart')).toHaveText('PRESS START');
   await expect(page.locator('#saveLine')).toHaveCount(0);
+});
+
+/* ---- with animations ON: the timing bugs only show up when transitions really run ---- */
+test.describe('with motion on', () => {
+  test.use({ reducedMotion: 'no-preference' });
+
+  test('a newer navigation wins: no stale title slam, no stale visit', async ({ page }) => {
+    const errors = errorsOf(page);
+    await openBoard(page);
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => {
+      window.__punch = [];
+      new MutationObserver(() => window.__punch.push(document.getElementById('punchText').textContent)).observe(document.getElementById('punchText'), { childList: true, characterData: true, subtree: true });
+    });
+    await page.evaluate(() => (location.hash = '#/stats'));
+    await page.waitForTimeout(150);
+    await page.evaluate(() => (location.hash = '#/contact'));
+    await page.waitForTimeout(2500);
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'contact');
+    expect((await page.evaluate(() => window.__punch)).join(' ')).not.toContain('STATS');
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('jn-resume-v1')).visited)).not.toContain('stats');
+    expect(errors).toEqual([]);
+  });
+
+  test('leaving during the case-file cut-in does not pop the file over the next screen', async ({ page }) => {
+    await openBoard(page);
+    await page.waitForTimeout(1500);
+    await page.locator('.case[data-case="arcas"] .case-open').click();
+    await page.waitForTimeout(100);
+    await page.evaluate(() => (location.hash = '#/quick'));
+    await page.waitForTimeout(2000);
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'quick');
+    await expect(page.locator('#modal')).toBeHidden();
+  });
+
+  test('keyboard: Enter on the sound button does not start the game, pages land focus on something real', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'keyboard check');
+    await page.goto('/');
+    await page.waitForTimeout(1200);
+    await page.locator('#soundBtn').focus();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(600);
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'title');
+    for (const id of ['missions', 'skills', 'stats', 'side-quests', 'system']) {
+      await page.evaluate((x) => (location.hash = `#/${x}`), id);
+      await expect(page.locator('body')).toHaveAttribute('data-screen', id);
+      await page.waitForTimeout(2200);
+      const tag = await page.evaluate(() => (document.activeElement === document.body ? 'BODY' : document.activeElement.closest('#page') ? 'PAGE' : 'ELSEWHERE'));
+      expect(tag, `focus after opening ${id}`).toBe('PAGE');
+    }
+  });
+
+  test('an open file traps focus and gives it back when closed', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'keyboard check');
+    await openBoard(page);
+    await page.waitForTimeout(1500);
+    const opener = page.locator('.case[data-case="meliona"] .case-open');
+    await opener.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#modal')).toBeVisible();
+    for (let i = 0; i < 8; i++) {
+      await page.keyboard.press('Tab');
+      expect(await page.evaluate(() => Boolean(document.activeElement.closest('#modal')))).toBe(true);
+    }
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#modal')).toBeHidden();
+    await expect(opener).toBeFocused();
+  });
+
+  test('menu: opens with focus on the first item, Esc returns focus to MENU', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'keyboard check');
+    await openBoard(page);
+    await page.waitForTimeout(1500);
+    await page.locator('#menuBtn').click();
+    await expect(page.locator('#menuBtn')).toHaveAttribute('aria-expanded', 'true');
+    await page.waitForTimeout(500);
+    await expect(page.locator('.stair-item').first()).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#menuBtn')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#menuBtn')).toBeFocused();
+  });
+});
+
+test('every CASE LOG item can be reached from the site itself (ALL CLEAR is possible)', async ({ page }) => {
+  await openBoard(page);
+  // open every MENU page (except SYSTEM, which is settings) by clicking, then mark both projects cleared
+  for (const id of ['missions', 'skills', 'different', 'stats', 'side-quests']) {
+    await page.locator('#menuBtn').click();
+    await page.locator(`.stair-item[data-go="${id}"]`).click();
+    await expect(page.locator('body')).toHaveAttribute('data-screen', id);
+    await page.locator('#page .back-btn').click();
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  }
+  await page.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem('jn-resume-v1'));
+    st.cleared = ['meliona', 'arcas'];
+    localStorage.setItem('jn-resume-v1', JSON.stringify(st));
+  });
+  await page.goto('/#/');
+  await page.reload();
+  await expect(page.locator('#saveLine')).toContainText('ALL CLEAR');
 });

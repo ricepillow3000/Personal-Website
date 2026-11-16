@@ -19,6 +19,7 @@ export function createMenu(go) {
   const overlay = $('#menu');
   const stair = $('#stair');
   const teaser = $('#menuTeaser');
+  const btn = $('#menuBtn');
 
   function render() {
     stair.innerHTML = MENU_ITEMS.map(
@@ -40,6 +41,7 @@ export function createMenu(go) {
   }
 
   function select(b, quiet) {
+    if (b.classList.contains('on')) return; // already selected (mouse then focus): no second sound
     stair.querySelectorAll('.stair-item').forEach((x) => x.classList.toggle('on', x === b));
     stair.classList.add('has-on');
     teaser.textContent = menuTeasers[b.dataset.go] || '';
@@ -58,15 +60,16 @@ export function createMenu(go) {
     openState = true;
     anim?.kill();
     overlay.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
     const first = stair.querySelector('.stair-item');
-    first.focus();
     select(first, true);
+    first.focus();
     if (reducedMotion()) return;
     sfx('menuOpen');
     anim = gsap.timeline()
       .fromTo(overlay, { clipPath: SHUT }, { clipPath: FULL, duration: 0.32, ease: 'power3.out' }, 0)
-      .fromTo(stair.querySelectorAll('li'), { x: () => -window.innerWidth * 0.6, rotation: -14, autoAlpha: 0 },
-        { x: 0, rotation: 0, autoAlpha: 1, duration: 0.3, ease: 'back.out(2.2)', stagger: 0.045, clearProps: 'transform,opacity,visibility' }, 0.06)
+      .fromTo(stair.querySelectorAll('li'), { x: () => -window.innerWidth * 0.6, rotation: -14, opacity: 0 },
+        { x: 0, rotation: 0, opacity: 1, duration: 0.3, ease: 'back.out(2.2)', stagger: 0.045, clearProps: 'transform,opacity' }, 0.06)
       .fromTo(teaser, { scale: 0.3, rotation: -12 }, { scale: 1, rotation: 0, duration: 0.3, ease: 'back.out(2.6)', clearProps: 'transform' }, 0.22)
       .add(() => gsap.set(overlay, { clearProps: 'clipPath' }));
   }
@@ -76,6 +79,9 @@ export function createMenu(go) {
     if (!openState) return;
     openState = false;
     anim?.kill();
+    btn.setAttribute('aria-expanded', 'false');
+    // closed in place (not leaving for a page): focus goes back to the MENU button
+    if (animated && overlay.contains(document.activeElement)) btn.focus({ preventScroll: true });
     const done = () => {
       overlay.hidden = true;
       stair.classList.remove('has-on');

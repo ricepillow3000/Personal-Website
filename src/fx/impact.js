@@ -55,7 +55,7 @@ export function burst(x, y, size = 1) {
 
 /** Squash + spring on the pressed element. Uses the separate `scale` property,
     so the element's own skew/translate transforms (hover states) stay intact. */
-export function squash(el) {
+function squash(el) {
   if (reducedMotion() || !el.animate) return;
   el.animate(
     [{ scale: '1' }, { scale: '0.86 0.8' }, { scale: '1.08 1.1' }, { scale: '0.98' }, { scale: '1' }],
@@ -107,7 +107,7 @@ export function initClickFx() {
     const el = e.target;
     if (reducedMotion() || !el.matches?.(':focus-visible') || !el.animate) return;
     el.animate([{ scale: '1' }, { scale: '1.09' }, { scale: '0.98' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1)' });
-    sfx('tick');
+    if (!el.matches('.skill, .stair-item')) sfx('hover'); // those two already play their own focus sound
   });
 
   // Keyboard presses (Enter/Space) fire click with detail 0: burst from the element's center.

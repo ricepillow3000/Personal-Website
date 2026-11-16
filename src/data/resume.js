@@ -138,11 +138,5 @@ export const resume = {
 
   skillsLine: ['Python', 'JavaScript', 'Flask', 'Docker', 'Git', 'GitHub Actions (CI/CD)', 'Claude Code (multi-agent workflows)', 'AI Evaluation'],
 
-  /* Asset switches — flip to true once the real files are in public/assets. */
-  assets: {
-    drumSamples: false, // public/assets/audio/{hat,snare,kick,crash,toms}.ogg
-    drumLoop: false // public/assets/audio/loop.ogg
-  },
-
   analytics: { goatcounter: '' } // e.g. 'johnnguyen' → https://johnnguyen.goatcounter.com/count
 };

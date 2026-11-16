@@ -60,19 +60,21 @@ function missions(ctx) {
 export function dossierMarkup(m) {
   return `<div class="dossier" data-id="${m.id}">
     <button class="modal-x" type="button" data-close aria-label="Close">✕</button>
-    <p class="dossier-code">MISSION FILE · ${esc(m.dates)} · DIFFICULTY ${esc(m.grade)}</p>
-    <h2 class="dossier-title" id="modalTitle">${esc(m.target)}</h2>
-    <p class="dossier-sub">${esc(m.name)} — <span style="color:var(--red)">${esc(m.status)}</span></p>
-    <ul class="dossier-stack">${m.stack.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
-    <div class="dossier-cols">
-      <div><h3>OBJECTIVES</h3><ul class="obj">${m.objectives.map((o) => `<li>${esc(o)}</li>`).join('')}</ul></div>
-      <div><h3>LOOT</h3><ul class="loot">${m.loot.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
-    </div>
+    <header class="dossier-head">
+      <p class="dossier-code">MISSION FILE · ${esc(m.dates)} · DIFFICULTY ${esc(m.grade)}</p>
+      <h2 class="dossier-title ransom" id="modalTitle" data-ransom="${esc(m.target.toUpperCase())}">${esc(m.target)}</h2>
+      <p class="dossier-sub">${esc(m.name)} · <span class="dossier-live">${esc(m.status)}</span></p>
+      <ul class="dossier-stack">${m.stack.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
+    </header>
     <div class="dossier-links">
       <a class="btn" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}" data-clear="${m.id}">Try it live ↗</a>
       <a class="btn" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}" data-clear="${m.id}">Code on GitHub ↗</a>
     </div>
     <p class="dossier-hint">${isCleared(m.id) ? 'Case cleared. Thanks for checking it out.' : 'Visit the live app or the code to clear this case.'}</p>
+    <div class="dossier-cols">
+      <div><h3>OBJECTIVES</h3><ul class="obj">${m.objectives.map((o) => `<li>${esc(o)}</li>`).join('')}</ul></div>
+      <div><h3>LOOT</h3><ul class="loot">${m.loot.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
+    </div>
     ${isCleared(m.id) ? clearStampMarkup() : ''}
   </div>`;
 }
@@ -112,7 +114,7 @@ function skills(ctx) {
                 <span class="crew-name" aria-hidden="true">${esc(s.name)}</span>
                 <span class="crew-dot" aria-hidden="true">•</span>
                 <span class="crew-lv" aria-hidden="true"><small>LV</small>${n >= 10 ? 'MAX' : n}</span>
-                <span class="crew-m rk" aria-hidden="true"><small>RK</small><b>${n * 10}</b><i style="--v:${n * 10}%"></i></span>
+                <span class="crew-m rk" aria-hidden="true"><b>${n * 10}%</b><i style="--v:${n * 10}%"></i></span>
                 <span class="crew-m in" aria-hidden="true"><small>IN</small><b>${s.uses.length}/${total}</b><i style="--v:${(s.uses.length / total) * 100}%"></i></span>
               </li>`;
             })
@@ -206,7 +208,6 @@ function stats() {
             <span class="gpa-tag" aria-hidden="true">GPA</span>
             <div class="gpa-num" aria-hidden="true"><b data-to="${esc(e.gpa)}">${esc(e.gpa)}</b><span>/ 4.00</span></div>
             <div class="gpa-bar" aria-hidden="true" style="--v:${(Math.min(1, gpa / 4) * 100).toFixed(1)}%"><i></i></div>
-            <span class="gpa-note" aria-hidden="true">DEAN’S LIST · FALL 25 · SPRING 26</span>
           </figure>
           <div class="id-info">
             <h3>${esc(e.school)}</h3>
