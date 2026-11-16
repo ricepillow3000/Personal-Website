@@ -142,6 +142,14 @@ export function mountBackdrop(el) {
     <div class="bd-layer bd-graffiti"><div class="bd-drift">${graffitiLayer()}</div></div>
     <div class="bd-layer bd-shards"><div class="bd-drift">${shardLayer()}</div></div>`;
 
+  // tall screens only see a narrow slice of the wall: show its left side (GO! poster + star)
+  // instead of the empty middle
+  const tall = window.matchMedia('(max-aspect-ratio: 1/1)');
+  const graffiti = el.querySelector('.bd-graffiti svg');
+  const fit = () => graffiti.setAttribute('preserveAspectRatio', tall.matches ? 'xMinYMid slice' : 'xMidYMid slice');
+  fit();
+  tall.addEventListener?.('change', fit);
+
   if (window.matchMedia('(pointer: fine)').matches) {
     let raf = 0;
     let tx = 0;

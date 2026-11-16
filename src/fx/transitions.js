@@ -472,8 +472,9 @@ export function flipWipe(swap) {
       gsap.set(old, { clearProps: 'transform,filter' });
       swap();
       const now = $('.screen.active');
-      gsap.fromTo(now, { rotationY: -90, transformPerspective: 1300, transformOrigin: '50% 50%', scale: 0.92 },
-        { rotationY: 0, scale: 1, duration: 0.42, ease: 'back.out(1.6)', clearProps: 'transform' });
+      // part of the timeline, so the wipe only counts as done once this has fully settled
+      tl.add(gsap.fromTo(now, { rotationY: -90, transformPerspective: 1300, transformOrigin: '50% 50%', scale: 0.92 },
+        { rotationY: 0, scale: 1, duration: 0.42, ease: 'back.out(1.6)', clearProps: 'transform' }), 0.25);
       sfx('thunk');
     }, 0.25)
     .to({}, { duration: 0.42 }, 0.25);

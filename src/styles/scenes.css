@@ -165,7 +165,8 @@
 
   .screen-page { padding-top: 112px; }
   .back-btn { top: 70px; font-size: 17px; }
-  .quick-bar { top: 58px; }
+  .quick-bar { top: 58px; flex-wrap: nowrap; gap: 10px; }
+  .quick-bar .btn { white-space: nowrap; }
   #screen-quick { padding-top: 116px; }
 
   .dossier-cols, .sys-grid, .paper-body { grid-template-columns: 1fr; }
@@ -181,3 +182,5 @@
   .ccard-role, .ccard-line { max-width: 100%; }
   .ccard-back { background-image: none; }
 }
+/* very narrow phones: the Quick View buttons keep to one row */
+@media (max-width: 440px) { .qb-long { display: none; } }
