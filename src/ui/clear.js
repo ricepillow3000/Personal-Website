@@ -147,7 +147,8 @@ function stampTransition(landOn) {
       }
     });
     // 1. build-up
-    tl.add(() => sfx('riser'), 0)
+    tl.add(() => sfx('whipWind'), 0)
+      .add(() => sfx('whip'), HIT - 0.11) // the lash cracks exactly on the stamp hit
       .fromTo(rays, { autoAlpha: 0, rotation: -40, scale: 0.55 }, { autoAlpha: 1, rotation: 0, scale: 1, duration: 0.24, ease: 'expo.out' }, 0)
       .to(rays, { rotation: 30, duration: 1, ease: 'none' }, 0.24)
       .fromTo(bands[0], { xPercent: -110 }, { xPercent: 0, duration: 0.22, ease: 'power4.out' }, 0.02)
@@ -178,7 +179,7 @@ function stampTransition(landOn) {
 
     if (landOn) {
       tl.add(() => {
-        sfx('zip');
+        sfx('whipSmall');
         const a = big.getBoundingClientRect();
         const b = landOn.getBoundingClientRect();
         const to = {
@@ -219,7 +220,7 @@ function stampTransition(landOn) {
         .to({}, { duration: 0.08 }, OUT + 0.3);
     } else {
       // the project isn't on screen: the stamp spins off with the bands
-      tl.add(() => sfx('zip'), OUT)
+      tl.add(() => sfx('whipSmall'), OUT)
         .to(big, { x: W, rotation: 25, skewX: 20, duration: 0.2, ease: 'power3.in' }, OUT)
         .add(() => sfx('sparkle'), OUT + 0.18);
     }

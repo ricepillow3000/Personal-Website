@@ -380,3 +380,37 @@ body.scrolled .hud-bars { translate: calc(-100% - 60px) 0; pointer-events: none;
 @media (max-width: 760px) {
   .clear-fx-band { height: 9vh; font-size: 5.4vh; }
 }
+
+/* ============ more menu wipes: shatter, stripes, ink ============ */
+.shatter i { position: absolute; inset: 0; display: block; background: var(--black); }
+.shatter i:nth-child(3n) { background: var(--red); }
+.shatter i:nth-child(5n) { background: var(--white); }
+.stripes i { position: absolute; left: -40vw; width: 180vw; height: 30vh; top: calc(var(--i) * 22vh - 30vh); transform: rotate(-24deg); display: block; background: var(--black); }
+.stripes i:nth-child(3n + 1) { background: var(--red); }
+.stripes i:nth-child(3n + 2) { background: var(--white); }
+.inkw { display: grid; place-items: center; }
+.ink-blot { position: absolute; width: 190vmax; height: 190vmax; background: var(--black); }
+.ink-blot.red { background: var(--red); }
+
+/* ============ saved progress: CASE LOG chip, CONTINUE line, menu mini stamps ============ */
+.progress-chip {
+  display: inline-flex; align-items: center; gap: 10px; margin-top: 10px; padding: 5px 12px 6px; background: var(--black); color: var(--white);
+  border: 3px solid var(--white); box-shadow: 5px 5px 0 var(--red); transform: rotate(-3deg) skew(var(--skew)); cursor: help;
+}
+.progress-chip > * { transform: skew(calc(var(--skew) * -1)); }
+.pc-label { font-family: var(--f-menu); font-size: 15px; letter-spacing: 2px; color: var(--yellow); }
+.pc-count { font-family: var(--f-head); font-size: 18px; }
+.pc-count b { font-weight: 400; font-size: 24px; color: var(--yellow); }
+.pc-bar { display: inline-flex; gap: 3px; }
+.pc-bar i { display: block; width: 9px; height: 16px; background: #333; transform: skewX(-18deg); }
+.pc-bar i.on { background: var(--red); box-shadow: inset 0 0 0 2px var(--white); }
+.progress-chip.all { background: var(--yellow); color: var(--black); border-color: var(--black); box-shadow: 5px 5px 0 var(--red); }
+.progress-chip.all .pc-label { color: var(--red); }
+.pc-all { font-family: var(--f-head); font-size: 22px; letter-spacing: 1px; }
+.save-line { display: inline-flex; align-items: center; gap: 8px; margin: 14px 0 0; padding: 4px 12px; background: rgba(5, 5, 5, .86); border-left: 4px solid var(--yellow); font-family: var(--f-type); font-size: 15px; color: var(--white); transform: rotate(-1deg); }
+.save-dot { width: 10px; height: 10px; background: var(--yellow); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.save-reset { border: 0; background: none; color: var(--white); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px 2px; }
+.save-reset:hover, .save-reset:focus-visible { color: var(--yellow); }
+.stair-item > .clear-stamp { position: absolute; right: -40px; top: -10px; padding: 4px 6px; z-index: 3; }
+.stair-item > .clear-stamp .cs-word { font-size: 13px; }
+.stair-item > .clear-stamp .cs-star { width: 18px; height: 18px; right: -6px; top: -8px; }

@@ -15,7 +15,8 @@ import { $, $$, esc, reducedMotion } from './core/util.js';
 import { mountBackdrop } from './fx/backdrop.js';
 import { initClickFx, burst } from './fx/impact.js';
 import { initClearing, hydrateStamps } from './ui/clear.js';
-import { slashWipe, blindsWipe, paperWipe, irisWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
+import { progress } from './core/progress.js';
+import { slashWipe, blindsWipe, paperWipe, irisWipe, shatterWipe, stripesWipe, flipWipe, inkWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate, createBars } from './ui/hud.js';
 import { createBoard } from './scenes/board.js';
@@ -89,6 +90,9 @@ function activate(id) {
 }
 
 let lastStyle = 'slash';
+/* every menu destination gets its own transition */
+const MENU_STYLE = { missions: 'shatter', skills: 'blinds', stats: 'flip', 'side-quests': 'stripes', system: 'ink' };
+const WIPES = { slash: slashWipe, blinds: blindsWipe, paper: paperWipe, iris: irisWipe, shatter: shatterWipe, stripes: stripesWipe, flip: flipWipe, ink: inkWipe };
 async function show(id) {
   const prev = screen;
   const prevPage = pageId;
@@ -114,8 +118,16 @@ async function show(id) {
     await ripTransition(swap);
   } else {
     // mix it up: each kind of move has its own wipe
-    const style = viaMenu || id === 'system' || id === 'secret' ? 'blinds' : mode === 'quick' ? 'paper' : mode === 'board' && prev !== 'title' ? 'iris' : 'slash';
-    await { blinds: blindsWipe, paper: paperWipe, iris: irisWipe, slash: slashWipe }[style](swap);
+    const style = viaMenu
+      ? MENU_STYLE[id] || 'blinds'
+      : id === 'system' || id === 'secret'
+        ? 'blinds'
+        : mode === 'quick'
+          ? 'paper'
+          : mode === 'board' && prev !== 'title'
+            ? 'iris'
+            : 'slash';
+    await WIPES[style](swap);
     lastStyle = style;
   }
   viaMenu = false;
@@ -137,10 +149,73 @@ async function show(id) {
 
 /* ---------------------------------------------------------------- title */
 function introTitle() {
+  renderSaveLine();
   dropIn($('#titleName'), 0.15);
   if (!reducedMotion()) gsap.from('#screen-title .title-codename, #screen-title .title-hook, #pressStart, #screen-title .quick-link', { x: -40, opacity: 0, stagger: 0.08, duration: 0.35, delay: 0.35, ease: 'back.out(2)', clearProps: 'all' });
   setTimeout(() => $('#pressStart').focus({ preventScroll: true }), 50);
 }
+
+/* ---------------------------------------------------------------- saved progress */
+function renderProgress(celebrate) {
+  const chip = $('#progressChip');
+  if (!chip) return;
+  const p = progress();
+  const left = p.items.filter((i) => !i.done).map((i) => i.label);
+  chip.classList.toggle('all', p.all);
+  chip.setAttribute('aria-label', p.all ? 'Case log: all clear' : `Case log: ${p.done} of ${p.total}. Left: ${left.join(', ')}`);
+  chip.title = p.all ? 'Everything cleared. Thanks for playing.' : `Left: ${left.join(' · ')}`;
+  chip.innerHTML = p.all
+    ? '<span class="pc-label">CASE LOG</span><span class="pc-all">ALL CLEAR!</span>'
+    : `<span class="pc-label">CASE LOG</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
+       <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>`;
+  if (celebrate && !reducedMotion()) gsap.fromTo(chip, { scale: 1.6, rotation: -12 }, { scale: 1, rotation: -3, duration: 0.5, ease: 'elastic.out(1.4, .4)' });
+}
+let wasAll = progress().all;
+store.onChange(() => {
+  const p = progress();
+  renderProgress(p.all && !wasAll);
+  if (p.all && !wasAll) {
+    setTimeout(() => {
+      toast('Every case cleared. Thanks for playing.', 'ALL CLEAR!');
+      sfx('treasure');
+    }, 1600);
+  }
+  wasAll = p.all;
+});
+
+/* returning visitors: CONTINUE instead of starting from scratch (everything is saved) */
+function renderSaveLine() {
+  const p = progress();
+  const btn = $('#pressStart');
+  let line = $('#saveLine');
+  if (!p.any) {
+    btn.textContent = 'PRESS START';
+    line?.remove();
+    return;
+  }
+  btn.textContent = 'CONTINUE';
+  if (!line) {
+    line = document.createElement('p');
+    line.id = 'saveLine';
+    line.className = 'save-line';
+    btn.after(line);
+  }
+  line.innerHTML = `<span class="save-dot" aria-hidden="true"></span>Save found · ${p.all ? 'ALL CLEAR' : `${p.done}/${p.total} cleared`} · <button type="button" class="save-reset">Start over</button>`;
+  line.querySelector('.save-reset').addEventListener('click', () => {
+    store.reset();
+    try {
+      window.sessionStorage.clear();
+    } catch {
+      /* ignore */
+    }
+    sfx('back');
+    renderSaveLine();
+    renderProgress();
+    $('#board').innerHTML = '';
+    window.location.reload();
+  });
+}
+renderSaveLine();
 
 $('#pressStart').addEventListener('click', () => {
   sfx('select');
@@ -168,6 +243,7 @@ hydrateStamps($('#board'));
 let boardSeen = false;
 let revealDelay = 0;
 function enterBoard() {
+  renderProgress();
   board.reveal(revealDelay);
   revealDelay = 0;
   $('#board .case-open')?.focus({ preventScroll: true });
@@ -413,6 +489,7 @@ function handle(action, e) {
           return Boolean(b);
         }
         if (screen !== 'title' && MENU_ITEMS[n - 1]) {
+          viaMenu = true;
           navigate(MENU_ITEMS[n - 1].id);
           return true;
         }

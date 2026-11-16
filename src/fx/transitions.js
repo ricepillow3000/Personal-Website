@@ -408,3 +408,116 @@ export function irisWipe(swap) {
     .set(el, { visibility: 'hidden' });
   return track(tl);
 }
+
+
+/** SHATTER (menu: Missions): glass shards fly in, lock together, then blow apart. (~0.7s) */
+export function shatterWipe(swap) {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const cols = 4;
+  const rows = 3;
+  const html = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x0 = (c / cols) * 100;
+      const x1 = ((c + 1) / cols) * 100;
+      const y0 = (r / rows) * 100;
+      const y1 = ((r + 1) / rows) * 100;
+      const pad = 0.6; // overlap so no hairline gaps
+      html.push(`<i style="clip-path:polygon(${x0 - pad}% ${y0 - pad}%, ${x1 + pad}% ${y0 - pad}%, ${x0 - pad}% ${y1 + pad}%)"></i>`);
+      html.push(`<i style="clip-path:polygon(${x1 + pad}% ${y0 - pad}%, ${x1 + pad}% ${y1 + pad}%, ${x0 - pad}% ${y1 + pad}%)"></i>`);
+    }
+  }
+  const el = layer('shatter', html.join(''));
+  const shards = [...el.children];
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const tl = gsap.timeline();
+  tl.set(el, { visibility: 'visible' })
+    .add(() => sfx('swish'), 0)
+    .fromTo(shards, { x: () => gsap.utils.random(-1, 1) * W * 0.6, y: () => gsap.utils.random(-1, 1) * H * 0.6, rotation: () => gsap.utils.random(-90, 90), autoAlpha: 0 },
+      { x: 0, y: 0, rotation: 0, autoAlpha: 1, duration: 0.22, ease: 'power4.in', stagger: { each: 0.008, from: 'random' } }, 0)
+    .add(() => {
+      swap();
+      sfx('glass');
+      shake(el);
+    }, 0.4)
+    .to(shards, { x: () => gsap.utils.random(-1, 1) * W, y: () => gsap.utils.random(0.2, 1.2) * H, rotation: () => gsap.utils.random(-200, 200), duration: 0.38, ease: 'power3.in', stagger: { each: 0.006, from: 'center' } }, 0.48)
+    .set(el, { visibility: 'hidden' })
+    .set(shards, { clearProps: 'transform,opacity,visibility' });
+  return track(tl);
+}
+
+/** STRIPES (menu: Side Quests): diagonal red/black/white bands race across. (~0.65s) */
+export function stripesWipe(swap) {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const el = layer('stripes', Array.from({ length: 6 }, (_, i) => `<i style="--i:${i}"></i>`).join(''));
+  const bars = [...el.children];
+  const tl = gsap.timeline();
+  tl.set(el, { visibility: 'visible' })
+    .add(() => sfx('swish'), 0)
+    .add(() => sfx('swish'), 0.09)
+    .fromTo(bars, { xPercent: 140 }, { xPercent: 0, duration: 0.22, ease: 'power4.in', stagger: 0.04 }, 0)
+    .add(() => {
+      swap();
+      sfx('thwack', 0.7);
+    }, 0.42)
+    .to(bars, { xPercent: -140, duration: 0.26, ease: 'expo.in', stagger: 0.035 }, 0.46)
+    .set(el, { visibility: 'hidden' });
+  return track(tl);
+}
+
+/** FLIP (menu: Stats): the whole screen flips over like a card. (~0.6s) */
+export function flipWipe(swap) {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const old = $('.screen.active');
+  const tl = gsap.timeline();
+  tl.add(() => sfx('paper'), 0)
+    .to(old, { rotationY: 90, transformPerspective: 1300, transformOrigin: '50% 50%', scale: 0.92, filter: 'brightness(.5)', duration: 0.24, ease: 'power3.in' }, 0)
+    .add(() => {
+      gsap.set(old, { clearProps: 'transform,filter' });
+      swap();
+      const now = $('.screen.active');
+      gsap.fromTo(now, { rotationY: -90, transformPerspective: 1300, transformOrigin: '50% 50%', scale: 0.92 },
+        { rotationY: 0, scale: 1, duration: 0.42, ease: 'back.out(1.6)', clearProps: 'transform' });
+      sfx('thunk');
+    }, 0.25)
+    .to({}, { duration: 0.42 }, 0.25);
+  return track(tl);
+}
+
+/** INK (menu: System): a jagged ink blot floods the screen, then slides down off it. (~0.65s) */
+export function inkWipe(swap) {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const pts = Array.from({ length: 28 }, (_, i) => {
+    const a = (i / 28) * Math.PI * 2;
+    const r = i % 2 ? 50 : 36 + Math.random() * 14;
+    return `${(50 + Math.cos(a) * r).toFixed(1)}% ${(50 + Math.sin(a) * r).toFixed(1)}%`;
+  }).join(', ');
+  const el = layer('inkw', '<div class="ink-blot red"></div><div class="ink-blot"></div>');
+  [...el.children].forEach((b) => (b.style.clipPath = `polygon(${pts})`));
+  const [red, black] = el.children;
+  const tl = gsap.timeline();
+  tl.set(el, { visibility: 'visible' })
+    .add(() => sfx('swish'), 0)
+    .fromTo(red, { scale: 0, rotation: -40, yPercent: 0 }, { scale: 1.1, rotation: 0, duration: 0.24, ease: 'power3.in' }, 0)
+    .fromTo(black, { scale: 0, rotation: 30, yPercent: 0 }, { scale: 1, rotation: 0, duration: 0.24, ease: 'power3.in' }, 0.05)
+    .add(() => {
+      swap();
+      sfx('thwack', 0.8);
+    }, 0.3)
+    .to([black, red], { yPercent: 130, skewY: 8, duration: 0.32, ease: 'power3.in', stagger: 0.05 }, 0.36)
+    .set(el, { visibility: 'hidden' });
+  return track(tl);
+}
