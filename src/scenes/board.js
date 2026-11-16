@@ -16,13 +16,24 @@ import { sfx } from '../audio/audio.js';
 
 const pin = '<span class="pin" aria-hidden="true"></span>';
 
+/** Kinetic heading type: condensed, slanted, a bigger first letter and one letter
+    flipped to a contrasting box. Screen readers get the plain text. */
+function kin(text, inv = null) {
+  const chars = [...text];
+  const flip = inv ?? chars.findIndex((c, i) => i > 1 && /[A-Za-z]/.test(c));
+  const letters = chars
+    .map((c, i) => (c === ' ' ? '<span class="k-sp"> </span>' : `<span class="k${i === 0 ? ' k-first' : ''}${i === flip ? ' k-inv' : ''}">${esc(c)}</span>`))
+    .join('');
+  return `<span class="kin" aria-label="${esc(text)}"><span aria-hidden="true">${letters}</span></span>`;
+}
+
 function caseCard(m, i) {
   const stats = m.loot.slice(0, 2);
   const opened = store.has('opened', m.id);
   return `<article class="case" data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
     ${pin}
     <div class="case-top"><span class="case-no">CASE 0${i + 1}</span><span class="case-live">● ${esc(m.status)}</span><span class="case-grade" aria-label="Difficulty ${esc(m.grade)}">${esc(m.grade)}</span></div>
-    <h3 class="case-target">${esc(m.target)}</h3>
+    <h3 class="case-target ransom" data-ransom="${esc(m.target.toUpperCase())}"></h3>
     <p class="case-name">${esc(m.name)} · ${esc(m.stack.join(' · '))}</p>
     <ul class="case-stats">${stats.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
     <p class="case-brief">${esc(m.brief)}</p>
@@ -39,7 +50,7 @@ function skillTag(s, i) {
   const max = s.rank === 'MAX';
   return `<button class="skill" type="button" data-nav data-skill="${s.id}" style="--tilt:${(i % 3) - 1}deg"
       aria-label="${esc(s.name)}, rank ${esc(s.rank)}. ${esc(s.proof)}">
-    <span class="skill-name">${esc(s.name)}</span>
+    <span class="skill-name">${kin(s.name)}</span>
     <span class="skill-rank${max ? ' max' : ''}">${max ? 'MAX' : `R${esc(s.rank)}`}</span>
     <span class="skill-proof">${esc(s.proof)}</span>
     ${pin}
@@ -69,34 +80,34 @@ export function boardMarkup(ctx) {
     <svg class="strings" id="strings" aria-hidden="true"></svg>
 
     <section class="col col-skills" aria-label="Skills">
-      <h2 class="col-label" data-board-item>SKILLS <small>rank · proof</small></h2>
+      <h2 class="col-label" data-board-item><span class="ransom" data-ransom="SKILLS"></span><small>rank · proof</small></h2>
       <div class="skills-list">${skills.map(skillTag).join('')}</div>
     </section>
 
     <section class="col col-cases" aria-label="Projects">
-      <h2 class="col-label" data-board-item>CASE FILES <small>2 live apps</small></h2>
+      <h2 class="col-label" data-board-item><span class="ransom" data-ransom="CASE FILES"></span><small>2 live apps</small></h2>
       <div class="cases">${missions.map(caseCard).join('')}</div>
       <div class="edge" data-board-item>${pin}
-        <h3>WHAT MAKES ME DIFFERENT</h3>
+        <h3>${kin('WHAT MAKES ME DIFFERENT', 5)}</h3>
         <ol>${resume.different.map((d) => `<li><b>${esc(d.title)}.</b> ${esc(d.fact)}</li>`).join('')}</ol>
       </div>
     </section>
 
     <section class="col col-notes" aria-label="About and contact">
       <article class="note note-about" data-board-item>${pin}
-        <h3>THE PERSON</h3>
+        <h3>${kin('THE PERSON', 4)}</h3>
         <p><b>${esc(e.school)}</b><br>${esc(e.degree)}<br>${esc(e.concentration)} · ${esc(e.grad)}</p>
         <div class="about-stats"><span><b>${esc(e.gpa)}</b>GPA</span><span><b>×2</b>Dean's List</span></div>
         <ul>${resume.funFacts.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>
       </article>
       <article class="note note-quests" data-board-item>${pin}
-        <h3>SIDE QUESTS</h3>
+        <h3>${kin('SIDE QUESTS', 2)}</h3>
         <ul>${resume.sideQuests.map((q) => `<li><b>${esc(q.title)}</b>, ${esc(q.place)}<br><span>${esc(q.lesson)}</span></li>`).join('')}</ul>
         <a class="note-more" href="#/side-quests" data-nav>Full story ▸</a>
       </article>
       <article class="calling" data-board-item>${pin}
         <p class="calling-head">CALLING CARD</p>
-        <p class="calling-name">${esc(resume.name)}</p>
+        <p class="calling-name">${kin(resume.name.toUpperCase(), 6)}</p>
         <p class="calling-status">${esc(resume.status)} · ${esc(resume.location)}</p>
         <a class="btn btn-primary" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect ↗</a>
         <div class="calling-row">
@@ -112,6 +123,7 @@ export function boardMarkup(ctx) {
 export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
   root.innerHTML = boardMarkup(ctx);
   ransom(root.querySelector('#boardName'), resume.first, NAME_SEED);
+  root.querySelectorAll('[data-ransom]').forEach((el, i) => ransom(el, el.dataset.ransom, 21 + i * 7));
   const svg = root.querySelector('#strings');
   const grid = root.querySelector('.board-grid');
   const lit = new Set(JSON.parse(sessionStorageGet('jn-lit') || '[]'));
