@@ -112,7 +112,8 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 .case-stats { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 6px; }
 .case-stats li { justify-self: start; background: var(--yellow); border: 2px solid var(--black); padding: 3px 10px 2px; font-family: var(--f-head); font-weight: 400; font-size: 17px; letter-spacing: .4px; transform: skew(-9deg); box-shadow: 3px 3px 0 var(--black); }
 .case-brief { margin: 0 0 14px; font-size: 14px; line-height: 1.45; }
-.case-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.case-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.case-open { font-size: 18px !important; padding: 5px 12px 4px !important; }
 .case-open { font-size: 20px; box-shadow: 4px 4px 0 var(--red); }
 .case-link { font-weight: 800; font-size: 14px; color: var(--black); text-underline-offset: 3px; }
 .case .stamp-cleared { right: 18px; top: 58px; font-size: 18px; }
@@ -155,6 +156,75 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 /* keep the HUD bars from covering the board on shorter screens */
 body[data-mode="board"] .keyhints { display: none; }
 
+
+/* ===================== CARTOON CARD KIT =====================
+   Shared by every box on the board so it reads as one illustrated piece:
+   thick ink outline, a second sheet peeking out behind (depth), a red + black
+   "pop" shadow, halftone shading in a corner, and a lift on hover. */
+.card-pop {
+  --ink: #050505; --pop: var(--red); --sheet: #D2CBB8;
+  position: relative; border: 4px solid var(--ink); clip-path: none !important;
+  box-shadow: -9px 9px 0 -3px var(--sheet), -9px 9px 0 1px var(--ink), 10px 11px 0 0 var(--pop), 16px 18px 0 0 var(--ink);
+  transition: transform .18s var(--ease-pop), box-shadow .18s var(--ease-pop), opacity .15s;
+}
+.card-pop::before {
+  content: ""; position: absolute; right: 0; bottom: 0; width: 52%; height: 52%; z-index: -1; pointer-events: none;
+  background-image: radial-gradient(rgba(5, 5, 5, .2) 1.7px, transparent 2.3px); background-size: 8px 8px;
+  -webkit-mask-image: linear-gradient(315deg, #000 0%, transparent 72%); mask-image: linear-gradient(315deg, #000 0%, transparent 72%);
+}
+.card-pop.dark { --sheet: var(--red); --pop: var(--white); border-color: var(--white); }
+.card-pop.dark::before { background-image: radial-gradient(rgba(255, 255, 255, .13) 1.7px, transparent 2.3px); }
+.card-pop:hover, .card-pop:focus-within {
+  transform: rotate(0deg) translate(-3px, -6px) !important;
+  box-shadow: -11px 12px 0 -3px var(--sheet), -11px 12px 0 1px var(--ink), 14px 16px 0 0 var(--pop), 22px 25px 0 0 var(--ink);
+}
+.ruled { background-image: repeating-linear-gradient(180deg, transparent 0 25px, rgba(0, 90, 180, .13) 25px 26px); background-color: #FFFDF5; }
+.tape { position: absolute; top: -14px; left: 14%; width: 86px; height: 26px; z-index: 4; background: rgba(255, 255, 255, .62); border: 1px solid rgba(0, 0, 0, .12); transform: rotate(-5deg); }
+.roster.card-pop { transform: rotate(-.6deg); padding: 20px 28px 20px 20px; }
+.edge.card-pop { border-left-width: 4px; }
+
+/* cartoon buttons: chunky, press down when clicked */
+.btn-cartoon {
+  display: inline-flex; align-items: center; gap: 6px; border: 3px solid var(--ink, #050505); background: var(--black); color: var(--white);
+  font-family: var(--f-head); font-size: 20px; letter-spacing: .6px; padding: 6px 16px 5px; transform: skewX(-10deg);
+  box-shadow: 0 6px 0 var(--red), 0 6px 0 3px var(--black); transition: transform .08s, box-shadow .08s, background .1s;
+}
+.btn-cartoon:hover, .btn-cartoon:focus-visible { background: var(--yellow); color: var(--black); transform: skewX(-10deg) translateY(-2px); box-shadow: 0 8px 0 var(--red), 0 8px 0 3px var(--black); outline: none; }
+.btn-cartoon:active { transform: skewX(-10deg) translateY(5px); box-shadow: 0 1px 0 var(--red), 0 1px 0 3px var(--black); }
+
+.btn-cartoon.cta { background: var(--white); color: var(--black); font-size: 18px; white-space: nowrap; }
+.btn-cartoon.alt { background: var(--yellow); color: var(--black); }
+.calling .btn-cartoon { text-decoration: none; }
+.calling-row { margin-top: 6px; }
+
+/* ----- case files, cartoon edition ----- */
+.case.card-pop { padding: 28px 22px 22px; background: #F7F4EA; }
+.case.lit { transform: rotate(0) translate(-3px, -6px) scale(1.02); box-shadow: -11px 12px 0 -3px var(--sheet), -11px 12px 0 1px var(--ink), 14px 16px 0 0 #3FE6D0, 22px 25px 0 0 var(--ink); }
+.case .pin { top: -12px; }
+.case-grade { position: absolute; top: -30px; right: -26px; z-index: 5; width: 92px; height: 92px; display: grid; place-items: center; transform: rotate(-12deg);
+  background: var(--black); clip-path: polygon(50% 0, 60% 22%, 82% 9%, 78% 33%, 100% 37%, 82% 52%, 97% 72%, 73% 72%, 70% 96%, 52% 80%, 34% 100%, 29% 76%, 4% 78%, 17% 57%, 0 40%, 22% 33%, 15% 9%, 39% 20%); transition: transform .3s var(--ease-pop); }
+.case-grade span { width: 78px; height: 78px; display: grid; place-items: center; background: var(--yellow); color: var(--black); font-family: var(--f-head); font-size: 40px; line-height: 1;
+  clip-path: inherit; text-shadow: 3px 3px 0 var(--red); -webkit-text-stroke: 0; }
+.case:hover .case-grade { transform: rotate(8deg) scale(1.1); }
+.case-live {
+  display: inline-block; padding: 4px 16px 3px 12px; background: var(--red); color: var(--white); font-family: var(--f-head); font-size: 15px; letter-spacing: 1px;
+  clip-path: polygon(0 12%, 64% 0, 68% 14%, 100% 6%, 90% 50%, 100% 92%, 58% 86%, 52% 100%, 4% 92%, 8% 52%); transform: rotate(-4deg);
+}
+.case-name { font-family: var(--f-head); font-weight: 400; font-size: 16px; letter-spacing: .3px; color: var(--black); }
+.case-name span { font-family: var(--f-body); font-weight: 700; font-size: 12px; color: #555; letter-spacing: 0; }
+.case-stats { gap: 10px; }
+.case-stats .sticker {
+  justify-self: start; font-family: var(--f-head); font-weight: 400; font-size: 18px; letter-spacing: .3px; padding: 5px 12px 4px;
+  border: 3px solid var(--black); box-shadow: 4px 4px 0 var(--black); transform: rotate(-2deg) skewX(-6deg);
+}
+.case-stats .sticker.s0 { background: var(--yellow); }
+.case-stats .sticker.s1 { background: #3FE6D0; transform: rotate(1.6deg) skewX(-6deg); margin-left: 14px; }
+.bubble-say { position: relative; margin: 6px 0 18px; padding: 10px 14px; background: var(--white); border: 3px solid var(--black); border-radius: 16px; font-weight: 600; box-shadow: 3px 3px 0 var(--black); }
+.bubble-say::after { content: ""; position: absolute; left: 22px; bottom: -14px; width: 20px; height: 14px; background: var(--black); clip-path: polygon(0 0, 100% 0, 10% 100%); }
+.bubble-say::before { content: ""; position: absolute; left: 25px; bottom: -8px; z-index: 1; width: 13px; height: 9px; background: var(--white); clip-path: polygon(0 0, 100% 0, 10% 100%); }
+.case-fold { position: absolute; right: -4px; bottom: -4px; width: 34px; height: 34px; background: linear-gradient(135deg, #CFC8B4 0 48%, var(--black) 48% 54%, transparent 54%); pointer-events: none; }
+.case-link { font-family: var(--f-head); font-weight: 400; font-size: 15px; letter-spacing: .4px; }
+
 /* ===================== PHONES ===================== */
 @media (max-width: 1100px) {
   .board-grid { grid-template-columns: 260px minmax(0, 1fr); }
@@ -171,5 +241,9 @@ body[data-mode="board"] .keyhints { display: none; }
   .hint-desk { display: none; }
   .hint-phone { display: inline; }
   .col-notes { grid-template-columns: 1fr; }
+  .col-label { flex-wrap: wrap; }
+  .col-label .ransom { font-size: 28px; flex-wrap: nowrap; }
+  .card-pop { box-shadow: -6px 6px 0 -3px var(--sheet), -6px 6px 0 1px var(--ink), 7px 8px 0 0 var(--pop), 11px 12px 0 0 var(--ink); }
+  .case-grade { right: -8px; }
   body[data-mode="board"] .hud-bars { display: none; }
 }

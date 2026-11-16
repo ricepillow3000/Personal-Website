@@ -28,20 +28,22 @@ function kin(text, inv = null) {
 }
 
 function caseCard(m, i) {
-  const stats = m.loot.slice(0, 2);
+  const stickers = m.loot.slice(0, 2);
   const opened = store.has('opened', m.id);
-  return `<article class="case" data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
+  return `<article class="case card-pop" data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
     ${pin}
-    <div class="case-top"><span class="case-no">CASE 0${i + 1}</span><span class="case-live">● ${esc(m.status)}</span><span class="case-grade" aria-label="Difficulty ${esc(m.grade)}">${esc(m.grade)}</span></div>
+    <span class="case-grade" aria-label="Difficulty ${esc(m.grade)}"><span>${esc(m.grade)}</span></span>
+    <div class="case-top"><span class="case-no">CASE 0${i + 1}</span><span class="case-live">${esc(m.status)}</span></div>
     <h3 class="case-target ransom" data-ransom="${esc(m.target.toUpperCase())}"></h3>
-    <p class="case-name">${esc(m.name)} · ${esc(m.stack.join(' · '))}</p>
-    <ul class="case-stats">${stats.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
-    <p class="case-brief">${esc(m.brief)}</p>
+    <p class="case-name">${esc(m.name)} <span>· ${esc(m.stack.join(' · '))}</span></p>
+    <ul class="case-stats">${stickers.map((t, k) => `<li class="sticker s${k}">${esc(t)}</li>`).join('')}</ul>
+    <p class="case-brief bubble-say">${esc(m.brief)}</p>
     <div class="case-actions">
-      <button class="btn case-open" type="button" data-nav data-open="${m.id}">OPEN FILE ▸</button>
+      <button class="btn-cartoon case-open" type="button" data-nav data-open="${m.id}">OPEN FILE ▸</button>
       <a class="case-link" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}">Live ↗</a>
       <a class="case-link" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}">Code ↗</a>
     </div>
+    <span class="case-fold" aria-hidden="true"></span>
     ${opened ? '<span class="stamp stamp-cleared">CLEARED!</span>' : ''}
   </article>`;
 }
@@ -65,7 +67,7 @@ function skillTag(s) {
 
 function roster(skills) {
   const badge = (t, cls) => `<div class="roster-badge ${cls}" aria-hidden="true"><span>${t}</span></div>`;
-  return `<div class="roster">
+  return `<div class="roster card-pop dark">
     ${badge('CORE', 'b-core')}${skills.slice(0, 3).map(skillTag).join('')}
     ${badge('KIT', 'b-kit')}${skills.slice(3).map(skillTag).join('')}
   </div>`;
@@ -77,8 +79,8 @@ export function boardMarkup(ctx) {
   const missions = reorder(resume.missions, ctx.company?.order?.missions);
   const skills = reorder(resume.skills, ctx.company?.order?.skills);
   const note = ctx.company
-    ? `<aside class="note note-company" data-board-item>${pin}<b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you. Pick any skill to see where I used it.</aside>`
-    : `<aside class="note note-hint" data-board-item>${pin}<b>How to read this board:</b> <span class="hint-desk">hover any skill. The red string shows which project proves it.</span><span class="hint-phone">tap any skill to light up the project that proves it.</span></aside>`;
+    ? `<aside class="note note-company card-pop" data-board-item>${pin}<b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you. Pick any skill to see where I used it.</aside>`
+    : `<aside class="note note-hint card-pop" data-board-item>${pin}<b>How to read this board:</b> <span class="hint-desk">hover any skill. The red string shows which project proves it.</span><span class="hint-phone">tap any skill to light up the project that proves it.</span></aside>`;
 
   return `
   <header class="board-head" data-board-item>
@@ -101,32 +103,32 @@ export function boardMarkup(ctx) {
     <section class="col col-cases" aria-label="Projects">
       <h2 class="col-label" data-board-item><span class="ransom" data-ransom="CASE FILES"></span><small>2 live apps</small></h2>
       <div class="cases">${missions.map(caseCard).join('')}</div>
-      <div class="edge" data-board-item>${pin}
+      <div class="edge card-pop dark" data-board-item>${pin}
         <h3>${kin('WHAT MAKES ME DIFFERENT', 5)}</h3>
         <ol>${resume.different.map((d) => `<li><b>${esc(d.title)}.</b> ${esc(d.fact)}</li>`).join('')}</ol>
       </div>
     </section>
 
     <section class="col col-notes" aria-label="About and contact">
-      <article class="note note-about" data-board-item>${pin}
+      <article class="note note-about card-pop ruled" data-board-item><span class="tape" aria-hidden="true"></span>${pin}
         <h3>${kin('THE PERSON', 4)}</h3>
         <p><b>${esc(e.school)}</b><br>${esc(e.degree)}<br>${esc(e.concentration)} · ${esc(e.grad)}</p>
         <div class="about-stats"><span><b>${esc(e.gpa)}</b>GPA</span><span><b>×2</b>Dean's List</span></div>
         <ul>${resume.funFacts.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>
       </article>
-      <article class="note note-quests" data-board-item>${pin}
+      <article class="note note-quests card-pop ruled" data-board-item><span class="tape" aria-hidden="true"></span>${pin}
         <h3>${kin('SIDE QUESTS', 2)}</h3>
         <ul>${resume.sideQuests.map((q) => `<li><b>${esc(q.title)}</b>, ${esc(q.place)}<br><span>${esc(q.lesson)}</span></li>`).join('')}</ul>
         <a class="note-more" href="#/side-quests" data-nav>Full story ▸</a>
       </article>
-      <article class="calling" data-board-item>${pin}
+      <article class="calling card-pop dark" data-board-item>${pin}
         <p class="calling-head">CALLING CARD</p>
         <p class="calling-name">${kin(resume.name.toUpperCase(), 6)}</p>
         <p class="calling-status">${esc(resume.status)} · ${esc(resume.location)}</p>
-        <a class="btn btn-primary" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect ↗</a>
+        <a class="btn-cartoon cta" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect on LinkedIn ↗</a>
         <div class="calling-row">
-          <a class="btn" data-nav href="mailto:${esc(L.email)}" data-track="email_click">✉ Email</a>
-          <a class="btn btn-accent" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">⬇ PDF</a>
+          <a class="btn-cartoon" data-nav href="mailto:${esc(L.email)}" data-track="email_click">✉ Email</a>
+          <a class="btn-cartoon alt" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">⬇ PDF</a>
         </div>
       </article>
     </section>
