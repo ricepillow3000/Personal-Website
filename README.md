@@ -9,6 +9,9 @@ connecting every skill to the project that proves it. Hover (or tap) a skill to 
 
 Live: https://ricepillow3000.github.io/ · One-pager: https://ricepillow3000.github.io/#/quick
 
+## Design rules
+All design rules, decisions and lessons live in [`DESIGN.md`](DESIGN.md). Read it before changing anything visual, motion, sound or on-screen copy ([`CLAUDE.md`](CLAUDE.md) makes this mandatory for Claude Code).
+
 ## Edit the content
 All text lives in two files — no other code needs to change:
 

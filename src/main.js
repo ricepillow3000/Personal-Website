@@ -57,7 +57,7 @@ const menu = createMenu((id) => {
 renderDate();
 
 let screen = null; // title | board | page | quick
-const MENU_KEY = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘K' : 'CTRL K'; // shown in the key hints
+const MENU_KEY = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘\u00A0K' : 'CTRL\u00A0K'; // shown in the key hints
 let pageId = null;
 let pendingStart = false;
 let lastFocus = null;

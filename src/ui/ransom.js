@@ -10,6 +10,7 @@ export const NAME_SEED = 11;
 export function ransom(el, text, seed = 7) {
   const rnd = seeded(seed * 9973 + text.length * 31);
   el.removeAttribute('aria-label');
+  el.setAttribute('translate', 'no'); // auto-translate would scramble cut-out names letter by letter
   el.innerHTML = '';
   // screen readers read this plain text; the cut-out letters are hidden from them
   const plain = document.createElement('span');
