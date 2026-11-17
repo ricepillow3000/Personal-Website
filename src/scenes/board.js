@@ -144,7 +144,7 @@ function boardMarkup(ctx) {
         <p class="calling-steal">Consider it stolen.</p>
         <p class="calling-sign">— ${esc(resume.name)}</p>
         <span class="calling-seal" aria-hidden="true"><span>J</span></span>
-        <a class="btn-cartoon cta" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">Connect on LinkedIn ↗</a>
+        <a class="btn-cartoon cta" data-nav data-magnetic href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">Connect on LinkedIn ↗</a>
         <p class="calling-row"><a data-nav href="mailto:${esc(L.email)}" data-track="email_click">Email</a><span aria-hidden="true">·</span><a data-nav href="${esc(L.pdf)}" download data-track="pdf_click">Resume PDF ↓</a></p>
       </article>
     </section>

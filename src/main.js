@@ -14,6 +14,7 @@ import { store } from './core/store.js';
 import { $, $$, esc, reducedMotion } from './core/util.js';
 import { mountBackdrop } from './fx/backdrop.js';
 import { initClickFx, burst } from './fx/impact.js';
+import { initMagnetic, scramble, rollIn } from './fx/kinetic.js';
 import { initClearing, hydrateStamps } from './ui/clear.js';
 import { progress } from './core/progress.js';
 import { slashWipe, blindsWipe, paperWipe, irisWipe, shatterWipe, stripesWipe, flipWipe, inkWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
@@ -55,7 +56,8 @@ const menu = createMenu((id) => {
 });
 renderDate();
 
-let screen = null; // title | talk | page | quick
+let screen = null; // title | board | page | quick
+const MENU_KEY = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘K' : 'CTRL K'; // shown in the key hints
 let pageId = null;
 let pendingStart = false;
 let lastFocus = null;
@@ -186,6 +188,7 @@ function introTitle() {
 }
 
 /* ---------------------------------------------------------------- saved progress */
+let lastDone = null;
 function renderProgress(celebrate) {
   const chip = $('#progressChip');
   if (!chip) return;
@@ -200,6 +203,8 @@ function renderProgress(celebrate) {
        <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>
        <span class="pc-hint" aria-hidden="true">clear both cases · open the 5 menu pages</span>`;
   if (celebrate && !reducedMotion()) gsap.fromTo(chip, { scale: 1.6, rotation: -12 }, { scale: 1, rotation: -3, duration: 0.5, ease: 'elastic.out(1.4, .4)' });
+  else if (lastDone !== null && p.done > lastDone) rollIn(chip.querySelector('.pc-count b')); // one more case rolls in
+  lastDone = p.done;
 }
 let wasAll = progress().all;
 store.onChange(() => {
@@ -222,6 +227,7 @@ function renderSaveLine() {
   if (!p.any) {
     btn.textContent = 'PRESS START';
     line?.remove();
+    renderUndoLine();
     return;
   }
   btn.textContent = 'CONTINUE';
@@ -233,9 +239,11 @@ function renderSaveLine() {
   }
   line.innerHTML = `<span class="save-dot" aria-hidden="true"></span>Save found · ${p.all ? 'ALL CLEAR' : `${p.done}/${p.total} cleared`} · <button type="button" class="save-reset">Start over</button>`;
   line.querySelector('.save-reset').addEventListener('click', () => {
+    const backup = store.snapshot();
     store.reset();
     try {
       window.sessionStorage.clear();
+      window.sessionStorage.setItem(UNDO_KEY, backup); // one chance to take it back
     } catch {
       /* ignore */
     }
@@ -246,9 +254,42 @@ function renderSaveLine() {
     window.location.reload();
   });
 }
+/* Undo toast for Start over: right after wiping, the title offers the save back until you press start. */
+const UNDO_KEY = 'jn-undo';
+function readUndo() {
+  try {
+    return window.sessionStorage.getItem(UNDO_KEY);
+  } catch {
+    return null;
+  }
+}
+function dropUndo() {
+  try {
+    window.sessionStorage.removeItem(UNDO_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+function renderUndoLine() {
+  const backup = readUndo();
+  if (!backup) return;
+  const line = document.createElement('p');
+  line.id = 'saveLine';
+  line.className = 'save-line';
+  line.innerHTML = 'Progress wiped · <button type="button" class="save-reset">Undo</button>';
+  $('#pressStart').after(line);
+  line.querySelector('.save-reset').addEventListener('click', () => {
+    store.restore(backup);
+    dropUndo();
+    sfx('select');
+    window.location.reload();
+  });
+}
+
 renderSaveLine();
 
 $('#pressStart').addEventListener('click', () => {
+  dropUndo();
   sfx('select');
   unlock('first-words');
   pendingStart = true;
@@ -257,6 +298,7 @@ $('#pressStart').addEventListener('click', () => {
 
 /* ---------------------------------------------------------------- heist board */
 initClickFx();
+initMagnetic();
 // FULL STORY on the side quests gets a whip crack + level-clear jingle
 document.addEventListener('click', (e) => {
   if (e.target.closest?.('.quest-more')) sfx('fanfare');
@@ -331,6 +373,7 @@ async function openDossier(id, row) {
   openModal(dossierMarkup(m));
   const title = $('#modalPanel [data-ransom]');
   if (title) ransom(title, title.dataset.ransom, 5); // the file name in cut-out letters
+  scramble($('#modalPanel .dossier-code')); // the file code "decrypts" as it opens
   animateDossier($('#modalPanel'), () => {
     sfx('thwack');
     shake($('#modalPanel'));
@@ -362,6 +405,7 @@ function toggleSetting(b) {
 
 /* ---------------------------------------------------------------- modal */
 let closing = null;
+let modalEntry = false; // this visit added a history entry for the open file
 function openModal(html) {
   if (closing) {
     closing.kill();
@@ -374,6 +418,15 @@ function openModal(html) {
   $('#modal').hidden = false;
   setBehindModal(true);
   $('#modalPanel [data-close]')?.focus({ preventScroll: true });
+  // the phone's back gesture / browser Back closes the file instead of leaving the page
+  try {
+    if (!modalEntry) {
+      window.history.pushState({ modal: true }, '');
+      modalEntry = true;
+    }
+  } catch {
+    /* history unavailable (sandboxed frame): Back simply navigates */
+  }
 }
 
 /* While a file is open, the page behind it can't be tabbed into or clicked (a real modal). */
@@ -381,9 +434,18 @@ function setBehindModal(on) {
   $$('#app, .hud-tl, .hud-tr, #menu, .skip-link').forEach((el) => (el.inert = on));
 }
 
-function closeModal() {
+function closeModal(fromBack = false) {
   if ($('#modal').hidden || closing) return false;
   setBehindModal(false); // before focus goes back: inert elements can't take focus
+  if (modalEntry) {
+    modalEntry = false;
+    try {
+      // drop the entry the file added (only if it is still the current one)
+      if (!fromBack && window.history.state?.modal) window.history.back();
+    } catch {
+      /* ignore */
+    }
+  }
   const done = () => {
     closing = null;
     $('#modal').hidden = true;
@@ -416,6 +478,39 @@ $('#modal').addEventListener('keydown', (e) => {
     first.focus();
   }
 });
+
+window.addEventListener('popstate', () => {
+  if (!$('#modal').hidden) closeModal(true);
+});
+
+/* Swipe down on an open file (from its top) to dismiss it, like a phone sheet. */
+{
+  const panel = $('#modalPanel');
+  let y0 = null;
+  let dy = 0;
+  panel.addEventListener('touchstart', (e) => {
+    y0 = panel.scrollTop <= 0 && e.touches.length === 1 ? e.touches[0].clientY : null;
+    dy = 0;
+  }, { passive: true });
+  panel.addEventListener('touchmove', (e) => {
+    if (y0 === null) return;
+    dy = Math.max(0, e.touches[0].clientY - y0);
+    panel.style.translate = `0 ${dy}px`;
+    panel.style.opacity = String(1 - Math.min(dy / 500, 0.4));
+  }, { passive: true });
+  panel.addEventListener('touchend', () => {
+    if (y0 === null) return;
+    y0 = null;
+    if (dy > 110) {
+      sfx('back');
+      closeModal();
+      return;
+    }
+    if (dy > 0 && panel.animate) panel.animate([{ translate: `0 ${dy}px` }, { translate: '0 0' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1)' });
+    panel.style.translate = '';
+    panel.style.opacity = '';
+  }, { passive: true });
+}
 
 $('#modal').addEventListener('click', (e) => {
   if (e.target.id === 'modal' || e.target.closest('[data-close]')) {
@@ -479,7 +574,7 @@ $('#menuBtn').addEventListener('click', () => {
 function renderKeyHints(mode) {
   const sets = {
     board: [['TAB', 'MOVE'], ['⏎', 'OPEN'], ['1-2', 'CASE FILES'], ['F', 'FLIP'], ['Q', 'QUICK VIEW']],
-    page: [['↑↓', 'MOVE'], ['⏎', 'OPEN'], ['ESC', 'BACK'], ['Q', 'QUICK VIEW']]
+    page: [['↑↓', 'MOVE'], ['⏎', 'OPEN'], ['ESC', 'BACK'], [MENU_KEY, 'MENU'], ['Q', 'QUICK VIEW']]
   };
   $('#keyhints').innerHTML = (sets[mode] || [])
     .map(([k, v]) => `<span><b>${esc(k)}</b>${esc(v)}</span>`)
@@ -580,6 +675,14 @@ function handle(action, e) {
 }
 
 bindInput(handle);
+
+/* Command-menu shortcut: Ctrl+K (⌘K on a Mac) opens or closes the MENU from anywhere past the title. */
+window.addEventListener('keydown', (e) => {
+  if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'k' || screen === 'title' || screen === null) return;
+  e.preventDefault();
+  if (!$('#modal').hidden) closeModal();
+  menu.isOpen() ? menu.close() : menu.open();
+});
 bindGamepad(handle, () => unlock('player-2'));
 
 /* ---------------------------------------------------------------- analytics (cookie-free, optional) */

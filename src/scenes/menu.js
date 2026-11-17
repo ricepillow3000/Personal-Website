@@ -3,6 +3,7 @@ import { $, esc, reducedMotion } from '../core/util.js';
 import { store } from '../core/store.js';
 import { menuTeasers } from '../data/script.js';
 import { sfx } from '../audio/audio.js';
+import { scramble } from '../fx/kinetic.js';
 import { clearStampMarkup, hydrateStamps } from '../ui/clear.js';
 
 /* The diagonal staircase list menu (opened from the MENU button). */
@@ -44,7 +45,7 @@ export function createMenu(go) {
     if (b.classList.contains('on')) return; // already selected (mouse then focus): no second sound
     stair.querySelectorAll('.stair-item').forEach((x) => x.classList.toggle('on', x === b));
     stair.classList.add('has-on');
-    teaser.textContent = menuTeasers[b.dataset.go] || '';
+    scramble(teaser, menuTeasers[b.dataset.go] || '', { duration: 0.3 });
     if (!quiet) sfx('hover');
   }
 
