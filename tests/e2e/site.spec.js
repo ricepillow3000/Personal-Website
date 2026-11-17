@@ -304,6 +304,35 @@ test.describe('with motion on', () => {
     expect(errors).toEqual([]);
   });
 
+  test('THE DROP: board -> page splits the board, falls past the tower, lands on the page', async ({ page }) => {
+    const errors = errorsOf(page);
+    await openBoard(page);
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => (location.hash = '#/missions'));
+    await expect(page.locator('.fall')).toHaveCount(1);
+    await expect(page.locator('.fall-sign .sr-only')).toHaveText('MISSIONS'); // the sign is cut-out letters; this is its plain-text name
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'missions');
+    await expect(page.locator('.fall')).toHaveCount(0, { timeout: 4000 }); // the film cut cleans itself up
+    await expect(page.locator('#page .back-btn')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('NEXT EPISODE: pushing past the bottom of a page fills the fuse and rolls the next chapter', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'wheel input is desktop only (the button path is tested on every device)');
+    const errors = errorsOf(page);
+    await page.goto('/#/missions');
+    await expect(page.locator('#page .next-ep')).toBeVisible();
+    await page.locator('#screen-page').evaluate((s) => s.scrollTo(0, s.scrollHeight));
+    await page.mouse.move(600, 400);
+    await page.waitForTimeout(2000); // let the page's title slam finish (pushes during an animation don't count)
+    for (let i = 0; i < 14; i++) {
+      await page.mouse.wheel(0, 100);
+      await page.waitForTimeout(80);
+    }
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'skills', { timeout: 4000 });
+    expect(errors).toEqual([]);
+  });
+
   test('leaving during the case-file cut-in does not pop the file over the next screen', async ({ page }) => {
     await openBoard(page);
     await page.waitForTimeout(1500);
@@ -398,6 +427,16 @@ test('every CASE LOG item can be reached from the site itself (ALL CLEAR is poss
   await page.goto('/#/');
   await page.reload();
   await expect(page.locator('#saveLine')).toContainText('ALL CLEAR');
+});
+
+test('every story page ends with a NEXT EPISODE card that rolls the next chapter', async ({ page }) => {
+  const order = ['missions', 'skills', 'different', 'stats', 'side-quests', 'contact', 'board'];
+  await page.goto('/#/missions');
+  for (let i = 1; i < order.length; i++) {
+    await expect(page.locator('body')).toHaveAttribute('data-screen', order[i - 1]);
+    await page.locator('#page [data-episode]').click({ force: true });
+  }
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
 });
 
 test('Start over can be undone', async ({ page }) => {

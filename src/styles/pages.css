@@ -13,6 +13,7 @@
 .pg-mark {
   position: fixed; left: 0; right: 0; top: 46%; z-index: -1; pointer-events: none; overflow: hidden;
   white-space: nowrap; transform: rotate(-8deg); opacity: .5;
+  translate: calc(var(--sp, 0) * -22%) calc(var(--sp, 0) * -60px); /* depth: the watermark pans slower than the page as you scroll */
 }
 .pg-mark span {
   display: inline-block; padding-right: .4em; font-family: var(--f-head); font-size: clamp(120px, 22vw, 320px); line-height: 1;
@@ -263,3 +264,24 @@ body.reduce-motion .panel::before { animation: none !important; }
 .stop-stat span { font-family: var(--f-ui); font-style: italic; font-weight: 700; font-size: 18px; line-height: 1.15; text-transform: uppercase; letter-spacing: .3px; }
 /* cards that fly in from the side never make the page wider, even mid-animation */
 .page-inner { overflow-x: clip; overflow-y: visible; }
+
+/* ============ NEXT EPISODE: the "next time" card at the end of each story page ============ */
+.next-ep { position: relative; margin: 90px auto 10px; max-width: 760px; display: grid; justify-items: center; gap: 12px; text-align: center; }
+.ne-kicker { margin: 0; padding: 3px 14px 1px; background: var(--yellow); color: var(--black); font-family: var(--f-menu); font-size: 20px; letter-spacing: 3px;
+  transform: rotate(-2deg) skewX(-10deg); box-shadow: 4px 4px 0 var(--black); }
+.ne-go { display: grid; gap: 4px; justify-items: center; width: 100%; padding: 18px 24px 16px; cursor: pointer; background: var(--black); color: var(--white);
+  border: 4px solid var(--white); box-shadow: 10px 10px 0 var(--red); transform: rotate(1deg) skewX(-6deg);
+  transition: transform .16s var(--ease-pop), box-shadow .16s var(--ease-pop), background-color .16s; touch-action: manipulation; }
+.ne-go:hover, .ne-go:focus-visible { background: var(--red); transform: rotate(0) skewX(-6deg) translateY(-4px); box-shadow: 14px 14px 0 var(--black); outline: 3px solid var(--yellow); outline-offset: 4px; }
+.ne-title { font-family: var(--f-head); font-size: clamp(40px, 8vw, 84px); line-height: .95; letter-spacing: 1px; text-wrap: balance; }
+.ne-tease { font-family: var(--f-ui); font-weight: 700; font-style: italic; font-size: 19px; letter-spacing: .5px; color: var(--yellow); }
+.ne-fuse { position: relative; margin-top: 14px; width: min(100%, 520px); height: 10px; background: rgba(5, 5, 5, .6); border: 2px solid var(--black); transform: skewX(-12deg); overflow: hidden; }
+.ne-fuse i { position: absolute; inset: 0; transform-origin: 0 50%; transform: scaleX(0); border-right: 4px solid var(--yellow);
+  background: repeating-linear-gradient(-45deg, var(--red) 0 10px, #B30F12 10px 14px); }
+.ne-hint { margin: 0; font-family: var(--f-menu); font-size: 15px; letter-spacing: 2px; color: rgba(245, 245, 240, .75); }
+.next-ep.lit .ne-hint { color: var(--yellow); }
+.next-ep.lit .ne-go { animation: neShake .12s steps(2) infinite; } /* the card strains while the fuse burns */
+@keyframes neShake { 50% { translate: 1px -1px; } }
+@media (prefers-reduced-motion: reduce) { .next-ep.lit .ne-go { animation: none; } }
+body.reduce-motion .next-ep.lit .ne-go { animation: none; }
+@media print { .next-ep { display: none; } }

@@ -112,8 +112,10 @@ export function initScrollMeter() {
     const sc = document.querySelector('.screen.active');
     const room = sc ? sc.scrollHeight - sc.clientHeight : 0;
     const on = room > 60;
+    const sp = on ? Math.min(1, Math.max(0, sc.scrollTop / room)) : 0;
     bar.classList.toggle('on', on);
-    setX(on ? Math.min(1, Math.max(0, sc.scrollTop / room)) : 0);
+    setX(sp);
+    sc?.style.setProperty('--sp', sp.toFixed(3)); // background layers drift with the story (see pages.css)
   };
   document.addEventListener('scroll', sync, { capture: true, passive: true }); // screens scroll, not the page
   window.addEventListener('resize', sync, { passive: true });

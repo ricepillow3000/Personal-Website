@@ -340,7 +340,7 @@ body.scrolled .hud-tl { translate: 0 -260px; transition: translate .18s cubic-be
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
 }
 .iris-star.red { background: var(--red); }
-@media print { .fxw { display: none !important; } }
+@media print { .fxw, .fall { display: none !important; } }
 
 /* ============ CLEARED! transition, deluxe layers ============ */
 .clear-fx-band {
@@ -519,3 +519,62 @@ body[data-mode="title"] .scroll-meter { display: none; }
 
 /* Slam-in on scroll (Anime.js drives --slam from 0 to 1, overshooting a little) */
 .slam-wait { --slam: 0; translate: 0 calc((1 - var(--slam)) * 70px); rotate: calc((1 - var(--slam)) * -4deg); scale: calc(.86 + var(--slam) * .14); }
+
+/* ===== THE DROP (board -> page, next episode): rooftop, fall past a tower, star-flash landing ===== */
+.fall { position: fixed; inset: 0; z-index: 89; pointer-events: none; overflow: hidden; visibility: hidden; }
+.fall-city { position: absolute; inset: 0; overflow: hidden;
+  /* the neighbouring towers either side: dark facades with a faint window grid */
+  background: #17181C repeating-linear-gradient(90deg, transparent 0 34px, rgba(0, 0, 0, .5) 34px 40px), repeating-linear-gradient(0deg, transparent 0 30px, rgba(0, 0, 0, .55) 30px 38px); }
+.fall-sky { position: absolute; inset: 0; overflow: hidden;
+  background: var(--red); } /* the art carries its own red sky; this shows only while it loads */
+.fall-sky .fs-art { position: absolute; left: -3%; top: 0; width: 106%; height: 100%; object-fit: cover; object-position: 50% 100%;
+  animation: fsDrift 6s linear both; } /* the background drifts slower than everything in front of it */
+@keyframes fsDrift { to { translate: -2.5% 0; } }
+.fall-tower { position: absolute; left: 50%; top: 0; display: flex; flex-direction: column; --blur: 0; }
+.ft-crown { display: block; width: 100%; height: auto; flex: none; }
+.ft-face { position: relative; flex: 1; background-repeat: repeat-y; background-size: 100% auto; background-color: #1E1F24; }
+/* motion blur while falling: two ghost copies of the facade trail behind, stronger the faster we go */
+.ft-face::before, .ft-face::after { content: ""; position: absolute; inset: 0; background: inherit; pointer-events: none; }
+.ft-face::before { opacity: calc(var(--blur) * .45); translate: 0 calc(var(--blur) * 46px); }
+.ft-face::after { opacity: calc(var(--blur) * .25); translate: 0 calc(var(--blur) * 110px); }
+@media (prefers-reduced-motion: reduce) { .fall-sky .fs-art { animation: none; } }
+.fall-lines i { position: absolute; top: 0; width: 4px; background: var(--white); transform: skewX(-4deg); }
+.fall-lines i:nth-child(3n) { width: 2px; background: var(--yellow); }
+.fall-sign { position: absolute; left: 0; right: 0; top: 38%; display: grid; place-items: center; }
+.fall-sign span { padding: 14px 26px 12px; background: var(--black); border: 4px solid var(--white);
+  font-size: clamp(40px, 8vw, 104px); line-height: 1; transform: rotate(-4deg); box-shadow: 10px 10px 0 var(--red); white-space: nowrap; }
+.fall-half { position: absolute; inset: 0; overflow: hidden; will-change: transform; }
+.fall-flash { position: absolute; left: 50%; top: 50%; width: 80vmax; height: 80vmax; margin: -40vmax 0 0 -40vmax; background: var(--white);
+  clip-path: polygon(50% 0, 61% 33%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 33%); transform: scale(0); }
+
+/* THE RISE: the page as one piece, dropping away below the camera */
+.fall-half.whole { will-change: transform; }
+
+/* NEXT STOP: a subway train fills the frame, close to the camera */
+.train { background: transparent; }
+.train-strip { position: absolute; top: 0; bottom: 0; left: 0; display: flex; gap: 34px; will-change: transform; }
+.train-car { position: relative; flex: none; height: 100%; background: #0B0B0B center / auto 100% no-repeat; }
+.tc-no { position: absolute; right: 4%; bottom: 31%; font-family: var(--f-head); font-size: clamp(40px, 7vw, 90px); color: var(--white); line-height: 1; }
+.tc-sign { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: grid; justify-items: center; padding: 10px 30px 8px; background: var(--black);
+  border: 5px solid var(--yellow); box-shadow: 10px 10px 0 var(--red); transform: rotate(-3deg) skewX(-8deg); }
+.tc-sign small { font-family: var(--f-menu); font-size: clamp(18px, 2.4vw, 28px); letter-spacing: 4px; color: var(--white); }
+.tc-sign span { margin-top: 6px; font-size: clamp(40px, 8vw, 104px); line-height: 1; white-space: nowrap; }
+.train-lines i { position: absolute; left: 0; height: 4px; background: var(--white); }
+.train-lines i:nth-child(2n) { height: 2px; background: var(--yellow); }
+
+/* CALLING CARD: thrown at the camera, smacks the lens, flips away */
+.cardshot { display: grid; place-items: center; }
+.cs-dim { position: absolute; inset: 0; background: rgba(5, 5, 5, .72); }
+.cs-card { position: relative; width: min(78vw, 560px); aspect-ratio: 1.6; display: grid; align-content: center; justify-items: center; gap: 6px;
+  background: #F7F1E1; color: var(--black); border: 5px solid var(--black); box-shadow: 14px 14px 0 var(--red); will-change: transform; }
+.cs-card small { font-family: var(--f-menu); font-size: clamp(16px, 2.6vw, 22px); letter-spacing: 3px; }
+.cs-card b { font-family: var(--f-mark); font-weight: 400; font-size: clamp(42px, 9vw, 84px); line-height: 1; color: var(--red); transform: rotate(-4deg); }
+.cs-card em { font-family: var(--f-mark); font-style: normal; font-size: clamp(16px, 2.6vw, 22px); }
+.cs-seal { position: absolute; right: 7%; bottom: 10%; width: 54px; height: 54px; border-radius: 50%; background: var(--red); box-shadow: inset 0 0 0 6px #B30F12; }
+
+/* film letterbox (every film cut) and cut-out signs */
+.fall .lb { position: absolute; left: 0; right: 0; height: 9vh; background: var(--black); z-index: 5; transform: scaleY(0); }
+.fall .lb-t { top: 0; transform-origin: 50% 0; border-bottom: 3px solid var(--red); }
+.fall .lb-b { bottom: 0; transform-origin: 50% 100%; border-top: 3px solid var(--red); }
+.fall-sign .ransom, .tc-sign .ransom { display: flex; flex-wrap: nowrap; justify-content: center; }
+.fall-sign .ransom .rw:last-child, .tc-sign .ransom .rw:last-child { margin-right: 0; }
