@@ -161,6 +161,22 @@ const VOICES = {
   menuClose: (bus, at) => [1047, 784, 523].forEach((f, i) => tone(bus, { at: at + i * 0.03, dur: 0.08, from: f, to: f * 0.98, type: 'triangle', gain: 0.16 })),
   /* air swipe under the slash wipe */
   swish: (bus, at) => VOICES.whoosh(bus, at, 0.8),
+  // THE RISE: wind plus a rising whistle (low to high)
+  rise: (bus, at) => {
+    sweep(bus, at, 2400, 300, 0.6, 0.28, 0.7);
+    tone(bus, { at, dur: 0.6, from: 480, to: 1800, type: 'triangle', gain: 0.06 });
+  },
+  // NEXT STOP: rail rumble, a two-note station chime, a pass-by sweep
+  train: (bus, at) => {
+    noise(bus, { at, dur: 0.9, freq: 160, gain: 0.5, type: 'lowpass' });
+    tone(bus, { at: at + 0.4, dur: 0.22, from: 1319, to: 1319, type: 'sine', gain: 0.12 });
+    tone(bus, { at: at + 0.6, dur: 0.3, from: 1047, to: 1047, type: 'sine', gain: 0.12 });
+  },
+  // THE DROP: rushing wind plus a cartoon falling whistle (high to low)
+  fall: (bus, at) => {
+    sweep(bus, at, 260, 2600, 0.8, 0.3, 0.7);
+    tone(bus, { at: at + 0.05, dur: 0.75, from: 1700, to: 520, type: 'triangle', gain: 0.06 });
+  },
   /* page lands: short wooden "thwack" (higher and shorter than any kick) */
   thwack: (bus, at, v = 1, vol = 1) => {
     tone(bus, { at, dur: 0.09, from: 340, to: 150, type: 'triangle', gain: 0.55 * v * vol });

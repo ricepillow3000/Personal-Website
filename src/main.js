@@ -12,13 +12,14 @@ import { resume } from './data/resume.js';
 import { readCompany } from './data/companies.js';
 import { store } from './core/store.js';
 import { $, $$, esc, reducedMotion } from './core/util.js';
+import { menuTeasers } from './data/script.js';
 import { mountBackdrop } from './fx/backdrop.js';
 import { initClickFx, burst } from './fx/impact.js';
 import { initMagnetic, initTilt, initScrollMeter, slamOnScroll, scramble, rollIn } from './fx/kinetic.js';
 import { initTooltips } from './ui/tooltip.js';
 import { initClearing, hydrateStamps } from './ui/clear.js';
 import { progress } from './core/progress.js';
-import { slashWipe, blindsWipe, paperWipe, irisWipe, shatterWipe, stripesWipe, flipWipe, inkWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
+import { fallWipe, riseWipe, trainWipe, cardWipe, preloadFilm, slashWipe, blindsWipe, paperWipe, irisWipe, shatterWipe, stripesWipe, flipWipe, inkWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate } from './ui/hud.js';
 import { createBoard } from './scenes/board.js';
@@ -51,6 +52,7 @@ document.addEventListener('click', (e) => {
 });
 /* how the next screen change should look; the menu asks for blinds */
 let viaMenu = false;
+let viaEpisode = false; // the move came from a NEXT EPISODE card
 const menu = createMenu((id) => {
   viaMenu = true;
   navigate(id);
@@ -85,7 +87,21 @@ function route() {
   return VALID.has(id) ? id : 'title';
 }
 
+/* Closing a case file steps history back, which lands a moment later. A jump made in that
+   moment (e.g. Esc then Q) waits for it, or the late Back would undo the jump. */
+let backPending = false;
+let pendingNav = null;
+function flushNav() {
+  backPending = false;
+  const id = pendingNav;
+  pendingNav = null;
+  if (id) navigate(id);
+}
 function navigate(id) {
+  if (backPending) {
+    pendingNav = id;
+    return;
+  }
   const hash = id === 'title' ? '#/' : `#/${id}`;
   if (window.location.hash === hash) show(id);
   else window.location.hash = hash;
@@ -110,7 +126,7 @@ function activate(id) {
 
 /* every menu destination gets its own transition */
 const MENU_STYLE = { missions: 'shatter', skills: 'blinds', different: 'slash', stats: 'flip', 'side-quests': 'stripes', contact: 'iris', system: 'ink' };
-const WIPES = { slash: slashWipe, blinds: blindsWipe, paper: paperWipe, iris: irisWipe, shatter: shatterWipe, stripes: stripesWipe, flip: flipWipe, ink: inkWipe };
+const WIPES = { fall: fallWipe, rise: riseWipe, train: trainWipe, card: cardWipe, slash: slashWipe, blinds: blindsWipe, paper: paperWipe, iris: irisWipe, shatter: shatterWipe, stripes: stripesWipe, flip: flipWipe, ink: inkWipe };
 /* Focus a target once its entrance animation has made it visible (a hidden element can't take focus).
    Gives up if the visitor has already moved focus somewhere themselves. */
 function focusSoon(el, tries = 16, from = document.activeElement) {
@@ -166,19 +182,28 @@ async function show(id) {
     await ripTransition(swap);
   } else {
     // mix it up: each kind of move has its own wipe
-    style = viaMenu
+    // the film cuts: CONTACT gets the calling card, NEXT EPISODE the train, board -> page THE DROP,
+    // back to the board THE RISE. Page -> page through the menu keeps the quick comic wipes.
+    style = id === 'contact'
+      ? 'card'
+      : viaEpisode && mode === 'page'
+      ? 'train'
+      : prev === 'board' && mode === 'page'
+      ? 'fall'
+      : mode === 'board' && prev !== 'title'
+      ? 'rise'
+      : viaMenu
       ? MENU_STYLE[id] || 'blinds'
       : id === 'system' || id === 'secret'
         ? 'blinds'
         : mode === 'quick'
           ? 'paper'
-          : mode === 'board' && prev !== 'title'
-            ? 'iris'
-            : 'slash';
-    await WIPES[style](swap);
+          : 'slash';
+    await WIPES[style](swap, SECTION_TITLES[id] || '');
   }
   if (tok !== navSeq) return;
   viaMenu = false;
+  viaEpisode = false;
 
   if (mode === 'title') introTitle();
   if (mode === 'page') {
@@ -314,6 +339,8 @@ $('#pressStart').addEventListener('click', () => {
 
 /* ---------------------------------------------------------------- heist board */
 const syncMeter = initScrollMeter();
+// load the film-cut art while the browser is idle, so the first cut never stutters
+(window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => preloadFilm(), { timeout: 4000 });
 initClickFx();
 initMagnetic();
 initTilt();
@@ -367,12 +394,88 @@ let pageIntro = null;
 function root0Class(id) {
   $('#page').className = `page-inner pg-${id}`;
 }
+/* NEXT EPISODE: the end of every story page is a "next time" card, studied from Lusion's
+   scroll-to-next-page bar. Keep scrolling (or swiping) past the bottom and the fuse fills;
+   when it's full the next chapter rolls in with THE DROP. A click or Enter does it at once. */
+const EPISODES = ['missions', 'skills', 'different', 'stats', 'side-quests', 'contact'];
+function nextEpisodeMarkup(id) {
+  const i = EPISODES.indexOf(id);
+  if (i < 0) return '';
+  const next = EPISODES[i + 1] || 'board';
+  const title = next === 'board' ? 'BACK TO THE BOARD' : SECTION_TITLES[next];
+  const tease = next === 'board' ? 'Every case, skill and note in one place' : menuTeasers[next] || '';
+  return `<section class="next-ep" aria-label="Next episode">
+    <p class="ne-kicker">${i === EPISODES.length - 1 ? 'THE END · FOR NOW' : `NEXT EPISODE · ${String(i + 2).padStart(2, '0')}`}</p>
+    <button class="ne-go" type="button" data-episode="${next}"><span class="ne-title">${esc(title)} ▸</span><span class="ne-tease">${esc(tease)}</span></button>
+    <div class="ne-fuse" aria-hidden="true"><i></i></div>
+    <p class="ne-hint" aria-hidden="true"><span class="hint-desk">Keep scrolling to roll it</span><span class="hint-phone">Keep swiping up to roll it</span></p>
+  </section>`;
+}
+let epFuse = 0;
+let epBottomSince = 0;
+let epLastPush = 0;
+let epRaf = 0;
+function epReset() {
+  epFuse = 0;
+  epBottomSince = 0;
+  epDraw();
+}
+function epDraw() {
+  const bar = $('#page .ne-fuse i');
+  if (bar) bar.style.transform = `scaleX(${epFuse.toFixed(3)})`;
+  $('#page .next-ep')?.classList.toggle('lit', epFuse > 0);
+}
+function epDecay(now) {
+  epRaf = 0;
+  if (now - epLastPush > 300) epFuse = Math.max(0, epFuse - 0.035); // let go and the fuse burns back down
+  epDraw();
+  if (epFuse > 0) epRaf = requestAnimationFrame(epDecay);
+}
+function pushEpisode(amount) {
+  const sc = $('#screen-page');
+  if (screen !== 'page' || !$('#page .next-ep') || isAnimating() || !$('#modal').hidden || menu.isOpen()) return;
+  const now = performance.now();
+  if (sc.scrollTop + sc.clientHeight < sc.scrollHeight - 4) {
+    epBottomSince = 0;
+    return;
+  }
+  // a scroll that is still coasting when it hits the bottom doesn't count: arrive, then push
+  if (!epBottomSince) epBottomSince = now;
+  if (now - epBottomSince < 350) return;
+  epLastPush = now;
+  epFuse = Math.min(1, epFuse + amount);
+  epDraw();
+  if (epFuse >= 1) rollEpisode();
+  else if (!epRaf) epRaf = requestAnimationFrame(epDecay);
+}
+function rollEpisode() {
+  const b = $('#page [data-episode]');
+  if (!b) return;
+  epReset();
+  viaEpisode = true;
+  sfx('select');
+  navigate(b.dataset.episode);
+}
+{
+  const sc = $('#screen-page');
+  sc.addEventListener('wheel', (e) => e.deltaY > 0 && pushEpisode(Math.min(e.deltaY, 120) / 520), { passive: true });
+  let ty = null;
+  sc.addEventListener('touchstart', (e) => (ty = e.touches[0].clientY), { passive: true });
+  sc.addEventListener('touchmove', (e) => {
+    const y = e.touches[0].clientY;
+    if (ty !== null && ty - y > 0) pushEpisode((ty - y) / 420);
+    ty = y;
+  }, { passive: true });
+  sc.addEventListener('click', (e) => e.target.closest('[data-episode]') && rollEpisode());
+}
+
 function renderPage(id) {
   const r = SECTION_RENDERERS[id](ctx);
   pageIntro = r.intro || null;
   root0Class(id);
   const root = $('#page');
-  root.innerHTML = r.html;
+  root.innerHTML = r.html + nextEpisodeMarkup(id);
+  epReset();
   root.querySelectorAll('[data-ransom]').forEach((h, i) => ransom(h, h.dataset.ransom, i + id.length));
   root.querySelectorAll('[data-mission]').forEach((b) => b.addEventListener('click', () => openDossier(b.dataset.mission, b)));
   root.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('click', () => toggleSetting(b)));
@@ -463,7 +566,11 @@ function closeModal(fromBack = false) {
     modalEntry = false;
     try {
       // drop the entry the file added (only if it is still the current one)
-      if (!fromBack && window.history.state?.modal) window.history.back();
+      if (!fromBack && window.history.state?.modal) {
+        backPending = true;
+        setTimeout(() => backPending && flushNav(), 500); // in case Back never reports in
+        window.history.back();
+      }
     } catch {
       /* ignore */
     }
@@ -502,6 +609,7 @@ $('#modal').addEventListener('keydown', (e) => {
 });
 
 window.addEventListener('popstate', () => {
+  if (backPending) return flushNav(); // our own step back from closing a file
   if (!$('#modal').hidden) closeModal(true);
 });
 

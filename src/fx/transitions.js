@@ -508,3 +508,270 @@ export function inkWipe(swap) {
     .set(el, { visibility: 'hidden' });
   return track(tl);
 }
+
+
+/* ---------------------------------------------------------------------------------
+   THE DROP (board -> page, and "next episode"): a short film cut, studied from how
+   Lusion stages its scroll story (frame flies at the camera, the world opens up, the
+   camera travels through a scene, a title passes, a hard landing).
+   1. the screen you are on rushes at you and splits in two along a jagged seam
+   2. behind it: a grayed-out city at dusk, you are on a rooftop
+   3. you drop: a dark tower of windows streams past, speed lines, the next
+      chapter's name rides the fall like a building sign
+   4. a white star-flash lands you on the next page, which builds in as it clears
+   (~1.3s, skippable with any click or Esc; instant with reduced motion)
+   --------------------------------------------------------------------------------- */
+
+/** Copy of whatever is on screen right now (backdrop + active screen + HUD), for splitting. */
+function snapshotScreen() {
+  const src = document.querySelector('.screen.active');
+  const frag = document.createElement('div');
+  frag.className = 'rip-page';
+  let screenCopy = null;
+  [$('#backdrop'), src, $('.hud-tl'), $('.hud-tr')].filter(Boolean).forEach((el) => {
+    const copy = el.cloneNode(true);
+    if (copy.classList.contains('screen')) {
+      copy.classList.replace('screen', 'rip-screen'); // stay out of screen switching
+      screenCopy = copy;
+    }
+    copy.querySelectorAll('button, a').forEach((b) => b.setAttribute('tabindex', '-1'));
+    frag.appendChild(copy);
+  });
+  // a clone starts scrolled to the top: put it where the visitor actually was
+  return { frag, settle: () => screenCopy && src && (screenCopy.scrollTop = src.scrollTop) };
+}
+
+/* ---- the city set pieces (public/assets/film): a low-angle look up at the towers against a
+   red sky, the tower's crown and facade (drawn by tools/draw-city.mjs to John's references),
+   and the subway car (drawn by Gemini, cleaned by tools/clean-film-svg.py). Loaded while idle. */
+const FILM = ['upshot', 'facade', 'crown', 'train'].reduce((o, k) => ((o[k] = `assets/film/${k}.svg`), o), {});
+const filmCache = [];
+export function preloadFilm() {
+  if (filmCache.length) return;
+  Object.values(FILM).forEach((src) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = src;
+    img.decode?.().catch(() => {});
+    filmCache.push(img); // keep a reference so the browser keeps it decoded
+  });
+}
+
+/* Film letterbox: two black bars close in at the start of every film cut and open as it lands,
+   so each cut reads as a movie shot, not a page effect. */
+const LETTERBOX = '<i class="lb lb-t"></i><i class="lb lb-b"></i>';
+const barsIn = (tl, bars) => tl.fromTo(bars, { scaleY: 0 }, { scaleY: 1, duration: 0.16, ease: 'power3.out' }, 0);
+
+/** The city set for THE DROP and THE RISE: the low-angle red-sky city, the tower (crown + facade),
+    speed lines, a chapter sign and the white star-flash used to cut to the next screen. */
+function citySet(label, extra = '') {
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const TW = Math.round(Math.min(W * 0.92, 1100));
+  const TH = Math.round(H * 2.6);
+  const el = document.createElement('div');
+  el.className = 'fall';
+  el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = `<div class="fall-city">
+      <div class="fall-sky"><img class="fs-art" src="${FILM.upshot}" alt=""></div>
+      <div class="fall-tower" style="width:${TW}px;height:${TH}px"><img class="ft-crown" src="${FILM.crown}" alt=""><div class="ft-face" style="background-image:url(${FILM.facade})"></div></div>
+      <div class="fall-lines">${'<i></i>'.repeat(14)}</div>
+      <div class="fall-sign"><span class="ransom"></span></div>
+    </div>${extra}
+    <div class="fall-flash"></div>${LETTERBOX}`;
+  ransom(el.querySelector('.fall-sign span'), label, label.length);
+  const q = (sel) => el.querySelector(sel);
+  const lines = el.querySelectorAll('.fall-lines i');
+  lines.forEach((l, i) => gsap.set(l, { left: `${6 + ((i * 41) % 88)}%`, height: 60 + ((i * 53) % 140) }));
+  return { el, W, H, TW, TH, bars: el.querySelectorAll('.lb'), city: q('.fall-city'), sky: q('.fall-sky'), tower: q('.fall-tower'), lines, sign: q('.fall-sign'), flash: q('.fall-flash') };
+}
+
+/** Shared landing: the white star-flash covers everything, the screen swaps, the flash clears. */
+function landing(tl, set, swap, at) {
+  tl.to(set.city, { y: 10, duration: 0.05, yoyo: true, repeat: 1, ease: 'power1.inOut' }, at - 0.1) // impact jolt
+    .to(set.bars, { scaleY: 0, duration: 0.2, ease: 'power2.in' }, at + 0.2)
+    .fromTo(set.flash, { scale: 0, rotation: -40, opacity: 1 }, { scale: 3.2, rotation: 0, duration: 0.2, ease: 'power3.in' }, at)
+    .add(() => {
+      swap();
+      sfx('thwack');
+      gsap.set(set.city, { visibility: 'hidden' });
+    }, at + 0.2)
+    .to(set.flash, { opacity: 0, duration: 0.22, ease: 'power2.out' }, at + 0.22);
+}
+
+export function fallWipe(swap, label = '') {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const set = citySet(label, '<div class="fall-half left"></div><div class="fall-half right"></div>');
+  const { el, W, H, TH, city, sky, tower, lines, sign } = set;
+  const left = el.querySelector('.fall-half.left');
+  const right = el.querySelector('.fall-half.right');
+
+  // the jagged seam the screen tears along (top to bottom, near the middle)
+  const seam = [];
+  for (let i = 0; i <= 8; i++) seam.push([W / 2 + (i % 2 ? 1 : -1) * (14 + ((i * 37) % 26)), (H * i) / 8]);
+  const s = seam.map(([x, y]) => `${x.toFixed(0)}px ${y.toFixed(0)}px`).join(', ');
+  const shots = [[left, `polygon(0 0, ${s}, 0 ${H}px)`], [right, `polygon(${W}px 0, ${s}, ${W}px ${H}px)`]].map(([half, clip]) => {
+    const snap = snapshotScreen();
+    half.style.clipPath = clip;
+    half.appendChild(snap.frag);
+    return snap;
+  });
+  document.body.appendChild(el);
+  shots.forEach((shot) => shot.settle());
+  gsap.set(tower, { xPercent: -50, y: H * 0.8 });
+
+  const tl = gsap.timeline({ onComplete: () => el.remove() });
+  tl.set(el, { visibility: 'visible' });
+  barsIn(tl, set.bars);
+  tl
+    // 1. the screen rushes at the camera...
+    .add(() => sfx('whoosh'), 0)
+    .to([left, right], { scale: 1.07, duration: 0.18, ease: 'power2.in', transformOrigin: '50% 50%' }, 0)
+    // ...and splits open on a rooftop over the city
+    .add(() => sfx('tear', 0.2), 0.16)
+    .to(left, { xPercent: -118, rotation: -9, scale: 1.25, duration: 0.42, ease: 'power3.in' }, 0.18)
+    .to(right, { xPercent: 118, rotation: 9, scale: 1.25, duration: 0.42, ease: 'power3.in' }, 0.18)
+    .set([left, right], { autoAlpha: 0 }, 0.6) // fully gone before the fall starts
+    .fromTo(city, { scale: 1.12 }, { scale: 1, duration: 0.4, ease: 'power2.out' }, 0.18)
+    // 2. the jump: the tower face streams up past the camera, faster and faster
+    .add(() => sfx('fall'), 0.4)
+    .to(tower, { y: -(TH - H), duration: 0.78, ease: 'power2.in' }, 0.38)
+    .fromTo(tower, { '--blur': 0 }, { '--blur': 1, duration: 0.55, ease: 'power2.in' }, 0.5) // the faster we fall, the more the windows smear
+    .to(sky, { yPercent: -120, duration: 0.5, ease: 'power2.in' }, 0.42)
+    .fromTo(city, { rotation: 0 }, { rotation: -1.6, duration: 0.3, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0.5)
+    .fromTo(lines, { y: H + 40 }, { y: -260, duration: 0.32, ease: 'none', stagger: { each: 0.05, repeat: 1 } }, 0.62)
+    // 3. the next chapter's name rides the fall like a building sign
+    .fromTo(sign, { y: H * 0.55, opacity: 0, scale: 0.8 }, { y: 0, opacity: 1, scale: 1, duration: 0.34, ease: 'back.out(1.6)' }, 0.6)
+    .to(sign, { y: -H * 0.12, duration: 0.24, ease: 'power1.in' }, 0.94);
+  // 4. hard landing: white star-flash, swap, the page builds in as it clears
+  landing(tl, set, swap, 1.0);
+  return track(tl);
+}
+
+/* THE RISE (any page -> back to the board): the reverse shot. The page drops away below
+   you, you rocket up the tower face, burst over the roof into the red sky, and the board
+   lands with the star-flash. (~0.95s, kept short because Back is used a lot) */
+export function riseWipe(swap, label = 'THE BOARD') {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const set = citySet(label || 'THE BOARD', '<div class="fall-half whole"></div>');
+  const { el, H, TH, city, sky, tower, lines, sign } = set;
+  const whole = el.querySelector('.fall-half.whole');
+  const snap = snapshotScreen();
+  whole.appendChild(snap.frag);
+  document.body.appendChild(el);
+  snap.settle();
+  gsap.set(tower, { xPercent: -50, y: -(TH - H) });
+  gsap.set(sky, { yPercent: 60 });
+
+  const tl = gsap.timeline({ onComplete: () => el.remove() });
+  tl.set(el, { visibility: 'visible' });
+  barsIn(tl, set.bars);
+  tl
+    // 1. lift-off: the page falls away beneath the camera
+    .add(() => sfx('rise'), 0)
+    .to(whole, { yPercent: 105, scale: 0.86, rotation: 2, duration: 0.32, ease: 'power3.in' }, 0)
+    // 2. up the tower, fastest at the start, braking as the roof comes into view
+    .to(tower, { y: H * 0.72, duration: 0.62, ease: 'power3.out' }, 0.12)
+    .fromTo(tower, { '--blur': 1 }, { '--blur': 0, duration: 0.5, ease: 'power2.out' }, 0.12) // smeared at launch, sharp as we brake
+    .to(sky, { yPercent: 0, duration: 0.5, ease: 'power3.out' }, 0.3)
+    .fromTo(lines, { y: -260 }, { y: H + 40, duration: 0.26, ease: 'none', stagger: { each: 0.04, repeat: 1 } }, 0.12)
+    .fromTo(city, { rotation: 1.4 }, { rotation: 0, duration: 0.5, ease: 'power2.out' }, 0.12)
+    // 3. over the roof: the board's name hangs in the sky for a beat
+    .fromTo(sign, { y: -H * 0.4, opacity: 0, scale: 0.85 }, { y: -H * 0.08, opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)' }, 0.42);
+  landing(tl, set, swap, 0.74);
+  return track(tl);
+}
+
+/* NEXT STOP (the NEXT EPISODE card): a subway train pulls in close to the camera, its lead
+   car's sign reads the next chapter, it brakes to a stop (the cut happens behind it) and
+   pulls away, the gaps between cars flashing the new page like a real pass-by. (~1.3s) */
+export function trainWipe(swap, label = '') {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const W = window.innerWidth;
+  const carW = Math.round(W * 1.15);
+  // each car is Gemini's subway-car art; the lead car's blank middle panel carries the sign
+  const car = (cls, inner = '') => `<div class="train-car ${cls}" style="width:${carW}px;background-image:url(${FILM.train})">${inner}</div>`;
+  const el = document.createElement('div');
+  el.className = 'fall train';
+  el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = `<div class="train-strip">${car('lead', '<div class="tc-sign"><small>NEXT STOP</small><span class="ransom"></span></div><div class="tc-no">06</div>')}${car('mid', '<div class="tc-no">07</div>')}${car('tail')}</div><div class="train-lines">${'<i></i>'.repeat(7)}</div>${LETTERBOX}`;
+  ransom(el.querySelector('.tc-sign span'), label, label.length + 3);
+  const bars = el.querySelectorAll('.lb');
+  const strip = el.firstChild;
+  const lines = el.querySelectorAll('.train-lines i');
+  lines.forEach((l, i) => gsap.set(l, { top: `${8 + ((i * 29) % 84)}%`, width: 120 + ((i * 67) % 220) }));
+  document.body.appendChild(el);
+  const stop = W / 2 - carW / 2; // lead car centred: it covers the whole screen
+  const gone = -(strip.scrollWidth + 40);
+
+  const tl = gsap.timeline({ onComplete: () => el.remove() });
+  tl.set(el, { visibility: 'visible' })
+    .set(strip, { x: W })
+    .fromTo(bars, { scaleY: 0 }, { scaleY: 1, duration: 0.16, ease: 'power3.out' }, 0)
+    .add(() => sfx('train'), 0)
+    // 1. pulls in hard and brakes, the cars rocking on the rails
+    .to(strip, { x: stop, duration: 0.5, ease: 'power3.out' }, 0)
+    .fromTo(strip, { rotation: 0 }, { rotation: -0.8, duration: 0.12, yoyo: true, repeat: 3, ease: 'sine.inOut' }, 0.3)
+    .fromTo(lines, { x: W }, { x: -400, duration: 0.3, ease: 'none', stagger: 0.03 }, 0)
+    // 2. the cut happens behind the stopped car
+    .add(swap, 0.52)
+    .from(el.querySelector('.tc-sign'), { scale: 1.25, duration: 0.24, ease: 'back.out(2.4)' }, 0.42)
+    // 3. departs, accelerating: gaps between cars flash the new page
+    .add(() => sfx('whoosh'), 0.86)
+    .to(strip, { x: gone, duration: 0.5, ease: 'power3.in' }, 0.8)
+    .to(bars, { scaleY: 0, duration: 0.22, ease: 'power2.in' }, 1.08)
+    .fromTo(lines, { x: W }, { x: -400, duration: 0.26, ease: 'none', stagger: 0.03 }, 1.0);
+  return track(tl);
+}
+
+/* CALLING CARD (into CONTACT): a calling card is thrown at the camera, spinning in from far
+   away; it smacks into the lens and fills the screen, then flips away to reveal the page.
+   The site's own ending motif, so the finale gets the signature shot. (~1.1s) */
+export function cardWipe(swap, label = 'CONTACT') {
+  if (reducedMotion()) {
+    swap();
+    return Promise.resolve();
+  }
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const el = document.createElement('div');
+  el.className = 'fall cardshot';
+  el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = `<div class="cs-dim"></div><div class="cs-card"><span class="cs-seal"></span><small>A calling card for you</small><b></b><em>Consider it stolen.</em></div>${LETTERBOX}`;
+  el.querySelector('.cs-card b').textContent = label;
+  const [dim, card] = el.children;
+  const bars = el.querySelectorAll('.lb');
+  document.body.appendChild(el);
+  const r = card.getBoundingClientRect();
+  const cover = Math.max(W / r.width, H / r.height) * 1.25;
+
+  const tl = gsap.timeline({ onComplete: () => el.remove() });
+  tl.set(el, { visibility: 'visible' })
+    .fromTo(dim, { opacity: 0 }, { opacity: 1, duration: 0.2 }, 0)
+    .fromTo(bars, { scaleY: 0 }, { scaleY: 1, duration: 0.16, ease: 'power3.out' }, 0)
+    .to(bars, { scaleY: 0, duration: 0.2, ease: 'power2.in' }, 0.88)
+    // 1. flung from deep in the frame, spinning
+    .add(() => sfx('whip'), 0.05)
+    .fromTo(card, { scale: 0.04, rotation: -540, rotationY: 0, x: W * 0.32, y: -H * 0.3 },
+      { scale: 1, rotation: -6, x: 0, y: 0, transformPerspective: 900, duration: 0.5, ease: 'power3.out' }, 0)
+    // 2. a beat to read it, then it smacks into the lens
+    .to(card, { scale: cover, rotation: 0, duration: 0.24, ease: 'power3.in' }, 0.62)
+    .add(() => {
+      swap();
+      sfx('thwack');
+      shake(document.body);
+    }, 0.86)
+    .set(dim, { opacity: 0 }, 0.86)
+    // 3. flips away to reveal the page
+    .to(card, { rotationX: 88, y: -H * 0.2, opacity: 0, duration: 0.26, ease: 'power2.in' }, 0.88);
+  return track(tl);
+}
