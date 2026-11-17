@@ -222,7 +222,7 @@ function stats() {
     intro(root) {
       if (reducedMotion()) return;
       const num = root.querySelector('.gpa-num b');
-      const v = { n: 0 };
+      const v = { n: Math.min(3.5, gpa) };
       gsap.to(v, { n: gpa, duration: 0.7, ease: 'power3.out', delay: 0.1, onUpdate: () => (num.textContent = v.n.toFixed(2)) });
       gsap.from(root.querySelector('.gpa-bar i'), { scaleX: 0, duration: 0.6, ease: 'back.out(1.8)', delay: 0.15, clearProps: 'transform' });
       gsap.from(root.querySelector('.gpa-tag'), { scale: 2.4, rotation: -30, duration: 0.3, ease: 'back.out(2.5)', delay: 0.05, clearProps: 'transform' });

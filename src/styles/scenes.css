@@ -126,6 +126,11 @@
 .ach-list .ach-ico { font-size: 22px; width: 28px; text-align: center; }
 .ach-list strong { display: block; font-family: var(--f-menu); font-size: 21px; letter-spacing: 1px; font-weight: 400; line-height: 1.1; }
 .ach-list span.hint { font-size: 14px; }
+/* CASE LOG: tight two-column checklist so all 8 rows and the caption fit a laptop screen */
+.log-list { gap: 6px; }
+.log-list li { padding: 6px 10px; gap: 10px; }
+.log-list strong { font-size: 18px; }
+@media (min-width: 640px) { .log-list { grid-template-columns: 1fr 1fr; } }
 
 /* secret behind-the-scenes */
 .bts p { max-width: 70ch; }

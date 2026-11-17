@@ -10,11 +10,11 @@ import { clearStampMarkup, hydrateStamps } from '../ui/clear.js';
 export const MENU_ITEMS = [
   { id: 'missions', label: 'MISSIONS' },
   { id: 'skills', label: 'SKILLS' },
-  { id: 'different', label: 'DIFFERENT' },
+  { id: 'different', label: 'MY EDGE' },
   { id: 'stats', label: 'STATS' },
   { id: 'side-quests', label: 'SIDE QUESTS' },
   { id: 'contact', label: 'CONTACT' },
-  { id: 'system', label: 'SYSTEM' }
+  { id: 'system', label: 'SETTINGS' }
 ];
 
 export function createMenu(go) {

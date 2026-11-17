@@ -391,7 +391,7 @@ export function irisWipe(swap) {
       swap();
       sfx('thwack', 0.7);
     }, 0.29)
-    .to([black, red], { scale: 0, rotation: 140, duration: 0.28, ease: 'expo.in', stagger: 0.04 }, 0.34)
+    .to([black, red], { scale: 0, rotation: 140, duration: 0.26, ease: 'power3.out', stagger: 0.03 }, 0.31) // opens right away: no long red hold
     .set(el, { visibility: 'hidden' });
   return track(tl);
 }

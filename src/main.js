@@ -14,7 +14,8 @@ import { store } from './core/store.js';
 import { $, $$, esc, reducedMotion } from './core/util.js';
 import { mountBackdrop } from './fx/backdrop.js';
 import { initClickFx, burst } from './fx/impact.js';
-import { initMagnetic, scramble, rollIn } from './fx/kinetic.js';
+import { initMagnetic, initTilt, initScrollMeter, slamOnScroll, scramble, rollIn } from './fx/kinetic.js';
+import { initTooltips } from './ui/tooltip.js';
 import { initClearing, hydrateStamps } from './ui/clear.js';
 import { progress } from './core/progress.js';
 import { slashWipe, blindsWipe, paperWipe, irisWipe, shatterWipe, stripesWipe, flipWipe, inkWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
@@ -57,6 +58,7 @@ const menu = createMenu((id) => {
 renderDate();
 
 let screen = null; // title | board | page | quick
+const SLAM_PAGE = '.sq, .sys, .stop-card, .crew-row, .wanted-slot, .idcard, .comic'; // page blocks that punch in on scroll
 const MENU_KEY = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘\u00A0K' : 'CTRL\u00A0K'; // shown in the key hints
 let pageId = null;
 let pendingStart = false;
@@ -66,7 +68,7 @@ document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotio
 ransom($('#titleName'), resume.first, NAME_SEED);
 $('#titleHook').textContent = resume.titleHook || resume.hook;
 // who + proof in the first 10 seconds (two clean lines on phones)
-$('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">2 live apps · 2,000+ tests</span>`;
+$('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">GSU '29 · 2 live apps · 727/728 checks</span>`;
 $('#hudLinkedIn').href = resume.links.linkedin;
 $('#quickPdf').href = resume.links.pdf;
 renderQuickView($('#paper'));
@@ -103,9 +105,9 @@ function activate(id) {
   el.scrollTop = 0;
   document.body.classList.remove('scrolled');
   renderKeyHints(mode);
+  requestAnimationFrame(syncMeter);
 }
 
-let lastStyle = 'slash';
 /* every menu destination gets its own transition */
 const MENU_STYLE = { missions: 'shatter', skills: 'blinds', different: 'slash', stats: 'flip', 'side-quests': 'stripes', contact: 'iris', system: 'ink' };
 const WIPES = { slash: slashWipe, blinds: blindsWipe, paper: paperWipe, iris: irisWipe, shatter: shatterWipe, stripes: stripesWipe, flip: flipWipe, ink: inkWipe };
@@ -121,6 +123,15 @@ function focusSoon(el, tries = 16, from = document.activeElement) {
   }, 100);
 }
 
+/* A page's entrance: the slash wipe ends on a big title slam; every page then builds its parts in. */
+function pageEnter(id, punch) {
+  if (punch) titlePunch(SECTION_TITLES[id] || id.toUpperCase());
+  $$('#page [data-ransom]').forEach((h, i) => dropIn(h, i * 0.05));
+  enter($('#page')); // back button, subtitle and other [data-in] items
+  pageIntro?.($('#page')); // each page's own entrance
+  slamOnScroll($('#page'), SLAM_PAGE); // blocks further down punch in when you reach them
+}
+
 let navSeq = 0; // a newer navigation cancels whatever an older one still had left to do
 async function show(id) {
   const prev = screen;
@@ -132,6 +143,7 @@ async function show(id) {
   const tok = ++navSeq;
   closeModal();
   const mode = modeOf(id);
+  let style = null; // which wipe this move uses; decided before the swap runs
 
   const swap = () => {
     if (tok !== navSeq) return;
@@ -139,7 +151,10 @@ async function show(id) {
     activate(id);
     screen = mode === 'page' ? 'page' : id;
     pageId = mode === 'page' ? id : null;
-    if (mode === 'page') renderPage(id);
+    if (mode === 'page') {
+      renderPage(id);
+      pageEnter(id, style === 'slash' || prev === null); // builds in while the wipe lifts: no full page, blank, rebuild
+    }
     if (mode === 'board') enterBoard();
   };
 
@@ -151,7 +166,7 @@ async function show(id) {
     await ripTransition(swap);
   } else {
     // mix it up: each kind of move has its own wipe
-    const style = viaMenu
+    style = viaMenu
       ? MENU_STYLE[id] || 'blinds'
       : id === 'system' || id === 'secret'
         ? 'blinds'
@@ -161,19 +176,12 @@ async function show(id) {
             ? 'iris'
             : 'slash';
     await WIPES[style](swap);
-    lastStyle = style;
   }
   if (tok !== navSeq) return;
   viaMenu = false;
 
   if (mode === 'title') introTitle();
   if (mode === 'page') {
-    // the big title slam only follows the slash; menu/settings pages build in with kinetic letters instead
-    // the title slam plays over the page while its content builds in underneath (no waiting on it)
-    if (lastStyle === 'slash' || prev === null) titlePunch(SECTION_TITLES[id] || id.toUpperCase());
-    $$('#page [data-ransom]').forEach((h, i) => dropIn(h, i * 0.05));
-    enter($('#page')); // back button, subtitle and other [data-in] items
-    pageIntro?.($('#page')); // each page's own entrance
     const target = $('#page [data-nav]') || $('#page .back-btn');
     focusSoon(target);
     // entrance animations that finish later can knock focus back to <body>; once they settle, put it back
@@ -209,7 +217,7 @@ function renderProgress(celebrate) {
     ? '<span class="pc-label">CASE LOG</span><span class="pc-all">ALL CLEAR!</span>'
     : `<span class="pc-label">CASE LOG</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
        <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>
-       <span class="pc-hint" aria-hidden="true">visit both projects · open the 6 menu pages</span>`;
+       <span class="pc-hint" aria-hidden="true">open each project's Live or Code link · open the 6 menu pages</span>`;
   if (celebrate && !reducedMotion()) gsap.fromTo(chip, { scale: 1.6, rotation: -12 }, { scale: 1, rotation: -3, duration: 0.5, ease: 'elastic.out(1.4, .4)' });
   else if (lastDone !== null && p.done > lastDone) rollIn(chip.querySelector('.pc-count b')); // one more case rolls in
   lastDone = p.done;
@@ -305,8 +313,14 @@ $('#pressStart').addEventListener('click', () => {
 });
 
 /* ---------------------------------------------------------------- heist board */
+const syncMeter = initScrollMeter();
 initClickFx();
 initMagnetic();
+initTilt();
+initTooltips();
+$('#menuBtn').dataset.tip = `MENU · ${MENU_KEY}`;
+// the top buttons tick on hover like every other control
+$$('.hud-btn').forEach((b) => b.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && sfx('hover')));
 // FULL STORY on the side quests gets a whip crack + level-clear jingle
 document.addEventListener('click', (e) => {
   if (e.target.closest?.('.quest-more')) sfx('fanfare');
@@ -332,6 +346,7 @@ function enterBoard() {
   board.reveal(revealDelay);
   setTimeout(() => screen === 'board' && board.demo(), (revealDelay + 1.1) * 1000);
   revealDelay = 0;
+  slamOnScroll($('#board'), '.note, .calling'); // phones: the notes and calling card punch in as you scroll
   $('#board .case-open')?.focus({ preventScroll: true });
   if (!boardSeen) {
     boardSeen = true;
@@ -543,7 +558,7 @@ document.addEventListener('click', (e) => {
   openModal(`<div class="dossier"><button class="modal-x" type="button" data-close aria-label="Close">✕</button>
     <header class="dossier-head"><p class="dossier-code">CASE LOG · ${p.done}/${p.total} CLEARED</p>
     <h2 class="dossier-title ransom" id="modalTitle" data-ransom="CASE LOG">CASE LOG</h2></header>
-    <ul class="ach-list">${p.items.map((i) => `<li class="${i.done ? 'got' : ''}"><span class="ach-ico" aria-hidden="true">${i.done ? '★' : '·'}</span><div><strong>${esc(i.label)}</strong><span class="hint">${i.done ? 'Cleared' : 'Not yet'}</span></div></li>`).join('')}</ul>
+    <ul class="ach-list log-list">${p.items.map((i) => `<li class="${i.done ? 'got' : ''}"><span class="ach-ico" aria-hidden="true">${i.done ? '★' : '☆'}</span><strong>${esc(i.label)}</strong><span class="sr-only">${i.done ? 'cleared' : 'not yet'}</span></li>`).join('')}</ul>
     <p class="dossier-hint">A project counts once you open its live app or its code. A page counts once you open it from the MENU.</p></div>`);
 });
 
