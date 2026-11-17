@@ -15,7 +15,7 @@ const SECTIONS = [
 export function progress() {
   const st = store.get();
   const items = [
-    ...resume.missions.map((m) => ({ label: `Clear ${m.target}`, done: (st.cleared || []).includes(m.id) })),
+    ...resume.missions.map((m) => ({ label: `Visit ${m.target}'s Live or Code`, done: (st.cleared || []).includes(m.id) })),
     ...SECTIONS.map(([id, label]) => ({ label: `Open ${label}`, done: (st.visited || []).includes(id) }))
   ];
   const done = items.filter((i) => i.done).length;

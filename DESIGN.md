@@ -153,7 +153,7 @@ From John's research notes (kept verbatim in spirit):
 
 ## 7. Motion
 
-- Engine: **GSAP** timelines + CSS. No second animation library (Anime.js etc. would duplicate GSAP).
+- Engine: **GSAP** timelines + CSS. **Anime.js** is used for exactly one thing (slam-in on scroll), imported as two small pieces (`animejs/animation`, `animejs/utils`) and **lazy-loaded** so the first screen stays fast. Don't spread it further; GSAP stays the main engine.
 - Enter: 0.2 to 0.4s, steep ease-out, overshoot and settle; stagger 2 to 4 frames.
 - **Every big animation is skippable** with a click or Esc (`timeline.progress(1)`); Esc during a transition skips first.
 - **Respect reduced motion** (OS setting and the SYSTEM toggle): swap motion for instant changes; stop idle loops.
@@ -162,7 +162,10 @@ From John's research notes (kept verbatim in spirit):
 - **PRESS START:** a **paper rip** that starts at the ATL poster tape and tears **from the right side toward the upper left, diagonally**, along a **non-linear lightning-bolt edge**, slow enough to see it tear, then the board slams in.
 - **CLEARED stamp (signature moment):** only plays when the visitor actually clicked a project link, left, and **came back**. Full-screen: rays, CASE CLOSED bands, giant cut-out stamp slams with a **whip crack** (Queen/Makoto style), flash, ring, confetti, then the stamp zips onto the card with a motion trail and lands with a thunk and sparkle. No "WELCOME BACK" text; the stamp is the transition.
 - Idle motion is welcome (stepped "boil" on selected buttons, slow star spin, parallax), but **no endless marquees**: watermark words slide in once and settle.
-- Small kinetic touches (from Motion Primitives ideas, rebuilt natively): file codes and menu teasers **decode** (text scramble); PRESS START and LinkedIn buttons are **magnetic**; counters **roll in** like a slot machine.
+- Small kinetic touches (from Motion Primitives ideas, rebuilt natively): file codes and menu teasers **decode** (text scramble); PRESS START and LinkedIn buttons are **magnetic**; counters **roll in** like a slot machine; case cards and the calling card **tilt in 3D** toward the mouse (max 6deg, mouse only); a red heist-tape **scroll meter** fills across the top of long pages.
+- **Slam-in on scroll** (Anime.js): page blocks that start below the fold punch up into place when you reach them. It only moves the separate `translate`/`rotate`/`scale` properties through one `--slam` variable, so it never clashes with GSAP or hover lifts, and nothing is ever hidden.
+- **Pages build in while the wipe lifts** (the entrance starts at the swap, under the cover). Never show a finished page, blank it, then rebuild it.
+- Board return (iris) opens right away; no long solid-red hold.
 - Animate transform/opacity; never `transition: all`.
 
 ## 8. Sound
@@ -204,7 +207,7 @@ From John's research notes (kept verbatim in spirit):
 
 With `?company=X`: "To the team at X," and a board note "Wait, someone from X? I've been expecting you."
 
-**Menu** — diagonal staircase list: MISSIONS, SKILLS, DIFFERENT, STATS, SIDE QUESTS, CONTACT, SYSTEM. Star cursor, black slab snaps behind the selected item, one-line teaser bubble that says what's inside ("What makes me different · 4 facts"). CLEARED mini-stamps on visited items must **not block the labels**. Ctrl/⌘+K toggles it.
+**Menu** — diagonal staircase list: MISSIONS, SKILLS, MY EDGE, STATS, SIDE QUESTS, CONTACT, SETTINGS. Star cursor, black slab snaps behind the selected item, one-line teaser bubble that says what's inside ("What makes me different · 4 facts"). CLEARED mini-stamps on visited items must **not block the labels**. Ctrl/⌘+K toggles it.
 **Achievements panel** — same black comic header as the case file ("SECRETS · x/7 FOUND"), never a plain white box.
 
 **Case file (dossier modal)** — black header band with the name in cut-out letters and a yellow decoding file code, **Try it live / Code on GitHub near the top**, then numbered OBJECTIVES and yellow LOOT stickers. Close with X, Esc, backdrop, Back gesture, or swipe down on phones. Focus is trapped inside; the page behind is inert.
@@ -262,7 +265,8 @@ Run after every design change; report results honestly.
 - **Bundled side-by-side strings** → one shared wiring-diagram rail.
 - **"RK 90" next to "LV 9"** → one LV scale.
 - **Recorded drum samples / drum loop plan** → dropped; everything synthesized.
-- **Libraries suggested later** (Motion Primitives, Watermelon UI, Coconut UI, chart kits, Anime.js) → ideas ported natively; no React, no second animation library. img2threejs skipped (no photos; 3D clashes with flat comic style).
+- **Libraries suggested later**: Motion Primitives (scramble, magnetic, sliding number, tilt, scroll progress) and Watermelon UI (tooltip, Sonner toast timer) were read from their GitHub source and rebuilt natively in the comic style; Anime.js is used lazily for slam-in only. No React. Coconut UI and Backlit UI sites are blocked by the session network and have no public repo. img2threejs skipped (no photos; 3D clashes with flat comic style).
+- **Menu labels DIFFERENT and SYSTEM** read as unclear to a phone tester → renamed **MY EDGE** and **SETTINGS** (pages keep their full titles).
 
 ## 14. Lessons learned while building (technical design notes)
 
@@ -280,6 +284,10 @@ Run after every design change; report results honestly.
 - Entrance animations can knock focus back to `<body>` after it was placed; re-check focus once a page has settled.
 - Loading Google Fonts without blocking was tested: first paint got 0.2s faster but the main content (LCP) did not, and cut-out letters flashed in fallback fonts. Fonts stay render-blocking on purpose.
 - The big outlined watermark words used to scroll forever (a marquee). Endless motion competes for attention; they now slide in once.
+- Pop-ups on phones must never block a control: phone toasts let taps pass straight through. Desktop toasts show a draining yellow **fuse** (Watermelon/Sonner pattern) that pauses on hover.
+- HUD buttons use **comic tooltips** (black slab, red offset, spike) that show the name and shortcut (`SOUND · M`, `MENU · CTRL K`) on mouse hover or keyboard focus; never on touch. No native `title` tooltips (they doubled up).
+- Count-ups must never show a wrong headline number for long: the GPA counts from 3.50, not 0.
+- The CASE LOG list is two columns with outline stars for "not yet" so all 8 rows fit a 900px-tall laptop.
 
 ## 15. Tools that help (use before calling a design done)
 

@@ -34,7 +34,7 @@ function caseCard(m, i) {
   const mark = v === 'v1'
     ? `<svg class="cc-chart" viewBox="0 0 300 200" aria-hidden="true"><polygon points="0,200 0,150 40,120 70,140 105,80 140,110 175,40 205,75 240,20 270,55 300,10 300,200"/><polyline points="0,150 40,120 70,140 105,80 140,110 175,40 205,75 240,20 270,55 300,10"/></svg>`
     : '<span class="cc-star" aria-hidden="true"></span>';
-  return `<article class="case card-pop cc ${v}" data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
+  return `<article class="case card-pop cc ${v}" data-tilt data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
     ${pin}<span class="cc-deco" aria-hidden="true">${mark}</span>
     <span class="case-grade" aria-label="Difficulty ${esc(m.grade)}"><span>${esc(m.grade)}</span></span>
     <div class="case-top"><span class="case-no">CASE 0${i + 1}</span><span class="case-live">${esc(m.status)}</span></div>
@@ -84,7 +84,7 @@ function boardMarkup(ctx) {
   const skills = reorder(resume.skills, ctx.company?.order?.skills);
   const note = ctx.company
     ? `<aside class="note note-company card-pop" data-board-item>${pin}<b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you. Pick any skill to see where I used it.</aside>`
-    : `<aside class="note note-hint note-case0 card-pop" data-board-item>${pin}<b class="c0-tag">CASE 00 · THIS SITE</b> Resumes are boring, so I directed 3 AI agents to build mine as a game. <span class="hint-desk">Hover a skill and the string finds the proof.</span><span class="hint-phone">Tap a skill and it lights the proof.</span></aside>`;
+    : `<aside class="note note-hint note-case0 card-pop" data-board-item>${pin}<b class="c0-tag">CASE 00 · THIS SITE</b> Resumes are boring, so I directed 3 AI agents to build mine as a game. <span class="hint-desk">Hover a skill and the string finds the proof.</span><span class="hint-phone">Skills are further down. Tap one and it lights the proof.</span></aside>`;
 
   return `
   <header class="board-head" data-board-item>
@@ -92,7 +92,7 @@ function boardMarkup(ctx) {
       <h1 class="ransom" id="boardName"></h1>
       <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
       <button type="button" class="progress-chip" id="progressChip"></button>
-      <span class="board-status">${esc(resume.status)} · GSU · ${esc(resume.education.grad)}</span>
+      <span class="board-status">${esc(resume.status)} · GSU · ${esc(resume.education.grad)} · GPA ${esc(resume.education.gpa)}</span>
     </div>
     <p class="board-hook">${esc(resume.role)}. ${esc(resume.hook)}</p>
     ${note}
@@ -136,7 +136,7 @@ function boardMarkup(ctx) {
     </section>
 
     <section class="col col-call" aria-label="Contact">
-      <article class="calling card-pop" data-board-item aria-label="Calling card">${pin}
+      <article class="calling card-pop" data-tilt data-board-item aria-label="Calling card">${pin}
         <span class="calling-tape" aria-hidden="true"></span>
         <p class="calling-to">To ${esc(ctx.company ? `the team at ${ctx.company.name}` : 'the one buried in boring resumes')},</p>
         <h3 class="calling-title ransom" data-ransom="TAKE NOTICE."></h3>

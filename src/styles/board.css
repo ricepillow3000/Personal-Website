@@ -420,3 +420,9 @@ button.gpa-burst { border: 0; padding: 0; cursor: pointer; perspective: 400px; }
 .calling-steal { margin: 0; font-family: var(--f-head); font-size: 26px; line-height: 1; letter-spacing: .5px; color: var(--red); transform: rotate(-3deg) skewX(-8deg); text-shadow: 2px 2px 0 var(--black); }
 .calling-msg { font-size: 17px !important; max-width: 32ch !important; }
 .calling-to { padding-right: 64px; }
+
+/* Tilt (Motion Primitives): a hovered case or calling card leans toward the mouse in 3D.
+   --rx/--ry come from initTilt(); without them it is the normal lift. */
+.card-pop[data-tilt]:hover, .calling.card-pop[data-tilt]:hover {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translate(-3px, -6px) !important;
+}
