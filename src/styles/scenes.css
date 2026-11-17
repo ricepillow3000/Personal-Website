@@ -42,8 +42,14 @@
 .dossier-stack li { border: 2px solid var(--black); padding: 0 8px; font-weight: 800; font-size: 13px; }
 .dossier-cols { display: grid; grid-template-columns: 1.45fr 1fr; gap: 26px; }
 .dossier h3 { display: inline-block; font-family: var(--f-menu); font-size: 22px; letter-spacing: 2px; font-weight: 400; background: var(--black); color: var(--white); padding: 0 12px; margin: 0 0 10px; transform: skew(var(--skew)); }
-.dossier ul.obj { margin: 0; padding-left: 18px; line-height: 1.5; }
-.dossier ul.obj li { margin-bottom: 6px; }
+.dossier ul.obj { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; line-height: 1.5; counter-reset: obj; }
+/* each objective gets a slanted black number tag, with the text hanging clear of it */
+.dossier ul.obj li { position: relative; padding-left: 46px; counter-increment: obj; }
+.dossier ul.obj li::before {
+  content: counter(obj, decimal-leading-zero); position: absolute; left: 0; top: 1px;
+  font-family: var(--f-menu); font-size: 16px; letter-spacing: 1px; line-height: 1.35; padding: 0 7px;
+  background: var(--black); color: var(--white); transform: skew(var(--skew)); box-shadow: 3px 3px 0 var(--red);
+}
 .loot { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .loot li { background: var(--yellow); border: 2px solid var(--black); padding: 4px 10px; font-weight: 800; transform: skew(-6deg); box-shadow: 3px 3px 0 var(--black); }
 .dossier-links { display: flex; flex-wrap: wrap; gap: 14px; }

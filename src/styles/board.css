@@ -248,8 +248,18 @@ body[data-mode="board"] .keyhints { display: none; }
 .person-tags .s0 { background: var(--yellow); }
 .person-tags .s1 { background: #FF4FD8; color: var(--black); transform: rotate(2deg) skewX(-6deg); }
 .person-tags .s2 { background: var(--white); }
-.person-facts { display: grid; gap: 6px; margin-bottom: 4px; font-size: 13.5px; line-height: 1.35; }
-.person-facts i { font-style: normal; margin-right: 6px; }
+/* fun facts: one tilted sticker strip per fact (slanted box, upright text, outlined star tab) */
+.person-facts { list-style: none; margin: 16px 0 8px; padding: 0 4px 0 10px; display: grid; gap: 12px; font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pf {
+  position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 10px; align-items: center;
+  padding: 7px 12px 7px 6px; background: var(--white); color: var(--black); border: 2.5px solid var(--black);
+  box-shadow: 4px 4px 0 var(--red); transform: rotate(-1.2deg) skew(var(--skew));
+}
+.pf > * { transform: skew(calc(var(--skew) * -1)); }
+.pf1 { background: var(--black); color: var(--white); box-shadow: 4px 4px 0 var(--yellow); transform: rotate(.8deg) skew(var(--skew)); margin-left: 8px; }
+.pf2 { transform: rotate(-.4deg) skew(var(--skew)); margin-right: 6px; }
+.pf .ff-star { width: 22px; height: 22px; margin: 0; filter: drop-shadow(1.5px 0 0 var(--black)) drop-shadow(-1.5px 0 0 var(--black)) drop-shadow(0 1.5px 0 var(--black)) drop-shadow(0 -1.5px 0 var(--black)); }
+.pf1 .ff-star { background: var(--yellow); }
 
 .quest-log { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 12px; }
 .quest { position: relative; display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: start; padding: 8px 10px 10px 6px; background: var(--white); border: 3px solid var(--black); box-shadow: 4px 4px 0 var(--black); transform: rotate(var(--qt, -.8deg)); transition: transform .15s var(--ease-pop); }
