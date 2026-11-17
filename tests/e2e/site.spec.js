@@ -41,10 +41,16 @@ test('hovering a skill lights exactly its red strings and projects', async ({ pa
   await expect(page.locator('#strings .string.lit')).toHaveAttribute('data-case', 'arcas');
   await expect(page.locator('.case[data-case="arcas"]')).toHaveClass(/lit/);
   await expect(page.locator('.case[data-case="meliona"]')).not.toHaveClass(/lit/);
-  const d = await page.locator('#strings .string.lit').getAttribute('d');
-  const [, x1, y1] = d.match(/^M([\d.]+) ([\d.]+)/);
-  const [, x2, y2] = d.match(/([\d.]+) ([\d.]+)$/);
-  expect(Math.hypot(x2 - x1, y2 - y1)).toBeGreaterThan(100); // a real string, not a dot
+  // a real string (not a dot) that ends right at the ARCAS pin
+  const r = await page.evaluate(() => {
+    const s = document.querySelector('#strings .string.lit');
+    const g = document.querySelector('.board-grid').getBoundingClientRect();
+    const pin = document.querySelector('.case[data-case="arcas"] .pin').getBoundingClientRect();
+    const end = s.getPointAtLength(s.getTotalLength());
+    return { len: s.getTotalLength(), gap: Math.hypot(end.x + g.left - (pin.left + pin.width / 2), end.y + g.top - (pin.top + pin.height / 2)) };
+  });
+  expect(r.len).toBeGreaterThan(100);
+  expect(r.gap).toBeLessThan(16); // stops at the pin's edge
 });
 
 test('lighting every string unlocks Full Recon', async ({ page, isMobile }) => {

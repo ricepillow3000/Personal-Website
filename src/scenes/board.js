@@ -180,29 +180,46 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
     svg.setAttribute('viewBox', `0 0 ${g.width} ${g.height}`);
     svg.setAttribute('width', g.width);
     svg.setAttribute('height', g.height);
+    /* Wiring-diagram layout: every string shares ONE rail up the gap between the columns and
+       ONE bus above the case cards, then drops into its case's pin. Shared parts sit exactly on
+       top of each other, so the board shows a single clean line, never a bundle. */
+    const cases = [...root.querySelectorAll('.case')];
+    const firstCase = cases[0]?.getBoundingClientRect();
+    const roster = root.querySelector('.roster')?.getBoundingClientRect();
     let out = '';
-    resume.skills.forEach((s, i) => {
-      const a = root.querySelector(`.skill[data-skill="${s.id}"]`);
-      s.uses.forEach((caseId) => {
-        const b = root.querySelector(`.case[data-case="${caseId}"]`);
-        if (!a || !b) return;
-        const p1 = centerOf(a);
-        const p2 = centerOf(b);
-        // angular route: out to the gap between the columns, straight up it, then along the card
-        // tops to the pin, so a string never runs across a card's text. Each skill sits a few px
-        // apart, so a bundle still reads as separate strings.
-        const f = (n) => n.toFixed(1);
-        const gx = p1.x + 14 + (i % 5) * 4;
-        const top = p2.y - (i % 5) * 3;
-        out += `<path class="string" data-skill="${s.id}" data-case="${caseId}" d="M${f(p1.x)} ${f(p1.y)} L${f(gx)} ${f(p1.y)} L${f(gx)} ${f(top)} L${f(p2.x)} ${f(top)} L${f(p2.x)} ${f(p2.y)}"/>`;
+    if (firstCase && roster) {
+      const PIN = 10; // lines stop at the edge of a pin, so the pins stay on top visually
+      const railX = (roster.right + firstCase.left) / 2 - g.left;
+      const topPin = Math.min(...cases.map((c) => centerOf(c).y));
+      const busY = topPin - 44; // above the S badges
+      const f = (n) => n.toFixed(1);
+      resume.skills.forEach((s) => {
+        const a = root.querySelector(`.skill[data-skill="${s.id}"]`);
+        s.uses.forEach((caseId) => {
+          const b = root.querySelector(`.case[data-case="${caseId}"]`);
+          if (!a || !b) return;
+          const p1 = centerOf(a);
+          const p2 = centerOf(b);
+          // cards in the top row are reached from the rail above them; a card stacked lower
+          // (tablet widths) is reached straight from the rail at its pin's height
+          const d = p2.y - topPin > 30
+            ? `M${f(p1.x + PIN)} ${f(p1.y)} H${f(railX)} V${f(p2.y)} H${f(p2.x - PIN)}`
+            : `M${f(p1.x + PIN)} ${f(p1.y)} H${f(railX)} V${f(busY)} H${f(p2.x)} V${f(p2.y - PIN)}`;
+          out += `<path class="string" data-skill="${s.id}" data-case="${caseId}" d="${d}"/>`;
+        });
       });
-    });
+    }
     svg.innerHTML = out;
     markLit();
   }
 
   let focus = [null, null]; // what is highlighted right now, so a redraw keeps it lit
-  const markLit = () => svg.querySelectorAll('.string').forEach((p) => p.classList.toggle('lit', Boolean(focus[1]) && p.dataset[focus[0]] === focus[1]));
+  const markLit = () =>
+    svg.querySelectorAll('.string').forEach((p) => {
+      const on = Boolean(focus[1]) && p.dataset[focus[0]] === focus[1];
+      p.classList.toggle('lit', on);
+      if (on) svg.appendChild(p); // lit strings paint on top of the shared rail
+    });
 
   /* ---------- highlight logic ---------- */
   function highlight(kind, id, { silent = false } = {}) {
