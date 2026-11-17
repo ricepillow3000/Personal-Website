@@ -364,6 +364,7 @@ body[data-mode="board"] .keyhints { display: none; }
   .board-head { grid-template-columns: 1fr; }
   .board-grid { grid-template-columns: 1fr; gap: 30px; }
   .col-cases { order: -1; }
+  .col-notes { order: 0; } .col-skills { order: 1; } .col-call { order: 2; } /* phone: cases, the person, skills, then the calling card */
   .cases { grid-template-columns: 1fr; }
   .strings { display: none; }
   .skill .pin { display: none; }

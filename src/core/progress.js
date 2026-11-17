@@ -8,7 +8,8 @@ const SECTIONS = [
   ['skills', 'Skills'],
   ['different', 'What makes me different'],
   ['stats', 'Stats'],
-  ['side-quests', 'Side quests']
+  ['side-quests', 'Side quests'],
+  ['contact', 'Contact']
 ];
 
 export function progress() {

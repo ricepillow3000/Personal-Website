@@ -270,10 +270,10 @@ test('progress is saved: returning visitors CONTINUE with their case log', async
   await page.goto('/#/');
   await page.reload();
   await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
-  await expect(page.locator('#saveLine')).toContainText('2/7 cleared');
+  await expect(page.locator('#saveLine')).toContainText('2/8 cleared');
   await page.locator('#pressStart').click();
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
-  await expect(page.locator('#progressChip')).toContainText('2/7');
+  await expect(page.locator('#progressChip')).toContainText('2/8');
   // starting over wipes the save
   await page.goto('/#/');
   await page.reload();
@@ -383,7 +383,7 @@ test.describe('with motion on', () => {
 test('every CASE LOG item can be reached from the site itself (ALL CLEAR is possible)', async ({ page }) => {
   await openBoard(page);
   // open every MENU page (except SYSTEM, which is settings) by clicking, then mark both projects cleared
-  for (const id of ['missions', 'skills', 'different', 'stats', 'side-quests']) {
+  for (const id of ['missions', 'skills', 'different', 'stats', 'side-quests', 'contact']) {
     await page.locator('#menuBtn').click();
     await page.locator(`.stair-item[data-go="${id}"]`).click();
     await expect(page.locator('body')).toHaveAttribute('data-screen', id);
@@ -411,7 +411,7 @@ test('Start over can be undone', async ({ page }) => {
   await expect(page.locator('#saveLine')).toContainText('Progress wiped');
   await page.locator('.save-reset').click(); // Undo
   await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
-  await expect(page.locator('#saveLine')).toContainText('1/7');
+  await expect(page.locator('#saveLine')).toContainText('1/8');
 });
 
 test('Back closes an open case file instead of leaving the board', async ({ page }) => {
