@@ -85,7 +85,7 @@ export const resume = {
   skills: [
     { id: 'agents', name: 'AI Agents (Claude Code)', rank: 9, proof: '3-role agent workflow: orchestrator, researcher, builder', uses: ['meliona'] },
     { id: 'testing', name: 'Testing / QA', rank: 'MAX', proof: '2,000+ automated tests across 2 apps', uses: ['meliona', 'arcas'] },
-    { id: 'python', name: 'Python', rank: 8, proof: '7,700+ lines in Meliona · ARCAS backend', uses: ['meliona', 'arcas'] },
+    { id: 'python', name: 'Python', rank: 5, proof: '7,700+ lines in Meliona · ARCAS backend', uses: ['meliona', 'arcas'] },
     { id: 'aieval', name: 'AI Evaluation', rank: 8, proof: 'Live-data audits · 727/728 checks passed', uses: ['meliona'] },
     { id: 'cicd', name: 'GitHub Actions (CI/CD)', rank: 7, proof: '6 workflows: lint, security scan, 3 test suites', uses: ['meliona', 'arcas'] },
     { id: 'flask', name: 'Flask', rank: 7, proof: 'ARCAS REST API', uses: ['arcas'] },

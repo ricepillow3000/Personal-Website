@@ -43,15 +43,16 @@ body[data-mode="board"] .backdrop { filter: brightness(.6); }
 
 /* grid + red string */
 .board-grid { position: relative; display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 40px; align-items: start; }
-.strings { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; overflow: visible; filter: drop-shadow(1px 2px 0 rgba(5, 5, 5, .85)); }
-.string { fill: none; stroke: #FF3030; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; opacity: .75; transition: opacity .15s, stroke .15s, stroke-width .15s; }
-/* while a skill is highlighted, the strings come up over the cards so the lit one is never hidden */
-.board-focus .strings { z-index: 3; }
-.board-focus .string { opacity: 0; }
-.board-focus .string.lit { opacity: 1; stroke: #FFFFFF; stroke-width: 4; }
+.strings { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; overflow: visible; filter: drop-shadow(1px 2px 0 rgba(5, 5, 5, .85)); }
+/* one shared red rail (solid colour, so overlapping strings never darken into a bundle);
+   the lit route turns white and thick, with sharp comic corners */
+.string { fill: none; stroke: #D4141A; stroke-width: 3; stroke-linecap: square; stroke-linejoin: miter; transition: stroke .15s, stroke-width .15s, opacity .15s; }
+.board-focus .string:not(.lit) { opacity: .45; }
+.board-focus .string.lit { stroke: #FFFFFF; stroke-width: 5; }
 .col { position: relative; z-index: 2; min-width: 0; }
 .col-label { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px; margin: 0 0 20px; font-weight: 400; }
 .col-label .ransom { font-size: 36px; }
+@media (min-width: 761px) { .col-cases .col-label { margin-bottom: 64px; } } /* a clear lane for the string rail above the cards and their S badges */
 .col-label small { font-family: var(--f-body); font-size: 12px; font-weight: 800; letter-spacing: .5px; color: var(--white); background: rgba(5, 5, 5, .8); padding: 2px 8px; transform: skew(var(--skew)); }
 
 /* skills ROSTER: black panel, cartoon stat rows (name · big slanted number · colour meters) */
