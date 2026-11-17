@@ -3,6 +3,9 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { inflateSync } from 'node:zlib';
 
+/* Any US-style phone number, e.g. (555) 123-4567, 555-123-4567, 555.123.4567. No real digits live in this repo. */
+const PHONE = /\(?\b\d{3}\)?[\s.-]*\d{3}[\s.-]\d{4}\b/;
+
 const errorsOf = (page) => {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -136,7 +139,7 @@ test('contact leads with LinkedIn and never shows a phone number', async ({ page
   const primary = page.locator('.contact-btns .btn-primary');
   await expect(primary).toContainText('LinkedIn');
   await expect(primary).toHaveAttribute('href', /linkedin\.com\/in\//);
-  await expect(page.locator('body')).not.toContainText('555-0100');
+  await expect(page.locator('body')).not.toContainText(PHONE);
 });
 
 test('keyboard: 1 opens a case file, Q for Quick View, Esc back', async ({ page, isMobile }) => {
@@ -191,12 +194,11 @@ test('phone: no horizontal scroll and thumb-sized targets', async ({ page, isMob
 test('no phone number anywhere in the built site', async () => {
   const walk = (dir) => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : [join(dir, f)]));
   const text = walk('dist').filter((f) => /\.(html|js|css|svg|json)$/.test(f)).map((f) => readFileSync(f, 'utf8')).join('\n');
-  expect(text).not.toMatch(/555[-.\s]?0100/);
-  expect(text).not.toMatch(/\(555\)/);
+  expect(text).not.toMatch(PHONE);
 });
 
 /* Reads every text string out of a PDF's compressed content streams. */
-function pdfDigits(path) {
+function pdfText(path) {
   const buf = readFileSync(path);
   const raw = buf.toString('latin1');
   let out = '';
@@ -218,13 +220,13 @@ function pdfDigits(path) {
       for (let i = 0; i + 1 < h.length; i += 2) out += String.fromCharCode(parseInt(h.slice(i, i + 2), 16));
     }
   }
-  return out.replace(/\D/g, '');
+  return out;
 }
 
 test('the downloadable resume PDF has no phone number', async () => {
-  const digits = pdfDigits('dist/assets/John_Nguyen_Resume.pdf');
-  expect(digits.length).toBeGreaterThan(20); // the reader really found text
-  expect(digits).not.toContain('5550100');
+  const text = pdfText('dist/assets/John_Nguyen_Resume.pdf');
+  expect(text).toContain('Nguyen'); // the reader really found text
+  expect(text).not.toMatch(PHONE);
 });
 
 test('a corrupted or hostile save can never crash the site or inject markup', async ({ page }) => {
