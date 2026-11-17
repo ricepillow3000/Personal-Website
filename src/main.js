@@ -26,7 +26,7 @@ import { createMenu, MENU_ITEMS } from './scenes/menu.js';
 import { SECTION_RENDERERS, SECTION_TITLES, dossierMarkup, animateDossier } from './scenes/sections.js';
 import { renderQuickView } from './scenes/quickview.js';
 import { sfx, setSound, setMusicVolume } from './audio/audio.js';
-import { unlock, refreshCounter, listMarkup } from './eggs/achievements.js';
+import { unlock, refreshCounter, listMarkup, count, ACHIEVEMENTS } from './eggs/achievements.js';
 import { armBee } from './eggs/bee.js';
 import { installConsole } from './eggs/console.js';
 import { bindInput, bindGamepad } from './input/input.js';
@@ -65,6 +65,8 @@ let lastFocus = null;
 document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotion === true);
 ransom($('#titleName'), resume.first, NAME_SEED);
 $('#titleHook').textContent = resume.titleHook || resume.hook;
+// who + proof in the first 10 seconds (two clean lines on phones)
+$('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">2 live apps · 2,000+ tests</span>`;
 $('#hudLinkedIn').href = resume.links.linkedin;
 $('#quickPdf').href = resume.links.pdf;
 renderQuickView($('#paper'));
@@ -105,7 +107,7 @@ function activate(id) {
 
 let lastStyle = 'slash';
 /* every menu destination gets its own transition */
-const MENU_STYLE = { missions: 'shatter', skills: 'blinds', different: 'slash', stats: 'flip', 'side-quests': 'stripes', system: 'ink' };
+const MENU_STYLE = { missions: 'shatter', skills: 'blinds', different: 'slash', stats: 'flip', 'side-quests': 'stripes', contact: 'iris', system: 'ink' };
 const WIPES = { slash: slashWipe, blinds: blindsWipe, paper: paperWipe, iris: irisWipe, shatter: shatterWipe, stripes: stripesWipe, flip: flipWipe, ink: inkWipe };
 /* Focus a target once its entrance animation has made it visible (a hidden element can't take focus).
    Gives up if the visitor has already moved focus somewhere themselves. */
@@ -124,15 +126,16 @@ async function show(id) {
   const prev = screen;
   if ((prev === 'page' && pageId === id) || (prev === id && id !== 'page')) {
     viaMenu = false; // already here: nothing to do, and nothing in progress is cancelled
+    menu.close();
     return;
   }
   const tok = ++navSeq;
-  menu.close(false);
   closeModal();
   const mode = modeOf(id);
 
   const swap = () => {
     if (tok !== navSeq) return;
+    menu.close(false); // the menu stays up until the transition covers it: the old screen never flashes back
     activate(id);
     screen = mode === 'page' ? 'page' : id;
     pageId = mode === 'page' ? id : null;
@@ -166,12 +169,17 @@ async function show(id) {
   if (mode === 'title') introTitle();
   if (mode === 'page') {
     // the big title slam only follows the slash; menu/settings pages build in with kinetic letters instead
-    if (lastStyle === 'slash' || prev === null) await titlePunch(SECTION_TITLES[id] || id.toUpperCase());
-    if (tok !== navSeq) return;
+    // the title slam plays over the page while its content builds in underneath (no waiting on it)
+    if (lastStyle === 'slash' || prev === null) titlePunch(SECTION_TITLES[id] || id.toUpperCase());
     $$('#page [data-ransom]').forEach((h, i) => dropIn(h, i * 0.05));
     enter($('#page')); // back button, subtitle and other [data-in] items
     pageIntro?.($('#page')); // each page's own entrance
-    focusSoon($('#page [data-nav]') || $('#page .back-btn'));
+    const target = $('#page [data-nav]') || $('#page .back-btn');
+    focusSoon(target);
+    // entrance animations that finish later can knock focus back to <body>; once they settle, put it back
+    setTimeout(() => {
+      if (tok === navSeq && target?.isConnected && (document.activeElement === document.body || document.activeElement === null)) focusSoon(target);
+    }, 1400);
   }
   if (mode === 'quick') {
     track('quick_view');
@@ -183,7 +191,7 @@ async function show(id) {
 function introTitle() {
   renderSaveLine();
   dropIn($('#titleName'), 0.15);
-  if (!reducedMotion()) gsap.from('#screen-title .title-codename, #screen-title .title-hook, #pressStart, #screen-title .quick-link', { x: -40, opacity: 0, stagger: 0.08, duration: 0.35, delay: 0.35, ease: 'back.out(2)', clearProps: 'all' });
+  if (!reducedMotion()) gsap.from('#screen-title .title-codename, #screen-title .title-role, #screen-title .title-hook, #pressStart, #screen-title .quick-link', { x: -40, opacity: 0, stagger: 0.08, duration: 0.35, delay: 0.35, ease: 'back.out(2)', clearProps: 'all' });
   setTimeout(() => $('#pressStart').focus({ preventScroll: true }), 50);
 }
 
@@ -201,7 +209,7 @@ function renderProgress(celebrate) {
     ? '<span class="pc-label">CASE LOG</span><span class="pc-all">ALL CLEAR!</span>'
     : `<span class="pc-label">CASE LOG</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
        <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>
-       <span class="pc-hint" aria-hidden="true">clear both cases · open the 5 menu pages</span>`;
+       <span class="pc-hint" aria-hidden="true">visit both projects · open the 6 menu pages</span>`;
   if (celebrate && !reducedMotion()) gsap.fromTo(chip, { scale: 1.6, rotation: -12 }, { scale: 1, rotation: -3, duration: 0.5, ease: 'elastic.out(1.4, .4)' });
   else if (lastDone !== null && p.done > lastDone) rollIn(chip.querySelector('.pc-count b')); // one more case rolls in
   lastDone = p.done;
@@ -371,8 +379,6 @@ async function openDossier(id, row) {
     if (at !== navSeq || !$('#modal').hidden || menu.isOpen()) return; // the visitor moved on during the cut-in
   }
   openModal(dossierMarkup(m));
-  const title = $('#modalPanel [data-ransom]');
-  if (title) ransom(title, title.dataset.ransom, 5); // the file name in cut-out letters
   scramble($('#modalPanel .dossier-code')); // the file code "decrypts" as it opens
   animateDossier($('#modalPanel'), () => {
     sfx('thwack');
@@ -415,6 +421,7 @@ function openModal(html) {
   }
   lastFocus = document.activeElement;
   $('#modalPanel').innerHTML = html;
+  $$('#modalPanel [data-ransom]').forEach((t) => ransom(t, t.dataset.ransom, 5)); // titles in cut-out letters
   $('#modal').hidden = false;
   setBehindModal(true);
   $('#modalPanel [data-close]')?.focus({ preventScroll: true });
@@ -521,9 +528,23 @@ $('#modal').addEventListener('click', (e) => {
 
 $('#achBtn').addEventListener('click', () => {
   sfx('select');
-  openModal(`<button class="modal-x" type="button" data-close aria-label="Close">✕</button>
-    <h2 class="dossier-title" id="modalTitle" style="margin-bottom:12px">ACHIEVEMENTS</h2>${listMarkup()}
-    <p style="margin:14px 0 0;font-size:14px">All 7 unlock the director's cut, how my AI crew built this.</p>`);
+  openModal(`<div class="dossier"><button class="modal-x" type="button" data-close aria-label="Close">✕</button>
+    <header class="dossier-head"><p class="dossier-code">SECRETS · ${count()}/${ACHIEVEMENTS.length} FOUND</p>
+    <h2 class="dossier-title ransom" id="modalTitle" data-ransom="ACHIEVEMENTS">ACHIEVEMENTS</h2></header>
+    ${listMarkup()}
+    <p class="dossier-hint">All 7 unlock the director's cut, how my AI crew built this.</p></div>`);
+});
+
+/* CASE LOG chip: a real button that shows what is left and how each item counts. */
+document.addEventListener('click', (e) => {
+  if (!e.target.closest?.('#progressChip')) return;
+  sfx('select');
+  const p = progress();
+  openModal(`<div class="dossier"><button class="modal-x" type="button" data-close aria-label="Close">✕</button>
+    <header class="dossier-head"><p class="dossier-code">CASE LOG · ${p.done}/${p.total} CLEARED</p>
+    <h2 class="dossier-title ransom" id="modalTitle" data-ransom="CASE LOG">CASE LOG</h2></header>
+    <ul class="ach-list">${p.items.map((i) => `<li class="${i.done ? 'got' : ''}"><span class="ach-ico" aria-hidden="true">${i.done ? '★' : '·'}</span><div><strong>${esc(i.label)}</strong><span class="hint">${i.done ? 'Cleared' : 'Not yet'}</span></div></li>`).join('')}</ul>
+    <p class="dossier-hint">A project counts once you open its live app or its code. A page counts once you open it from the MENU.</p></div>`);
 });
 
 /* ---------------------------------------------------------------- HUD + sound */

@@ -2,6 +2,7 @@
 #screen-title.active { display: flex; align-items: flex-end; padding: 0 var(--gutter) 9vh; }
 .title-block { position: relative; z-index: 2; max-width: 760px; }
 .title-codename { font-size: clamp(22px, 3vw, 34px); margin: 18px 0 10px; }
+.title-role { display: table; margin: 0 0 12px; padding: 2px 12px; font-family: var(--f-menu); font-size: clamp(16px, 1.6vw, 20px); letter-spacing: 1.5px; text-transform: uppercase; color: var(--yellow); background: var(--black); transform: skew(var(--skew)); box-shadow: 4px 4px 0 var(--white); }
 .title-hook { display: inline-block; margin: 0 0 26px; max-width: 560px; padding: 6px 12px; background: rgba(5, 5, 5, .82); font-family: var(--f-type); font-size: clamp(15px, 1.6vw, 19px); transform: rotate(-1deg); }
 .press-start {
   display: block; border: 0; background: var(--white); color: var(--black);
@@ -12,7 +13,7 @@
 .press-start:hover, .press-start:focus-visible { background: var(--black); color: var(--white); box-shadow: 8px 8px 0 var(--white); animation: none; }
 @keyframes pulse { 50% { transform: skew(var(--skew)) scale(1.05); } }
 .quick-link {
-  display: inline-block; margin-top: 22px; font-weight: 600; font-size: 15px;
+  display: inline-block; margin-top: 22px; padding: 6px 0; font-weight: 700; font-size: 17px;
   text-underline-offset: 4px; text-shadow: 1px 1px 0 var(--black);
 }
 
@@ -172,6 +173,8 @@
   .screen-page { padding-top: 112px; }
   .back-btn { top: 70px; font-size: 17px; }
   .quick-bar { top: 58px; flex-wrap: nowrap; gap: 10px; }
+  .title-role .tr-sep { display: none; }
+  .title-role .tr-proof { display: block; }
   .quick-bar .btn { white-space: nowrap; }
   #screen-quick { padding-top: 116px; }
 
@@ -179,6 +182,7 @@
 
   .modal-panel { padding: 30px 20px 26px; }
   .dossier-head { margin: -30px -20px 18px; padding: 26px 80px 28px 20px; }
+  .dossier-head .dossier-title { font-size: clamp(26px, 7.4vw, 40px); } /* long cut-out titles (ACHIEVEMENTS) fit a phone */
     .paper header { padding: 22px 20px 28px; }
   .paper-body { gap: 0; padding: 8px 20px 26px; }
   .stair { top: 90px; }

@@ -13,6 +13,7 @@ export const MENU_ITEMS = [
   { id: 'different', label: 'DIFFERENT' },
   { id: 'stats', label: 'STATS' },
   { id: 'side-quests', label: 'SIDE QUESTS' },
+  { id: 'contact', label: 'CONTACT' },
   { id: 'system', label: 'SYSTEM' }
 ];
 
@@ -35,8 +36,7 @@ export function createMenu(go) {
       b.addEventListener('focus', on);
       b.addEventListener('click', () => {
         sfx('select');
-        close(false);
-        go(b.dataset.go);
+        go(b.dataset.go); // the page transition closes the menu once it covers the screen
       });
     });
   }

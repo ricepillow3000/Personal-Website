@@ -91,7 +91,7 @@ function boardMarkup(ctx) {
     <div class="board-name">
       <h1 class="ransom" id="boardName"></h1>
       <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
-      <div class="progress-chip" id="progressChip" role="status"></div>
+      <button type="button" class="progress-chip" id="progressChip"></button>
       <span class="board-status">${esc(resume.status)} · GSU · ${esc(resume.education.grad)}</span>
     </div>
     <p class="board-hook">${esc(resume.role)}. ${esc(resume.hook)}</p>
@@ -250,12 +250,20 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
     if (!sticky) highlight(null, null);
   };
 
+  // a skill that slides in under a resting cursor is not a hover: wait for the mouse to really move
+  let pointerMoved = false;
+  root.addEventListener('pointermove', (e) => {
+    if (pointerMoved || e.pointerType !== 'mouse') return;
+    pointerMoved = true;
+    // the first real move happened on top of a skill: light it now
+    e.target.closest?.('.skill')?.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+  });
   root.querySelectorAll('.skill').forEach((el) => {
     const on = () => {
       sfx('hover');
       highlight('skill', el.dataset.skill);
     };
-    el.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && on());
+    el.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && pointerMoved && on());
     el.addEventListener('focus', on);
     el.addEventListener('pointerleave', clear);
     el.addEventListener('blur', clear);
@@ -294,10 +302,17 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
     }).observe(grid);
   }
 
+  let revealedOnce = false;
   function reveal(delay = 0) {
+    pointerMoved = false;
     drawStrings();
     if (reducedMotion()) return;
     const items = root.querySelectorAll('[data-board-item], .case, .skill');
+    if (revealedOnce) {
+      // coming back to the board: a quick slam (~0.4s), the full cascade only plays the first time
+      return gsap.timeline({ delay }).from(items, { y: -26, opacity: 0, duration: 0.22, ease: 'power3.out', stagger: 0.004, clearProps: 'transform,opacity' }).add(relayout);
+    }
+    revealedOnce = true;
     const tl = gsap.timeline({ delay });
     tl.from(items, {
       y: () => gsap.utils.random(-90, -50),
@@ -307,7 +322,7 @@ export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
       opacity: 0,
       duration: 0.4,
       ease: 'back.out(2.8)',
-      stagger: 0.022,
+      stagger: 0.014, // fast cascade: the proof is readable sooner
       clearProps: 'transform,opacity'
     }, 0);
     const paths = [...svg.querySelectorAll('.string')];

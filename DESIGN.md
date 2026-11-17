@@ -158,6 +158,7 @@ From John's research notes (kept verbatim in spirit):
 - **Every big animation is skippable** with a click or Esc (`timeline.progress(1)`); Esc during a transition skips first.
 - **Respect reduced motion** (OS setting and the SYSTEM toggle): swap motion for instant changes; stop idle loops.
 - **Mix transitions up.** Each destination has its own move: slash, blinds, shatter, flip, stripes, ink, iris, paper. The menu unfolds diagonally from the top-left. Don't reuse one transition everywhere.
+- **Never make people wait on decoration.** Content builds in underneath the title slam (don't await it). The menu stays up until the next transition covers it (the old screen never flashes back). The full board cascade plays once; coming back is a quick ~0.4s slam.
 - **PRESS START:** a **paper rip** that starts at the ATL poster tape and tears **from the right side toward the upper left, diagonally**, along a **non-linear lightning-bolt edge**, slow enough to see it tear, then the board slams in.
 - **CLEARED stamp (signature moment):** only plays when the visitor actually clicked a project link, left, and **came back**. Full-screen: rays, CASE CLOSED bands, giant cut-out stamp slams with a **whip crack** (Queen/Makoto style), flash, ring, confetti, then the stamp zips onto the card with a motion trail and lands with a thunk and sparkle. No "WELCOME BACK" text; the stamp is the transition.
 - Idle motion is welcome (stepped "boil" on selected buttons, slow star spin, parallax), but **no endless marquees**: watermark words slide in once and settle.
@@ -179,21 +180,22 @@ From John's research notes (kept verbatim in spirit):
 
 **Title**
 - Street-art wall background (red, halftone, stencil star, torn posters "GO!" and "ATL", crown tag). On tall screens the wall anchors left so the poster and star fill the space; the swoosh arrow only shows on wide screens.
-- Cut-out "JOHN", slab "NGUYEN", one hook line: "Resumes are boring. So I directed a crew of AI agents to turn mine into a game.", pulsing PRESS START (CONTINUE when a save exists), "Quick View (1-page resume) ▸".
+- Cut-out "JOHN", slab "NGUYEN", a yellow-on-black role line "AI SOLUTIONS ENGINEER IN TRAINING · 2 LIVE APPS · 2,000+ TESTS" (two lines on phones) so the first 10 seconds say who and what, one hook line: "Resumes are boring. So I directed a crew of AI agents to turn mine into a game.", pulsing PRESS START (CONTINUE when a save exists), "Quick View (1-page resume) ▸".
 - Save line: "Save found · x/7 cleared · Start over". Start over offers **Undo** until the visitor presses start.
 
 **HUD**
 - Top-left date in big slanted numbers + weekday + time of day (from the visitor's clock) + status + "GSU · Class of 2029". It must never sit on top of text: it slides away on scroll; inside pages it shrinks/hides.
 - Top-right: ★ achievements, sound, LinkedIn, MENU.
 - When the page scrolls, a black strip with a red edge slides in behind the fixed buttons (it lives inside each screen's layer so buttons stay above it). The BOARD button joins that row on wide screens.
-- Key hints are a solid black HUD tab (bottom right) and hide while scrolling; on phones they are hidden.
+- Key hints are a solid black HUD tab (bottom right) and hide while scrolling; on phones they are hidden, and so are `kbd` labels like ESC on touch screens.
+- Touch screens: every control has a tap area of at least 44px (invisible hit slop, the look doesn't change). Achievement pop-ups sit under the top bar on phones, are smaller, and dismiss on tap.
 
 **Heist Board (the portfolio hub)**
 - Columns: Skills roster (left) · Case Files (middle) · notes (right: CASE 00 · THIS SITE, The Person, Side Quests). On wide screens the **calling card closes the middle column** (no empty gap).
 - **Red strings = wiring diagram**, not a bundle: one shared rail up the gap between columns, a short tick from each skill pin, one rail above the case cards, a drop into each case pin. Shared parts overlap exactly (solid color). Lines stop at pin edges. Lit route = thick white with sharp corners; others dim. Lines never cross a card's text. Stacked cards (tablet) are reached from the side. Redraw only when the layout really changes.
-- First visit: one string lights itself + "TRY ONE ↓" until the first try.
+- First visit: one string lights itself + "TRY ONE ↓" until the first try. A skill that slides in under a resting mouse cursor is not a "try": hovers only count after the mouse really moves.
 - Case cards: calling-card red style, **different interiors** per case, S grade badge that fits, proof stickers, one-line brief bubble, OPEN FILE + Live + Code. Kept compact (cards were made ~10% shorter); badges, pins and stamps must never be clipped.
-- CASE LOG chip counts **7 things a visitor can actually reach** (clear both cases + open the 5 menu pages), with a caption under it.
+- CASE LOG chip counts **8 things a visitor can actually reach** (visit both projects + open the 6 menu pages), with a plain-words caption. It is a real button: it opens a checklist (same comic header as the case file) that says what is done and how each item counts.
 - The Person: GSU, degree, stickers (AI & Analytics, Dean's List ×2, Class of 2029), fun facts as sticker strips, GPA starburst that flips to "MAX · BEE FEAR".
 - Side Quests: one-liners on the board, FULL STORY to the page.
 
@@ -202,7 +204,8 @@ From John's research notes (kept verbatim in spirit):
 
 With `?company=X`: "To the team at X," and a board note "Wait, someone from X? I've been expecting you."
 
-**Menu** — diagonal staircase list, star cursor, black slab snaps behind the selected item, one-line teaser bubble with a stat. CLEARED mini-stamps on visited items must **not block the labels**. Ctrl/⌘+K toggles it.
+**Menu** — diagonal staircase list: MISSIONS, SKILLS, DIFFERENT, STATS, SIDE QUESTS, CONTACT, SYSTEM. Star cursor, black slab snaps behind the selected item, one-line teaser bubble that says what's inside ("What makes me different · 4 facts"). CLEARED mini-stamps on visited items must **not block the labels**. Ctrl/⌘+K toggles it.
+**Achievements panel** — same black comic header as the case file ("SECRETS · x/7 FOUND"), never a plain white box.
 
 **Case file (dossier modal)** — black header band with the name in cut-out letters and a yellow decoding file code, **Try it live / Code on GitHub near the top**, then numbered OBJECTIVES and yellow LOOT stickers. Close with X, Esc, backdrop, Back gesture, or swipe down on phones. Focus is trapped inside; the page behind is inert.
 
@@ -272,6 +275,9 @@ Run after every design change; report results honestly.
 - A ResizeObserver must ignore "same size" events or it will cancel draw-in animations.
 - Publishing: upload every referenced asset, remove old hashed files, then download the published copy and compare byte-for-byte (including the PDF).
 - Commit often; the cloud workspace can restart and stop servers.
+- **Never let personal data into git history.** The first commit once held the original PDF with the phone number, and the tests held part of the number. History was rewritten before the first push; tests now look for any phone-number pattern instead of storing real digits.
+- `position: relative` added for hit slop must never be applied to absolutely pinned controls (it once pushed every pop-up header down on phones).
+- Entrance animations can knock focus back to `<body>` after it was placed; re-check focus once a page has settled.
 - Loading Google Fonts without blocking was tested: first paint got 0.2s faster but the main content (LCP) did not, and cut-out letters flashed in fallback fonts. Fonts stay render-blocking on purpose.
 - The big outlined watermark words used to scroll forever (a marquee). Endless motion competes for attention; they now slide in once.
 

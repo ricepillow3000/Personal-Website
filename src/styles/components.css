@@ -382,8 +382,10 @@ body.scrolled .hud-tl { translate: 0 -260px; transition: translate .18s cubic-be
 /* ============ saved progress: CASE LOG chip, CONTINUE line, menu mini stamps ============ */
 .progress-chip {
   display: inline-grid; grid-auto-flow: column; justify-content: start; align-items: center; gap: 2px 10px; margin-top: 10px; padding: 5px 12px 6px; background: var(--black); color: var(--white);
-  border: 3px solid var(--white); box-shadow: 5px 5px 0 var(--red); transform: rotate(-3deg) skew(var(--skew)); cursor: help;
+  border: 3px solid var(--white); box-shadow: 5px 5px 0 var(--red); transform: rotate(-3deg) skew(var(--skew)); cursor: pointer;
+  font: inherit; text-align: left; transition: border-color .12s, box-shadow .12s;
 }
+.progress-chip:hover, .progress-chip:focus-visible { border-color: var(--yellow); box-shadow: 5px 5px 0 var(--yellow); } /* it's a button: it opens the checklist */
 .progress-chip > * { transform: skew(calc(var(--skew) * -1)); }
 .pc-label { font-family: var(--f-menu); font-size: 15px; letter-spacing: 2px; color: var(--yellow); }
 .pc-count { font-family: var(--f-head); font-size: 18px; }
@@ -476,3 +478,19 @@ p, li { text-wrap: pretty; }
 a, button, [role="button"], [data-nav], .skill { touch-action: manipulation; } /* no double-tap zoom delay */
 .modal-panel { overscroll-behavior: contain; } /* scrolling a file never drags the page behind it */
 .panel:focus-visible, .stop:focus-visible .stop-card { outline: 3px solid var(--yellow); outline-offset: 4px; } /* clear keyboard focus */
+
+/* ============ TOUCH SCREENS (from the phone review) ============ */
+@media (pointer: coarse) {
+  /* every control gets a tap area of at least 44px, without changing how it looks */
+  .hud-btn, .quick-link, .paper a { position: relative; } /* (.modal-x stays absolutely pinned to its corner) */
+  .hud-btn::after, .quick-link::after, .paper a::after { content: ""; position: absolute; left: -3px; right: -3px; top: 50%; height: 46px; translate: 0 -50%; }
+  .modal-x { width: 46px; height: 46px; }
+  kbd { display: none; } /* keyboard hints mean nothing on a phone */
+}
+@media (max-width: 760px) {
+  /* achievement pop-ups sit under the top bar and never cover a card for long; tap to dismiss */
+  .toasts { top: 58px; bottom: auto; }
+  .toast { padding: 5px 12px; box-shadow: 4px 4px 0 var(--yellow); pointer-events: auto; }
+  .toast small { font-size: 12px; }
+  .toast b { font-size: 17px; }
+}
