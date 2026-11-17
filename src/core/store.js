@@ -72,5 +72,14 @@ export const store = {
   reset() {
     Object.assign(state, defaults());
     save();
+  },
+  /** A copy of the save (for Undo), and putting one back. It is re-validated by load() on the next visit. */
+  snapshot: () => JSON.stringify(state),
+  restore(json) {
+    try {
+      window.localStorage.setItem(KEY, json);
+    } catch {
+      /* storage unavailable */
+    }
   }
 };

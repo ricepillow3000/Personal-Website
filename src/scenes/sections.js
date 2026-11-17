@@ -282,7 +282,7 @@ function contact() {
         </div>
       </div></div>
       <div class="contact-btns" data-in>
-        <a class="btn btn-primary" data-nav href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect on LinkedIn ↗</a>
+        <a class="btn btn-primary" data-nav data-magnetic href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect on LinkedIn ↗</a>
         <a class="btn" data-nav href="mailto:${esc(L.email)}" data-track="email_click">${esc(L.email)}</a>
         <a class="btn" data-nav href="${esc(L.github)}" target="_blank" rel="noopener" data-track="github_click">GitHub ↗</a>
         <a class="btn btn-accent" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">↓ PDF resume</a>

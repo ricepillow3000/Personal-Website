@@ -2,6 +2,7 @@ import { store } from '../core/store.js';
 import { $, esc } from '../core/util.js';
 import { toast } from '../ui/toast.js';
 import { sfx } from '../audio/audio.js';
+import { rollIn } from '../fx/kinetic.js';
 
 export const ACHIEVEMENTS = [
   { id: 'first-words', name: 'First Words', hint: 'Every story starts with a button.' },
@@ -22,9 +23,15 @@ export function allFound() {
   return ACHIEVEMENTS.every((a) => store.has('achievements', a.id));
 }
 
+let shownCount = null;
 export function refreshCounter() {
   const el = $('#achCount');
-  if (el) el.textContent = `${count()}/${ACHIEVEMENTS.length}`;
+  const text = `${count()}/${ACHIEVEMENTS.length}`;
+  if (!el || text === shownCount) return;
+  const changed = shownCount !== null; // not on first paint
+  shownCount = text;
+  el.textContent = text;
+  if (changed) rollIn(el); // a new star rolls in like a slot machine
 }
 
 export function unlock(id) {

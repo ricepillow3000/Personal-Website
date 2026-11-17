@@ -277,7 +277,7 @@ test('progress is saved: returning visitors CONTINUE with their case log', async
   await page.reload();
   await page.locator('.save-reset').click();
   await expect(page.locator('#pressStart')).toHaveText('PRESS START');
-  await expect(page.locator('#saveLine')).toHaveCount(0);
+  await expect(page.locator('#saveLine')).toContainText('Progress wiped'); // only the Undo offer is left
 });
 
 /* ---- with animations ON: the timing bugs only show up when transitions really run ---- */
@@ -396,4 +396,41 @@ test('every CASE LOG item can be reached from the site itself (ALL CLEAR is poss
   await page.goto('/#/');
   await page.reload();
   await expect(page.locator('#saveLine')).toContainText('ALL CLEAR');
+});
+
+test('Start over can be undone', async ({ page }) => {
+  await page.goto('/#/stats');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'stats');
+  await page.goto('/#/');
+  await page.reload();
+  await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
+  await page.locator('.save-reset').click();
+  await expect(page.locator('#pressStart')).toHaveText('PRESS START');
+  await expect(page.locator('#saveLine')).toContainText('Progress wiped');
+  await page.locator('.save-reset').click(); // Undo
+  await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
+  await expect(page.locator('#saveLine')).toContainText('1/7');
+});
+
+test('Back closes an open case file instead of leaving the board', async ({ page }) => {
+  await openBoard(page);
+  await page.locator('.case[data-case="meliona"] .case-open').click();
+  await expect(page.locator('#modal')).toBeVisible();
+  await page.goBack();
+  await expect(page.locator('#modal')).toBeHidden();
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  // closing with X does not leave a stray history step behind
+  await page.locator('.case[data-case="meliona"] .case-open').click();
+  await page.locator('#modalPanel [data-close]').click();
+  await expect(page.locator('#modal')).toBeHidden();
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+});
+
+test('Ctrl+K opens and closes the menu', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'keyboard');
+  await openBoard(page);
+  await page.keyboard.press('Control+k');
+  await expect(page.locator('#menu')).toBeVisible();
+  await page.keyboard.press('Control+k');
+  await expect(page.locator('#menu')).toBeHidden();
 });
