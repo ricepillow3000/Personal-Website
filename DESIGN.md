@@ -258,6 +258,7 @@ Run after every design change; report results honestly.
 - Width scan: 9 screens × 11 widths (320 to 1440) → 0 problems.
 - Look at screenshots yourself (desktop 1440 and Pixel 7).
 - Lighthouse: mobile ≥ 90 performance, 100 accessibility/best practices/SEO.
+- **The biggest text on the first screen (the title hook) never fades in from opacity 0.** It slides in but is visible from the first frame, because Lighthouse times "largest paint" from when it becomes visible (Nov 18: the fade cost ~0.5s of LCP; GitHub's CI scored 83). CI Lighthouse takes the median of 3 runs, because one run on a shared runner is too noisy.
 - `npx impeccable detect src/` and against the running page; fix real findings (side-stripe borders, low contrast, marquees). Star/jagged clip-paths are intentional.
 - Vercel Web Interface Guidelines pass (focus states, touch-action, overscroll, aria labels, no `transition: all`).
 - No phone number in the build or PDF.
