@@ -22,7 +22,10 @@ function ensure() {
   master.connect(ac.destination);
   sfxBus = ac.createGain();
   sfxBus.gain.value = 0.55;
-  sfxBus.connect(master);
+  const glue = ac.createDynamicsCompressor(); // keeps the layered film foley from clipping
+  glue.threshold.value = -12;
+  glue.ratio.value = 4;
+  sfxBus.connect(glue).connect(master);
   musicBus = ac.createGain();
   musicBus.gain.value = store.get().settings.music * 0.6;
   musicBus.connect(master);
@@ -77,6 +80,174 @@ function tone(bus, { at, dur, from, to, type = 'sine', gain = 0.6 }) {
   o.connect(g).connect(bus);
   o.start(at);
   o.stop(at + dur + 0.02);
+}
+
+
+/* ---------- realistic foley for the film cuts (still all synthesized) ---------- */
+// a shaped gain: silent -> peak at `a` -> silent at `end` (exponential, like real sounds)
+function env(bus, at, a, peak, end) {
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0008, at);
+  g.gain.exponentialRampToValueAtTime(peak, at + a);
+  g.gain.exponentialRampToValueAtTime(0.0008, end);
+  g.connect(bus);
+  return g;
+}
+function loopNoise(at, end) {
+  const src = ac.createBufferSource();
+  src.buffer = noiseBuf;
+  src.loop = true;
+  src.start(at, Math.random() * 0.9);
+  src.stop(end + 0.05);
+  return src;
+}
+function lfo(at, end, hz, depth, target) {
+  const o = ac.createOscillator();
+  o.frequency.value = hz;
+  const g = ac.createGain();
+  g.gain.value = depth;
+  o.connect(g).connect(target);
+  o.start(at);
+  o.stop(end + 0.05);
+}
+/* rushing air: a low roar that buffets (two slow wobbles) plus a whistling band, both sweeping
+   with speed. up = gets louder and brighter (falling faster); otherwise it starts loud and fades */
+function wind(bus, at, dur, { from = 220, to = 1400, gain = 0.4, up = true } = {}) {
+  const end = at + dur;
+  const g = env(bus, at, up ? dur * 0.85 : 0.06, gain, end);
+  const buffet = ac.createGain();
+  buffet.gain.value = 0.7;
+  lfo(at, end, 4.3, 0.22, buffet.gain);
+  lfo(at, end, 9.7, 0.12, buffet.gain);
+  buffet.connect(g);
+  const roar = ac.createBiquadFilter();
+  roar.type = 'lowpass';
+  roar.Q.value = 0.6;
+  roar.frequency.setValueAtTime(from, at);
+  roar.frequency.exponentialRampToValueAtTime(to, end);
+  const whistle = ac.createBiquadFilter();
+  whistle.type = 'bandpass';
+  whistle.Q.value = 2.2;
+  whistle.frequency.setValueAtTime(from * 3, at);
+  whistle.frequency.exponentialRampToValueAtTime(to * 2.2, end);
+  const wg = ac.createGain();
+  wg.gain.value = 0.35;
+  const n = loopNoise(at, end);
+  n.connect(roar).connect(buffet);
+  n.connect(whistle).connect(wg).connect(buffet);
+}
+/* a car horn: two detuned square tones through a small speaker (band-limited), far away */
+function carHorn(bus, at, dur, [f1, f2], gain) {
+  const g = env(bus, at, 0.015, gain, at + dur);
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 1600;
+  lp.connect(g);
+  [f1, f2].forEach((f) => {
+    const o = ac.createOscillator();
+    o.type = 'square';
+    o.frequency.value = f;
+    o.connect(lp);
+    o.start(at);
+    o.stop(at + dur + 0.05);
+  });
+}
+/* the busy street far below: traffic hum, a couple of horns, a distant siren. rising = we're
+   falling toward it (it swells); otherwise we're leaving it (it fades) */
+function street(bus, at, dur, { gain = 0.3, rising = true } = {}) {
+  const end = at + dur;
+  const hum = ac.createBiquadFilter();
+  hum.type = 'lowpass';
+  hum.frequency.value = 420;
+  loopNoise(at, end).connect(hum).connect(env(bus, at, rising ? dur * 0.9 : 0.05, gain, end));
+  const horns = rising ? [[0.25, 0.26, [392, 494], 0.05], [0.55, 0.1, [440, 554], 0.07], [0.68, 0.12, [440, 554], 0.08]] : [[0.05, 0.2, [415, 523], 0.05]];
+  horns.forEach(([t, d, fs, v]) => carHorn(bus, at + dur * t, d, fs, v * (gain / 0.3)));
+  const siren = ac.createOscillator(); // far-off siren, wailing
+  siren.type = 'triangle';
+  siren.frequency.value = 820;
+  lfo(at, end, 1.6, 170, siren.frequency);
+  const sg = ac.createBiquadFilter();
+  sg.type = 'lowpass';
+  sg.frequency.value = 1300;
+  siren.connect(sg).connect(env(bus, at, rising ? dur * 0.8 : 0.05, gain * 0.07, end));
+  siren.start(at);
+  siren.stop(end + 0.05);
+}
+/* a subway horn: a three-note chord of reedy sawtooth tones (the classic minor-ish chord), air
+   swelling into it, a little wobble, and a pitch drop if it passes us (Doppler) */
+function trainHorn(bus, at, dur, gain, drop = 1) {
+  const end = at + dur;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0008, at);
+  g.gain.exponentialRampToValueAtTime(gain, at + 0.07);
+  g.gain.setValueAtTime(gain, end - 0.1);
+  g.gain.exponentialRampToValueAtTime(0.0008, end);
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 2600;
+  const body = ac.createBiquadFilter(); // the horn's bell
+  body.type = 'peaking';
+  body.frequency.value = 900;
+  body.gain.value = 7;
+  lp.connect(body).connect(g).connect(bus);
+  [311.1, 370, 466.2].forEach((f) => [-5, 5].forEach((cents) => {
+    const o = ac.createOscillator();
+    o.type = 'sawtooth';
+    o.detune.value = cents;
+    o.frequency.setValueAtTime(f * 0.96, at);
+    o.frequency.exponentialRampToValueAtTime(f, at + 0.09);
+    if (drop !== 1) {
+      o.frequency.setValueAtTime(f, end - dur * 0.35);
+      o.frequency.exponentialRampToValueAtTime(f * drop, end);
+    }
+    lfo(at, end, 5.5, 2.2, o.frequency);
+    o.connect(lp);
+    o.start(at);
+    o.stop(end + 0.05);
+  }));
+}
+/* one wheel crossing a rail joint: a dull metal clack with a low thump */
+function clack(bus, at, v) {
+  noise(bus, { at, dur: 0.05, type: 'bandpass', freq: 1300, q: 1.4, gain: 0.5 * v });
+  noise(bus, { at, dur: 0.02, type: 'highpass', freq: 5200, q: 0.7, gain: 0.16 * v });
+  tone(bus, { at, dur: 0.07, from: 120, to: 55, gain: 0.55 * v });
+}
+/* wheels on the track: "ka-chunk ka-chunk" pairs for each car, the gap between them shrinking as
+   the train speeds up (or growing as it brakes), over a steel rumble */
+function rails(bus, at, dur, { gapFrom = 0.3, gapTo = 0.1, vFrom = 0.3, vTo = 1, gain = 0.5, rumble = 0.4 } = {}) {
+  const end = at + dur;
+  let t = at;
+  while (t < end - 0.02) {
+    const p = (t - at) / dur;
+    const gap = gapFrom + (gapTo - gapFrom) * p;
+    const v = gain * (vFrom + (vTo - vFrom) * p);
+    clack(bus, t, v);
+    clack(bus, t + Math.min(0.08, gap * 0.32), v * 0.85);
+    t += gap;
+  }
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(110, at);
+  lp.frequency.exponentialRampToValueAtTime(vTo > vFrom ? 380 : 140, end);
+  loopNoise(at, end).connect(lp).connect(env(bus, at, vTo > vFrom ? dur * 0.85 : 0.08, rumble, end));
+}
+/* brakes: steel squealing on steel, two high tones beating against each other */
+function squeal(bus, at, dur, gain) {
+  const g = env(bus, at, dur * 0.4, gain, at + dur);
+  [2930, 3390].forEach((f, i) => {
+    const o = ac.createOscillator();
+    o.frequency.value = f;
+    lfo(at, at + dur, 7 + i * 3, 25, o.frequency);
+    o.connect(g);
+    o.start(at);
+    o.stop(at + dur + 0.05);
+  });
+}
+/* loose paper caught in a gust: quick high flutters */
+function flutter(bus, at, dur, gain) {
+  for (let t = 0; t < dur; t += 0.035 + Math.random() * 0.03) {
+    noise(bus, { at: at + t, dur: 0.03, type: 'bandpass', freq: 2600 + Math.random() * 2400, q: 2.5, gain: gain * (0.5 + Math.random() * 0.5) });
+  }
 }
 
 const VOICES = {
@@ -161,21 +332,33 @@ const VOICES = {
   menuClose: (bus, at) => [1047, 784, 523].forEach((f, i) => tone(bus, { at: at + i * 0.03, dur: 0.08, from: f, to: f * 0.98, type: 'triangle', gain: 0.16 })),
   /* air swipe under the slash wipe */
   swish: (bus, at) => VOICES.whoosh(bus, at, 0.8),
-  // THE RISE: wind plus a rising whistle (low to high)
+  // THE RISE: rushing wind as you rocket up, the street below falling away
   rise: (bus, at) => {
-    sweep(bus, at, 2400, 300, 0.6, 0.28, 0.7);
-    tone(bus, { at, dur: 0.6, from: 480, to: 1800, type: 'triangle', gain: 0.06 });
+    wind(bus, at, 0.75, { from: 1600, to: 260, gain: 1.3, up: false });
+    street(bus, at, 0.5, { gain: 0.35, rising: false });
   },
-  // NEXT STOP: rail rumble, a two-note station chime, a pass-by sweep
+  // NEXT STOP: a short horn, wheels clacking as it brakes, brake squeal, the station chime
   train: (bus, at) => {
-    noise(bus, { at, dur: 0.9, freq: 160, gain: 0.5, type: 'lowpass' });
-    tone(bus, { at: at + 0.4, dur: 0.22, from: 1319, to: 1319, type: 'sine', gain: 0.12 });
-    tone(bus, { at: at + 0.6, dur: 0.3, from: 1047, to: 1047, type: 'sine', gain: 0.12 });
+    trainHorn(bus, at, 0.28, 0.1);
+    rails(bus, at, 0.55, { gapFrom: 0.12, gapTo: 0.24, vFrom: 1, vTo: 0.5, gain: 0.5, rumble: 0.55 });
+    squeal(bus, at + 0.25, 0.4, 0.035);
+    tone(bus, { at: at + 0.5, dur: 0.22, from: 1319, to: 1319, type: 'sine', gain: 0.08 });
+    tone(bus, { at: at + 0.7, dur: 0.3, from: 1047, to: 1047, type: 'sine', gain: 0.08 });
+    rails(bus, at + 0.85, 0.5, { gapFrom: 0.22, gapTo: 0.1, vFrom: 0.5, vTo: 0.9, gain: 0.38, rumble: 0.35 });
   },
-  // THE DROP: rushing wind plus a cartoon falling whistle (high to low)
+  // PRESS START: a rumble deep in the tunnel, the horn, wheels hammering the rail joints faster and
+  // louder, the horn's pitch dropping as it passes, the blast of air and the paper flying
+  tunnel: (bus, at) => {
+    rails(bus, at, 1.25, { gapFrom: 0.34, gapTo: 0.075, vFrom: 0.12, vTo: 1, gain: 0.5, rumble: 0.45 });
+    trainHorn(bus, at + 0.12, 0.2, 0.1);
+    trainHorn(bus, at + 0.4, 0.75, 0.2, 0.88);
+    wind(bus, at + 0.5, 0.75, { from: 300, to: 2400, gain: 0.45 });
+    flutter(bus, at + 0.6, 0.45, 0.12);
+  },
+  // THE DROP: the wind roars louder as you fall, and the busy street below rushes up at you
   fall: (bus, at) => {
-    sweep(bus, at, 260, 2600, 0.8, 0.3, 0.7);
-    tone(bus, { at: at + 0.05, dur: 0.75, from: 1700, to: 520, type: 'triangle', gain: 0.06 });
+    wind(bus, at, 0.85, { from: 240, to: 2200, gain: 1.5 });
+    street(bus, at, 0.85, { gain: 0.7 });
   },
   /* page lands: short wooden "thwack" (higher and shorter than any kick) */
   thwack: (bus, at, v = 1, vol = 1) => {
@@ -331,10 +514,22 @@ const VOICES = {
 /** Play a named SFX. UI uses hover/select/back/toggle/menu*; transitions use swish/thwack/
     stamp/zip/thunk/sparkle/paper/rip/whip/fanfare/treasure.
     `arg` is seconds of ripping for rip/tear, or the volume (0-1) for thwack. */
+const live = new Set();
 export function sfx(name, arg) {
   if (!enabled() || !ensure()) return;
   if (ac.state === 'suspended') ac.resume();
-  VOICES[name]?.(sfxBus, ac.currentTime, 1, arg);
+  const g = ac.createGain(); // each sound gets its own fader, so a skipped shot can be hushed
+  g.connect(sfxBus);
+  live.add(g);
+  setTimeout(() => live.delete(g), 2500);
+  VOICES[name]?.(g, ac.currentTime, 1, arg);
+}
+
+/** Fade out every sound that is still playing (a film cut was skipped). */
+export function hush() {
+  if (!ac) return;
+  live.forEach((g) => g.gain.setTargetAtTime(0, ac.currentTime, 0.03));
+  live.clear();
 }
 
 /* ---------- music: "Neon Rain" - original acid-jazz night theme, 92 BPM, swung ----------

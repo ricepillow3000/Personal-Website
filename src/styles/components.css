@@ -163,18 +163,6 @@ body[data-screen="title"] .keyhints, body[data-mode="quick"] .keyhints { display
 .modal.closing { animation: modalBgOut .16s ease-in forwards; }
 @keyframes modalBgOut { to { background: rgba(0, 0, 0, 0); } }
 
-/* ============ PAGE RIP (press start) ============ */
-.rip { position: fixed; inset: 0; z-index: 88; pointer-events: none; overflow: hidden; }
-.rip-piece { position: absolute; inset: 0; will-change: transform; }
-.rip-edge { position: absolute; inset: 0; background: var(--white); }
-.rip-tip { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; background: var(--yellow); border: 0;
-  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
-.rip-clip { position: absolute; inset: 0; }
-.rip-page { position: absolute; inset: 0; background: var(--black); }
-.rip-page .backdrop { filter: none !important; }
-.rip-screen { position: fixed; inset: 0; z-index: 1; }
-.rip-page *, .rip-page *::before, .rip-page *::after { animation: none !important; transition: none !important; }
-
 /* ============ CLICK HITS ============ */
 .fx-hit-layer { position: fixed; inset: 0; z-index: 96; pointer-events: none; overflow: hidden; }
 .fx-hit { position: absolute; width: 0; height: 0; }

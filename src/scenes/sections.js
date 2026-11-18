@@ -341,8 +341,8 @@ function secret() {
     html: `${back}${head('BEHIND THE SCENES', 'You found every secret. Here is how this site was made.')}
       <div class="sq-list bts">
         <article class="sq jag light" data-in><h3>THE CREW</h3><p>Same workflow as my projects. An orchestrator agent planned it, a researcher agent checked the details, a builder agent wrote the code, and I directed and reviewed every step. Every click path is covered by automated browser tests.</p></article>
-        <article class="sq jag light" data-in><h3>THE ART</h3><p>Everything you see is code. The spray-painted wall, the torn posters, the stickers and the page rip are all inline SVG and CSS. No images were downloaded to make the title screen appear.</p></article>
-        <article class="sq jag light" data-in><h3>THE SOUND</h3><p>Every click is a drum hit. I play drums, so the plan is my own e-kit recordings. Until then the kit is synthesized in the browser.</p></article>
+        <article class="sq jag light" data-in><h3>THE ART</h3><p>The subway, the city, the train and the trash on the platform are cel-shaded art I directed Google's Nano Banana to generate. The train that roars past is drawn live in perspective by code, and every sticker, poster and comic shape is inline SVG and CSS.</p></article>
+        <article class="sq jag light" data-in><h3>THE SOUND</h3><p>No audio files. Every click, the music, the wind on the fall and the train's horn and wheels are synthesized live in your browser.</p></article>
         <article class="sq jag light" data-in><blockquote class="motto" style="margin:0">“${esc(resume.motto.text)}”<cite>— ${esc(resume.motto.by)}</cite></blockquote></article>
       </div>`
   };

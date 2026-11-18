@@ -8,6 +8,8 @@
    Geometry lives in a 1600×900 box; `xMidYMid slice` covers 100vw × 100vh.
    ========================================================================= */
 
+import { mountSubway } from './subway.js';
+
 const C = { black: '#050505', red: '#D80000', red2: '#E60012', white: '#FFFFFF', blood: '#7A0008' };
 const VB = '0 0 1600 900';
 
@@ -218,7 +220,7 @@ export function mountBackdrop(el) {
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `
     <div class="bd-layer bd-wall"><div class="bd-drift">${wallLayer()}</div></div>
-    <div class="bd-layer bd-subway"><div class="bd-drift"><img alt="" decoding="async"></div></div>
+    <div class="bd-layer bd-subway"><div class="bd-drift"><div class="bd-cam"><img alt="" decoding="async"></div></div></div>
     <div class="bd-layer bd-city"><div class="bd-drift"><img alt="" decoding="async"></div></div>
     <div class="bd-layer bd-p5"><div class="bd-drift">${p5Layer()}</div></div>
     <div class="bd-layer bd-graffiti"><div class="bd-drift">${graffitiLayer()}</div></div>
@@ -230,7 +232,10 @@ export function mountBackdrop(el) {
   const small = () => window.innerWidth <= 900;
   const loadCity = () => {
     [[el.querySelector('.bd-subway img'), small() ? SUBWAY_SMALL : SUBWAY], [el.querySelector('.bd-city img'), small() ? CITY_SMALL : CITY]].forEach(([img, src]) => {
-      img.onload = () => img.classList.add('in'); // fades in once it's ready, never a half-drawn image
+      img.onload = () => {
+        img.classList.add('in'); // fades in once it's ready, never a half-drawn image
+        if (img.parentNode.classList.contains('bd-cam')) mountSubway(img.parentNode, img); // trash on the floor + the PRESS START train
+      };
       img.src = src;
     });
 

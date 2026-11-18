@@ -317,6 +317,19 @@ test.describe('with motion on', () => {
     expect(errors).toEqual([]);
   });
 
+  test('PRESS START: the train bursts out of the tunnel, blows the title away, and the board lands', async ({ page }) => {
+    const errors = errorsOf(page);
+    await page.goto('/');
+    await expect(page.locator('.bd-cam canvas')).toHaveCount(1, { timeout: 6000 }); // the platform (with its trash) is drawn once the art loads
+    await page.locator('#pressStart').click({ force: true });
+    await expect(page.locator('.fall.tunnel')).toHaveCount(1);
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 4000 });
+    await expect(page.locator('.fall.tunnel')).toHaveCount(0, { timeout: 4000 }); // the shot cleans up after itself
+    expect(await page.locator('#backdrop').evaluate((b) => b.style.translate)).toBe(''); // the camera shake is reset
+    expect(await page.locator('.title-block').evaluate((t) => t.style.transform)).toBe(''); // the title is back in place for next time
+    expect(errors).toEqual([]);
+  });
+
   test('NEXT EPISODE: pushing past the bottom of a page fills the fuse and rolls the next chapter', async ({ page, isMobile }) => {
     test.skip(isMobile, 'wheel input is desktop only (the button path is tested on every device)');
     const errors = errorsOf(page);
