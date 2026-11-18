@@ -334,3 +334,11 @@ body[data-mode="board"] .hud-tl { display: none; } /* the tiny rotated status ta
   .plan-stop { gap: 10px; }
 }
 @media (min-width: 761px) { .screen-board { padding-top: 76px; } } /* the HUD status tags are gone from the dashboard */
+/* short phones (Galaxy S9+, iPhone 13 class): a little tighter so the whole line always fits */
+@media (max-width: 760px) and (max-height: 700px) {
+  .plan { gap: 6px; }
+  .pp { padding: 4px 7px 3px; } .pp b { font-size: 15px; }
+  .pc-name { font-size: 40px; }
+  .plan-card { padding: 10px 12px 12px; }
+}
+@media (max-width: 360px) and (min-height: 621px) { .screen-board { padding-top: 96px; } } /* narrow phones: the HUD row is short, start a bit higher */
