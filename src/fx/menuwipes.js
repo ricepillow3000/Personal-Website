@@ -8,6 +8,7 @@ import { reducedMotion } from '../core/util.js';
 import { ransom } from '../ui/ransom.js';
 import { sfx } from '../audio/audio.js';
 import { track, shake, snapshotScreen } from './transitions.js';
+import { artSrc } from './art.js';
 
 function scene(cls, html, label) {
   const el = document.createElement('div');
@@ -165,7 +166,7 @@ export function glassWipe(swap) {
     the screen until it is the page. */
 export function cityWipe(swap, label = 'SIDE QUESTS') {
   if (reducedMotion()) return instant(swap);
-  const city = window.innerWidth <= 900 ? 'assets/film/city-800.webp' : 'assets/film/city.webp';
+  const city = artSrc('city');
   const el = scene('citylife', `<div class="cl-cam"><img class="cl-city" src="${city}" alt=""><i class="cl-shade"></i>
       <div class="cl-board"><div class="cl-screen"><span class="cl-on">NOW SHOWING</span><span class="cl-label ransom" data-label></span></div></div>
       <div class="cl-trails">${'<i></i>'.repeat(10)}</div></div><i class="cl-flash"></i>`, label);

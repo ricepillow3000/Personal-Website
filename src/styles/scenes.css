@@ -199,3 +199,5 @@
 }
 /* very narrow phones: the Quick View buttons keep to one row */
 @media (max-width: 440px) { .qb-long { display: none; } }
+/* the title's cut-out name and labels wait for their web fonts (see fontsReady in core/util.js) */
+#screen-title.title-wait :is(#titleName, .title-codename, .title-role, #pressStart, .quick-link) { opacity: 0; }

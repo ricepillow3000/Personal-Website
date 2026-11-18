@@ -4,6 +4,7 @@ import { ransom, NAME_SEED } from '../ui/ransom.js';
 import { burst } from './impact.js';
 import { sfx, hush } from '../audio/audio.js';
 import { trainShot, preloadSubway } from './subway.js';
+import { artSrc } from './art.js';
 
 /* Every big animation runs through here so ONE click / Esc can skip it. */
 let current = null;
@@ -326,7 +327,7 @@ export function snapshotScreen() {
 /* ---- the city set pieces (public/assets/film): original art generated with Google's Nano Banana
    (gemini-2.5-flash-image) to John's brief and approved by him: a low-angle look up at the towers
    against a red sky, the tower's crown, its glass facade, and the subway car. WebP, loaded while idle. */
-const FILM = { upshot: window.innerWidth <= 900 ? 'assets/film/city-800.webp' : 'assets/film/city.webp', facade: 'assets/film/facade.webp', crown: 'assets/film/crown.webp', train: 'assets/film/train.webp', interior: 'assets/film/interior.webp' };
+const FILM = { upshot: artSrc('city'), facade: 'assets/film/facade.webp', crown: 'assets/film/crown.webp', train: 'assets/film/train.webp', interior: 'assets/film/interior.webp' };
 const filmCache = [];
 export function preloadFilm() {
   if (filmCache.length) return;
