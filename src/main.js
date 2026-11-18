@@ -226,7 +226,12 @@ async function show(id) {
 function introTitle() {
   renderSaveLine();
   dropIn($('#titleName'), 0.15);
-  if (!reducedMotion()) gsap.from('#screen-title .title-codename, #screen-title .title-role, #screen-title .title-hook, #pressStart, #screen-title .quick-link', { x: -40, opacity: 0, stagger: 0.08, duration: 0.35, delay: 0.35, ease: 'back.out(2)', clearProps: 'all' });
+  if (!reducedMotion()) {
+    gsap.from('#screen-title .title-codename, #screen-title .title-role, #pressStart, #screen-title .quick-link', { x: -40, opacity: 0, stagger: 0.08, duration: 0.35, delay: 0.35, ease: 'back.out(2)', clearProps: 'all' });
+    // the hook is the biggest text on the first screen: it slides in but is visible from the first frame,
+    // so phones paint it right away (it used to wait ~0.6s at opacity 0, which slowed the load score)
+    gsap.from('#screen-title .title-hook', { x: -40, duration: 0.4, ease: 'power3.out', clearProps: 'all' });
+  }
   setTimeout(() => $('#pressStart').focus({ preventScroll: true }), 50);
 }
 
