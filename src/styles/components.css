@@ -163,6 +163,12 @@ body[data-screen="title"] .keyhints, body[data-mode="quick"] .keyhints { display
 .modal.closing { animation: modalBgOut .16s ease-in forwards; }
 @keyframes modalBgOut { to { background: rgba(0, 0, 0, 0); } }
 
+/* ============ SNAPSHOTS: frozen copies of the screen used by film cuts and the glass break ============ */
+.rip-page { position: absolute; inset: 0; background: var(--black); }
+.rip-page .backdrop { filter: none !important; }
+.rip-screen { position: fixed; inset: 0; z-index: 1; }
+.rip-page *, .rip-page *::before, .rip-page *::after { animation: none !important; transition: none !important; }
+
 /* ============ CLICK HITS ============ */
 .fx-hit-layer { position: fixed; inset: 0; z-index: 96; pointer-events: none; overflow: hidden; }
 .fx-hit { position: absolute; width: 0; height: 0; }
@@ -311,7 +317,7 @@ body.scrolled .hud-tl { translate: 0 -260px; transition: translate .18s cubic-be
 .clear-fx > .clear-stamp .cs-word { font-size: clamp(54px, 10vw, 140px); }
 .clear-fx > .clear-stamp .cs-star { width: 80px; height: 80px; right: -26px; top: -34px; }
 
-/* ============ VARIETY WIPES: blinds (menu/settings), paper (Quick View), star iris (back) ============ */
+/* ============ VARIETY WIPES: blinds (settings/secret), paper (Quick View) ============ */
 .fxw { position: fixed; inset: 0; z-index: 90; pointer-events: none; visibility: hidden; overflow: hidden; }
 .blinds { display: grid; grid-template-rows: repeat(7, 1fr); }
 .blinds i { display: block; margin: 0 -6vw; transform: skewY(-4deg); background: var(--black); border-bottom: 5px solid var(--red); }
@@ -322,12 +328,6 @@ body.scrolled .hud-tl { translate: 0 -260px; transition: translate .18s cubic-be
 }
 .paperw-lines { position: absolute; inset: 0; background: repeating-linear-gradient(transparent 0 38px, rgba(229, 25, 28, .18) 38px 40px); }
 .paperw-sheet::after { content: ""; position: absolute; left: 9vw; top: 0; bottom: 0; width: 3px; background: rgba(229, 25, 28, .45); }
-.iris { display: grid; place-items: center; }
-.iris-star {
-  position: absolute; width: 420vmax; height: 420vmax; background: var(--black);
-  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-}
-.iris-star.red { background: var(--red); }
 @media print { .fxw, .fall { display: none !important; } }
 
 /* ============ CLEARED! transition, deluxe layers ============ */
@@ -355,17 +355,6 @@ body.scrolled .hud-tl { translate: 0 -260px; transition: translate .18s cubic-be
 @media (max-width: 760px) {
   .clear-fx-band { height: 9vh; font-size: 5.4vh; }
 }
-
-/* ============ more menu wipes: shatter, stripes, ink ============ */
-.shatter i { position: absolute; inset: 0; display: block; background: var(--black); }
-.shatter i:nth-child(3n) { background: var(--red); }
-.shatter i:nth-child(5n) { background: var(--white); }
-.stripes i { position: absolute; left: -40vw; width: 180vw; height: 30vh; top: calc(var(--i) * 22vh - 30vh); transform: rotate(-24deg); display: block; background: var(--black); }
-.stripes i:nth-child(3n + 1) { background: var(--red); }
-.stripes i:nth-child(3n + 2) { background: var(--white); }
-.inkw { display: grid; place-items: center; }
-.ink-blot { position: absolute; width: 190vmax; height: 190vmax; background: var(--black); }
-.ink-blot.red { background: var(--red); }
 
 /* ============ saved progress: PROGRESS chip, CONTINUE line, menu mini stamps ============ */
 .progress-chip {
@@ -540,18 +529,22 @@ body[data-mode="title"] .scroll-meter { display: none; }
 /* THE RISE: the page as one piece, dropping away below the camera */
 .fall-half.whole { will-change: transform; }
 
-/* NEXT STOP: a subway train fills the frame, close to the camera */
-.train { background: transparent; }
-.train-strip { position: absolute; top: 0; bottom: 0; left: 0; display: flex; gap: 34px; will-change: transform; }
-.train-car { position: relative; flex: none; height: 100%; background: #0B0B0B center / auto 100% no-repeat; }
-.tc-sign { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: grid; justify-items: center; padding: 10px 30px 8px; background: var(--black);
-  border: 5px solid var(--yellow); box-shadow: 10px 10px 0 var(--red); transform: rotate(-3deg) skewX(-8deg); }
-.tc-sign small { font-family: var(--f-menu); font-size: clamp(18px, 2.4vw, 28px); letter-spacing: 4px; color: var(--white); }
-.tc-sign span { margin-top: 6px; font-size: clamp(40px, 8vw, 104px); line-height: 1; white-space: nowrap; }
-.train-lines i { position: absolute; left: 0; height: 4px; background: var(--white); }
-.train-lines i:nth-child(2n) { height: 2px; background: var(--yellow); }
-
-/* CALLING CARD: thrown at the camera, smacks the lens, flips away */
+/* NEXT STOP: inside the train car, the next station slides into the windows */
+.nextstop { background: #050506; }
+.ns-cam { position: absolute; inset: -3vh -3vw; }
+.ns-out { position: absolute; inset: 0; background: #08080A; overflow: hidden; }
+.ns-lights i { position: absolute; left: 0; height: 6px; background: #FFF6D8; box-shadow: 0 0 14px 3px rgba(255, 240, 200, .55); }
+.ns-lights i:nth-child(3n) { background: var(--red); box-shadow: 0 0 14px 3px rgba(229, 25, 28, .55); height: 4px; }
+.ns-station { position: absolute; inset: 0; background: #2A2B2F; }
+.ns-tiles { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, .55) 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(rgba(0, 0, 0, .55) 1px, transparent 1px) 0 0 / 48px 48px, #9C9C98; }
+.ns-stripe { position: absolute; left: 0; right: 0; top: 63%; height: 5%; background: var(--red); border-block: 3px solid #0B0B0B; }
+.ns-pillar { position: absolute; top: 0; bottom: 0; left: 12%; width: 9vw; background: #5A5B60; border-inline: 4px solid #0B0B0B; }
+.ns-pillar.p2 { left: auto; right: 10%; }
+.ns-sign { position: absolute; left: 50%; top: 40%; translate: -50% -50%; display: grid; justify-items: center; padding: 10px 34px 10px; background: var(--black);
+  border: 5px solid var(--white); box-shadow: 10px 10px 0 var(--red); }
+.ns-sign small { font: 400 clamp(16px, 2vw, 26px)/1 var(--f-menu); letter-spacing: 5px; color: var(--yellow); }
+.ns-sign .ransom { margin-top: 6px; font-size: clamp(36px, 6.4vw, 92px); line-height: 1; white-space: nowrap; }
+.ns-car { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 49% 46%; }
 .cardshot { display: grid; place-items: center; }
 .cs-dim { position: absolute; inset: 0; background: rgba(5, 5, 5, .72); }
 .cs-card { position: relative; width: min(78vw, 560px); aspect-ratio: 1.6; display: grid; align-content: center; justify-items: center; gap: 6px;
@@ -565,5 +558,83 @@ body[data-mode="title"] .scroll-meter { display: none; }
 .fall .lb { position: absolute; left: 0; right: 0; height: 9vh; background: var(--black); z-index: 5; transform: scaleY(0); }
 .fall .lb-t { top: 0; transform-origin: 50% 0; border-bottom: 3px solid var(--red); }
 .fall .lb-b { bottom: 0; transform-origin: 50% 100%; border-top: 3px solid var(--red); }
-.fall-sign .ransom, .tc-sign .ransom { display: flex; flex-wrap: nowrap; justify-content: center; }
-.fall-sign .ransom .rw:last-child, .tc-sign .ransom .rw:last-child { margin-right: 0; }
+.fall-sign .ransom, .ns-sign .ransom { display: flex; flex-wrap: nowrap; justify-content: center; }
+.fall-sign .ransom .rw:last-child, .ns-sign .ransom .rw:last-child { margin-right: 0; }
+
+/* ============ MENU TRANSITIONS (src/fx/menuwipes.js): one move per page, from the heist-movie world ============ */
+.mw .ransom { font-size: clamp(40px, 8.5vw, 116px); line-height: 1; white-space: nowrap; }
+/* MISSIONS: the case file */
+.casefile { perspective: 1400px; }
+.cf-cover { position: absolute; inset: -6vh -6vw; transform-origin: 0 50%; background: #141414 repeating-linear-gradient(135deg, rgba(245, 245, 240, .035) 0 2px, transparent 2px 10px);
+  box-shadow: inset 0 0 0 10px #0B0B0B, inset 0 0 0 14px var(--red); }
+.cf-tab { position: absolute; top: 6vh; left: 14vw; padding: 10px 26px 6px; background: var(--red); color: var(--white); font: 400 clamp(20px, 2.6vw, 34px)/1 var(--f-menu); letter-spacing: 4px;
+  clip-path: polygon(0 100%, 6% 0, 94% 0, 100% 100%); translate: 0 6vh; }
+.cf-dots { position: absolute; right: 0; bottom: 0; width: 46vmax; height: 46vmax; background: radial-gradient(circle, rgba(245, 245, 240, .2) 30%, transparent 32%) 0 0 / 18px 18px;
+  -webkit-mask: linear-gradient(135deg, transparent 40%, #000 80%); mask: linear-gradient(135deg, transparent 40%, #000 80%); }
+.cf-label { position: absolute; left: 50%; top: 47%; translate: -50% -50%; rotate: -3deg; }
+.cf-code { position: absolute; left: 50%; top: calc(47% + clamp(52px, 8vw, 104px)); translate: -50% 0; font: clamp(15px, 1.6vw, 22px) var(--f-type); color: var(--yellow); letter-spacing: 2px; white-space: nowrap; }
+.cf-stamp { position: absolute; right: 12vw; bottom: 16vh; padding: 8px 20px 4px; border: 7px solid var(--red); color: var(--red); font: 400 clamp(34px, 6vw, 84px)/1 var(--f-head); letter-spacing: 2px;
+  rotate: -12deg; opacity: 0; -webkit-mask: radial-gradient(circle, #000 62%, transparent 64%) 0 0 / 7px 7px, linear-gradient(#000, #000); mask-composite: intersect; }
+/* SKILLS: subway doors */
+.dr { position: absolute; top: 0; bottom: 0; width: 50.5vw; background: #CFCEC8; box-shadow: inset 0 0 0 5px #0B0B0B; }
+.dr-l { left: 0; } .dr-r { right: 0; }
+.dr-l::after, .dr-r::after { content: ""; position: absolute; top: 0; bottom: 0; width: 16px; background: #0B0B0B; }
+.dr-l::after { right: 0; } .dr-r::after { left: 0; }
+.dr::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 22vh; background: #B4B3AC; border-top: 4px solid #0B0B0B; }
+.dr-win { position: absolute; top: 11vh; bottom: 44vh; left: 20%; right: 20%; border: 8px solid #0B0B0B; clip-path: polygon(6% 0, 94% 0, 100% 6%, 100% 94%, 94% 100%, 6% 100%, 0 94%, 0 6%);
+  background: linear-gradient(118deg, transparent 0 30%, rgba(245, 245, 240, .22) 30% 37%, transparent 37% 45%, rgba(245, 245, 240, .14) 45% 48%, transparent 48%), #1B1D22; }
+.dr-stripe { position: absolute; left: 0; right: 0; top: 60vh; height: 3vh; background: var(--red); border-block: 3px solid #0B0B0B; }
+.dr-sign { position: absolute; right: 3vw; top: 22vh; display: grid; justify-items: center; padding: 8px 22px 8px; background: var(--black); border: 4px solid var(--white); box-shadow: 9px 9px 0 var(--red); rotate: -3deg; z-index: 1; }
+.dr-sign small { font: 400 clamp(14px, 1.8vw, 22px)/1 var(--f-menu); letter-spacing: 4px; color: var(--yellow); }
+.dr-sign .ransom { font-size: clamp(30px, 5.6vw, 76px); margin-top: 4px; }
+/* MY EDGE: comic panels */
+.pn-gut { position: absolute; inset: 0; background: var(--white); opacity: 0; }
+.pn { position: absolute; inset: 0; display: block; }
+.p1 { clip-path: polygon(0 0, 57% 0, 49% 47%, 0 53%); background: radial-gradient(circle, rgba(11, 11, 11, .35) 30%, transparent 32%) 0 0 / 16px 16px, var(--red); }
+.p2 { clip-path: polygon(59% 0, 100% 0, 100% 39%, 51% 46.5%); background: repeating-linear-gradient(100deg, transparent 0 22px, rgba(245, 245, 240, .45) 22px 25px), var(--black); }
+.p3 { clip-path: polygon(0 55%, 48.6% 49%, 42.6% 100%, 0 100%); background: repeating-linear-gradient(-45deg, var(--black) 0 30px, #9E0F12 30px 36px); }
+.p4 { clip-path: polygon(50.6% 48.5%, 100% 41%, 100% 100%, 44.6% 100%); background: radial-gradient(circle, rgba(11, 11, 11, .55) 30%, transparent 32%) 0 0 / 14px 14px, var(--white); }
+.pn-title { position: absolute; left: 50%; top: 48%; translate: -50% -50%; padding: 12px 26px 10px; background: var(--black); border: 5px solid var(--white); box-shadow: 12px 12px 0 var(--red); }
+/* STATS: breaking glass */
+.gl-shard { position: absolute; inset: 0; overflow: hidden; will-change: transform; }
+.gl-shine { position: absolute; inset: 0; z-index: 2; background: linear-gradient(125deg, transparent 0 40%, rgba(245, 245, 240, .16) 40% 46%, transparent 46% 60%, rgba(245, 245, 240, .08) 60% 63%, transparent 63%); }
+.glass svg { position: absolute; inset: 0; z-index: 3; }
+.gl-crack { fill: none; stroke: var(--white); stroke-width: 2.5; filter: drop-shadow(1.5px 1.5px 0 #0B0B0B); }
+.gl-hit { position: absolute; z-index: 4; width: 120px; height: 120px; margin: -60px 0 0 -60px; background: var(--white);
+  clip-path: polygon(50% 0, 58% 38%, 100% 50%, 58% 62%, 50% 100%, 42% 62%, 0 50%, 42% 38%); }
+/* SIDE QUESTS: city life */
+.cl-cam { position: absolute; inset: 0; background: #070708; overflow: hidden; }
+.cl-city { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; }
+.cl-shade { position: absolute; inset: 0; background: linear-gradient(transparent 55%, rgba(5, 5, 6, .85) 78%); }
+.cl-board { position: absolute; left: 50%; top: 40%; width: min(46vw, 640px); aspect-ratio: 16 / 9; translate: -50% -50%; rotate: -4deg; padding: 12px; background: #0B0B0B;
+  box-shadow: 0 0 0 4px var(--red), 14px 14px 0 4px #000; }
+.cl-board::after { content: ""; position: absolute; left: 30%; right: 30%; top: 100%; height: 18vh; background: repeating-linear-gradient(90deg, #111 0 14px, #1E1E1E 14px 18px); }
+.cl-screen { position: relative; height: 100%; display: grid; place-content: center; justify-items: center; gap: 8px; opacity: 0;
+  background: repeating-linear-gradient(0deg, rgba(11, 11, 11, .25) 0 2px, transparent 2px 4px), var(--red); }
+.cl-on { font: 400 clamp(14px, 1.6vw, 22px)/1 var(--f-menu); letter-spacing: 5px; color: var(--yellow); }
+.cl-label.ransom { font-size: clamp(30px, 5vw, 72px); }
+.cl-trails i { position: absolute; left: 0; height: 5px; background: var(--white); box-shadow: 0 0 10px rgba(245, 245, 240, .7); }
+.cl-trails i.red { height: 4px; background: var(--red); box-shadow: 0 0 10px rgba(229, 25, 28, .8); }
+.cl-flash { position: absolute; inset: 0; background: var(--white); opacity: 0; }
+/* SETTINGS: the security monitor */
+.crt-t, .crt-b { position: absolute; left: 0; right: 0; height: 50.5vh; background: #050505; }
+.crt-t { top: 0; transform-origin: 50% 0; } .crt-b { bottom: 0; transform-origin: 50% 100%; }
+.crt-line { position: absolute; left: 0; right: 0; top: 50%; height: 6px; margin-top: -3px; background: var(--white); box-shadow: 0 0 24px 6px rgba(245, 245, 240, .6); opacity: 0; }
+.crt-static { position: absolute; inset: 0; opacity: 0; background: repeating-linear-gradient(0deg, rgba(245, 245, 240, .18) 0 2px, transparent 2px 4px),
+  radial-gradient(circle, rgba(245, 245, 240, .3) 25%, transparent 27%) 0 0 / 5px 7px; }
+.crt-rec { position: absolute; left: 5vw; top: 12vh; display: flex; align-items: center; gap: 10px; color: var(--red); font: 400 clamp(20px, 2.6vw, 34px)/1 var(--f-menu); letter-spacing: 3px; opacity: 0; }
+.crt-rec::before { content: ""; width: .7em; height: .7em; border-radius: 50%; background: var(--red); }
+.crt-label { position: absolute; left: 50%; top: 50%; translate: -50% -50%; opacity: 0; }
+@media (max-width: 760px) {
+  .dr-sign { right: 2vw; top: 18vh; padding: 6px 12px; }
+  .dr-win { left: 12%; right: 12%; }
+  .cl-board { width: 78vw; }
+}
+
+/* the HUD MENU button shouts until the menu has been opened once */
+.hud-btn.menu-hot { background: var(--red); color: var(--white); animation: menuHot 1.6s steps(1) infinite; }
+.hud-btn.menu-hot::after { content: ""; position: absolute; inset: -6px; border: 3px solid var(--yellow); transform: skew(var(--skew)); animation: menuRing 1.6s ease-out infinite; pointer-events: none; }
+@keyframes menuHot { 0%, 100% { rotate: 0deg; } 8% { rotate: -4deg; } 16% { rotate: 3deg; } 24% { rotate: 0deg; } }
+@keyframes menuRing { from { opacity: 1; scale: 1; } to { opacity: 0; scale: 1.5; } }
+@media (prefers-reduced-motion: reduce) { .hud-btn.menu-hot, .hud-btn.menu-hot::after { animation: none; } }
+body.reduce-motion .hud-btn.menu-hot, body.reduce-motion .hud-btn.menu-hot::after { animation: none; }

@@ -257,10 +257,11 @@ function trainNose(d, img, alpha) {
   ctx.globalAlpha = 1;
 }
 
-function headlights(d, glow) {
-  if (d < 14) return;
+function headlights(d, glow, alpha = 1) {
+  if (d < 14 || alpha <= 0) return;
   const n = noseRect(d);
   ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha = alpha;
   [0.14, 0.86].forEach((fx) => {
     const x = n.l + n.w * fx;
     const y = n.t + n.h * 0.74;
@@ -272,6 +273,7 @@ function headlights(d, glow) {
     ctx.fillStyle = g;
     ctx.fillRect(x - r, y - r, r * 2, r * 2);
   });
+  ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = 'source-over';
 }
 
@@ -341,7 +343,7 @@ function draw() {
   afterimages(lead, kk, img, Math.max(0, Math.min(1, (MOUTH + 200 - lead) / 500)));
   trainSide(lead, kk);
   trainNose(lead, img, 1);
-  headlights(lead, 1 + Math.max(0, 1 - lead / MOUTH) * 1.6);
+  headlights(lead, 1 + Math.max(0, 1 - lead / MOUTH) * 1.6, Math.min(1, t / 0.3)); // the lights fade up with the horn
   speedLines(t, state.lines);
 }
 

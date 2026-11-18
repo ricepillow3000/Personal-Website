@@ -19,7 +19,8 @@ import { initMagnetic, initTilt, initScrollMeter, slamOnScroll, scramble, rollIn
 import { initTooltips } from './ui/tooltip.js';
 import { initClearing, hydrateStamps } from './ui/clear.js';
 import { progress } from './core/progress.js';
-import { fallWipe, riseWipe, trainWipe, cardWipe, preloadFilm, slashWipe, blindsWipe, paperWipe, irisWipe, shatterWipe, stripesWipe, flipWipe, inkWipe, titlePunch, tunnelWipe, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
+import { caseWipe, doorsWipe, panelsWipe, glassWipe, cityWipe, crtWipe } from './fx/menuwipes.js';
+import { fallWipe, riseWipe, trainWipe, cardWipe, preloadFilm, slashWipe, blindsWipe, paperWipe, titlePunch, tunnelWipe, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate } from './ui/hud.js';
 import { createBoard } from './scenes/board.js';
@@ -125,8 +126,9 @@ function activate(id) {
 }
 
 /* every menu destination gets its own transition */
-const MENU_STYLE = { missions: 'shatter', skills: 'blinds', different: 'slash', stats: 'flip', 'side-quests': 'stripes', contact: 'iris', system: 'ink' };
-const WIPES = { fall: fallWipe, rise: riseWipe, train: trainWipe, card: cardWipe, slash: slashWipe, blinds: blindsWipe, paper: paperWipe, iris: irisWipe, shatter: shatterWipe, stripes: stripesWipe, flip: flipWipe, ink: inkWipe };
+// each menu page has its own move from the heist-movie world (src/fx/menuwipes.js); CONTACT gets the calling card
+const MENU_STYLE = { missions: 'casefile', skills: 'doors', different: 'panels', stats: 'glass', 'side-quests': 'city', system: 'crt' };
+const WIPES = { fall: fallWipe, rise: riseWipe, train: trainWipe, card: cardWipe, slash: slashWipe, blinds: blindsWipe, paper: paperWipe, casefile: caseWipe, doors: doorsWipe, panels: panelsWipe, glass: glassWipe, city: cityWipe, crt: crtWipe };
 /* Focus a target once its entrance animation has made it visible (a hidden element can't take focus).
    Gives up if the visitor has already moved focus somewhere themselves. */
 function focusSoon(el, tries = 16, from = document.activeElement) {
@@ -719,8 +721,28 @@ function soundHint() {
   setTimeout(() => $('#soundBtn').classList.remove('wiggle'), 1400);
 }
 
+/* the MENU button shouts until the visitor has opened the menu once (then it calms down for good) */
+const MENU_SEEN = 'jn-menu-seen';
+const menuSeen = () => {
+  try {
+    return window.localStorage.getItem(MENU_SEEN) === '1';
+  } catch {
+    return false;
+  }
+};
+if (!menuSeen()) $('#menuBtn').classList.add('menu-hot');
 $('#menuBtn').addEventListener('click', () => {
+  $('#menuBtn').classList.remove('menu-hot');
+  try {
+    window.localStorage.setItem(MENU_SEEN, '1');
+  } catch {
+    /* private mode: it just shouts again next visit */
+  }
   menu.isOpen() ? menu.close() : menu.open();
+});
+// CHAPTER SELECT's "FULL MENU" opens the same menu
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-open-menu]')) $('#menuBtn').click();
 });
 
 function renderKeyHints(mode) {
