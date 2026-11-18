@@ -1,3 +1,4 @@
+import { MENU_ITEMS } from './menu.js';
 import { gsap } from 'gsap';
 import { clearStampMarkup, isCleared } from '../ui/clear.js';
 import { resume } from '../data/resume.js';
@@ -77,6 +78,20 @@ function roster(skills) {
   </div>`;
 }
 
+/* CHAPTER SELECT: the six story pages right on the board, as a P5-style diagonal staircase, so
+   nobody thinks the board is all there is. Each one is a real link; visited ones get a star. */
+function chapterSelect() {
+  const seen = store.get().visited || [];
+  const items = MENU_ITEMS.filter((m) => m.id !== 'system');
+  return `<nav class="chapters" aria-label="Chapters">
+    <span class="ch-head"><b>CHAPTER SELECT</b><small>${items.length} more pages</small></span>
+    <ol class="ch-list">${items
+      .map((m, i) => `<li style="--i:${i}"><a class="ch-item${seen.includes(m.id) ? ' seen' : ''}" href="#/${m.id}" data-nav><span class="ch-no">${String(i + 1).padStart(2, '0')}</span><span class="ch-name">${esc(m.label)}</span></a></li>`)
+      .join('')}</ol>
+    <button type="button" class="ch-menu" data-open-menu>FULL MENU ▸</button>
+  </nav>`;
+}
+
 function boardMarkup(ctx) {
   const e = resume.education;
   const L = resume.links;
@@ -94,8 +109,11 @@ function boardMarkup(ctx) {
       <button type="button" class="progress-chip" id="progressChip"></button>
       <span class="board-status">${esc(resume.status)} · GSU · ${esc(resume.education.grad)} · GPA ${esc(resume.education.gpa)}</span>
     </div>
-    <p class="board-hook">${esc(resume.role)}. ${esc(resume.hook)}</p>
-    ${note}
+    ${chapterSelect()}
+    <div class="board-side">
+      <p class="board-hook">${esc(resume.role)}. ${esc(resume.hook)}</p>
+      ${note}
+    </div>
   </header>
 
   <div class="board-grid">

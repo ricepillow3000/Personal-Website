@@ -19,7 +19,7 @@ export function skipCurrent() {
 
 export const isAnimating = () => Boolean(current && current.isActive());
 
-function track(tl) {
+export function track(tl) {
   current = tl;
   return new Promise((resolve) => {
     const own = tl.eventCallback('onComplete');
@@ -292,142 +292,6 @@ export function paperWipe(swap) {
   return track(tl);
 }
 
-/** STAR IRIS (back to the board): a black star spins open over the screen, then spins away. (~0.6s) */
-export function irisWipe(swap) {
-  if (reducedMotion()) {
-    swap();
-    return Promise.resolve();
-  }
-  const el = layer('iris', '<div class="iris-star"></div><div class="iris-star red"></div>');
-  const [black, red] = el.children;
-  const tl = gsap.timeline();
-  tl.set(el, { visibility: 'visible' })
-    .add(() => sfx('back'), 0)
-    .fromTo(red, { scale: 0, rotation: -90 }, { scale: 1.15, rotation: 0, duration: 0.22, ease: 'power3.in' }, 0)
-    .fromTo(black, { scale: 0, rotation: -120 }, { scale: 1, rotation: 0, duration: 0.24, ease: 'power3.in' }, 0.04)
-    .add(() => {
-      swap();
-      sfx('thwack', 0.7);
-    }, 0.29)
-    .to([black, red], { scale: 0, rotation: 140, duration: 0.26, ease: 'power3.out', stagger: 0.03 }, 0.31) // opens right away: no long red hold
-    .set(el, { visibility: 'hidden' });
-  return track(tl);
-}
-
-
-/** SHATTER (menu: Missions): glass shards fly in, lock together, then blow apart. (~0.7s) */
-export function shatterWipe(swap) {
-  if (reducedMotion()) {
-    swap();
-    return Promise.resolve();
-  }
-  const cols = 4;
-  const rows = 3;
-  const html = [];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const x0 = (c / cols) * 100;
-      const x1 = ((c + 1) / cols) * 100;
-      const y0 = (r / rows) * 100;
-      const y1 = ((r + 1) / rows) * 100;
-      const pad = 0.6; // overlap so no hairline gaps
-      html.push(`<i style="clip-path:polygon(${x0 - pad}% ${y0 - pad}%, ${x1 + pad}% ${y0 - pad}%, ${x0 - pad}% ${y1 + pad}%)"></i>`);
-      html.push(`<i style="clip-path:polygon(${x1 + pad}% ${y0 - pad}%, ${x1 + pad}% ${y1 + pad}%, ${x0 - pad}% ${y1 + pad}%)"></i>`);
-    }
-  }
-  const el = layer('shatter', html.join(''));
-  const shards = [...el.children];
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-  const tl = gsap.timeline();
-  tl.set(el, { visibility: 'visible' })
-    .add(() => sfx('rip', 0.36), 0)
-    .fromTo(shards, { x: () => gsap.utils.random(-1, 1) * W * 0.6, y: () => gsap.utils.random(-1, 1) * H * 0.6, rotation: () => gsap.utils.random(-90, 90), autoAlpha: 0 },
-      { x: 0, y: 0, rotation: 0, autoAlpha: 1, duration: 0.22, ease: 'power4.in', stagger: { each: 0.008, from: 'random' } }, 0)
-    .add(() => {
-      swap();
-      sfx('rip', 0.22);
-      shake(el);
-    }, 0.4)
-    .to(shards, { x: () => gsap.utils.random(-1, 1) * W, y: () => gsap.utils.random(0.2, 1.2) * H, rotation: () => gsap.utils.random(-200, 200), duration: 0.38, ease: 'power3.in', stagger: { each: 0.006, from: 'center' } }, 0.48)
-    .set(el, { visibility: 'hidden' })
-    .set(shards, { clearProps: 'transform,opacity,visibility' });
-  return track(tl);
-}
-
-/** STRIPES (menu: Side Quests): diagonal red/black/white bands race across. (~0.65s) */
-export function stripesWipe(swap) {
-  if (reducedMotion()) {
-    swap();
-    return Promise.resolve();
-  }
-  const el = layer('stripes', Array.from({ length: 6 }, (_, i) => `<i style="--i:${i}"></i>`).join(''));
-  const bars = [...el.children];
-  const tl = gsap.timeline();
-  tl.set(el, { visibility: 'visible' })
-    .add(() => sfx('rip', 0.4), 0)
-    .fromTo(bars, { xPercent: 140 }, { xPercent: 0, duration: 0.22, ease: 'power4.in', stagger: 0.04 }, 0)
-    .add(() => {
-      swap();
-      sfx('thwack', 0.7);
-    }, 0.42)
-    .to(bars, { xPercent: -140, duration: 0.26, ease: 'expo.in', stagger: 0.035 }, 0.46)
-    .set(el, { visibility: 'hidden' });
-  return track(tl);
-}
-
-/** FLIP (menu: Stats): the whole screen flips over like a card. (~0.6s) */
-export function flipWipe(swap) {
-  if (reducedMotion()) {
-    swap();
-    return Promise.resolve();
-  }
-  const old = $('.screen.active');
-  const tl = gsap.timeline();
-  tl.add(() => sfx('rip', 0.24), 0)
-    .to(old, { rotationY: 90, transformPerspective: 1300, transformOrigin: '50% 50%', scale: 0.92, filter: 'brightness(.5)', duration: 0.24, ease: 'power3.in' }, 0)
-    .add(() => {
-      gsap.set(old, { clearProps: 'transform,filter' });
-      swap();
-      const now = $('.screen.active');
-      // part of the timeline, so the wipe only counts as done once this has fully settled
-      tl.add(gsap.fromTo(now, { rotationY: -90, transformPerspective: 1300, transformOrigin: '50% 50%', scale: 0.92 },
-        { rotationY: 0, scale: 1, duration: 0.42, ease: 'back.out(1.6)', clearProps: 'transform' }), 0.25);
-      sfx('thunk');
-    }, 0.25)
-    .to({}, { duration: 0.42 }, 0.25);
-  return track(tl);
-}
-
-/** INK (menu: System): a jagged ink blot floods the screen, then slides down off it. (~0.65s) */
-export function inkWipe(swap) {
-  if (reducedMotion()) {
-    swap();
-    return Promise.resolve();
-  }
-  const pts = Array.from({ length: 28 }, (_, i) => {
-    const a = (i / 28) * Math.PI * 2;
-    const r = i % 2 ? 50 : 36 + Math.random() * 14;
-    return `${(50 + Math.cos(a) * r).toFixed(1)}% ${(50 + Math.sin(a) * r).toFixed(1)}%`;
-  }).join(', ');
-  const el = layer('inkw', '<div class="ink-blot red"></div><div class="ink-blot"></div>');
-  [...el.children].forEach((b) => (b.style.clipPath = `polygon(${pts})`));
-  const [red, black] = el.children;
-  const tl = gsap.timeline();
-  tl.set(el, { visibility: 'visible' })
-    .add(() => sfx('rip', 0.3), 0)
-    .fromTo(red, { scale: 0, rotation: -40, yPercent: 0 }, { scale: 1.1, rotation: 0, duration: 0.24, ease: 'power3.in' }, 0)
-    .fromTo(black, { scale: 0, rotation: 30, yPercent: 0 }, { scale: 1, rotation: 0, duration: 0.24, ease: 'power3.in' }, 0.05)
-    .add(() => {
-      swap();
-      sfx('thwack', 0.8);
-    }, 0.3)
-    .to([black, red], { yPercent: 130, skewY: 8, duration: 0.32, ease: 'power3.in', stagger: 0.05 }, 0.36)
-    .set(el, { visibility: 'hidden' });
-  return track(tl);
-}
-
-
 /* ---------------------------------------------------------------------------------
    THE DROP (board -> page, and "next episode"): a short film cut, studied from how
    Lusion stages its scroll story (frame flies at the camera, the world opens up, the
@@ -441,7 +305,7 @@ export function inkWipe(swap) {
    --------------------------------------------------------------------------------- */
 
 /** Copy of whatever is on screen right now (backdrop + active screen + HUD), for splitting. */
-function snapshotScreen() {
+export function snapshotScreen() {
   const src = document.querySelector('.screen.active');
   const frag = document.createElement('div');
   frag.className = 'rip-page';
@@ -462,7 +326,7 @@ function snapshotScreen() {
 /* ---- the city set pieces (public/assets/film): original art generated with Google's Nano Banana
    (gemini-2.5-flash-image) to John's brief and approved by him: a low-angle look up at the towers
    against a red sky, the tower's crown, its glass facade, and the subway car. WebP, loaded while idle. */
-const FILM = { upshot: window.innerWidth <= 900 ? 'assets/film/city-800.webp' : 'assets/film/city.webp', facade: 'assets/film/facade.webp', crown: 'assets/film/crown.webp', train: 'assets/film/train.webp' };
+const FILM = { upshot: window.innerWidth <= 900 ? 'assets/film/city-800.webp' : 'assets/film/city.webp', facade: 'assets/film/facade.webp', crown: 'assets/film/crown.webp', train: 'assets/film/train.webp', interior: 'assets/film/interior.webp' };
 const filmCache = [];
 export function preloadFilm() {
   if (filmCache.length) return;
@@ -506,13 +370,13 @@ function citySet(label, extra = '') {
 }
 
 /** Shared landing: the white star-flash covers everything, the screen swaps, the flash clears. */
-function landing(tl, set, swap, at) {
+function landing(tl, set, swap, at, hit = 'thwack') {
   tl.to(set.city, { y: 10, duration: 0.05, yoyo: true, repeat: 1, ease: 'power1.inOut' }, at - 0.1) // impact jolt
     .to(set.bars, { scaleY: 0, duration: 0.2, ease: 'power2.in' }, at + 0.2)
     .fromTo(set.flash, { scale: 0, rotation: -40, opacity: 1 }, { scale: 3.2, rotation: 0, duration: 0.2, ease: 'power3.in' }, at)
     .add(() => {
       swap();
-      sfx('thwack');
+      sfx(hit);
       gsap.set(set.city, { visibility: 'hidden' });
     }, at + 0.2)
     .to(set.flash, { opacity: 0, duration: 0.22, ease: 'power2.out' }, at + 0.22);
@@ -556,7 +420,7 @@ export function fallWipe(swap, label = '') {
     .set([left, right], { autoAlpha: 0 }, 0.6) // fully gone before the fall starts
     .fromTo(city, { scale: 1.12 }, { scale: 1, duration: 0.4, ease: 'power2.out' }, 0.18)
     // 2. the jump: the tower face streams up past the camera, faster and faster
-    .add(() => sfx('fall'), 0.4)
+    .add(() => sfx('fall'), 0.2) // the jump: from here to the landing (~1.05s)
     .to(tower, { y: -(TH - H), duration: 0.78, ease: 'power2.in' }, 0.38)
     .fromTo(tower, { '--blur': 0 }, { '--blur': 1, duration: 0.55, ease: 'power2.in' }, 0.5) // the faster we fall, the more the windows smear
     .to(sky, { yPercent: -120, duration: 0.5, ease: 'power2.in' }, 0.42)
@@ -566,7 +430,7 @@ export function fallWipe(swap, label = '') {
     .fromTo(sign, { y: H * 0.55, opacity: 0, scale: 0.8 }, { y: 0, opacity: 1, scale: 1, duration: 0.34, ease: 'back.out(1.6)' }, 0.6)
     .to(sign, { y: -H * 0.12, duration: 0.24, ease: 'power1.in' }, 0.94);
   // 4. hard landing: white star-flash, swap, the page builds in as it clears
-  landing(tl, set, swap, 1.0);
+  landing(tl, set, swap, 1.0, 'land'); // you hit the street: a deep boom
   return track(tl);
 }
 
@@ -608,48 +472,69 @@ export function riseWipe(swap, label = 'THE BOARD') {
   return track(tl);
 }
 
-/* NEXT STOP (the NEXT EPISODE card): a subway train pulls in close to the camera, its lead
-   car's sign reads the next chapter, it brakes to a stop (the cut happens behind it) and
-   pulls away, the gaps between cars flashing the new page like a real pass-by. (~1.3s) */
+/* NEXT STOP (the NEXT EPISODE card): you ride the train. From inside the car (Nano Banana
+   interior: ring hoops, plain light strip, bench, see-through windows) you watch tunnel lights
+   streak past the windows, the car rocks, the brakes squeal, and the next station slides into the
+   windows and stops: its sign reads the next chapter. Ding-dong, star-flash, you're there. (~1.4s) */
 export function trainWipe(swap, label = '') {
   if (reducedMotion()) {
     swap();
     return Promise.resolve();
   }
-  const W = window.innerWidth;
-  const carW = Math.round(W * 1.15);
-  // each car is Gemini's subway-car art; the lead car's blank middle panel carries the sign
-  const car = (cls, inner = '') => `<div class="train-car ${cls}" style="width:${carW}px;background-image:url(${FILM.train})">${inner}</div>`;
   const el = document.createElement('div');
-  el.className = 'fall train';
+  el.className = 'fall nextstop';
   el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = `<div class="train-strip">${car('lead', '<div class="tc-sign"><small>NEXT STOP</small><span class="ransom"></span></div>')}${car('mid')}${car('tail')}</div><div class="train-lines">${'<i></i>'.repeat(7)}</div>${LETTERBOX}`;
-  ransom(el.querySelector('.tc-sign span'), label, label.length + 3);
+  el.innerHTML = `<div class="ns-cam">
+      <div class="ns-out"><div class="ns-lights">${'<i></i>'.repeat(9)}</div>
+        <div class="ns-station"><i class="ns-tiles"></i><i class="ns-stripe"></i><div class="ns-sign"><small>NEXT STOP</small><span class="ransom"></span></div><i class="ns-pillar"></i><i class="ns-pillar p2"></i></div></div>
+      <img class="ns-car" src="${FILM.interior}" alt="">
+    </div><div class="fall-flash"></div>${LETTERBOX}`;
+  ransom(el.querySelector('.ns-sign span'), label, label.length + 3);
+  const q = (sel) => el.querySelector(sel);
+  const cam = q('.ns-cam');
+  const lights = el.querySelectorAll('.ns-lights i');
+  const station = q('.ns-station');
+  const sign = q('.ns-sign');
+  const flash = q('.fall-flash');
   const bars = el.querySelectorAll('.lb');
-  const strip = el.firstChild;
-  const lines = el.querySelectorAll('.train-lines i');
-  lines.forEach((l, i) => gsap.set(l, { top: `${8 + ((i * 29) % 84)}%`, width: 120 + ((i * 67) % 220) }));
+  lights.forEach((l, i) => gsap.set(l, { top: `${18 + ((i * 23) % 60)}%`, width: `${10 + ((i * 17) % 22)}vw` }));
   document.body.appendChild(el);
-  const stop = W / 2 - carW / 2; // lead car centred: it covers the whole screen
-  const gone = -(strip.scrollWidth + 40);
+  // put the station sign inside the left window's lower pane (art: 1344x768, pane 300-640 x 310-486),
+  // and on narrow screens aim the camera at that pane
+  const car = q('.ns-car');
+  const bw = cam.offsetWidth;
+  const bh = cam.offsetHeight;
+  const k = Math.max(bw / 1344, bh / 768);
+  const free = bw - 1344 * k;
+  const fx = free < 0 ? Math.min(1, Math.max(0, (bw / 2 - 470 * k) / free)) : 0.49;
+  car.style.objectPosition = `${(fx * 100).toFixed(1)}% 46%`;
+  const ox = free * fx;
+  const oy = (bh - 768 * k) * 0.46;
+  const paneW = 340 * k;
+  gsap.set(sign, { left: ox + 470 * k, top: oy + 398 * k, scale: Math.min(1, (paneW * 0.86) / sign.offsetWidth, (176 * k * 0.8) / sign.offsetHeight) });
 
   const tl = gsap.timeline({ onComplete: () => el.remove() });
-  tl.set(el, { visibility: 'visible' })
-    .set(strip, { x: W })
-    .fromTo(bars, { scaleY: 0 }, { scaleY: 1, duration: 0.16, ease: 'power3.out' }, 0)
-    .add(() => sfx('train'), 0)
-    // 1. pulls in hard and brakes, the cars rocking on the rails
-    .to(strip, { x: stop, duration: 0.5, ease: 'power3.out' }, 0)
-    .fromTo(strip, { rotation: 0 }, { rotation: -0.8, duration: 0.12, yoyo: true, repeat: 3, ease: 'sine.inOut' }, 0.3)
-    .fromTo(lines, { x: W }, { x: -400, duration: 0.3, ease: 'none', stagger: 0.03 }, 0)
-    // 2. the cut happens behind the stopped car
-    .add(swap, 0.52)
-    .from(el.querySelector('.tc-sign'), { scale: 1.25, duration: 0.24, ease: 'back.out(2.4)' }, 0.42)
-    // 3. departs, accelerating: gaps between cars flash the new page
-    .add(() => sfx('whoosh'), 0.86)
-    .to(strip, { x: gone, duration: 0.5, ease: 'power3.in' }, 0.8)
-    .to(bars, { scaleY: 0, duration: 0.22, ease: 'power2.in' }, 1.08)
-    .fromTo(lines, { x: W }, { x: -400, duration: 0.26, ease: 'none', stagger: 0.03 }, 1.0);
+  tl.set(el, { visibility: 'visible' });
+  barsIn(tl, bars);
+  tl.add(() => sfx('train'), 0)
+    .fromTo(cam, { scale: 1.08 }, { scale: 1, duration: 0.2, ease: 'power3.out' }, 0)
+    // the car rocks on the rails, settling as it brakes
+    .fromTo(cam, { rotation: -0.7, y: 3 }, { rotation: 0.7, y: -3, duration: 0.09, ease: 'sine.inOut', yoyo: true, repeat: 7 }, 0)
+    .to(cam, { rotation: 0, y: 0, duration: 0.2, ease: 'power2.out' }, 0.72)
+    // tunnel lights streaking past the windows, then slowing
+    .fromTo(lights, { x: '110vw' }, { x: '-40vw', duration: 0.24, ease: 'none', stagger: { each: 0.04, repeat: 2 } }, 0)
+    // the station glides in and stops in the windows
+    .fromTo(station, { xPercent: 100 }, { xPercent: 0, duration: 0.62, ease: 'power3.out' }, 0.3)
+    .from(sign, { scale: '+=0.25', duration: 0.2, ease: 'back.out(3)' }, 0.86)
+    // the cut
+    .fromTo(flash, { scale: 0, rotation: -40, opacity: 1 }, { scale: 3.2, rotation: 0, duration: 0.2, ease: 'power3.in' }, 1.08)
+    .add(() => {
+      swap();
+      sfx('thwack');
+      gsap.set(cam, { visibility: 'hidden' });
+    }, 1.28)
+    .to(bars, { scaleY: 0, duration: 0.2, ease: 'power2.in' }, 1.28)
+    .to(flash, { opacity: 0, duration: 0.22, ease: 'power2.out' }, 1.3);
   return track(tl);
 }
 

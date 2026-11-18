@@ -8,6 +8,7 @@ let master = null;
 let sfxBus = null;
 let musicBus = null;
 let noiseBuf = null;
+let brownBuf = null; // deep, natural rumble noise (wind roar, traffic)
 let music = null;
 
 const enabled = () => store.get().settings.sound;
@@ -21,7 +22,7 @@ function ensure() {
   master.gain.value = 0.9;
   master.connect(ac.destination);
   sfxBus = ac.createGain();
-  sfxBus.gain.value = 0.55;
+  sfxBus.gain.value = 0.7; // louder overall; the compressor keeps the big film moments from clipping
   const glue = ac.createDynamicsCompressor(); // keeps the layered film foley from clipping
   glue.threshold.value = -12;
   glue.ratio.value = 4;
@@ -32,6 +33,13 @@ function ensure() {
   noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
   const d = noiseBuf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  brownBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+  const bd = brownBuf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < bd.length; i++) {
+    last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+    bd[i] = last * 3.5;
+  }
   return ac;
 }
 
@@ -110,32 +118,6 @@ function lfo(at, end, hz, depth, target) {
   o.start(at);
   o.stop(end + 0.05);
 }
-/* rushing air: a low roar that buffets (two slow wobbles) plus a whistling band, both sweeping
-   with speed. up = gets louder and brighter (falling faster); otherwise it starts loud and fades */
-function wind(bus, at, dur, { from = 220, to = 1400, gain = 0.4, up = true } = {}) {
-  const end = at + dur;
-  const g = env(bus, at, up ? dur * 0.85 : 0.06, gain, end);
-  const buffet = ac.createGain();
-  buffet.gain.value = 0.7;
-  lfo(at, end, 4.3, 0.22, buffet.gain);
-  lfo(at, end, 9.7, 0.12, buffet.gain);
-  buffet.connect(g);
-  const roar = ac.createBiquadFilter();
-  roar.type = 'lowpass';
-  roar.Q.value = 0.6;
-  roar.frequency.setValueAtTime(from, at);
-  roar.frequency.exponentialRampToValueAtTime(to, end);
-  const whistle = ac.createBiquadFilter();
-  whistle.type = 'bandpass';
-  whistle.Q.value = 2.2;
-  whistle.frequency.setValueAtTime(from * 3, at);
-  whistle.frequency.exponentialRampToValueAtTime(to * 2.2, end);
-  const wg = ac.createGain();
-  wg.gain.value = 0.35;
-  const n = loopNoise(at, end);
-  n.connect(roar).connect(buffet);
-  n.connect(whistle).connect(wg).connect(buffet);
-}
 /* a car horn: two detuned square tones through a small speaker (band-limited), far away */
 function carHorn(bus, at, dur, [f1, f2], gain) {
   const g = env(bus, at, 0.015, gain, at + dur);
@@ -152,39 +134,31 @@ function carHorn(bus, at, dur, [f1, f2], gain) {
     o.stop(at + dur + 0.05);
   });
 }
-/* the busy street far below: traffic hum, a couple of horns, a distant siren. rising = we're
-   falling toward it (it swells); otherwise we're leaving it (it fades) */
-function street(bus, at, dur, { gain = 0.3, rising = true } = {}) {
+/* a subway horn: a three-note chord of reedy sawtooth tones (the classic minor-ish chord) with a
+   little wobble. It can arrive and leave like a real train: `fadeIn` seconds swelling up from far
+   away (muffled at first, clearer as it nears), loudest at `peak` seconds, then the pitch drops
+   (Doppler) and it fades away behind you */
+function trainHorn(bus, at, dur, gain, { fadeIn = 0.07, peak = null, drop = 1 } = {}) {
   const end = at + dur;
-  const hum = ac.createBiquadFilter();
-  hum.type = 'lowpass';
-  hum.frequency.value = 420;
-  loopNoise(at, end).connect(hum).connect(env(bus, at, rising ? dur * 0.9 : 0.05, gain, end));
-  const horns = rising ? [[0.25, 0.26, [392, 494], 0.05], [0.55, 0.1, [440, 554], 0.07], [0.68, 0.12, [440, 554], 0.08]] : [[0.05, 0.2, [415, 523], 0.05]];
-  horns.forEach(([t, d, fs, v]) => carHorn(bus, at + dur * t, d, fs, v * (gain / 0.3)));
-  const siren = ac.createOscillator(); // far-off siren, wailing
-  siren.type = 'triangle';
-  siren.frequency.value = 820;
-  lfo(at, end, 1.6, 170, siren.frequency);
-  const sg = ac.createBiquadFilter();
-  sg.type = 'lowpass';
-  sg.frequency.value = 1300;
-  siren.connect(sg).connect(env(bus, at, rising ? dur * 0.8 : 0.05, gain * 0.07, end));
-  siren.start(at);
-  siren.stop(end + 0.05);
-}
-/* a subway horn: a three-note chord of reedy sawtooth tones (the classic minor-ish chord), air
-   swelling into it, a little wobble, and a pitch drop if it passes us (Doppler) */
-function trainHorn(bus, at, dur, gain, drop = 1) {
-  const end = at + dur;
+  const top = at + (peak ?? fadeIn);
   const g = ac.createGain();
   g.gain.setValueAtTime(0.0008, at);
-  g.gain.exponentialRampToValueAtTime(gain, at + 0.07);
-  g.gain.setValueAtTime(gain, end - 0.1);
+  if (peak === null) {
+    g.gain.exponentialRampToValueAtTime(gain, top);
+    g.gain.setValueAtTime(gain, end - 0.1);
+  } else {
+    g.gain.exponentialRampToValueAtTime(gain * 0.12, at + fadeIn); // far off in the tunnel
+    g.gain.exponentialRampToValueAtTime(gain, top); // closer and closer
+    g.gain.setValueAtTime(gain, top + 0.06);
+  }
   g.gain.exponentialRampToValueAtTime(0.0008, end);
   const lp = ac.createBiquadFilter();
   lp.type = 'lowpass';
-  lp.frequency.value = 2600;
+  lp.frequency.setValueAtTime(peak === null ? 2600 : 650, at);
+  if (peak !== null) {
+    lp.frequency.exponentialRampToValueAtTime(3200, top); // the tunnel stops muffling it
+    lp.frequency.exponentialRampToValueAtTime(1100, end); // and it trails off behind us
+  }
   const body = ac.createBiquadFilter(); // the horn's bell
   body.type = 'peaking';
   body.frequency.value = 900;
@@ -194,17 +168,195 @@ function trainHorn(bus, at, dur, gain, drop = 1) {
     const o = ac.createOscillator();
     o.type = 'sawtooth';
     o.detune.value = cents;
-    o.frequency.setValueAtTime(f * 0.96, at);
-    o.frequency.exponentialRampToValueAtTime(f, at + 0.09);
+    const hi = drop !== 1 ? f * 1.03 : f; // approaching: a touch sharp
+    o.frequency.setValueAtTime(hi * 0.96, at);
+    o.frequency.exponentialRampToValueAtTime(hi, at + 0.09);
     if (drop !== 1) {
-      o.frequency.setValueAtTime(f, end - dur * 0.35);
-      o.frequency.exponentialRampToValueAtTime(f * drop, end);
+      const pass = peak === null ? end - dur * 0.35 : top - 0.08;
+      o.frequency.setValueAtTime(hi, pass);
+      o.frequency.exponentialRampToValueAtTime(f * drop, Math.min(end, pass + 0.28));
     }
     lfo(at, end, 5.5, 2.2, o.frequency);
     o.connect(lp);
     o.start(at);
     o.stop(end + 0.05);
   }));
+}
+/* ---------- the skyscraper fall, layer by layer (all live synthesis, built to sound real) ---------- */
+function loopBuf(buf, at, end) {
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  src.start(at, Math.random() * 1.5);
+  src.stop(end + 0.05);
+  return src;
+}
+function pan(bus, v) {
+  if (!ac.createStereoPanner) return bus;
+  const p = ac.createStereoPanner();
+  p.pan.value = v;
+  p.connect(bus);
+  return p;
+}
+/* random gusts: slow noise steering a gain, so the wind never wobbles like a machine */
+function gusts(at, end, rate, depth, target) {
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = rate;
+  const g = ac.createGain();
+  g.gain.value = depth;
+  loopBuf(noiseBuf, at, end).connect(lp).connect(g).connect(target);
+}
+/* the roar of air when you fall fast: deep brown noise opening up with speed, gusting, plus a thin
+   high hiss of air past your ears */
+function airRoar(bus, at, dur, { from, to, gain, up = true }) {
+  const end = at + dur;
+  const g = env(bus, at, up ? dur * 0.9 : 0.05, gain, end);
+  const gust = ac.createGain();
+  gust.gain.value = 0.75;
+  gusts(at, end, 7, 0.9, gust.gain);
+  gust.connect(g);
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.Q.value = 0.5;
+  lp.frequency.setValueAtTime(from, at);
+  lp.frequency.exponentialRampToValueAtTime(to, end);
+  loopBuf(brownBuf, at, end).connect(lp).connect(gust);
+  const hiss = ac.createBiquadFilter();
+  hiss.type = 'highpass';
+  hiss.frequency.value = 3500;
+  const hg = ac.createGain();
+  hg.gain.value = 0.05;
+  loopBuf(noiseBuf, at, end).connect(hiss).connect(hg).connect(gust);
+}
+/* every floor's window ledge rushing past: a short "whom", left then right, closer and closer
+   together as the fall speeds up */
+function floorsPassing(bus, at, dur, { gapFrom, gapTo, gain }) {
+  let t = 0;
+  let i = 0;
+  while (t < dur - 0.05) {
+    const p = t / dur;
+    const src = ac.createBufferSource();
+    src.buffer = noiseBuf;
+    const f = ac.createBiquadFilter();
+    f.type = 'bandpass';
+    f.Q.value = 1.6;
+    f.frequency.setValueAtTime(900 + p * 600, at + t);
+    f.frequency.exponentialRampToValueAtTime(320 + p * 200, at + t + 0.1); // pitch falls as it passes
+    const g = ac.createGain();
+    const v = gain * (0.35 + 0.65 * p);
+    g.gain.setValueAtTime(0.0008, at + t);
+    g.gain.exponentialRampToValueAtTime(v, at + t + 0.035);
+    g.gain.exponentialRampToValueAtTime(0.0008, at + t + 0.12);
+    src.connect(f).connect(g).connect(pan(bus, i % 2 ? 0.45 : -0.45));
+    src.start(at + t, Math.random() * 0.8);
+    src.stop(at + t + 0.14);
+    t += gapFrom + (gapTo - gapFrom) * p;
+    i++;
+  }
+}
+/* your clothes flapping in the wind: mid noise chopped by a fast flutter that speeds up */
+function flapping(bus, at, dur, gain) {
+  const end = at + dur;
+  const g = env(bus, at, dur * 0.8, gain, end);
+  const chop = ac.createGain();
+  chop.gain.value = 0.5;
+  const o = ac.createOscillator();
+  o.type = 'triangle';
+  o.frequency.setValueAtTime(14, at);
+  o.frequency.linearRampToValueAtTime(32, end);
+  const od = ac.createGain();
+  od.gain.value = 0.5;
+  o.connect(od).connect(chop.gain);
+  o.start(at);
+  o.stop(end + 0.05);
+  const bp = ac.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 750;
+  bp.Q.value = 0.9;
+  loopBuf(noiseBuf, at, end).connect(bp).connect(chop).connect(g);
+}
+/* a car going by down on the street: a swell of tire noise that rises and falls in pitch */
+function carPass(bus, at, dur, gain, side) {
+  const src = loopBuf(brownBuf, at, at + dur);
+  const f = ac.createBiquadFilter();
+  f.type = 'bandpass';
+  f.Q.value = 0.8;
+  f.frequency.setValueAtTime(380, at);
+  f.frequency.exponentialRampToValueAtTime(900, at + dur * 0.5);
+  f.frequency.exponentialRampToValueAtTime(300, at + dur);
+  src.connect(f).connect(env(pan(bus, side), at, dur * 0.5, gain, at + dur));
+}
+/* the city street below: low traffic rumble, cars passing, horns from different sides, a siren
+   somewhere, a bus's air brakes. rising = you're falling toward it */
+function cityBelow(bus, at, dur, { gain, rising = true }) {
+  const end = at + dur;
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(rising ? 220 : 520, at);
+  lp.frequency.exponentialRampToValueAtTime(rising ? 520 : 200, end);
+  loopBuf(brownBuf, at, end).connect(lp).connect(env(bus, at, rising ? dur * 0.95 : 0.05, gain, end));
+  const k = gain / 0.6;
+  if (rising) {
+    carPass(bus, at + dur * 0.15, dur * 0.6, 0.18 * k, -0.6);
+    carPass(bus, at + dur * 0.45, dur * 0.55, 0.24 * k, 0.5);
+    carHorn(pan(bus, 0.55), at + dur * 0.38, 0.22, [349, 440], 0.05 * k);
+    carHorn(pan(bus, -0.4), at + dur * 0.7, 0.08, [392, 494], 0.07 * k);
+    carHorn(pan(bus, -0.4), at + dur * 0.8, 0.12, [392, 494], 0.08 * k);
+    noise(pan(bus, 0.3), { at: at + dur * 0.86, dur: 0.18, type: 'highpass', freq: 3800, q: 0.5, gain: 0.06 * k }); // bus air brakes
+  } else {
+    carHorn(pan(bus, 0.4), at + 0.05, 0.2, [349, 440], 0.04 * k);
+  }
+  const siren = ac.createOscillator(); // a siren a few blocks away, wailing up and down
+  siren.type = 'sawtooth';
+  siren.frequency.value = 900;
+  lfo(at, end, 1.1, 260, siren.frequency);
+  const sb = ac.createBiquadFilter();
+  sb.type = 'bandpass';
+  sb.frequency.value = 1000;
+  sb.Q.value = 1.2;
+  siren.connect(sb).connect(env(pan(bus, -0.7), at, rising ? dur * 0.9 : 0.05, gain * 0.05, end));
+  siren.start(at);
+  siren.stop(end + 0.05);
+}
+/* a subway car shaking: loose panels and grab rails rattling (quick metal ticks at random) over
+   a low judder of the whole body. faster = the ticks crowd together and the judder speeds up */
+function rattle(bus, at, dur, { gain, from = 1, to = 1 }) {
+  let t = 0;
+  while (t < dur) {
+    const p = t / dur;
+    const v = gain * (from + (to - from) * p);
+    noise(pan(bus, Math.random() * 1.2 - 0.6), { at: at + t, dur: 0.018 + Math.random() * 0.02, type: 'bandpass', freq: 2400 + Math.random() * 3800, q: 6, gain: v * (0.4 + Math.random() * 0.6) });
+    t += (0.02 + Math.random() * 0.05) / Math.max(0.3, from + (to - from) * p);
+  }
+  const end = at + dur;
+  const judder = ac.createGain();
+  judder.gain.value = 0.6;
+  const o = ac.createOscillator();
+  o.frequency.setValueAtTime(7 * from + 3, at);
+  o.frequency.linearRampToValueAtTime(7 * to + 3, end);
+  const od = ac.createGain();
+  od.gain.value = 0.4;
+  o.connect(od).connect(judder.gain);
+  o.start(at);
+  o.stop(end + 0.05);
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 110;
+  loopBuf(brownBuf, at, end).connect(lp).connect(judder).connect(env(bus, at, dur * 0.3, gain * 2.2, end));
+}
+/* steel wheels grinding on a curve: a thin, wavering high screech */
+function screech(bus, at, dur, gain) {
+  const g = env(bus, at, dur * 0.5, gain, at + dur);
+  [3700, 5150].forEach((f, i) => {
+    const o = ac.createOscillator();
+    o.type = 'triangle';
+    o.frequency.value = f;
+    lfo(at, at + dur, 11 + i * 4, 60, o.frequency);
+    o.connect(g);
+    o.start(at);
+    o.stop(at + dur + 0.05);
+  });
 }
 /* one wheel crossing a rail joint: a dull metal clack with a low thump */
 function clack(bus, at, v) {
@@ -229,7 +381,7 @@ function rails(bus, at, dur, { gapFrom = 0.3, gapTo = 0.1, vFrom = 0.3, vTo = 1,
   lp.type = 'lowpass';
   lp.frequency.setValueAtTime(110, at);
   lp.frequency.exponentialRampToValueAtTime(vTo > vFrom ? 380 : 140, end);
-  loopNoise(at, end).connect(lp).connect(env(bus, at, vTo > vFrom ? dur * 0.85 : 0.08, rumble, end));
+  loopBuf(brownBuf, at, end).connect(lp).connect(env(bus, at, vTo > vFrom ? dur * 0.85 : 0.08, rumble * 1.4, end));
 }
 /* brakes: steel squealing on steel, two high tones beating against each other */
 function squeal(bus, at, dur, gain) {
@@ -334,31 +486,88 @@ const VOICES = {
   swish: (bus, at) => VOICES.whoosh(bus, at, 0.8),
   // THE RISE: rushing wind as you rocket up, the street below falling away
   rise: (bus, at) => {
-    wind(bus, at, 0.75, { from: 1600, to: 260, gain: 1.3, up: false });
-    street(bus, at, 0.5, { gain: 0.35, rising: false });
+    airRoar(bus, at, 0.8, { from: 1800, to: 240, gain: 1.6, up: false });
+    floorsPassing(bus, at + 0.05, 0.5, { gapFrom: 0.05, gapTo: 0.14, gain: 0.3 });
+    cityBelow(bus, at, 0.55, { gain: 0.45, rising: false });
   },
   // NEXT STOP: a short horn, wheels clacking as it brakes, brake squeal, the station chime
+  /* NEXT STOP, riding inside the car: the floor rumbling, the car rattling, wheels over the rail
+     joints slowing down, muffled tunnel wind outside, the brakes squealing, then the station chime */
   train: (bus, at) => {
-    trainHorn(bus, at, 0.28, 0.1);
-    rails(bus, at, 0.55, { gapFrom: 0.12, gapTo: 0.24, vFrom: 1, vTo: 0.5, gain: 0.5, rumble: 0.55 });
-    squeal(bus, at + 0.25, 0.4, 0.035);
-    tone(bus, { at: at + 0.5, dur: 0.22, from: 1319, to: 1319, type: 'sine', gain: 0.08 });
-    tone(bus, { at: at + 0.7, dur: 0.3, from: 1047, to: 1047, type: 'sine', gain: 0.08 });
-    rails(bus, at + 0.85, 0.5, { gapFrom: 0.22, gapTo: 0.1, vFrom: 0.5, vTo: 0.9, gain: 0.38, rumble: 0.35 });
+    rails(bus, at, 1.0, { gapFrom: 0.085, gapTo: 0.3, vFrom: 1, vTo: 0.45, gain: 0.42, rumble: 0.5 });
+    rattle(bus, at, 0.95, { gain: 0.12, from: 1.4, to: 0.4 });
+    airRoar(bus, at, 0.8, { from: 520, to: 200, gain: 0.7, up: false });
+    squeal(bus, at + 0.45, 0.55, 0.05);
+    tone(bus, { at: at + 0.98, dur: 0.24, from: 1319, to: 1319, type: 'sine', gain: 0.1 }); // ding
+    tone(bus, { at: at + 1.16, dur: 0.36, from: 1047, to: 1047, type: 'sine', gain: 0.1 }); // dong
   },
   // PRESS START: a rumble deep in the tunnel, the horn, wheels hammering the rail joints faster and
   // louder, the horn's pitch dropping as it passes, the blast of air and the paper flying
   tunnel: (bus, at) => {
     rails(bus, at, 1.25, { gapFrom: 0.34, gapTo: 0.075, vFrom: 0.12, vTo: 1, gain: 0.5, rumble: 0.45 });
-    trainHorn(bus, at + 0.12, 0.2, 0.1);
-    trainHorn(bus, at + 0.4, 0.75, 0.2, 0.88);
-    wind(bus, at + 0.5, 0.75, { from: 300, to: 2400, gain: 0.45 });
-    flutter(bus, at + 0.6, 0.45, 0.12);
+    // one long horn: faint as the headlights appear, loudest as the nose passes us (~0.74s), then gone
+    trainHorn(bus, at + 0.02, 1.5, 0.24, { fadeIn: 0.3, peak: 0.74, drop: 0.88 });
+    // the wall of air the train shoves out of the tunnel ahead of itself, then its wake
+    airRoar(bus, at + 0.2, 0.6, { from: 160, to: 1600, gain: 1.4 });
+    airRoar(bus, at + 0.78, 0.6, { from: 1800, to: 300, gain: 1.2, up: false });
+    rattle(bus, at + 0.3, 1.0, { gain: 0.16, from: 0.4, to: 1.6 }); // the cars shaking as they storm past
+    screech(bus, at + 0.55, 0.5, 0.03);
+    flutter(bus, at + 0.6, 0.45, 0.14);
   },
   // THE DROP: the wind roars louder as you fall, and the busy street below rushes up at you
   fall: (bus, at) => {
-    wind(bus, at, 0.85, { from: 240, to: 2200, gain: 1.5 });
-    street(bus, at, 0.85, { gain: 0.7 });
+    airRoar(bus, at, 1.05, { from: 200, to: 2400, gain: 1.9 });
+    floorsPassing(bus, at + 0.2, 0.8, { gapFrom: 0.16, gapTo: 0.045, gain: 0.42 });
+    flapping(bus, at + 0.15, 0.9, 0.22);
+    cityBelow(bus, at, 1.05, { gain: 0.6 });
+  },
+  /* subway doors: the two-tone door chime, then the air hiss as they slide */
+  doors: (bus, at) => {
+    tone(bus, { at, dur: 0.18, from: 988, to: 988, type: 'sine', gain: 0.14 });
+    tone(bus, { at: at + 0.16, dur: 0.26, from: 784, to: 784, type: 'sine', gain: 0.14 });
+    noise(bus, { at: at + 0.22, dur: 0.32, type: 'highpass', freq: 3000, q: 0.5, gain: 0.12 });
+  },
+  /* glass taking a hit: a sharp tink and the crackle of cracks running out */
+  crack: (bus, at) => {
+    tone(bus, { at, dur: 0.12, from: 4200, to: 3900, type: 'sine', gain: 0.16 });
+    for (let i = 0; i < 7; i++) noise(bus, { at: at + 0.01 + i * 0.018, dur: 0.02, type: 'highpass', freq: 3500 + i * 300, q: 1, gain: 0.25 - i * 0.025 });
+  },
+  /* the pane giving way: a burst, then pieces tinkling down for a moment */
+  shatter: (bus, at) => {
+    noise(bus, { at, dur: 0.25, type: 'highpass', freq: 2200, q: 0.6, gain: 0.5 });
+    tone(bus, { at, dur: 0.18, from: 160, to: 70, gain: 0.35 });
+    for (let i = 0; i < 12; i++) {
+      const t = at + 0.06 + i * 0.035 + Math.random() * 0.03;
+      tone(bus, { at: t, dur: 0.07, from: 2800 + Math.random() * 3200, to: 2600 + Math.random() * 2600, type: 'sine', gain: 0.05 + Math.random() * 0.05 });
+    }
+  },
+  /* a night street: traffic going by both ways, a horn, the city hum */
+  city: (bus, at) => {
+    cityBelow(bus, at, 0.7, { gain: 0.45, rising: false });
+    carPass(bus, at, 0.45, 0.3, -0.5);
+    carPass(bus, at + 0.12, 0.45, 0.25, 0.5);
+    carHorn(pan(bus, 0.3), at + 0.08, 0.16, [392, 494], 0.06);
+  },
+  /* a big LED billboard switching on: an electrical buzz and a hum */
+  buzz: (bus, at) => {
+    tone(bus, { at, dur: 0.2, from: 120, to: 120, type: 'square', gain: 0.05 });
+    noise(bus, { at, dur: 0.12, type: 'bandpass', freq: 2400, q: 3, gain: 0.12 });
+  },
+  /* an old monitor switching off: a falling hum and a click */
+  crtOff: (bus, at) => {
+    tone(bus, { at, dur: 0.3, from: 520, to: 60, type: 'sawtooth', gain: 0.08 });
+    noise(bus, { at: at + 0.3, dur: 0.03, type: 'bandpass', freq: 2500, q: 2, gain: 0.3 });
+  },
+  /* ...and back on: a burst of static and the rising whine of the tube */
+  crtOn: (bus, at) => {
+    noise(bus, { at, dur: 0.18, type: 'highpass', freq: 1800, q: 0.5, gain: 0.22 });
+    tone(bus, { at, dur: 0.25, from: 5000, to: 9000, type: 'sine', gain: 0.02 });
+  },
+  /* hitting the ground after the fall: a deep boom under the usual thwack */
+  land: (bus, at) => {
+    tone(bus, { at, dur: 0.45, from: 75, to: 32, gain: 0.9 });
+    noise(bus, { at, dur: 0.16, type: 'lowpass', freq: 900, q: 0.7, gain: 0.5 });
+    VOICES.thwack(bus, at, 0.8);
   },
   /* page lands: short wooden "thwack" (higher and shorter than any kick) */
   thwack: (bus, at, v = 1, vol = 1) => {
