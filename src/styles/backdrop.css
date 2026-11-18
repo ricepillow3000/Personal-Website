@@ -27,7 +27,7 @@
 /* PRESS START freeze: the wall drains to grey and stops */
 
 /* Sections read better over a dimmed wall; Quick View almost hides it. */
-body[data-mode="page"] .backdrop { filter: brightness(.62); }
+body[data-mode="page"] .backdrop { filter: brightness(.86); }
 body[data-mode="quick"] .backdrop { filter: brightness(.16); }
 
 @media (prefers-reduced-motion: reduce) {
@@ -61,11 +61,7 @@ body[data-mode="title"] .bd-tech { opacity: 0; } /* the title has its own compos
 @media (prefers-reduced-motion: reduce) { .bd-subway img { animation: none; } }
 body.reduce-motion .bd-subway img { animation: none; }
 
-/* Print texture (Nano Banana grit: halftone patches, ink specks, hatching), John: "incorporate
-   Persona 5 textures". Over the whole background it reads like a screen print; on the cream cards
-   like printed comic paper. Big tile + low opacity so the repeat never shows; added after first paint. */
-.tex .backdrop::after { content: ""; position: absolute; inset: 0; z-index: 9; pointer-events: none;
-  background: var(--grit) 0 0 / 900px 900px; mix-blend-mode: overlay; opacity: .42; }
-.tex .card-pop:not(.dark)::after, .tex .ccard-face::after, .tex .quest::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
-  background: var(--grit) 0 0 / 700px 700px; mix-blend-mode: multiply; opacity: .14; }
+/* P5-style graphics: board and pages only (the title stays a clean cinematic shot) */
+.bd-p5 { --amp: 14; transition: opacity .3s steps(3); }
+body[data-mode="title"] .bd-p5 { opacity: 0; }
+@media (max-width: 760px) { .bd-p5 { opacity: .85; } }
