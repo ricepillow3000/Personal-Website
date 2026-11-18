@@ -8,11 +8,11 @@ import { clearStampMarkup, hydrateStamps } from '../ui/clear.js';
 
 /* The diagonal staircase list menu (opened from the MENU button). */
 export const MENU_ITEMS = [
+  { id: 'stats', label: 'STATS' },
   { id: 'missions', label: 'MISSIONS' },
   { id: 'skills', label: 'SKILLS' },
-  { id: 'different', label: 'MY EDGE' },
-  { id: 'stats', label: 'STATS' },
   { id: 'side-quests', label: 'SIDE QUESTS' },
+  { id: 'different', label: 'MY EDGE' },
   { id: 'contact', label: 'CONTACT' },
   { id: 'system', label: 'SETTINGS' }
 ];

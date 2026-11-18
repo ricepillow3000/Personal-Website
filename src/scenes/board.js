@@ -1,369 +1,139 @@
-import { MENU_ITEMS } from './menu.js';
 import { gsap } from 'gsap';
-import { clearStampMarkup, isCleared } from '../ui/clear.js';
+import { MENU_ITEMS } from './menu.js';
 import { resume } from '../data/resume.js';
-import { reorder } from '../data/companies.js';
-import { $, esc, reducedMotion, isPhone } from '../core/util.js';
+import { menuTeasers } from '../data/script.js';
+import { esc, reducedMotion } from '../core/util.js';
 import { ransom, NAME_SEED } from '../ui/ransom.js';
 import { sfx } from '../audio/audio.js';
 import { store } from '../core/store.js';
 
 /* =========================================================================
-   HEIST BOARD — the portfolio as one planning board.
-   Skills (left) are pinned tags; case files (centre) are the projects; notes
-   (right) hold the person + contact. RED STRING runs from every skill to the
-   projects that prove it. Hover/focus/tap a skill or case and its strings light
-   up. Everything is readable at a glance; the string is the optional fun.
+   THE PLAN — the hub after PRESS START (replaced the crowded heist board, Nov 18).
+   One screen, one job: the resume as six chapters in reading order, a big
+   Persona-style staircase of chapter names, ONE preview card for the chapter
+   you point at (one line, one number), and a big CONTINUE that always points
+   to the next chapter you haven't seen. Every detail lives in the chapters.
    ========================================================================= */
 
-const pin = '<span class="pin" aria-hidden="true"></span>';
+/** The resume, start to finish: who he is, what he built, what he can do, where he worked,
+    why he's different, how to reach him. Each chapter ends with NEXT EPISODE to the next one. */
+export const CHAPTERS = ['stats', 'missions', 'skills', 'side-quests', 'different', 'contact'];
+const label = (id) => MENU_ITEMS.find((m) => m.id === id)?.label || id.toUpperCase();
+const no = (i) => String(i + 1).padStart(2, '0');
 
-/** Kinetic heading type: condensed, slanted, a bigger first letter and one letter
-    flipped to a contrasting box. Screen readers get the plain text. */
-function kin(text, inv = null) {
-  const chars = [...text];
-  const flip = inv ?? chars.findIndex((c, i) => i > 1 && /[A-Za-z]/.test(c));
-  const letters = chars
-    .map((c, i) => (c === ' ' ? '<span class="k-sp"> </span>' : `<span class="k${i === 0 ? ' k-first' : ''}${i === flip ? ' k-inv' : ''}">${esc(c)}</span>`))
-    .join('');
-  return `<span class="kin"><span class="sr-only">${esc(text)}</span><span aria-hidden="true">${letters}</span></span>`;
-}
-
-function caseCard(m, i) {
-  const stickers = m.loot.slice(0, 2);
-  const v = i % 2 ? 'v2' : 'v1';
-  const mark = v === 'v1'
-    ? `<svg class="cc-chart" viewBox="0 0 300 200" aria-hidden="true"><polygon points="0,200 0,150 40,120 70,140 105,80 140,110 175,40 205,75 240,20 270,55 300,10 300,200"/><polyline points="0,150 40,120 70,140 105,80 140,110 175,40 205,75 240,20 270,55 300,10"/></svg>`
-    : '<span class="cc-star" aria-hidden="true"></span>';
-  return `<article class="case card-pop cc ${v}" data-tilt data-case="${m.id}" style="--tilt:${i % 2 ? 1.6 : -1.4}deg">
-    ${pin}<span class="cc-deco" aria-hidden="true">${mark}</span>
-    <span class="case-grade" aria-label="Difficulty ${esc(m.grade)}"><span>${esc(m.grade)}</span></span>
-    <div class="case-top"><span class="case-no">CASE 0${i + 1}</span><span class="case-live">${esc(m.status)}</span></div>
-    <h3 class="case-target ransom" data-ransom="${esc(m.target.toUpperCase())}"></h3>
-    <p class="case-name">${esc(m.name)} <span>${m.stack.map(esc).join(' ·\u00A0')}</span></p>
-    <ul class="case-stats">${stickers.map((t, k) => `<li class="sticker s${k}">${esc(t)}</li>`).join('')}</ul>
-    <p class="case-brief bubble-say">${esc(m.brief)}</p>
-    <div class="case-actions">
-      <button class="btn-cartoon case-open" type="button" data-nav data-open="${m.id}">OPEN FILE ▸</button>
-      <a class="case-link" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}" data-clear="${m.id}">Live ↗</a>
-      <a class="case-link" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}" data-clear="${m.id}">Code ↗</a>
-    </div>
-    <span class="case-fold" aria-hidden="true"></span>
-    ${isCleared(m.id) ? clearStampMarkup() : ''}
-  </article>`;
-}
-
-/* Skills roster: name · big slanted level · level meter · pink "used in" meter.
-   The proof line shows on the selected row (and is always in the aria-label). */
-function skillTag(s) {
-  const max = s.rank === 'MAX';
-  const pct = max ? 100 : Number(s.rank) * 10;
-  return `<button class="skill" type="button" data-nav data-skill="${s.id}"
-      aria-label="${esc(s.name)}, level ${esc(s.rank)}, used in ${s.uses.length} project${s.uses.length > 1 ? 's' : ''}. ${esc(s.proof)}">
-    <span class="skill-hl" aria-hidden="true"></span>
-    <span class="skill-name">${esc(s.name)}</span>
-    <span class="skill-dot" aria-hidden="true">•</span>
-    <span class="skill-stat rank${max ? ' max' : ''}" aria-hidden="true"><small>LV</small><b>${max ? 'MAX' : esc(s.rank)}</b><i style="--v:${pct}%"></i></span>
-    <span class="skill-stat used" aria-hidden="true"><small>IN</small><b>${s.uses.length}</b><i style="--v:${s.uses.length * 50}%"></i></span>
-    <span class="skill-proof">${esc(s.proof)}</span>
-    ${pin}
-  </button>`;
-}
-
-function roster(skills) {
-  const badge = (t, cls) => `<div class="roster-badge ${cls}" aria-hidden="true"><span>${t}</span></div>`;
-  return `<div class="roster card-pop dark">
-    ${badge('CORE', 'b-core')}${skills.slice(0, 3).map(skillTag).join('')}
-    ${badge('KIT', 'b-kit')}${skills.slice(3).map(skillTag).join('')}
-  </div>`;
-}
-
-/* CHAPTER SELECT: the six story pages right on the board, as a P5-style diagonal staircase, so
-   nobody thinks the board is all there is. Each one is a real link; visited ones get a star. */
-function chapterSelect() {
+/** The first chapter the visitor hasn't opened yet (or null when all six are done). */
+export function nextChapter() {
   const seen = store.get().visited || [];
-  const items = MENU_ITEMS.filter((m) => m.id !== 'system');
-  return `<nav class="chapters" aria-label="Chapters">
-    <span class="ch-head"><b>CHAPTER SELECT</b><small>${items.length} more pages</small></span>
-    <ol class="ch-list">${items
-      .map((m, i) => `<li style="--i:${i}"><a class="ch-item${seen.includes(m.id) ? ' seen' : ''}" href="#/${m.id}" data-nav><span class="ch-no">${String(i + 1).padStart(2, '0')}</span><span class="ch-name">${esc(m.label)}</span></a></li>`)
-      .join('')}</ol>
-    <button type="button" class="ch-menu" data-open-menu>FULL MENU ▸</button>
-  </nav>`;
+  return CHAPTERS.find((id) => !seen.includes(id)) || null;
 }
 
-function boardMarkup(ctx) {
+function planMarkup(ctx) {
+  const seen = store.get().visited || [];
   const e = resume.education;
-  const L = resume.links;
-  const missions = reorder(resume.missions, ctx.company?.order?.missions);
-  const skills = reorder(resume.skills, ctx.company?.order?.skills);
   const note = ctx.company
-    ? `<aside class="note note-company card-pop" data-board-item>${pin}<b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you. Pick any skill to see where I used it.</aside>`
-    : ''; // CASE 00 used to sit here; it only repeated the title and the calling card (decluttered)
-
-  return `
-  <header class="board-head" data-board-item>
-    <div class="board-name">
-      <h1 class="ransom" id="boardName"></h1>
-      <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
+    ? `<p class="plan-note"><b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you.</p>`
+    : '';
+  return `<div class="plan">
+    <header class="plan-head" data-board-item>
+      <div class="plan-name">
+        <h1 class="ransom" id="boardName"></h1>
+        <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
+      </div>
+      <p class="plan-role">${esc(resume.role)} · GSU ${esc(e.grad.replace('Class of ', "'").replace(/^'20/, "'"))}<span class="plan-status"> · ${esc(resume.status)}</span></p>
       <button type="button" class="progress-chip" id="progressChip"></button>
-      <span class="board-status">${esc(resume.status)} · GSU · ${esc(resume.education.grad)} · GPA ${esc(resume.education.gpa)}</span>
-    </div>
-    ${chapterSelect()}
-    <div class="board-side">
-      <p class="board-hook">${esc(resume.role)}. ${esc(resume.hook)}</p>
       ${note}
+    </header>
+
+    <div class="plan-body">
+      <nav class="plan-list" aria-label="Chapters">
+        <p class="plan-kicker" data-board-item>THE PLAN <span>· ${CHAPTERS.length} chapters, in order</span></p>
+        <ol>${CHAPTERS.map((id, i) => `<li style="--i:${i}" data-board-item>
+          <a class="pl-item${seen.includes(id) ? ' seen' : ''}" href="#/${id}" data-nav data-ch="${id}">
+            <span class="pl-no">${no(i)}</span>
+            <span class="pl-name">${esc(label(id))}</span>
+            <span class="pl-star" aria-label="${seen.includes(id) ? 'seen' : ''}"></span>
+            <span class="pl-tease">${esc(menuTeasers[id] || '')}</span>
+          </a></li>`).join('')}</ol>
+      </nav>
+
+      <aside class="plan-card" data-board-item aria-live="polite">
+        <span class="pc-ch"></span>
+        <h2 class="pc-name"></h2>
+        <p class="pc-tease"></p>
+        <a class="btn-cartoon pc-go" href="#/stats" data-nav>ENTER ▸</a>
+      </aside>
     </div>
-  </header>
 
-  <div class="board-grid">
-    <svg class="strings" id="strings" aria-hidden="true"></svg>
-
-    <section class="col col-skills" aria-label="Skills">
-      <h2 class="col-label" data-board-item><span class="ransom" data-ransom="SKILLS"></span><small>LV = skill level · IN = live projects using it</small>${(store.get().lit || []).length ? '' : '<span class="try-one" aria-hidden="true">TRY ONE ↓</span>'}</h2>
-      ${roster(skills)}
-    </section>
-
-    <section class="col col-cases" aria-label="Projects">
-      <h2 class="col-label" data-board-item><span class="ransom" data-ransom="CASE FILES"></span><small>2 live apps</small></h2>
-      <div class="cases">${missions.map(caseCard).join('')}</div>
-    </section>
-
-    <section class="col col-notes" aria-label="About">
-      <article class="note note-about card-pop" data-board-item>${pin}
-        <div class="note-band"><h3>${kin('THE PERSON', 4)}</h3></div>
-        <button class="gpa-burst" type="button" aria-label="GPA ${esc(e.gpa)}. Press to flip for the off-the-record stats." aria-pressed="false"><span class="gb-front"><b>${esc(e.gpa)}</b><small>GPA</small></span><span class="gb-back"><b>MAX</b><small>BEE FEAR</small></span></button>
-        <p class="person-school">${esc(e.school.toUpperCase())}</p>
-        <p class="person-degree">${esc(e.degree)}</p>
-        <div class="person-tags">
-          <span class="sticker s0">${esc(e.concentration)}</span>
-          <span class="sticker s1">Dean's List ×2</span>
-          <span class="sticker s2">${esc(e.grad)}</span>
-        </div>
-        <ul class="person-facts">${resume.funFacts.map((f, i) => `<li class="pf pf${i}"><i class="ff-star" aria-hidden="true"></i><span>${esc(f)}</span></li>`).join('')}</ul>
-      </article>
-      <article class="note note-quests card-pop" data-board-item>${pin}
-        <div class="note-band"><h3>${kin('SIDE QUESTS', 2)}</h3></div>
-        <ol class="quest-log">${resume.sideQuests
-          .map((q, i) => `<li class="quest quest-mini">
-            <span class="quest-no" aria-hidden="true"><span>${i + 1}</span></span>
-            <div><b class="quest-title">${esc(q.title)}</b><span class="quest-place">${esc(q.place)}</span></div></li>`)
-          .join('')}</ol>
-        <a class="btn-cartoon quest-more" href="#/side-quests" data-nav>FULL STORY ▸</a>
-      </article>
-    </section>
-
-    <section class="col col-call" aria-label="Contact">
-      <article class="calling card-pop" data-tilt data-board-item aria-label="Calling card">${pin}
-        <span class="calling-tape" aria-hidden="true"></span>
-        <p class="calling-to">To ${esc(ctx.company ? `the team at ${ctx.company.name}` : 'the one buried in boring resumes')},</p>
-        <h3 class="calling-title ransom" data-ransom="TAKE NOTICE."></h3>
-        <p class="calling-msg">Resumes have been boring for too long. So I, an AI solutions engineer, directed a crew of AI agents to build this one myself. A personal project with one target, your attention.</p>
-        <p class="calling-steal">Consider it stolen.</p>
-        <p class="calling-sign">— ${esc(resume.name)}</p>
-        <span class="calling-seal" aria-hidden="true"><span>J</span></span>
-        <a class="btn-cartoon cta" data-nav data-magnetic href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">Connect on LinkedIn ↗</a>
-        <p class="calling-row"><a data-nav href="mailto:${esc(L.email)}" data-track="email_click">Email</a><span aria-hidden="true">·</span><a data-nav href="${esc(L.pdf)}" download data-track="pdf_click">Resume PDF ↓</a></p>
-      </article>
-    </section>
+    <a class="plan-continue" href="#/stats" data-nav data-board-item data-magnetic>
+      <small class="pcn-kicker">START HERE</small><b class="pcn-title">CHAPTER 01 · STATS ▸</b>
+    </a>
   </div>`;
 }
 
-/** Mounts the board into #board and wires strings + interactions. */
-export function createBoard(root, ctx, { onOpenCase, onAllStringsLit }) {
-  root.innerHTML = boardMarkup(ctx);
+/** Mounts THE PLAN into #board. reveal() plays its entrance; refresh() updates the stars and
+    the CONTINUE target after the visitor comes back from a chapter. */
+export function createBoard(root, ctx) {
+  root.innerHTML = planMarkup(ctx);
   ransom(root.querySelector('#boardName'), resume.first, NAME_SEED);
-  root.querySelectorAll('[data-ransom]').forEach((el, i) => ransom(el, el.dataset.ransom, 21 + i * 7));
-  const svg = root.querySelector('#strings');
-  const grid = root.querySelector('.board-grid');
-  const lit = new Set(store.get().lit || []); // saved: survives coming back another day
-  let sticky = null; // a tapped skill/case stays lit until tapped again
+  const items = [...root.querySelectorAll('.pl-item')];
+  const card = root.querySelector('.plan-card');
+  const cont = root.querySelector('.plan-continue');
 
-  /* ---------- red string geometry ---------- */
-  function centerOf(el) {
-    const p = el.querySelector('.pin') || el;
-    const r = p.getBoundingClientRect();
-    const g = grid.getBoundingClientRect();
-    return { x: r.left + r.width / 2 - g.left, y: r.top + r.height / 2 - g.top };
+  /* the preview card follows whatever chapter you point at */
+  let shown = null;
+  function preview(id, { silent = false } = {}) {
+    if (!id || id === shown) return;
+    shown = id;
+    const i = CHAPTERS.indexOf(id);
+    items.forEach((a) => a.classList.toggle('on', a.dataset.ch === id));
+    card.querySelector('.pc-ch').textContent = `CHAPTER ${no(i)}`;
+    card.querySelector('.pc-name').textContent = label(id);
+    card.querySelector('.pc-tease').textContent = menuTeasers[id] || '';
+    card.querySelector('.pc-go').setAttribute('href', `#/${id}`);
+    if (!silent) sfx('hover');
+    if (!reducedMotion()) gsap.fromTo(card, { x: 18, rotation: 1.5 }, { x: 0, rotation: 0, duration: 0.22, ease: 'back.out(2.4)', clearProps: 'transform' });
   }
+  items.forEach((a) => {
+    a.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && preview(a.dataset.ch));
+    a.addEventListener('focus', () => preview(a.dataset.ch));
+  });
 
-  let drawnAt = ''; // grid size the strings were last drawn for
-  function drawStrings() {
-    if (isPhone()) {
-      svg.innerHTML = '';
-      return;
-    }
-    const g = grid.getBoundingClientRect();
-    drawnAt = `${Math.round(g.width)}x${Math.round(g.height)}`;
-    svg.setAttribute('viewBox', `0 0 ${g.width} ${g.height}`);
-    svg.setAttribute('width', g.width);
-    svg.setAttribute('height', g.height);
-    /* Wiring-diagram layout: every string shares ONE rail up the gap between the columns and
-       ONE bus above the case cards, then drops into its case's pin. Shared parts sit exactly on
-       top of each other, so the board shows a single clean line, never a bundle. */
-    const cases = [...root.querySelectorAll('.case')];
-    const firstCase = cases[0]?.getBoundingClientRect();
-    const roster = root.querySelector('.roster')?.getBoundingClientRect();
-    let out = '';
-    if (firstCase && roster) {
-      const PIN = 10; // lines stop at the edge of a pin, so the pins stay on top visually
-      const railX = (roster.right + firstCase.left) / 2 - g.left;
-      const topPin = Math.min(...cases.map((c) => centerOf(c).y));
-      const busY = topPin - 44; // above the S badges
-      const f = (n) => n.toFixed(1);
-      resume.skills.forEach((s) => {
-        const a = root.querySelector(`.skill[data-skill="${s.id}"]`);
-        s.uses.forEach((caseId) => {
-          const b = root.querySelector(`.case[data-case="${caseId}"]`);
-          if (!a || !b) return;
-          const p1 = centerOf(a);
-          const p2 = centerOf(b);
-          // cards in the top row are reached from the rail above them; a card stacked lower
-          // (tablet widths) is reached straight from the rail at its pin's height
-          const d = p2.y - topPin > 30
-            ? `M${f(p1.x + PIN)} ${f(p1.y)} H${f(railX)} V${f(p2.y)} H${f(p2.x - PIN)}`
-            : `M${f(p1.x + PIN)} ${f(p1.y)} H${f(railX)} V${f(busY)} H${f(p2.x)} V${f(p2.y - PIN)}`;
-          out += `<path class="string" data-skill="${s.id}" data-case="${caseId}" d="${d}"/>`;
-        });
-      });
-    }
-    svg.innerHTML = out;
-    markLit();
-  }
-
-  let focus = [null, null]; // what is highlighted right now, so a redraw keeps it lit
-  const markLit = () =>
-    svg.querySelectorAll('.string').forEach((p) => {
-      const on = Boolean(focus[1]) && p.dataset[focus[0]] === focus[1];
-      p.classList.toggle('lit', on);
-      if (on) svg.appendChild(p); // lit strings paint on top of the shared rail
+  function refresh() {
+    const seen = store.get().visited || [];
+    items.forEach((a) => {
+      const on = seen.includes(a.dataset.ch);
+      a.classList.toggle('seen', on);
+      a.querySelector('.pl-star').setAttribute('aria-label', on ? 'seen' : '');
     });
-
-  /* ---------- highlight logic ---------- */
-  function highlight(kind, id, { silent = false } = {}) {
-    focus = [kind, id];
-    root.classList.toggle('board-focus', Boolean(id));
-    markLit();
-    const skills = new Set();
-    const cases = new Set();
-    if (kind === 'skill' && id) {
-      skills.add(id);
-      resume.skills.find((s) => s.id === id)?.uses.forEach((c) => cases.add(c));
-    }
-    if (kind === 'case' && id) {
-      cases.add(id);
-      resume.skills.filter((s) => s.uses.includes(id)).forEach((s) => skills.add(s.id));
-    }
-    root.querySelectorAll('[data-skill].skill').forEach((el) => el.classList.toggle('lit', skills.has(el.dataset.skill)));
-    root.querySelectorAll('.case').forEach((el) => el.classList.toggle('lit', cases.has(el.dataset.case)));
-    if (kind === 'skill' && id && !silent) root.querySelector('.try-one')?.remove();
-    if (kind === 'skill' && id && !lit.has(id) && !silent) {
-      lit.add(id);
-      store.addTo('lit', id);
-      if (resume.skills.every((s) => lit.has(s.id))) onAllStringsLit?.();
-    }
+    const next = nextChapter();
+    const id = next || 'contact';
+    const i = CHAPTERS.indexOf(id);
+    cont.setAttribute('href', `#/${id}`);
+    cont.querySelector('.pcn-kicker').textContent = !seen.some((s) => CHAPTERS.includes(s)) ? 'START HERE' : next ? 'CONTINUE' : 'ALL SIX SEEN · REVISIT';
+    cont.querySelector('.pcn-title').textContent = `CHAPTER ${no(i)} · ${label(id)} ▸`;
+    shown = null;
+    preview(id, { silent: true });
   }
-
-  const clear = () => {
-    if (!sticky) highlight(null, null);
-  };
-
-  // a skill that slides in under a resting cursor is not a hover: wait for the mouse to really move
-  let pointerMoved = false;
-  root.addEventListener('pointermove', (e) => {
-    if (pointerMoved || e.pointerType !== 'mouse') return;
-    pointerMoved = true;
-    // the first real move happened on top of a skill: light it now
-    e.target.closest?.('.skill')?.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
-  });
-  root.querySelectorAll('.skill').forEach((el) => {
-    const on = () => {
-      sfx('hover');
-      highlight('skill', el.dataset.skill);
-    };
-    el.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && pointerMoved && on());
-    el.addEventListener('focus', on);
-    el.addEventListener('pointerleave', clear);
-    el.addEventListener('blur', clear);
-    el.addEventListener('click', () => {
-      sticky = sticky === el.dataset.skill ? null : el.dataset.skill;
-      if (sticky) on();
-      else highlight(null, null);
-    });
-  });
-
-  root.querySelectorAll('.case').forEach((el) => {
-    el.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && !sticky && highlight('case', el.dataset.case));
-    el.addEventListener('pointerleave', clear);
-  });
-
-  root.querySelectorAll('[data-open]').forEach((b) =>
-    b.addEventListener('click', () => onOpenCase(b.dataset.open, b.closest('.case')))
-  );
-
-  /* ---------- layout + intro ---------- */
-  let raf = 0;
-  const relayout = () => {
-    cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(drawStrings);
-  };
-  window.addEventListener('resize', relayout);
-  if (document.fonts?.ready) document.fonts.ready.then(relayout);
-  // anything that moves the columns (fonts, the calling card, a wrapping line) re-pins the strings
-  // (only on a real size change: the board appearing at the size it was just drawn for must not
-  // replace the strings mid draw-in animation)
-  if (window.ResizeObserver) {
-    new ResizeObserver(([e]) => {
-      const w = Math.round(e.contentRect.width);
-      const h = Math.round(e.contentRect.height);
-      if (w && h && `${w}x${h}` !== drawnAt) relayout();
-    }).observe(grid);
-  }
+  refresh();
 
   let revealedOnce = false;
   function reveal(delay = 0) {
-    pointerMoved = false;
-    drawStrings();
+    refresh();
     if (reducedMotion()) return;
-    const items = root.querySelectorAll('[data-board-item], .case, .skill');
+    const parts = root.querySelectorAll('[data-board-item]');
     if (revealedOnce) {
-      // coming back to the board: a quick slam (~0.4s), the full cascade only plays the first time
-      return gsap.timeline({ delay }).from(items, { y: -26, opacity: 0, duration: 0.22, ease: 'power3.out', stagger: 0.004, clearProps: 'transform,opacity' }).add(relayout);
+      // coming back: a quick slam, the full entrance only plays the first time
+      return gsap.from(parts, { x: -30, opacity: 0, duration: 0.22, ease: 'power3.out', stagger: 0.025, delay, clearProps: 'transform,opacity' });
     }
     revealedOnce = true;
     const tl = gsap.timeline({ delay });
-    tl.from(items, {
-      y: () => gsap.utils.random(-90, -50),
-      x: () => gsap.utils.random(-30, 30),
-      scale: 1.3,
-      rotation: () => gsap.utils.random(-16, 16),
-      opacity: 0,
-      duration: 0.4,
-      ease: 'back.out(2.8)',
-      stagger: 0.014, // fast cascade: the proof is readable sooner
-      clearProps: 'transform,opacity'
-    }, 0);
-    const paths = [...svg.querySelectorAll('.string')];
-    if (!paths.length) return tl; // phones draw no strings
-    paths.forEach((p) => {
-      const len = p.getTotalLength();
-      p.style.strokeDasharray = `${len}`;
-      p.style.strokeDashoffset = `${len}`;
-    });
-    tl.to(paths, { strokeDashoffset: 0, duration: 0.42, ease: 'expo.out', stagger: 0.018, onComplete: () => paths.forEach((p) => (p.style.strokeDasharray = p.style.strokeDashoffset = '')) }, 0.35);
-    tl.add(relayout); // once everything has landed, pin the strings to the final card positions
+    // the chapter names slam in one after another along the staircase, the card swings in, CONTINUE punches
+    tl.from(root.querySelector('.plan-head'), { y: -40, opacity: 0, duration: 0.3, ease: 'power3.out', clearProps: 'transform,opacity' }, 0)
+      .from(root.querySelectorAll('.plan-list li, .plan-kicker'), { x: () => -window.innerWidth * 0.35, rotation: -10, opacity: 0, duration: 0.34, ease: 'back.out(1.8)', stagger: 0.05, clearProps: 'transform,opacity' }, 0.08)
+      .from(card, { x: 160, rotation: 8, opacity: 0, duration: 0.36, ease: 'back.out(2)', clearProps: 'transform,opacity' }, 0.3)
+      .from(cont, { scale: 1.6, rotation: -10, opacity: 0, duration: 0.3, ease: 'back.out(2.6)', clearProps: 'transform,opacity' }, 0.5);
     return tl;
   }
 
-  /* first visit: the board shows how it works by lighting one string by itself */
-  function demo(id = resume.skills[0].id) {
-    if ((store.get().lit || []).length) return;
-    highlight('skill', id, { silent: true });
-    setTimeout(() => {
-      if (!root.querySelector('.skill.lit:hover')) highlight(null, null, { silent: true });
-    }, 2200);
-  }
-
-  return { reveal, demo };
+  return { reveal, refresh, demo() {} };
 }
-

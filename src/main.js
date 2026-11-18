@@ -23,7 +23,7 @@ import { caseWipe, doorsWipe, panelsWipe, glassWipe, cityWipe, crtWipe } from '.
 import { fallWipe, riseWipe, trainWipe, cardWipe, preloadFilm, slashWipe, blindsWipe, paperWipe, titlePunch, tunnelWipe, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate } from './ui/hud.js';
-import { createBoard } from './scenes/board.js';
+import { createBoard, CHAPTERS } from './scenes/board.js';
 import { toast } from './ui/toast.js';
 import { createMenu, MENU_ITEMS } from './scenes/menu.js';
 import { SECTION_RENDERERS, SECTION_TITLES, dossierMarkup, animateDossier } from './scenes/sections.js';
@@ -40,7 +40,7 @@ const ctx = { company };
 mountBackdrop($('#backdrop'));
 /* "Off the Record": the GPA star on the person card flips to the fun stats */
 function flipGpa() {
-  const b = $('#board .gpa-burst');
+  const b = $('.screen.active .gpa-burst') || $('.gpa-burst');
   if (!b) return;
   const on = !b.classList.contains('flipped');
   b.classList.toggle('flipped', on);
@@ -128,6 +128,8 @@ function activate(id) {
 /* every menu destination gets its own transition */
 // each menu page has its own move from the heist-movie world (src/fx/menuwipes.js); CONTACT gets the calling card
 const MENU_STYLE = { missions: 'casefile', skills: 'doors', different: 'panels', stats: 'glass', 'side-quests': 'city', system: 'crt' };
+// from THE PLAN every chapter enters with its own move (never the same one twice in a row)
+const PLAN_STYLE = { stats: 'fall', missions: 'casefile', skills: 'doors', 'side-quests': 'city', different: 'panels', contact: 'card', system: 'crt' };
 const WIPES = { fall: fallWipe, rise: riseWipe, train: trainWipe, card: cardWipe, slash: slashWipe, blinds: blindsWipe, paper: paperWipe, casefile: caseWipe, doors: doorsWipe, panels: panelsWipe, glass: glassWipe, city: cityWipe, crt: crtWipe };
 /* Focus a target once its entrance animation has made it visible (a hidden element can't take focus).
    Gives up if the visitor has already moved focus somewhere themselves. */
@@ -184,14 +186,14 @@ async function show(id) {
     await tunnelWipe(swap);
   } else {
     // mix it up: each kind of move has its own wipe
-    // the film cuts: CONTACT gets the calling card, NEXT EPISODE the train, board -> page THE DROP,
-    // back to the board THE RISE. Page -> page through the menu keeps the quick comic wipes.
+    // the film cuts: CONTACT gets the calling card, NEXT EPISODE the train, THE PLAN -> a chapter its
+    // own move (THE DROP, case file, subway doors, city, comic panels), back to THE PLAN is THE RISE.
     style = id === 'contact'
       ? 'card'
       : viaEpisode && mode === 'page'
       ? 'train'
       : prev === 'board' && mode === 'page'
-      ? 'fall'
+      ? PLAN_STYLE[id] || 'fall'
       : mode === 'board' && prev !== 'title'
       ? 'rise'
       : viaMenu
@@ -256,7 +258,7 @@ function renderProgress(celebrate) {
     ? '<span class="pc-label">PROGRESS</span><span class="pc-all">ALL CLEAR!</span>'
     : `<span class="pc-label">PROGRESS</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
        <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>
-       <span class="pc-hint" aria-hidden="true">open each project's Live or Code link · open the 6 menu pages</span>`;
+       <span class="pc-hint" aria-hidden="true">open all 6 chapters · try both projects' Live or Code links</span>`;
   if (celebrate && !reducedMotion()) gsap.fromTo(chip, { scale: 1.6, rotation: -12 }, { scale: 1, rotation: -3, duration: 0.5, ease: 'elastic.out(1.4, .4)' });
   else if (lastDone !== null && p.done > lastDone) rollIn(chip.querySelector('.pc-count b')); // one more case rolls in
   lastDone = p.done;
@@ -382,21 +384,15 @@ $$('.screen').forEach((sc) =>
   }, { passive: true })
 );
 initClearing();
-const board = createBoard($('#board'), ctx, {
-  onOpenCase: (id, el) => openDossier(id, el),
-  onAllStringsLit: () => unlock('full-recon')
-});
-hydrateStamps($('#board'));
+const board = createBoard($('#board'), ctx);
 
 let boardSeen = false;
 let revealDelay = 0;
 function enterBoard() {
   renderProgress();
   board.reveal(revealDelay);
-  setTimeout(() => screen === 'board' && board.demo(), (revealDelay + 1.1) * 1000);
   revealDelay = 0;
-  slamOnScroll($('#board'), '.note, .calling'); // phones: the notes and calling card punch in as you scroll
-  $('#board .case-open')?.focus({ preventScroll: true });
+  focusSoon($('#board .plan-continue'));
   if (!boardSeen) {
     boardSeen = true;
     soundHint();
@@ -419,13 +415,13 @@ function root0Class(id) {
 /* NEXT EPISODE: the end of every story page is a "next time" card, studied from Lusion's
    scroll-to-next-page bar. Keep scrolling (or swiping) past the bottom and the fuse fills;
    when it's full the next chapter rolls in with THE DROP. A click or Enter does it at once. */
-const EPISODES = ['missions', 'skills', 'different', 'stats', 'side-quests', 'contact'];
+const EPISODES = CHAPTERS; // the resume in reading order (src/scenes/board.js)
 function nextEpisodeMarkup(id) {
   const i = EPISODES.indexOf(id);
   if (i < 0) return '';
   const next = EPISODES[i + 1] || 'board';
-  const title = next === 'board' ? 'BACK TO THE BOARD' : SECTION_TITLES[next];
-  const tease = next === 'board' ? 'Every case, skill and note in one place' : menuTeasers[next] || '';
+  const title = next === 'board' ? 'BACK TO THE PLAN' : SECTION_TITLES[next];
+  const tease = next === 'board' ? 'All six chapters on one screen' : menuTeasers[next] || '';
   return `<section class="next-ep" aria-label="Next episode">
     <p class="ne-kicker">${i === EPISODES.length - 1 ? 'THE END · FOR NOW' : `NEXT EPISODE · ${String(i + 2).padStart(2, '0')}`}</p>
     <button class="ne-go" type="button" data-episode="${next}"><span class="ne-title">${esc(title)} ▸</span><span class="ne-tease">${esc(tease)}</span></button>
@@ -506,6 +502,7 @@ function renderPage(id) {
   hydrateStamps(root);
   if (id === 'contact') sfx('sparkle');
   store.addTo('visited', id);
+  if (CHAPTERS.every((c) => store.has('visited', c))) unlock('full-recon'); // every chapter opened
 }
 
 let cutinShown = false;
@@ -752,14 +749,10 @@ $('#menuBtn').addEventListener('click', () => {
   }
   menu.isOpen() ? menu.close() : menu.open();
 });
-// CHAPTER SELECT's "FULL MENU" opens the same menu
-document.addEventListener('click', (e) => {
-  if (e.target.closest('[data-open-menu]')) $('#menuBtn').click();
-});
 
 function renderKeyHints(mode) {
   const sets = {
-    board: [['TAB', 'MOVE'], ['⏎', 'OPEN'], ['1-2', 'CASE FILES'], ['F', 'FLIP'], ['Q', 'QUICK VIEW']],
+    board: [['↑↓', 'MOVE'], ['⏎', 'OPEN'], ['1-6', 'CHAPTERS'], [MENU_KEY, 'MENU'], ['Q', 'QUICK VIEW']],
     page: [['↑↓', 'MOVE'], ['⏎', 'OPEN'], ['ESC', 'BACK'], [MENU_KEY, 'MENU'], ['Q', 'QUICK VIEW']]
   };
   $('#keyhints').innerHTML = (sets[mode] || [])
@@ -845,10 +838,9 @@ function handle(action, e) {
     default:
       if (action.startsWith('hotkey:') && $('#modal').hidden) {
         const n = Number(action.split(':')[1]);
-        if (screen === 'board' && !menu.isOpen() && n <= resume.missions.length) {
-          const b = $$('#board .case-open')[n - 1];
-          b?.click();
-          return Boolean(b);
+        if (screen === 'board' && !menu.isOpen() && CHAPTERS[n - 1]) {
+          navigate(CHAPTERS[n - 1]); // THE PLAN: 1-6 open the chapters in reading order
+          return true;
         }
         if (screen !== 'title' && MENU_ITEMS[n - 1]) {
           viaMenu = true;

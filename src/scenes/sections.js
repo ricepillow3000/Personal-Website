@@ -8,7 +8,7 @@ import { clearStampMarkup, isCleared } from '../ui/clear.js';
 
 /* Each section returns { title, html, after(root) }. Content comes from resume.js only. */
 
-const back = '<button class="btn back-btn" type="button" data-back>◂ BOARD <kbd>ESC</kbd></button>';
+const back = '<button class="btn back-btn" type="button" data-back>◂ THE PLAN <kbd>ESC</kbd></button>';
 const head = (title, sub = '') => `
   <div class="page-head"><h2 class="ransom ransom-lg" data-ransom="${esc(title)}"></h2></div>
   ${sub ? `<p class="page-sub" data-in>${sub}</p>` : ''}`;
@@ -171,7 +171,7 @@ function skills(ctx) {
 
 function different() {
   return {
-    title: 'DIFFERENT',
+    title: 'MY EDGE',
     html: `${watermark('FACTS')}${back}${head('WHAT MAKES ME DIFFERENT', 'Four facts. No pitch.')}
       <div class="comic">${resume.different
         .map((d, i) => `<article class="panel panel-${i}" data-nav tabindex="0"><span class="panel-num" aria-hidden="true">${i + 1}</span><h3>${esc(d.title)}</h3><p>${mark(d.fact)}</p></article>`)
@@ -202,6 +202,7 @@ function stats() {
     title: 'STATS',
     html: `${watermark('PROFILE')}${back}${head('STATS', 'The person behind the projects.')}
       <section class="idcard" data-in>
+        <button class="gpa-burst" type="button" aria-label="Off the record. Press to flip for a secret stat." aria-pressed="false"><span class="gb-front"><b>???</b><small>OFF RECORD</small></span><span class="gb-back"><b>MAX</b><small>BEE FEAR</small></span></button>
         <div class="id-band"><span>ID · ${esc(resume.name.toUpperCase())}</span><span>${esc(resume.location)}</span></div>
         <div class="id-body">
           <figure class="gpa-card" aria-label="GPA ${esc(e.gpa)} out of 4.00">
@@ -312,8 +313,8 @@ function system() {
   const s = store.get().settings;
   const reduce = s.reduceMotion === null ? reducedMotion() : s.reduceMotion;
   return {
-    title: 'SYSTEM',
-    html: `${watermark('CONFIG')}${back}${head('SYSTEM')}
+    title: 'SETTINGS',
+    html: `${watermark('CONFIG')}${back}${head('SETTINGS')}
       <div class="sys-grid">
         <section class="sys jag light" data-in>
           <h3>RESUME</h3>
@@ -348,7 +349,7 @@ function secret() {
   };
 }
 
-export const SECTION_TITLES = { missions: 'MISSIONS', skills: 'SKILLS', different: 'DIFFERENT', stats: 'STATS', 'side-quests': 'SIDE QUESTS', contact: 'CONTACT', system: 'SYSTEM', secret: 'BEHIND THE SCENES' };
+export const SECTION_TITLES = { missions: 'MISSIONS', skills: 'SKILLS', different: 'MY EDGE', stats: 'STATS', 'side-quests': 'SIDE QUESTS', contact: 'CONTACT', system: 'SETTINGS', secret: 'BEHIND THE SCENES' };
 
 export const SECTION_RENDERERS = {
   missions,

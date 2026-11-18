@@ -7,7 +7,7 @@ import { rollIn } from '../fx/kinetic.js';
 export const ACHIEVEMENTS = [
   { id: 'first-words', name: 'First Words', hint: 'Every story starts with a button.' },
   { id: 'case-file', name: 'Case File', hint: 'Open one of the mission files.' },
-  { id: 'full-recon', name: 'Full Recon', hint: 'Light up every red string on the board.' },
+  { id: 'full-recon', name: 'Full Recon', hint: 'Open all six chapters.' },
   { id: 'bee', name: 'BEE!!', hint: 'Something small and buzzing passes by. Be quick.' },
   { id: 'off-record', name: 'Off the Record', hint: 'That GPA star has a flip side.' },
   { id: 'inspector', name: 'Inspector', hint: 'Developers know where to look.' },

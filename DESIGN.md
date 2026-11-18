@@ -207,23 +207,23 @@ From John's research notes (kept verbatim in spirit):
 - Key hints are a solid black HUD tab (bottom right) and hide while scrolling; on phones they are hidden, and so are `kbd` labels like ESC on touch screens.
 - Touch screens: every control has a tap area of at least 44px (invisible hit slop, the look doesn't change). Achievement pop-ups sit under the top bar on phones, are smaller, and dismiss on tap.
 
-**Heist Board (the portfolio hub)**
-- Columns: Skills roster (left) · Case Files (middle) · notes (right: CASE 00 · THIS SITE, The Person, Side Quests). On wide screens the **calling card closes the middle column** (no empty gap).
-- **Red strings = wiring diagram**, not a bundle: one shared rail up the gap between columns, a short tick from each skill pin, one rail above the case cards, a drop into each case pin. Shared parts overlap exactly (solid color). Lines stop at pin edges. Lit route = thick white with sharp corners; others dim. Lines never cross a card's text. Stacked cards (tablet) are reached from the side. Redraw only when the layout really changes.
-- First visit: one string lights itself + "TRY ONE ↓" until the first try. A skill that slides in under a resting mouse cursor is not a "try": hovers only count after the mouse really moves.
-- Case cards: calling-card red style, **different interiors** per case, S grade badge that fits, proof stickers, one-line brief bubble, OPEN FILE + Live + Code. Kept compact (cards were made ~10% shorter); badges, pins and stamps must never be clipped.
-- PROGRESS chip (was "CASE LOG", renamed as plain words) counts **8 things a visitor can actually reach** (visit both projects + open the 6 menu pages), with a plain-words caption. It is a real button: it opens a checklist (same comic header as the case file) that says what is done and how each item counts.
-- The Person: GSU, degree, stickers (AI & Analytics, Dean's List ×2, Class of 2029), fun facts as sticker strips, GPA starburst that flips to "MAX · BEE FEAR".
-- Side Quests: one-liners on the board, FULL STORY to the page.
+**THE PLAN (the hub after PRESS START; replaced the Heist Board, Nov 18)** — John: the board was "crammed", the chapter tabs "don't look nice", a first-time visitor "would be so overwhelmed... I'll probably just click out", and the resume must **guide the visitor start to finish** without hiding anything behind a small button. One screen, one job:
+- The resume as **six chapters in reading order**: 01 STATS (who he is), 02 MISSIONS (projects), 03 SKILLS, 04 SIDE QUESTS (work experience), 05 MY EDGE, 06 CONTACT. `CHAPTERS` in `src/scenes/board.js` is the single source; NEXT EPISODE at the end of each chapter, the MENU order and the 1-6 keys all follow it.
+- A big P5-style **staircase of chapter names** (Anton, slanted, yellow number tags, black slab + red hard shadow on the selected one, a yellow star on seen ones). Generous spacing: never a crammed list.
+- **One preview card** (desktop/tablet landscape): the chapter you point at, with ONE line and its key number, plus ENTER. Phones and narrow tablets show the one-liner under each chapter name instead.
+- **One big CONTINUE** that always points at the next chapter not yet seen ("START HERE" on a first visit, "ALL SIX SEEN · REVISIT" at the end); pinned to the bottom of the screen on phones.
+- Header: cut-out JOHN + NGUYEN slab, one role line, the PROGRESS chip, and the `?company=` note when present. Nothing else: no skill roster, case cards, notes or strings (their content lives in the chapters).
+- **Every chapter enters with its own move from THE PLAN**: STATS = THE DROP, MISSIONS = case file, SKILLS = subway doors, SIDE QUESTS = city billboard, MY EDGE = comic panels, CONTACT = calling card. Back to THE PLAN = THE RISE.
+- One name per thing everywhere (chapter list, transition sign, NEXT EPISODE, menu): MY EDGE (page heading spells it out, "What makes me different"), SETTINGS (not SYSTEM).
+- Moved off the old board: the off-the-record starburst now sits on the STATS ID card ("??? OFF RECORD" flips to "MAX · BEE FEAR"); Full Recon = open all six chapters.
 
 **Calling card (the ending)** — cream paper, pinned and taped, red wax seal:
 > To the one buried in boring resumes, / **TAKE NOTICE.** / Resumes have been boring for too long. So I, an AI solutions engineer, directed a crew of AI agents to build this one myself. A personal project with one target, your attention. / *Consider it stolen.* / — John Nguyen / [Connect on LinkedIn ↗] / Email · Resume PDF ↓
 
-With `?company=X`: "To the team at X," and a board note "Wait, someone from X? I've been expecting you."
+With `?company=X`: "To the team at X," and a note on THE PLAN "Wait, someone from X? I've been expecting you."
 
-**CHAPTER SELECT (board)** — the six story pages as a P5-style diagonal staircase right on the board (numbered yellow tags, big slanted names, black slab + red shadow on hover, a star on visited ones) plus FULL MENU. John: the small MENU button made the board feel like "oh, that's all?". The HUD MENU button is red and pulses with a ring until the menu has been opened once (`jn-menu-seen`).
 **Declutter rule (John: "not cluttered, but don't hide anything fun")** — cut repeats, not fun: no CASE 00 note (it repeated the title and calling card), no second status line on wide screens (the HUD has it; phones keep it, it's their only status line), no posters/arrow/star outline behind the board and pages (title only). Real resume content (Side Quests jobs, fun facts) stays.
-**P5 split** — board and pages: a big flat red plane slices the right side (thin black edge) with the black/white starburst on it, and a jagged white band with a black ink edge cuts across, over the dark city (references: P5 pause menu and confidant screens, shapes original).
+**P5 split** — THE PLAN and pages: a big flat red plane slices the right side (thin black edge) with the black/white starburst on it, and a jagged white band with a black ink edge cuts across, over the dark city (references: P5 pause menu and confidant screens, shapes original).
 
 **Menu** — diagonal staircase list: MISSIONS, SKILLS, MY EDGE, STATS, SIDE QUESTS, CONTACT, SETTINGS. Star cursor, black slab snaps behind the selected item, one-line teaser bubble that says what's inside ("What makes me different · 4 facts"). CLEARED mini-stamps on visited items must **not block the labels**. Ctrl/⌘+K toggles it. The labels are sized by width **and height** (`min(max(7.5vw, 42px), 10vh)`) so all 7 fit on short laptops (1280×720, 1366×768, 1440×900) and phones held sideways; a test guards it (Nov 18: SETTINGS hung off the bottom on those screens).
 **Achievements panel** — same black comic header as the case file ("SECRETS · x/7 FOUND"), never a plain white box.
@@ -300,6 +300,7 @@ Run after every design change; report results honestly.
 - City look (from John's references, as inspiration only, never copied): **night city**, black sky, layered dark-gray towers with solid black shadows and halftone, dense strips of white lit windows, **red aircraft beacons** on rooftops, sharp red equalizer-style bars as accents, skylines and **semi bird's-eye** views. **No people, no red figure, no crosswalk**, no people inside windows.
 - The hand-painted canvas tower was replaced by Gemini's art (it read as blocky).
 - **Libraries suggested later**: Motion Primitives (scramble, magnetic, sliding number, tilt, scroll progress) and Watermelon UI (tooltip, Sonner toast timer) were read from their GitHub source and rebuilt natively in the comic style; Anime.js is used lazily for slam-in only. No React. Coconut UI and Backlit UI sites are blocked by the session network and have no public repo. img2threejs skipped (no photos; 3D clashes with flat comic style).
+- **Heist Board (skill roster + red strings + case cards + notes + chapter tabs on one screen)** → replaced by **THE PLAN** (Nov 18): too many boxes at once, and the chapter tabs read as crammed. Don't bring back a dashboard of boxes; the hub stays one list, one card, one CONTINUE.
 - **Menu labels DIFFERENT and SYSTEM** read as unclear to a phone tester → renamed **MY EDGE** and **SETTINGS** (pages keep their full titles).
 
 ## 14. Lessons learned while building (technical design notes)

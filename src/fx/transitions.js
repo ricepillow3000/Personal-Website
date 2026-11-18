@@ -438,12 +438,12 @@ export function fallWipe(swap, label = '') {
 /* THE RISE (any page -> back to the board): the reverse shot. The page drops away below
    you, you rocket up the tower face, burst over the roof into the red sky, and the board
    lands with the star-flash. (~0.95s, kept short because Back is used a lot) */
-export function riseWipe(swap, label = 'THE BOARD') {
+export function riseWipe(swap, label = 'THE PLAN') {
   if (reducedMotion()) {
     swap();
     return Promise.resolve();
   }
-  const set = citySet(label || 'THE BOARD', '<div class="fall-half whole"></div>');
+  const set = citySet(label || 'THE PLAN', '<div class="fall-half whole"></div>');
   const { el, H, TH, city, sky, tower, lines, sign } = set;
   const whole = el.querySelector('.fall-half.whole');
   const snap = snapshotScreen();

@@ -1,5 +1,5 @@
 /* ?company= personalization.
-   Key = lowercase company name. Any company gets the board note and calling-card greeting;
+   Key = lowercase company name. Any company gets the note on THE PLAN and the calling-card greeting;
    known ones also get order.skills / order.missions (ids from resume.js, listed first in that order). */
 
 export const companies = {
