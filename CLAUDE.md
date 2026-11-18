@@ -24,6 +24,11 @@ The project skill `.claude/skills/design-bible/SKILL.md` enforces the same thing
 
 ```bash
 npm install
-npm run dev
+npm run dev    # source page is app.html
 npm test
+npm run site   # build + copy the site to the repo root; commit the result
 ```
+
+## Publishing
+
+GitHub Pages serves this repo's `main` branch as-is ("Deploy from a branch"), so the BUILT site lives at the repo root (`index.html`, `assets/`, `.nojekyll`). The source page is `app.html`. After any change run `npm run site` and commit the root files with it; CI fails if they don't match the code.

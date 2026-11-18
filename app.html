@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>John Nguyen · Interactive Resume</title>
+  <meta name="description" content="John Nguyen — AI Solutions Engineer in training. I direct AI agents to build software, then test it like it's going to production. Play the interactive resume, or open the one-page Quick View.">
+  <meta name="theme-color" content="#E5191C">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="John Nguyen · Interactive Resume">
+  <meta property="og:description" content="I direct AI agents to build software, then test it like it's going to production. Press start.">
+  <meta property="og:image" content="https://ricepillow3000.github.io/assets/og-image.jpg">
+  <meta property="og:url" content="https://ricepillow3000.github.io/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800&family=Barlow+Semi+Condensed:wght@500;600;700&family=Permanent+Marker&family=Special+Elite&display=swap">
+</head>
+<body data-screen="boot">
+  <a class="skip-link" href="#/quick">Skip to the one-page resume</a>
+
+  <div id="backdrop"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <main id="app">
+    <!-- TITLE -->
+    <section class="screen" id="screen-title" aria-label="Title screen">
+      <div class="title-block">
+        <h1 class="ransom ransom-xl" id="titleName"></h1>
+        <div class="slab title-codename"><span>NGUYEN</span></div>
+        <p class="title-role" id="titleRole"></p>
+        <p class="title-hook" id="titleHook"></p>
+        <button class="press-start" id="pressStart" type="button" data-magnetic>PRESS START</button>
+        <a class="quick-link" href="#/quick">Quick View (1-page resume) ▸</a>
+      </div>
+    </section>
+
+    <!-- HEIST BOARD (the portfolio) -->
+    <section class="screen screen-board" id="screen-board" aria-label="Portfolio board">
+      <div class="board" id="board"></div>
+    </section>
+
+    <!-- SECTION PAGES (missions, skills, different, stats, side-quests, contact, system, secret) -->
+    <section class="screen screen-page" id="screen-page" aria-label="Section">
+      <div class="page-inner" id="page"></div>
+    </section>
+
+    <!-- QUICK VIEW -->
+    <section class="screen screen-page" id="screen-quick" aria-label="One-page resume">
+      <div class="quick-bar no-print">
+        <a class="btn" href="#/board" data-back>◂ Back<span class="qb-long"> to the board</span></a>
+        <a class="btn btn-accent" id="quickPdf" download>↓ <span class="qb-long">Download </span>PDF</a>
+      </div>
+      <article class="paper" id="paper"></article>
+    </section>
+  </main>
+
+  <!-- HUD -->
+  <header class="hud-tl" id="hudDate" aria-label="Date and status"></header>
+  <nav class="hud-tr" aria-label="Site controls">
+    <button class="hud-btn" id="achBtn" type="button" data-tip="ACHIEVEMENTS"><span class="sr-only">Achievements </span><span aria-hidden="true">★ </span><span id="achCount">0/7</span></button>
+    <button class="hud-btn" id="soundBtn" type="button" aria-pressed="false" aria-label="Sound" data-tip="SOUND · M"><span class="snd-off"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/></svg></span><span class="snd-on"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="2.2"/></svg></span><span class="sound-tip" id="soundTip" aria-hidden="true">sound?</span></button>
+    <a class="hud-btn hud-in" id="hudLinkedIn" href="#" target="_blank" rel="noopener" data-track="linkedin_click" data-tip="OPENS LINKEDIN ↗" aria-label="LinkedIn (opens in a new tab)">LinkedIn ↗</a>
+    <button class="hud-btn" id="menuBtn" type="button" data-tip="MENU" aria-expanded="false" aria-controls="menu">MENU</button>
+  </nav>
+  <div class="keyhints" id="keyhints" aria-hidden="true"></div>
+
+  <!-- MENU OVERLAY -->
+  <div class="menu-overlay" id="menu" hidden>
+    <ul class="stair" id="stair" role="menu" aria-label="Menu"></ul>
+    <div class="menu-teaser bubble" id="menuTeaser"></div>
+    <button class="btn menu-close" type="button" data-close-menu>✕ CLOSE <kbd>ESC</kbd></button>
+  </div>
+
+  <!-- MODAL (mission dossier, achievements) -->
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+    <div class="modal-panel" id="modalPanel"></div>
+  </div>
+
+  <!-- FX LAYERS -->
+  <div class="wipe" aria-hidden="true"><div class="wipe-red"></div><div class="wipe-black"></div><div class="wipe-white"></div><div class="wipe-star"></div></div>
+  <div class="punch" aria-hidden="true"><div class="punch-rays"></div><div class="punch-star"></div><div class="punch-text" id="punchText"></div></div>
+  <div class="cutin" aria-hidden="true"><div class="cutin-strip"><div class="cutin-eyes" id="cutinEyes"></div><div class="cutin-text" id="cutinText"></div><div class="cutin-flash"></div></div></div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <button class="bee" id="bee" type="button" aria-label="A bee!" hidden><svg viewBox="0 0 44 34" width="46" height="36" aria-hidden="true"><ellipse cx="17" cy="8" rx="8" ry="6" fill="#F5F5F0" stroke="#0B0B0B" stroke-width="2.5" transform="rotate(-25 17 8)"/><ellipse cx="27" cy="8" rx="7" ry="5" fill="#F5F5F0" stroke="#0B0B0B" stroke-width="2.5" transform="rotate(20 27 8)"/><ellipse cx="22" cy="21" rx="15" ry="10" fill="#FFE11A" stroke="#0B0B0B" stroke-width="3"/><path d="M17 12v18M25 12v18" stroke="#0B0B0B" stroke-width="4"/><circle cx="34" cy="19" r="2" fill="#0B0B0B"/><path d="M7 21l-6 2 6 2z" fill="#0B0B0B"/></svg></button>
+  <div class="motto-screen" id="motto" aria-hidden="true"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

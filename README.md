@@ -33,6 +33,7 @@ deep link: `/?company=Google#/missions`.
 npm install
 npm run dev        # local dev server
 npm test           # build + Playwright tests (desktop + phone)
+npm run site       # build and copy the site to the repo root (GitHub Pages serves main as-is)
 ```
 
 ## Controls
