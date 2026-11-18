@@ -190,7 +190,7 @@ From John's research notes (kept verbatim in spirit):
 ## 9. Components and screens
 
 **Title**
-- Street-art wall background (red, halftone, stencil star, torn posters "GO!" and "ATL", crown tag). On tall screens the wall anchors left so the poster and star fill the space; the swoosh arrow only shows on wide screens.
+- Opening shot: a cel-shaded night subway platform (Nano Banana) with a slow camera push; torn posters "GO!" and "ATL" and the stencil star as accents. On tall screens the wall anchors left so the poster and star fill the space; the swoosh arrow only shows on wide screens.
 - Cut-out "JOHN", slab "NGUYEN", a yellow-on-black role line "AI SOLUTIONS ENGINEER IN TRAINING · 2 LIVE APPS · 2,000+ TESTS" (two lines on phones) so the first 10 seconds say who and what, one hook line: "Resumes are boring. So I directed a crew of AI agents to turn mine into a game.", pulsing PRESS START (CONTINUE when a save exists), "Quick View (1-page resume) ▸".
 - Save line: "Save found · x/7 cleared · Start over". Start over offers **Undo** until the visitor presses start.
 
@@ -206,7 +206,7 @@ From John's research notes (kept verbatim in spirit):
 - **Red strings = wiring diagram**, not a bundle: one shared rail up the gap between columns, a short tick from each skill pin, one rail above the case cards, a drop into each case pin. Shared parts overlap exactly (solid color). Lines stop at pin edges. Lit route = thick white with sharp corners; others dim. Lines never cross a card's text. Stacked cards (tablet) are reached from the side. Redraw only when the layout really changes.
 - First visit: one string lights itself + "TRY ONE ↓" until the first try. A skill that slides in under a resting mouse cursor is not a "try": hovers only count after the mouse really moves.
 - Case cards: calling-card red style, **different interiors** per case, S grade badge that fits, proof stickers, one-line brief bubble, OPEN FILE + Live + Code. Kept compact (cards were made ~10% shorter); badges, pins and stamps must never be clipped.
-- CASE LOG chip counts **8 things a visitor can actually reach** (visit both projects + open the 6 menu pages), with a plain-words caption. It is a real button: it opens a checklist (same comic header as the case file) that says what is done and how each item counts.
+- PROGRESS chip (was "CASE LOG", renamed as plain words) counts **8 things a visitor can actually reach** (visit both projects + open the 6 menu pages), with a plain-words caption. It is a real button: it opens a checklist (same comic header as the case file) that says what is done and how each item counts.
 - The Person: GSU, degree, stickers (AI & Analytics, Dean's List ×2, Class of 2029), fun facts as sticker strips, GPA starburst that flips to "MAX · BEE FEAR".
 - Side Quests: one-liners on the board, FULL STORY to the page.
 
@@ -273,7 +273,13 @@ Run after every design change; report results honestly.
 - **Bundled side-by-side strings** → one shared wiring-diagram rail.
 - **"RK 90" next to "LV 9"** → one LV scale.
 - **Recorded drum samples / drum loop plan** → dropped; everything synthesized.
-- **Current city art (Nov 17):** the low-angle red-sky city, the tower crown and facade are drawn by `tools/draw-city.mjs` (real perspective: window lines converge to one vanishing point; white/gray/black faces, thin ink lines, big black shadow shapes clipped to each building, halftone edges, our own red-circle star emblem on billboards). The subway car is Gemini's, edited: ring-hoop hand straps, plain light strips. John wants the final art from an image model: **Nano Banana 2 (Gemini Flash image) once billing is on for his key** (best budget + quality); Midjourney uploads are the premium option. No bird's-eye views (John's call); low-angle and skyline views only.
+- **Art direction (Nov 18, John's references):** cartoon, not realistic, and **not fully red**. Blend clean with comic: a cel-shaded game look with bold black toon outlines, flat grayscale tones (white, light gray, charcoal, black), a little inked grit, hatching and halftone, deep black shadows; **crimson only as an accent** (safety lines, train stripe, red screens, beacons, our red-disc white-star emblem). All art generated with **Nano Banana (gemini-2.5-flash-image)** through the OpenAI-compatible `images/generations` endpoint (the chat endpoint can't return images), on John's private Persona Resume key. Photoreal results and clean vector clip-art results were both rejected.
+  - **Title:** an empty night subway platform (grayscale, red safety lines, red-striped train, star sign) as the opening shot, with a slow camera push. No people, no red figures. The red poster wall is retired (John: "don't make it fully red"); the GO!/ATL posters and star stay as accents.
+  - **Board and pages:** the night city at a Dutch angle (-7deg), half opacity over black, moving least in the parallax; black tech cutouts (server racks, a circuit board) in front, moving most.
+  - **Film cuts:** the same night city as THE DROP's opening shot; the Art Deco tower crown (its black sky melts in with an edge mask) and the window-wall facade (cropped so it tiles); the gray/white red-band subway car.
+  - **Print texture:** a Nano Banana grit tile (halftone patches, ink specks, hatching) over the whole background (overlay) and the cream cards (multiply, 14%), big tile so it never visibly repeats.
+  - **Speed rule:** background art and texture load after first paint (phones wait ~2.5s, then fade in); film-cut art loads on the first tap/key or ~6s in. Never let big images decode during the title's build-in (it cost 7 Lighthouse points).
+- **Superseded (Nov 17):** the low-angle red-sky city, the tower crown and facade are drawn by `tools/draw-city.mjs` (real perspective: window lines converge to one vanishing point; white/gray/black faces, thin ink lines, big black shadow shapes clipped to each building, halftone edges, our own red-circle star emblem on billboards). The subway car is Gemini's, edited: ring-hoop hand straps, plain light strips. John wants the final art from an image model: **Nano Banana 2 (Gemini Flash image) once billing is on for his key** (best budget + quality); Midjourney uploads are the premium option. No bird's-eye views (John's call); low-angle and skyline views only.
 - **City art** is generated by **Gemini** (John's call: "from now on, use Gemini for generation"). Gemini's image models are not on the free tier, so the art is drawn by Gemini's text model as **SVG** (gemini-3.8-flash via the OpenAI-compatible endpoint), cleaned with `tools/clean-film-svg.py` (no scripts, no external links, no text; red beacons blink) and kept in `public/assets/film/`. Keep asking Gemini for more detail until it looks right.
 - City look (from John's references, as inspiration only, never copied): **night city**, black sky, layered dark-gray towers with solid black shadows and halftone, dense strips of white lit windows, **red aircraft beacons** on rooftops, sharp red equalizer-style bars as accents, skylines and **semi bird's-eye** views. **No people, no red figure, no crosswalk**, no people inside windows.
 - The hand-painted canvas tower was replaced by Gemini's art (it read as blocky).
@@ -299,7 +305,7 @@ Run after every design change; report results honestly.
 - Pop-ups on phones must never block a control: phone toasts let taps pass straight through. Desktop toasts show a draining yellow **fuse** (Watermelon/Sonner pattern) that pauses on hover.
 - HUD buttons use **comic tooltips** (black slab, red offset, spike) that show the name and shortcut (`SOUND · M`, `MENU · CTRL K`) on mouse hover or keyboard focus; never on touch. No native `title` tooltips (they doubled up).
 - Count-ups must never show a wrong headline number for long: the GPA counts from 3.50, not 0.
-- The CASE LOG list is two columns with outline stars for "not yet" so all 8 rows fit a 900px-tall laptop.
+- The PROGRESS list is two columns with outline stars for "not yet" so all 8 rows fit a 900px-tall laptop.
 
 ## 15. Tools that help (use before calling a design done)
 

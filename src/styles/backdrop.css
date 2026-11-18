@@ -27,7 +27,7 @@
 /* PRESS START freeze: the wall drains to grey and stops */
 
 /* Sections read better over a dimmed wall; Quick View almost hides it. */
-body[data-mode="page"] .backdrop { filter: brightness(.42); }
+body[data-mode="page"] .backdrop { filter: brightness(.62); }
 body[data-mode="quick"] .backdrop { filter: brightness(.16); }
 
 @media (prefers-reduced-motion: reduce) {
@@ -39,3 +39,33 @@ body.reduce-motion .bd-layer { transform: none !important; }
 
 /* on tall screens the wall is cropped to its middle, and the arrow would read as a stray white band */
 @media (max-aspect-ratio: 1/1) { .bd-arrow { display: none; } }
+
+/* Background art (Nano Banana, cel-shaded + comic ink, grayscale with red accents only).
+   Title: the empty night subway platform, the movie's opening shot, with a slow camera push.
+   Board and pages: the night city at a Dutch angle. Red is an accent, never the whole screen
+   (John: "don't make it fully red"). Both fade in once loaded; the city moves least, the tech
+   cutouts in front move most. */
+.backdrop { background: #0B0B0B; }
+.bd-wall { opacity: 0; }
+.bd-subway, .bd-city { --amp: 2; }
+.bd-subway img, .bd-city img { position: absolute; width: 112%; height: 112%; inset: -6%; object-fit: cover; opacity: 0; transition: opacity .5s ease-out; }
+.bd-city img { object-position: 50% 40%; transform: rotate(-7deg) scale(1.08); }
+.bd-city img.in { opacity: .5; }
+.bd-subway img { object-position: 60% 55%; transform: rotate(-3deg) scale(1.06); animation: camPush 26s ease-in-out infinite alternate; }
+@keyframes camPush { to { transform: rotate(-2deg) scale(1.14) translate(-1.5%, 1%); } }
+body[data-mode="title"] .bd-subway img.in { opacity: 1; }
+body[data-mode="title"] .bd-city img { opacity: 0; }
+.bd-tech { --amp: 26; transition: opacity .3s steps(3); }
+body[data-mode="title"] .bd-tech { opacity: 0; } /* the title has its own composition */
+@media (max-width: 760px) { .bd-tech { opacity: .7; } }
+@media (prefers-reduced-motion: reduce) { .bd-subway img { animation: none; } }
+body.reduce-motion .bd-subway img { animation: none; }
+
+/* Print texture (Nano Banana grit: halftone patches, ink specks, hatching), John: "incorporate
+   Persona 5 textures". Over the whole background it reads like a screen print; on the cream cards
+   like printed comic paper. Big tile + low opacity so the repeat never shows; added after first paint. */
+.tex .backdrop::after { content: ""; position: absolute; inset: 0; z-index: 9; pointer-events: none;
+  background: var(--grit) 0 0 / 900px 900px; mix-blend-mode: overlay; opacity: .42; }
+.tex .card-pop:not(.dark)::after, .tex .ccard-face::after, .tex .quest::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: var(--grit) 0 0 / 700px 700px; mix-blend-mode: multiply; opacity: .14; }

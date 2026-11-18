@@ -134,13 +134,85 @@ function shardLayer() {
 /* =========================================================================
    Mount + motion: shared drift (nearer layers move further) + pointer parallax.
    ========================================================================= */
+/* =========================================================================
+   LAYER 4 — FOREGROUND TECH CUTOUTS: solid black vector silhouettes (server racks with
+   vents and status LEDs, a circuit board with traces and a chip, a cable run) with thin
+   white cut edges, like shapes sliced out of black card. They sit at the edges, in front
+   of everything in the backdrop, and move the most (parallax), never over the content.
+   ========================================================================= */
+function techLayer() {
+  const K = C.black;
+  const rack = (x, y, w, h, depth, leds) => {
+    let g = '';
+    g += poly([[x + w, y + 10], [x + w + depth, y - 8], [x + w + depth, y + h], [x + w, y + h]], '#151515'); // side face
+    g += poly([[x, y + 10], [x + w, y + 10], [x + w + depth, y - 8], [x + depth, y - 8]], '#262626'); // top
+    g += `<rect x="${x}" y="${y + 10}" width="${w}" height="${h - 10}" fill="${K}"/>`;
+    g += `<path d="M${x} ${y + 10}H${x + w}V${y + h}" fill="none" stroke="${C.white}" stroke-width="2" opacity=".55"/>`; // cut edge catching light
+    for (let i = 0, yy = y + 30; yy < y + h - 16; i++, yy += 26) {
+      g += `<rect x="${x + 10}" y="${yy}" width="${w - 20}" height="18" fill="none" stroke="#2C2C2C" stroke-width="2"/>`;
+      for (let v = x + 18; v < x + w - 40; v += 7) g += `<rect x="${v}" y="${yy + 5}" width="3" height="8" fill="#202020"/>`; // vents
+      if (leds) g += `<rect x="${x + w - 30}" y="${yy + 7}" width="5" height="4" fill="${i % 3 ? C.white : C.red2}"/><rect x="${x + w - 21}" y="${yy + 7}" width="5" height="4" fill="${i % 4 ? '#3A3A3A' : C.white}"/>`;
+    }
+    return g;
+  };
+  const trace = (d) => `<path d="${d}" fill="none" stroke="${K}" stroke-width="7" stroke-linejoin="miter"/><path d="${d}" fill="none" stroke="${C.white}" stroke-width="1" opacity=".35"/>`;
+  const pad = (x, y) => `<circle cx="${x}" cy="${y}" r="9" fill="${K}"/><circle cx="${x}" cy="${y}" r="3.5" fill="${C.red2}"/>`;
+  return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <g class="tech-racks">
+    ${rack(-30, 610, 150, 330, 34, true)}
+    ${rack(130, 690, 120, 250, 26, true)}
+    ${rack(1460, 660, 130, 280, 28, true)}
+    <path d="M250 900 C 300 820, 380 860, 430 780 S 520 760, 560 700" fill="none" stroke="${K}" stroke-width="12"/>
+    <path d="M250 900 C 300 820, 380 860, 430 780 S 520 760, 560 700" fill="none" stroke="${C.white}" stroke-width="1.4" opacity=".4"/>
+  </g>
+  <g class="tech-board">
+    ${poly([[1240, -10], [1610, -10], [1610, 250], [1490, 300], [1300, 120]], K)}
+    <path d="M1300 120 L1490 300 L1610 250" fill="none" stroke="${C.white}" stroke-width="2" opacity=".55"/>
+    <rect x="1440" y="40" width="90" height="90" fill="#1C1C1C" stroke="${C.white}" stroke-width="1.5" opacity=".9"/>
+    ${Array.from({ length: 6 }, (_, i) => `<rect x="${1448 + i * 14}" y="30" width="6" height="12" fill="#2E2E2E"/><rect x="${1448 + i * 14}" y="128" width="6" height="12" fill="#2E2E2E"/>`).join('')}
+    ${trace('M1440 70 H1360 L1320 30 V-10')}${trace('M1530 100 H1580 L1610 70')}${trace('M1480 130 V190 L1520 230')}
+    ${pad(1360, 70)}${pad(1580, 100)}${pad(1520, 230)}
+  </g>
+</svg>`;
+}
+
+/** The far city: Nano Banana night-city art (cartoon ink style: black sky, gray towers, white
+    windows, red only on screens and billboards), tilted to a Dutch angle and pushed back so it
+    never fights the content in front. On the title it is printed faintly into the red wall. */
+const CITY = 'assets/film/city.webp';
+const CITY_SMALL = 'assets/film/city-800.webp';
+/** The title's opening shot: an empty night subway platform (Nano Banana, cel-shaded + comic ink,
+    grayscale with red safety lines and a red-striped train, no people), with a slow camera push. */
+const SUBWAY = 'assets/film/subway.webp';
+const SUBWAY_SMALL = 'assets/film/subway-800.webp';
+
 export function mountBackdrop(el) {
   el.classList.add('backdrop');
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `
     <div class="bd-layer bd-wall"><div class="bd-drift">${wallLayer()}</div></div>
+    <div class="bd-layer bd-subway"><div class="bd-drift"><img alt="" decoding="async"></div></div>
+    <div class="bd-layer bd-city"><div class="bd-drift"><img alt="" decoding="async"></div></div>
     <div class="bd-layer bd-graffiti"><div class="bd-drift">${graffitiLayer()}</div></div>
-    <div class="bd-layer bd-shards"><div class="bd-drift">${shardLayer()}</div></div>`;
+    <div class="bd-layer bd-shards"><div class="bd-drift">${shardLayer()}</div></div>
+    <div class="bd-layer bd-tech"><div class="bd-drift">${techLayer()}</div></div>`;
+
+  // the city art loads only after the page has painted, sized for the screen, so it never
+  // competes with the title text on a phone's first load
+  const small = () => window.innerWidth <= 900;
+  const loadCity = () => {
+    [[el.querySelector('.bd-subway img'), small() ? SUBWAY_SMALL : SUBWAY], [el.querySelector('.bd-city img'), small() ? CITY_SMALL : CITY]].forEach(([img, src]) => {
+      img.onload = () => img.classList.add('in'); // fades in once it's ready, never a half-drawn image
+      img.src = src;
+    });
+    const root = document.documentElement; // print grit (Nano Banana texture) switches on after first paint
+    root.style.setProperty('--grit', `url(${new URL('assets/film/grit.webp', document.baseURI).href})`);
+    root.classList.add('tex');
+  };
+  // phones wait until the title has finished building in, then the scene fades in like an opening shot
+  const later = () => setTimeout(loadCity, small() || !window.matchMedia('(pointer: fine)').matches ? 2500 : 300);
+  if (document.readyState === 'complete') later();
+  else window.addEventListener('load', later, { once: true });
 
   // tall screens only see a narrow slice of the wall: show its left side (GO! poster + star)
   // instead of the empty middle

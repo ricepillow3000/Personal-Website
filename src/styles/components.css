@@ -379,7 +379,7 @@ body.scrolled .hud-tl { translate: 0 -260px; transition: translate .18s cubic-be
 .ink-blot { position: absolute; width: 190vmax; height: 190vmax; background: var(--black); }
 .ink-blot.red { background: var(--red); }
 
-/* ============ saved progress: CASE LOG chip, CONTINUE line, menu mini stamps ============ */
+/* ============ saved progress: PROGRESS chip, CONTINUE line, menu mini stamps ============ */
 .progress-chip {
   display: inline-grid; grid-auto-flow: column; justify-content: start; align-items: center; gap: 2px 10px; margin-top: 10px; padding: 5px 12px 6px; background: var(--black); color: var(--white);
   border: 3px solid var(--white); box-shadow: 5px 5px 0 var(--red); transform: rotate(-3deg) skew(var(--skew)); cursor: pointer;
@@ -526,13 +526,15 @@ body[data-mode="title"] .scroll-meter { display: none; }
   /* the neighbouring towers either side: dark facades with a faint window grid */
   background: #17181C repeating-linear-gradient(90deg, transparent 0 34px, rgba(0, 0, 0, .5) 34px 40px), repeating-linear-gradient(0deg, transparent 0 30px, rgba(0, 0, 0, .55) 30px 38px); }
 .fall-sky { position: absolute; inset: 0; overflow: hidden;
-  background: var(--red); } /* the art carries its own red sky; this shows only while it loads */
+  background: #0B0B0B; } /* the art carries its own night sky; this shows only while it loads */
 .fall-sky .fs-art { position: absolute; left: -3%; top: 0; width: 106%; height: 100%; object-fit: cover; object-position: 50% 100%;
   animation: fsDrift 6s linear both; } /* the background drifts slower than everything in front of it */
 @keyframes fsDrift { to { translate: -2.5% 0; } }
 .fall-tower { position: absolute; left: 50%; top: 0; display: flex; flex-direction: column; --blur: 0; }
-.ft-crown { display: block; width: 100%; height: auto; flex: none; }
-.ft-face { position: relative; flex: 1; background-repeat: repeat-y; background-size: 100% auto; background-color: #1E1F24; }
+.ft-crown { display: block; width: 100%; height: auto; flex: none; /* its black sky melts into the night: no visible box */
+  -webkit-mask-image: linear-gradient(90deg, transparent 2%, #000 15%, #000 85%, transparent 98%), linear-gradient(transparent 0, #000 22%);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 2%, #000 15%, #000 85%, transparent 98%), linear-gradient(transparent 0, #000 22%); mask-composite: intersect; }
+.ft-face { position: relative; flex: 1; margin: 0 17.3%; margin-top: -2px; background-repeat: repeat-y; background-size: 100% auto; background-color: #1E1F24; } /* same width as the tower at the crown's base */
 /* motion blur while falling: two ghost copies of the facade trail behind, stronger the faster we go */
 .ft-face::before, .ft-face::after { content: ""; position: absolute; inset: 0; background: inherit; pointer-events: none; }
 .ft-face::before { opacity: calc(var(--blur) * .45); translate: 0 calc(var(--blur) * 46px); }
@@ -554,7 +556,6 @@ body[data-mode="title"] .scroll-meter { display: none; }
 .train { background: transparent; }
 .train-strip { position: absolute; top: 0; bottom: 0; left: 0; display: flex; gap: 34px; will-change: transform; }
 .train-car { position: relative; flex: none; height: 100%; background: #0B0B0B center / auto 100% no-repeat; }
-.tc-no { position: absolute; right: 4%; bottom: 31%; font-family: var(--f-head); font-size: clamp(40px, 7vw, 90px); color: var(--white); line-height: 1; }
 .tc-sign { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: grid; justify-items: center; padding: 10px 30px 8px; background: var(--black);
   border: 5px solid var(--yellow); box-shadow: 10px 10px 0 var(--red); transform: rotate(-3deg) skewX(-8deg); }
 .tc-sign small { font-family: var(--f-menu); font-size: clamp(18px, 2.4vw, 28px); letter-spacing: 4px; color: var(--white); }

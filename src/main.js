@@ -239,8 +239,8 @@ function renderProgress(celebrate) {
   chip.setAttribute('aria-label', p.all ? 'Case log, all clear' : `Case log, ${p.done} of ${p.total}. Still to do: ${left.join(', ')}`);
   chip.title = p.all ? 'Everything cleared. Thanks for playing.' : `Still to do: ${left.join(' · ')}`;
   chip.innerHTML = p.all
-    ? '<span class="pc-label">CASE LOG</span><span class="pc-all">ALL CLEAR!</span>'
-    : `<span class="pc-label">CASE LOG</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
+    ? '<span class="pc-label">PROGRESS</span><span class="pc-all">ALL CLEAR!</span>'
+    : `<span class="pc-label">PROGRESS</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
        <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>
        <span class="pc-hint" aria-hidden="true">open each project's Live or Code link · open the 6 menu pages</span>`;
   if (celebrate && !reducedMotion()) gsap.fromTo(chip, { scale: 1.6, rotation: -12 }, { scale: 1, rotation: -3, duration: 0.5, ease: 'elastic.out(1.4, .4)' });
@@ -339,8 +339,16 @@ $('#pressStart').addEventListener('click', () => {
 
 /* ---------------------------------------------------------------- heist board */
 const syncMeter = initScrollMeter();
-// load the film-cut art while the browser is idle, so the first cut never stutters
-(window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => preloadFilm(), { timeout: 4000 });
+// load the film-cut art once the visitor first acts (or ~6s in), never during the first paint:
+// a phone decoding big images would otherwise hold back the title text
+{
+  const go = () => {
+    ['pointerdown', 'keydown'].forEach((t) => window.removeEventListener(t, go, true));
+    preloadFilm();
+  };
+  ['pointerdown', 'keydown'].forEach((t) => window.addEventListener(t, go, { capture: true, once: true, passive: true }));
+  window.addEventListener('load', () => setTimeout(go, 6000), { once: true });
+}
 initClickFx();
 initMagnetic();
 initTilt();
@@ -658,14 +666,14 @@ $('#achBtn').addEventListener('click', () => {
     <p class="dossier-hint">All 7 unlock the director's cut, how my AI crew built this.</p></div>`);
 });
 
-/* CASE LOG chip: a real button that shows what is left and how each item counts. */
+/* PROGRESS chip: a real button that shows what is left and how each item counts. */
 document.addEventListener('click', (e) => {
   if (!e.target.closest?.('#progressChip')) return;
   sfx('select');
   const p = progress();
   openModal(`<div class="dossier"><button class="modal-x" type="button" data-close aria-label="Close">✕</button>
-    <header class="dossier-head"><p class="dossier-code">CASE LOG · ${p.done}/${p.total} CLEARED</p>
-    <h2 class="dossier-title ransom" id="modalTitle" data-ransom="CASE LOG">CASE LOG</h2></header>
+    <header class="dossier-head"><p class="dossier-code">PROGRESS · ${p.done}/${p.total} DONE</p>
+    <h2 class="dossier-title ransom" id="modalTitle" data-ransom="PROGRESS">PROGRESS</h2></header>
     <ul class="ach-list log-list">${p.items.map((i) => `<li class="${i.done ? 'got' : ''}"><span class="ach-ico" aria-hidden="true">${i.done ? '★' : '☆'}</span><strong>${esc(i.label)}</strong><span class="sr-only">${i.done ? 'cleared' : 'not yet'}</span></li>`).join('')}</ul>
     <p class="dossier-hint">A project counts once you open its live app or its code. A page counts once you open it from the MENU.</p></div>`);
 });

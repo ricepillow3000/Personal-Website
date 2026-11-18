@@ -541,10 +541,10 @@ function snapshotScreen() {
   return { frag, settle: () => screenCopy && src && (screenCopy.scrollTop = src.scrollTop) };
 }
 
-/* ---- the city set pieces (public/assets/film): a low-angle look up at the towers against a
-   red sky, the tower's crown and facade (drawn by tools/draw-city.mjs to John's references),
-   and the subway car (drawn by Gemini, cleaned by tools/clean-film-svg.py). Loaded while idle. */
-const FILM = ['upshot', 'facade', 'crown', 'train'].reduce((o, k) => ((o[k] = `assets/film/${k}.svg`), o), {});
+/* ---- the city set pieces (public/assets/film): original art generated with Google's Nano Banana
+   (gemini-2.5-flash-image) to John's brief and approved by him: a low-angle look up at the towers
+   against a red sky, the tower's crown, its glass facade, and the subway car. WebP, loaded while idle. */
+const FILM = { upshot: window.innerWidth <= 900 ? 'assets/film/city-800.webp' : 'assets/film/city.webp', facade: 'assets/film/facade.webp', crown: 'assets/film/crown.webp', train: 'assets/film/train.webp' };
 const filmCache = [];
 export function preloadFilm() {
   if (filmCache.length) return;
@@ -568,7 +568,7 @@ function citySet(label, extra = '') {
   const W = window.innerWidth;
   const H = window.innerHeight;
   const TW = Math.round(Math.min(W * 0.92, 1100));
-  const TH = Math.round(H * 2.6);
+  const TH = Math.round(TW * 1.75 + H * 2.4); // the crown art (900x1575) on top, then ~2.4 screens of facade
   const el = document.createElement('div');
   el.className = 'fall';
   el.setAttribute('aria-hidden', 'true');
@@ -621,7 +621,7 @@ export function fallWipe(swap, label = '') {
   });
   document.body.appendChild(el);
   shots.forEach((shot) => shot.settle());
-  gsap.set(tower, { xPercent: -50, y: H * 0.8 });
+  gsap.set(tower, { xPercent: -50, y: H * 1.05 }); // starts just below the frame: the tower only rises into view once we're falling
 
   const tl = gsap.timeline({ onComplete: () => el.remove() });
   tl.set(el, { visibility: 'visible' });
@@ -685,6 +685,7 @@ export function riseWipe(swap, label = 'THE BOARD') {
     // 3. over the roof: the board's name hangs in the sky for a beat
     .fromTo(sign, { y: -H * 0.4, opacity: 0, scale: 0.85 }, { y: -H * 0.08, opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)' }, 0.42);
   landing(tl, set, swap, 0.74);
+  tl.timeScale(1.35); // Back is the most-used control: the same shot, ~0.85s instead of ~1.15s
   return track(tl);
 }
 
@@ -703,7 +704,7 @@ export function trainWipe(swap, label = '') {
   const el = document.createElement('div');
   el.className = 'fall train';
   el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = `<div class="train-strip">${car('lead', '<div class="tc-sign"><small>NEXT STOP</small><span class="ransom"></span></div><div class="tc-no">06</div>')}${car('mid', '<div class="tc-no">07</div>')}${car('tail')}</div><div class="train-lines">${'<i></i>'.repeat(7)}</div>${LETTERBOX}`;
+  el.innerHTML = `<div class="train-strip">${car('lead', '<div class="tc-sign"><small>NEXT STOP</small><span class="ransom"></span></div>')}${car('mid')}${car('tail')}</div><div class="train-lines">${'<i></i>'.repeat(7)}</div>${LETTERBOX}`;
   ransom(el.querySelector('.tc-sign span'), label, label.length + 3);
   const bars = el.querySelectorAll('.lb');
   const strip = el.firstChild;

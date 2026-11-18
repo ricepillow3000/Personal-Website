@@ -61,7 +61,7 @@ export function dossierMarkup(m) {
   return `<div class="dossier" data-id="${m.id}">
     <button class="modal-x" type="button" data-close aria-label="Close">✕</button>
     <header class="dossier-head">
-      <p class="dossier-code">MISSION FILE · ${esc(m.dates)} · DIFFICULTY ${esc(m.grade)}</p>
+      <p class="dossier-code">MISSION FILE · ${esc(m.dates)}</p>
       <h2 class="dossier-title ransom" id="modalTitle" data-ransom="${esc(m.target.toUpperCase())}">${esc(m.target)}</h2>
       <p class="dossier-sub">${esc(m.name)} · <span class="dossier-live">${esc(m.status)}</span></p>
       <ul class="dossier-stack">${m.stack.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
