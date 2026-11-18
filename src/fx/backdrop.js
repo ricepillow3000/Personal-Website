@@ -176,13 +176,40 @@ function techLayer() {
 </svg>`;
 }
 
+/* =========================================================================
+   LAYER — P5-STYLE GRAPHICS (John: "make it feel like the P5 menus"): bold flat shapes in
+   pure black / white / red sitting in front of the scene, never over the content:
+   a nested zigzag starburst (rings of jagged stars alternating black and white, turning
+   slowly), a tilted block of solid halftone dots, white star cutouts and one red jagged
+   slash. Original geometry; no logos, hands or characters.
+   ========================================================================= */
+function p5Layer() {
+  const ring = (cx, cy, r, n, rot, inner) => star(cx, cy, r, inner, n, rot);
+  let burst = '';
+  for (let i = 0; i < 9; i++) {
+    const r = 420 - i * 46;
+    burst += poly(ring(0, 0, r, 16, -90 + i * 6, 0.8), i % 2 ? C.white : C.black, i === 0 ? `stroke="${C.black}" stroke-width="6"` : '');
+  }
+  const dots = torn(0, 0, 360, 250, 41);
+  return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs><pattern id="p5dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="5.2" fill="${C.black}"/></pattern></defs>
+  <g class="p5-burst" transform="translate(1540 300)"><g class="spin-slow" style="--spin:140s">${burst}</g></g>
+  <g transform="translate(-60 640) rotate(-9)">
+    ${poly(dots, C.white, `stroke="${C.black}" stroke-width="7"`)}${poly(dots, 'url(#p5dots)')}
+  </g>
+  ${poly([[1180, 900], [1290, 690], [1250, 700], [1380, 470], [1335, 640], [1385, 625], [1300, 900]], C.red2, `stroke="${C.black}" stroke-width="6"`)}
+  ${poly(star(1460, 760, 70, 0.42), C.white, `stroke="${C.black}" stroke-width="7"`)}
+  ${poly(star(90, 90, 46, 0.42, 5, -72), C.white, `stroke="${C.black}" stroke-width="6"`)}
+</svg>`;
+}
+
 /** The far city: Nano Banana night-city art (cartoon ink style: black sky, gray towers, white
     windows, red only on screens and billboards), tilted to a Dutch angle and pushed back so it
     never fights the content in front. On the title it is printed faintly into the red wall. */
 const CITY = 'assets/film/city.webp';
 const CITY_SMALL = 'assets/film/city-800.webp';
-/** The title's opening shot: an empty night subway platform (Nano Banana, cel-shaded + comic ink,
-    grayscale with red safety lines and a red-striped train, no people), with a slow camera push. */
+/** The title's opening shot: an empty night subway platform (Nano Banana, clean toon-shaded 3D like
+    a P5 cutscene: dark, glossy floor, red safety lines, fluorescent strips, no people), slow camera push. */
 const SUBWAY = 'assets/film/subway.webp';
 const SUBWAY_SMALL = 'assets/film/subway-800.webp';
 
@@ -193,6 +220,7 @@ export function mountBackdrop(el) {
     <div class="bd-layer bd-wall"><div class="bd-drift">${wallLayer()}</div></div>
     <div class="bd-layer bd-subway"><div class="bd-drift"><img alt="" decoding="async"></div></div>
     <div class="bd-layer bd-city"><div class="bd-drift"><img alt="" decoding="async"></div></div>
+    <div class="bd-layer bd-p5"><div class="bd-drift">${p5Layer()}</div></div>
     <div class="bd-layer bd-graffiti"><div class="bd-drift">${graffitiLayer()}</div></div>
     <div class="bd-layer bd-shards"><div class="bd-drift">${shardLayer()}</div></div>
     <div class="bd-layer bd-tech"><div class="bd-drift">${techLayer()}</div></div>`;
@@ -205,9 +233,7 @@ export function mountBackdrop(el) {
       img.onload = () => img.classList.add('in'); // fades in once it's ready, never a half-drawn image
       img.src = src;
     });
-    const root = document.documentElement; // print grit (Nano Banana texture) switches on after first paint
-    root.style.setProperty('--grit', `url(${new URL('assets/film/grit.webp', document.baseURI).href})`);
-    root.classList.add('tex');
+
   };
   // phones wait until the title has finished building in, then the scene fades in like an opening shot
   const later = () => setTimeout(loadCity, small() || !window.matchMedia('(pointer: fine)').matches ? 2500 : 300);
