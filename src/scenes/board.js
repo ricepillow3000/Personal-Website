@@ -33,16 +33,21 @@ function planMarkup(ctx) {
     : '';
   return `<div class="plan">
     <header class="plan-head" data-board-item>
+      <div class="plan-id">
       <div class="plan-name">
         <h1 class="ransom" id="boardName"></h1>
         <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
       </div>
       <p class="plan-role">${esc(resume.role)}<span class="plan-status"> · GSU ${esc(e.grad.replace('Class of ', "'").replace(/^'20/, "'"))} · ${esc(resume.status)}</span></p>
+      </div>
+      <div class="plan-side">
       <ul class="plan-proof" aria-label="At a glance">
         <li class="pp pp0"><b>2</b> live apps</li>
         <li class="pp pp1"><b>2,000+</b> tests</li>
         <li class="pp pp2"><b>${esc(e.gpa)}</b> GPA</li>
       </ul>
+      <button type="button" class="progress-chip" id="progressChip"></button>
+      </div>
       ${note}
     </header>
 
@@ -53,7 +58,7 @@ function planMarkup(ctx) {
         <h2 class="pc-name"></h2>
         <p class="pc-tease"></p>
       </div>
-      <p class="plan-coach" aria-hidden="true">6 stops = my whole resume. Start here, I'll walk you through it.</p>
+      <p class="plan-coach" aria-hidden="true">6 stops. I'll walk you through.</p>
       <a class="plan-continue" href="#/stats" data-nav data-magnetic>
         <small class="pcn-kicker">START HERE</small><b class="pcn-title">BOARD THE TRAIN ▸</b>
       </a>
@@ -68,7 +73,6 @@ function planMarkup(ctx) {
         </a></li>`).join('')}</ol>
     </nav>
 
-    <div class="plan-foot" data-board-item><button type="button" class="progress-chip" id="progressChip"></button></div>
   </div>`;
 }
 
@@ -97,7 +101,7 @@ export function createBoard(root, ctx) {
     cont.setAttribute('href', `#/${id}`);
     cont.querySelector('.pcn-kicker').textContent = id !== next
       ? (seen.includes(id) ? 'RIDE AGAIN' : 'JUMP AHEAD')
-      : !seen.some((s) => CHAPTERS.includes(s)) ? 'START HERE' : nextChapter() ? 'CONTINUE' : 'ALL STOPS SEEN';
+      : !seen.some((s) => CHAPTERS.includes(s)) ? '' : nextChapter() ? 'CONTINUE' : 'ALL STOPS SEEN';
     if (!silent) sfx('hover');
     if (!reducedMotion()) gsap.fromTo(card, { x: 22, rotation: 1.5 }, { x: 0, rotation: 0, duration: 0.22, ease: 'back.out(2.4)', clearProps: 'transform' });
   }
@@ -140,7 +144,7 @@ export function createBoard(root, ctx) {
       .from(root.querySelector('.pl-item.here .pl-here'), { y: -40, opacity: 0, duration: 0.32, ease: 'bounce.out', clearProps: 'transform,opacity' }, 0.85)
       .from(root.querySelectorAll('.pp'), { scale: 1.8, rotation: () => gsap.utils.random(-20, 20), opacity: 0, duration: 0.26, ease: 'back.out(2.6)', stagger: 0.07, clearProps: 'transform,opacity' }, 0.2)
       .from(root.querySelector('.plan-coach'), { x: -30, opacity: 0, duration: 0.3, ease: 'back.out(2)', clearProps: 'transform,opacity' }, 1.0)
-      .from(root.querySelector('.plan-foot'), { opacity: 0, duration: 0.2, clearProps: 'opacity' }, 0.9);
+      .from(root.querySelector('#progressChip'), { opacity: 0, duration: 0.2, clearProps: 'opacity' }, 0.6);
     return tl;
   }
 

@@ -29,7 +29,8 @@ test('title → PRESS START → THE PLAN: six chapters in order and a CONTINUE t
   await expect(chapters).toHaveCount(6);
   expect(await chapters.evaluateAll((els) => els.map((e) => e.dataset.ch))).toEqual(['stats', 'missions', 'skills', 'side-quests', 'different', 'contact']);
   await expect(page.locator('#board .plan-continue')).toHaveAttribute('href', '#/stats');
-  await expect(page.locator('#board .plan-continue')).toContainText('START HERE');
+  await expect(page.locator('#board .plan-continue')).toContainText('BOARD THE TRAIN');
+  await expect(page.locator('#board .plan-coach')).toBeVisible(); // first ride: the hint says what this is
   expect(errors).toEqual([]);
 });
 
@@ -519,12 +520,11 @@ test('the guide: every chapter shows where you are, and the guide button leads t
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'skills');
   const strip = page.locator('#page .stop-strip');
   await expect(strip).toContainText('STOP 03 / 06');
-  await expect(strip).toContainText('NEXT · SIDE QUESTS');
   await expect(strip.locator('.ss-dot.now')).toHaveAttribute('href', '#/skills');
   if (isMobile) {
     const guide = page.locator('.guide');
     await expect(guide).toBeVisible();
-    await expect(guide).toContainText('NEXT STOP: SIDE QUESTS');
+    await expect(guide).toContainText('NEXT: SIDE QUESTS');
     await guide.click(); // scrolls to the NEXT STOP card, then bows out
     await expect(page.locator('#page .next-ep')).toBeInViewport();
     await expect(guide).toBeHidden();

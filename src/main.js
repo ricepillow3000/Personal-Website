@@ -175,7 +175,7 @@ async function show(id) {
       renderPage(id);
       pageEnter(id, style === 'slash' || prev === null); // builds in while the wipe lifts: no full page, blank, rebuild
     }
-    if (mode !== 'page') { guideObs?.disconnect(); guide.hidden = true; }
+    if (mode !== 'page') { guideObs?.disconnect(); guideScroll = null; clearTimeout(guideTimer); guide.hidden = true; }
     if (mode === 'board') enterBoard();
   };
 
@@ -212,7 +212,7 @@ async function show(id) {
 
   if (mode === 'title') introTitle();
   if (mode === 'page') {
-    const target = $('#page [data-nav]') || $('#page .back-btn');
+    const target = $('#page [data-nav]:not(.ss-dot)') || $('#page .back-btn');
     focusSoon(target);
     // entrance animations that finish later can knock focus back to <body>; once they settle, put it back
     setTimeout(() => {
@@ -420,11 +420,9 @@ function stopStripMarkup(id) {
   const i = CHAPTERS.indexOf(id);
   if (i < 0) return '';
   const seen = store.get().visited || [];
-  const nextId = CHAPTERS[i + 1];
   return `<nav class="stop-strip" aria-label="You are at stop ${i + 1} of ${CHAPTERS.length}">
     <span class="ss-label">STOP <b>${String(i + 1).padStart(2, '0')}</b> / ${String(CHAPTERS.length).padStart(2, '0')}</span>
     <ol class="ss-line">${CHAPTERS.map((c, k) => `<li><a class="ss-dot${k === i ? ' now' : seen.includes(c) ? ' seen' : ''}" href="#/${c}" data-nav aria-label="Stop ${k + 1}, ${esc(SECTION_TITLES[c])}${k === i ? ' (you are here)' : ''}"${k === i ? ' aria-current="step"' : ''}></a></li>`).join('')}</ol>
-    <span class="ss-next">${nextId ? `NEXT · ${esc(SECTION_TITLES[nextId])}` : 'LAST STOP'}</span>
   </nav>`;
 }
 const guide = document.createElement('button');
@@ -440,14 +438,25 @@ function updateGuide(id) {
   const i = CHAPTERS.indexOf(id);
   const ep = $('#page .next-ep');
   const sc = $('#screen-page');
-  if (i < 0 || !ep) return;
   const nextId = CHAPTERS[i + 1];
-  guide.querySelector('.g-text').textContent = `KEEP READING · NEXT STOP: ${nextId ? SECTION_TITLES[nextId] : 'THE PLAN'}`;
-  guide.setAttribute('aria-label', `Scroll on. Next stop: ${nextId ? SECTION_TITLES[nextId] : 'the plan'}`);
-  // only while there is more page below; it bows out once the NEXT STOP card is on screen
-  guideObs = new IntersectionObserver(([e]) => { guide.hidden = e.isIntersecting || screen !== 'page'; }, { root: sc, threshold: 0.35 });
+  if (i < 0 || !ep || !nextId) return; // the last stop has no "next": its card says THE END
+  guide.querySelector('.g-text').textContent = `NEXT: ${SECTION_TITLES[nextId]}`;
+  guide.setAttribute('aria-label', `Scroll on. Next stop: ${SECTION_TITLES[nextId]}`);
+  // a small corner chip, only while there is more page below and the visitor has paused (never
+  // over content while they scroll); it bows out once the NEXT STOP card is on screen
+  let epVisible = false;
+  const show = () => { guide.hidden = epVisible || screen !== 'page' || pageId !== id; };
+  guideObs = new IntersectionObserver(([e]) => { epVisible = e.isIntersecting; show(); }, { root: sc, threshold: 0.35 });
   guideObs.observe(ep);
+  guideScroll = () => {
+    guide.hidden = true;
+    clearTimeout(guideTimer);
+    guideTimer = setTimeout(show, 900);
+  };
 }
+let guideScroll = null;
+let guideTimer = 0;
+$('#screen-page').addEventListener('scroll', () => guideScroll?.(), { passive: true });
 guide.addEventListener('click', () => {
   sfx('select');
   $('#page .next-ep')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'center' });
@@ -530,7 +539,14 @@ function renderPage(id) {
   root0Class(id);
   const root = $('#page');
   root.innerHTML = r.html + nextEpisodeMarkup(id);
-  root.querySelector('.back-btn')?.insertAdjacentHTML('afterend', stopStripMarkup(id));
+  const backBtn = root.querySelector('.back-btn');
+  if (backBtn && CHAPTERS.includes(id)) {
+    // the back button and the stop strip share one row, so the content starts sooner
+    backBtn.insertAdjacentHTML('beforebegin', '<div class="page-top"></div>');
+    const top = root.querySelector('.page-top');
+    top.appendChild(backBtn);
+    top.insertAdjacentHTML('beforeend', stopStripMarkup(id));
+  }
   epReset();
   root.querySelectorAll('[data-ransom]').forEach((h, i) => ransom(h, h.dataset.ransom, i + id.length));
   root.querySelectorAll('[data-mission]').forEach((b) => b.addEventListener('click', () => openDossier(b.dataset.mission, b)));
