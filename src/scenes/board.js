@@ -141,11 +141,22 @@ export function createBoard(root, ctx) {
     gsap.from(loot.children, { x: -50, scale: 1.4, rotation: () => gsap.utils.random(-16, 16), opacity: 0, duration: 0.22, ease: 'back.out(2.4)', stagger: 0.05 });
     gsap.from(num.querySelectorAll('.rl'), { scale: 1.8, rotation: () => gsap.utils.random(-45, 45), opacity: 0, duration: 0.26, ease: 'back.out(2.2)', stagger: 0.05 });
   }
+  /* Only a mouse that really moves picks a chapter. After PRESS START the pointer is still resting
+     where the button was, and the lines slide in under it: that must not steal the pick from the
+     next unread chapter (Nov 18: the hub opened on CONTACT). */
+  let armed = true;
+  let restXY = null;
+  window.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    const xy = `${e.clientX},${e.clientY}`;
+    if (!armed && restXY !== null && xy !== restXY) armed = true;
+    restXY = xy;
+  }, { passive: true, capture: true }); // capture: unlock before the chapter line under the mouse hears this move
   items.forEach((a) => {
-    a.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && preview(a.dataset.ch));
+    a.addEventListener('pointermove', (e) => e.pointerType === 'mouse' && armed && preview(a.dataset.ch));
     a.addEventListener('focus', () => preview(a.dataset.ch));
   });
-  root.querySelector('.plan-line').addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && preview(next, { silent: true }));
+  root.querySelector('.plan-line').addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && armed && preview(next, { silent: true }));
 
   function refresh(animate = true) {
     const seen = store.get().visited || [];
@@ -159,6 +170,7 @@ export function createBoard(root, ctx) {
 
   let revealedOnce = false;
   function reveal(delay = 0) {
+    armed = restXY === null; // wait for the resting mouse to move before it can pick anything
     refresh(revealedOnce);
     if (reducedMotion()) return;
     const parts = root.querySelectorAll('[data-board-item]');

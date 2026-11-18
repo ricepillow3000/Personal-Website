@@ -7,6 +7,9 @@
    its side is cut into thin vertical strips (one per few screen pixels), each scaled for its
    depth, like an old raycaster. Its nose is our cut-out of Nano Banana's subway-car front. */
 
+import { createSideRenderer } from './sidegl.js';
+import { sharpArt } from './art.js';
+
 const IW = 1600;
 const IH = 914;
 // the shot's geometry, measured on the art: vanishing point on the platform-edge line inside the
@@ -56,7 +59,11 @@ const load = (src) => {
 };
 
 let cv = null;
-let ctx = null;
+let ctx = null; // the 2D layer being drawn on right now
+let under = null; // 2D: floor, trash, light pools, afterimage noses
+let over = null; // 2D on top of the GPU side: the nose, headlights, speed lines
+let cvTop = null;
+let glOn = false; // this frame's side went to the GPU layer
 let box = null;
 let art = null;
 let nose = null;
@@ -76,7 +83,11 @@ export function mountSubway(camBox, img) {
   cv = document.createElement('canvas');
   cv.setAttribute('aria-hidden', 'true');
   box.appendChild(cv);
-  ctx = cv.getContext('2d');
+  ctx = under = cv.getContext('2d');
+  cvTop = document.createElement('canvas'); // the GPU side's layer is slotted in between, when made
+  cvTop.setAttribute('aria-hidden', 'true');
+  box.appendChild(cvTop);
+  over = cvTop.getContext('2d');
   const img2 = load(TRASH_ART);
   img2.onload = () => {
     const lit = litCopy(img2);
@@ -94,7 +105,11 @@ export function preloadSubway() {
   side = load(SIDE);
   nose.decode?.().catch(() => {});
   // build the working copies ahead of time (idle), so the shot's first frame doesn't pay for them
-  const prep = () => (window.requestIdleCallback || setTimeout)(() => { sideArt(); windowProfile(); tinted(sideArt()); tinted(nose); });
+  const prep = () => (window.requestIdleCallback || setTimeout)(() => {
+    sideArt(); windowProfile(); tinted(sideArt()); tinted(nose);
+    const r = gpu();
+    if (r && cv) { r.prepare(sideTexFor(sideArt()), cv.width, cv.height); r.prepare(tinted(sideArt()), cv.width, cv.height); }
+  });
   (side.decode?.() || Promise.resolve()).then(prep, prep);
 }
 
@@ -105,8 +120,8 @@ function size() {
   const h = box.offsetHeight;
   if (!w || !h) return;
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
-    cv.width = Math.round(w * dpr);
-    cv.height = Math.round(h * dpr);
+    cv.width = cvTop.width = Math.round(w * dpr);
+    cv.height = cvTop.height = Math.round(h * dpr);
   }
   cv.dataset.dpr = dpr;
   draw();
@@ -294,8 +309,38 @@ function sideArt() {
   return c;
 }
 
+/* The side is one true-perspective surface on the GPU (src/fx/sidegl.js): a straight roof line and
+   straight stripes at any distance. Without WebGL2 it falls back to the 2D slices below. */
+let sideGL; // undefined = not tried yet, null = unavailable
+function gpu() {
+  if (sideGL === undefined && cvTop) { // only once the platform is mounted (a deep link preloads the train first)
+    try { sideGL = createSideRenderer(); } catch { sideGL = null; }
+    if (sideGL) box.insertBefore(sideGL.canvas, cvTop);
+  }
+  return sideGL || null;
+}
+/* the GPU gets the full-resolution car art (1828px tall), except on low-memory phones */
+const sideTexFor = (tex) => (tex === sideCopy && side?.naturalWidth && sharpArt() ? side : tex);
+function sideOnGPU(lead, alpha, tex) {
+  if (!glOn) return false;
+  const img = sideTexFor(tex);
+  const tw = img.naturalWidth || img.width;
+  const th = img.naturalHeight || img.height;
+  const near = Math.max(lead, 18);
+  const far = Math.min(lead + LEN, MOUTH + 430); // past MOUTH + 420 it has faded into the tunnel's dark
+  if (far <= near) return true;
+  const m = ctx.getTransform(); // art space -> canvas pixels (includes the afterimages' zoom)
+  const P = (Y, d) => {
+    const p = m.transformPoint(new DOMPoint(sx(SIDE_X, d), sy(Y, d)));
+    return [p.x, p.y];
+  };
+  return sideGL.quad(img, [[...P(ROOF, near), near, near - lead, 0], [...P(SKIRT, near), near, near - lead, 1], [...P(ROOF, far), far, far - lead, 0], [...P(SKIRT, far), far, far - lead, 1]],
+    { period: ((SKIRT - ROOF) * tw) / th, alpha, mouth: MOUTH });
+}
+
 function trainSide(lead, kk, alpha = 1, tex = sideArt()) {
   if (!tex) return;
+  if (sideOnGPU(lead, alpha, tex)) return;
   const tw = tex.width;
   const th = tex.height;
   const period = ((SKIRT - ROOF) * tw) / th; // one repeat of the car-side art (door to door), in world units
@@ -471,22 +516,30 @@ function afterimages(lead, kk, img, power) {
 }
 
 function draw() {
-  if (!ctx) return;
+  if (!under) return;
   const { k, ox, oy, kk } = mapping();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, cv.width, cv.height);
-  ctx.setTransform(k, 0, 0, k, ox, oy);
+  [under, over].forEach((g) => {
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, cv.width, cv.height);
+    g.setTransform(k, 0, 0, k, ox, oy);
+  });
+  ctx = under;
   const t = state?.t ?? 0;
   drawTrash(t);
+  // the GPU layer: drawn only while the train runs (made on first use, cleared at rest)
+  const r = state ? gpu() : sideGL;
+  glOn = Boolean(r && r.begin(cv.width, cv.height) && state);
   if (!state) return;
   const lead = START - SPEED * t;
   const img = nose?.complete && nose.naturalWidth ? nose : null;
   afterimages(lead, kk, img, Math.max(0, Math.min(1, (MOUTH + 200 - lead) / 500)));
   cabinLight(lead); // warm pools on the floor first, the train on top
   trainSide(lead, kk);
+  if (glOn) ctx = over; // the side is on the GPU layer: the nose and lights go above it
   trainNose(lead, img, 1);
   headlights(lead, 1 + Math.max(0, 1 - lead / MOUTH) * 1.6, Math.min(1, t / 0.3)); // the lights fade up with the horn
   speedLines(t, state.lines);
+  ctx = under;
 }
 
 /* ---------------------------------------------------------------- the shot */
