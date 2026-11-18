@@ -500,19 +500,22 @@ export function trainWipe(swap, label = '') {
   const bars = el.querySelectorAll('.lb');
   lights.forEach((l, i) => gsap.set(l, { top: `${18 + ((i * 23) % 60)}%`, width: `${10 + ((i * 17) % 22)}vw` }));
   document.body.appendChild(el);
-  // put the station sign inside the left window's lower pane (art: 1344x768, pane 300-640 x 310-486),
+  // put the station sign inside the big window's lower-left pane (art: 1408x768, pane 456-694 x 329-440),
   // and on narrow screens aim the camera at that pane
   const car = q('.ns-car');
   const bw = cam.offsetWidth;
   const bh = cam.offsetHeight;
-  const k = Math.max(bw / 1344, bh / 768);
-  const free = bw - 1344 * k;
-  const fx = free < 0 ? Math.min(1, Math.max(0, (bw / 2 - 470 * k) / free)) : 0.49;
+  const AW = 1408;
+  const AH = 768;
+  const PX = 575; // pane center
+  const PY = 384;
+  const k = Math.max(bw / AW, bh / AH);
+  const free = bw - AW * k;
+  const fx = free < 0 ? Math.min(1, Math.max(0, (bw / 2 - PX * k) / free)) : 0.49;
   car.style.objectPosition = `${(fx * 100).toFixed(1)}% 46%`;
   const ox = free * fx;
-  const oy = (bh - 768 * k) * 0.46;
-  const paneW = 340 * k;
-  gsap.set(sign, { left: ox + 470 * k, top: oy + 398 * k, scale: Math.min(1, (paneW * 0.86) / sign.offsetWidth, (176 * k * 0.8) / sign.offsetHeight) });
+  const oy = (bh - AH * k) * 0.46;
+  gsap.set(sign, { left: ox + PX * k, top: oy + PY * k, scale: Math.min(1, (238 * k * 0.9) / sign.offsetWidth, (111 * k * 0.86) / sign.offsetHeight) });
 
   const tl = gsap.timeline({ onComplete: () => el.remove() });
   tl.set(el, { visibility: 'visible' });
