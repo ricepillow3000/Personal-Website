@@ -226,6 +226,7 @@ With `?company=X`: "To the team at X," and a board note "Wait, someone from X? I
 **Pages** — each has its own system (see section 3, rule 8): Missions wanted posters, Skills party list (LV + level meter + IN projects + receipt bubble, one scale), Different comic panels, Stats ID card (clean GPA card, no speedometer), Side Quests route map with big number + REWARD line, System settings (sound, music volume, reduce motion, achievements, Quick View, PDF).
 
 **Quick View** — plain, ATS-friendly one-pager with red accents; normal bullets on purpose; Back + Download PDF bar stays on one row on phones.
+  - **Every Quick View bullet is word for word from the PDF resume** (the `resume` arrays in `src/data/resume.js`). Game pages may shorten wording but never change a fact: "planted" errors (not "hidden"), "serious" false alarms across 30 public tables, 5 checks across 6 workflows, led a **section** of 5 new servers and temps (not a floor), "recognized in" six Google reviews (not "by name"). When the PDF changes, update the data file and re-run the Quick View vs PDF check.
 
 **Stamps** — CLEARED! stamp is a Persona-style torn burst with cut-out letters, never a generic rubber stamp, and it must fit inside its card.
 

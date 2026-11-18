@@ -42,6 +42,7 @@ export const resume = {
     {
       id: 'meliona',
       name: 'Portfolio Risk Engine',
+      resumeTitle: 'Portfolio Risk Engine (Meliona)',
       target: 'Meliona',
       grade: 'S',
       status: 'LIVE',
@@ -51,16 +52,23 @@ export const resume = {
       objectives: [
         'Designed and launched a public web app that estimates how much a portfolio of stocks, ETFs, FX or futures could lose in a bad year.',
         'Runs 10,000 simulated years on live data from Yahoo Finance.',
-        'Built 300+ test cases and a live-data audit to cross-verify the risk engine.',
-        'Directed AI coding agents in a three-role workflow (orchestrator, researcher, builder) to write 7,700+ lines of Python.'
+        'Created 300+ test cases and a live-data audit to cross-verify the risk engine (727 of 728 checks in the October 2026 runs).',
+        'Directed AI coding agents in a three-role workflow (orchestrator, researcher, builder) to write 7,700+ lines of Python, validated by five checks (lint, security scan, three test suites) across six GitHub Actions workflows.'
       ],
       loot: ['727 of 728 checks passed', '7,700+ lines of Python', '6 GitHub Actions workflows', '5-check validation gate'],
+      // word for word from the PDF resume (Quick View shows these)
+      resume: [
+        'Designed and launched a public web app to estimate how a portfolio of stocks, ETFs, FX, or futures could lose in a bad year, using 10,000 simulated years of live data from Yahoo Finance',
+        'Created more than 300 test cases and a live-data audit to cross-verify risk engine results; October 2026 runs past with 0 failures (727 of 728 checks)',
+        'Directed AI coding agents in a three-role workflow (orchestrator, researcher, builder) to write 7,700+ lines of Python, validated by five checks: lint, security scan, and three test suites, across six GitHub Actions workflows'
+      ],
       live: 'https://summer-2026-quant-project-risk-engine-blueprint-production.up.railway.app/',
       repo: 'https://github.com/ricepillow3000/Summer-2026-Quant-Project-Risk-Engine-Blueprint'
     },
     {
       id: 'arcas',
       name: 'Excel Add-in',
+      resumeTitle: 'Excel Add-in (ARCAS)',
       target: 'ARCAS',
       grade: 'S',
       status: 'LIVE',
@@ -68,12 +76,17 @@ export const resume = {
       stack: ['Python', 'Flask', 'JavaScript', 'CI/CD'],
       brief: 'Finds the broken cells in your spreadsheet and explains them in plain English.',
       objectives: [
-        'Built and launched a Windows Excel add-in with 21 data checks, plain-language explanations for flagged cells, and suggested fixes.',
-        'Powered by a Python Flask REST API and a JavaScript (Office.js) task pane.',
-        'Wrote 1,700+ automated tests, plus mutation tests that plant 171 bugs across 70 guards to prove detection works.',
-        'Traced false alarms to "NA" codes and blank cells, cutting them sharply while still catching every planted error.'
+        'Built and launched a Windows Excel add-in with 21 data checks, plain-language explanations for flagged cells, and suggested fixes, powered by a Python Flask REST API and a JavaScript (Office.js) task pane.',
+        'Detected 199 of 201 planted errors across 42 unseen test sheets.',
+        'Wrote 1,700+ automated tests covering every safety guard, plus mutation tests that plant 171 bugs across 70 guards to verify detection.',
+        'Cut serious false alarms from 5,022 to 710 across 30 public tables by tracing them to "NA" codes and blank cells, while still catching every planted error.'
       ],
-      loot: ['199 of 201 hidden errors caught', 'False alarms 5,022 → 710 (−86%)', '1,700+ automated tests', '42 unseen test sheets'],
+      loot: ['199 of 201 planted errors caught', 'Serious false alarms 5,022 → 710 (−86%)', '1,700+ automated tests', '42 unseen test sheets'],
+      resume: [
+        'Built and launched a Windows Excel add-in with 21 data checks, plain-language explanations for flagged cells, and suggested fixes, powered by a Python Flask REST API and JavaScript (Office.js) task pane',
+        'Detected 199 of 201 planted errors across 42 unseen test sheets; wrote 1,700+ automated tests covering every safety guard, plus mutation tests deliberately planting 171 bugs across 70 guards to verify detection',
+        'Reduced serious false alarms from 5,022 to 710 across 30 public tables by tracing to “NA” codes and blank cells, while catching every planted error'
+      ],
       bestStat: '199 / 201',
       live: 'https://ricepillow3000.github.io/excel-anomaly-hunter/',
       repo: 'https://github.com/ricepillow3000/excel-anomaly-hunter'
@@ -87,7 +100,7 @@ export const resume = {
     { id: 'testing', name: 'Testing / QA', rank: 'MAX', proof: '2,000+ automated tests across 2 apps', uses: ['meliona', 'arcas'] },
     { id: 'python', name: 'Python', rank: 5, proof: '7,700+ lines in Meliona · ARCAS backend', uses: ['meliona', 'arcas'] },
     { id: 'aieval', name: 'AI Evaluation', rank: 8, proof: 'Live-data audits · 727/728 checks passed', uses: ['meliona'] },
-    { id: 'cicd', name: 'GitHub Actions (CI/CD)', rank: 7, proof: '6 workflows: lint, security scan, 3 test suites', uses: ['meliona', 'arcas'] },
+    { id: 'cicd', name: 'GitHub Actions (CI/CD)', rank: 7, proof: '5 checks (lint, security scan, 3 test suites) across 6 workflows', uses: ['meliona', 'arcas'] },
     { id: 'flask', name: 'Flask', rank: 7, proof: 'ARCAS REST API', uses: ['arcas'] },
     { id: 'git', name: 'Git / GitHub', rank: 7, proof: 'Both projects, public repos', uses: ['meliona', 'arcas'] },
     { id: 'js', name: 'JavaScript', rank: 6, proof: 'Office.js task pane · web UIs', uses: ['meliona', 'arcas'] },
@@ -96,9 +109,9 @@ export const resume = {
 
   different: [
     { title: 'I ship, not just study', fact: 'Two live apps, launched while keeping a 3.88 GPA.' },
-    { title: 'I test like it’s production', fact: '2,000+ automated tests. 199 of 201 hidden errors caught. False alarms cut 86%.' },
+    { title: 'I test like it’s production', fact: '2,000+ automated tests. 199 of 201 planted errors caught. Serious false alarms cut 86%.' },
     { title: 'I manage AI agents', fact: 'Orchestrator plans, researcher checks, builder codes. I direct and test.' },
-    { title: 'I lead under pressure', fact: 'Elected team leader. Ran a banquet floor of new servers on the club’s busiest day of the year.' }
+    { title: 'I lead under pressure', fact: 'Elected team leader. Led a section of 5 new servers and temps on the club’s busiest day of the year.' }
   ],
 
   sideQuests: [
@@ -110,6 +123,10 @@ export const resume = {
         'Coordinated 35 assignments across seven weekly rounds for a five-person team.',
         'Spearheaded a pivot to commuters after spotting missed parking-deck opportunities, then pitched three high-traffic locations and a contactless sampling plan with geofence advertising.'
       ],
+      resume: [
+        "Coordinated 35 assignments across seven weekly rounds for a five-person team, addressing customer segments, channels, value proposition, revenue, key activities, and costs; integrated team members' prior ideas",
+        'Spearheaded a shift to commuters after uncovering missed parking deck opportunities; pitched three high-traffic locations and a contactless sampling plan with geofence advertising'
+      ],
       stat: ['35', 'assignments run for a 5-person team'],
       lesson: 'I can turn five opinions into one plan — and change course when the data says so.'
     },
@@ -118,18 +135,24 @@ export const resume = {
       place: 'Dunwoody Country Club',
       dates: 'Feb 2026 — Present',
       did: [
-        'Led a section of 5 new servers and temps on July 4th, the club’s busiest day, coaching each one live.',
-        'Set up shortcuts and pre-placed supplies for accurate, on-time service at 5 weekly banquets.'
+        'Led a section of 5 new servers and temps on July 4th, the club’s busiest day, explaining the service routine to each one as the shift ran.',
+        'Set up shortcuts and pre-placed supplies for accurate, on-time orders at 5 weekly banquets and private events.'
       ],
-      stat: ['5', 'new servers coached live on July 4th'],
+      resume: [
+        "Led a section of 5 new servers and temporary workers on July 4th, the club's busiest day of the year, explaining the service routine to each one as the shift ran",
+        'Established shortcuts and pre-placed supplies to ensure accurate, on-time orders for 5 weekly banquets and private events'
+      ],
+      org: 'Dunwoody Country Club Inc',
+      stat: ['5', 'new servers and temps led on July 4th'],
       lesson: 'I onboard people fast, under real pressure.'
     },
     {
       title: 'Food Server',
       place: 'The Sparrow',
       dates: 'May 2025 — Aug 2025',
-      did: ['Mentored new hires on menu, POS and table flow while running a full section, and was named in six positive Google reviews.'],
-      stat: ['6', 'Google reviews mention me by name'],
+      did: ['Mentored new hires on menu, POS and table flow while running a full section, and was recognized in six positive Google reviews from guests.'],
+      resume: ['Mentored new hires on menu, POS, and table flow while managing a full section; recognized in six positive Google reviews from guests'],
+      stat: ['6', 'positive Google reviews recognized me'],
       lesson: 'I stay calm and friendly in front of real customers.'
     }
   ],
