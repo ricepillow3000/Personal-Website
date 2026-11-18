@@ -336,7 +336,7 @@ test.describe('with motion on', () => {
   test('PRESS START: the train bursts out of the tunnel, blows the title away, and the board lands', async ({ page }) => {
     const errors = errorsOf(page);
     await page.goto('/');
-    await expect(page.locator('.bd-cam canvas')).toHaveCount(1, { timeout: 6000 }); // the platform (with its trash) is drawn once the art loads
+    await expect(page.locator('.bd-cam canvas').first()).toBeAttached({ timeout: 6000 }); // the platform layers (trash below, the train's GPU side between, its nose on top) mount once the art loads
     await page.locator('#pressStart').click({ force: true });
     await expect(page.locator('.fall.tunnel')).toHaveCount(1);
     await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 4000 });
@@ -582,4 +582,20 @@ test('THE PLAN holds still: nothing on the hub jumps between frames (a scrollbar
   expect(new Set(tops).size).toBe(1);
   const over = await page.evaluate(() => { const s = document.querySelector('#screen-board'); return s.scrollHeight - s.clientHeight; });
   expect(over).toBeLessThanOrEqual(0);
+});
+
+test('THE PLAN: a mouse resting where a chapter slides in does not steal the pick; moving it does', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'mouse only');
+  await openBoard(page);
+  const box = await page.locator('.pl-item[data-ch="contact"]').boundingBox();
+  await page.locator('.pl-item[data-ch="stats"]').click();
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'stats');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); // rest the mouse where CONTACT will be
+  await page.locator('#page .back-btn').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  await page.waitForTimeout(600);
+  await expect(page.locator('#board .pl-item.on')).toHaveAttribute('data-ch', 'missions'); // the next unread chapter
+  await page.mouse.move(box.x + box.width / 2 + 6, box.y + box.height / 2 + 2); // a real move picks what's under it
+  await expect(page.locator('#board .pl-item.on')).toHaveAttribute('data-ch', 'contact');
 });
