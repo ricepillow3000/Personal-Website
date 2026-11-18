@@ -189,6 +189,7 @@ From John's research notes (kept verbatim in spirit):
 - **Film cuts get realistic foley** (John, Nov 18), still synthesized: THE DROP = wind that roars louder with speed + the busy street below swelling up (traffic hum, car horns, a far siren). THE RISE = wind falling away, the street fading. Trains = a real subway horn (three-note reedy chord, Doppler drop as it passes), wheels "ka-chunk" over rail joints speeding up or braking, steel rumble, brake squeal, paper flutter in the gust. No cartoon whistles on the film cuts. A compressor glues the layers; skipping a cut hushes its sound.
 - CLEARED = **whip** + punchy, weighty stamp; achievements = **treasure / Zelda-Korok-style chime** (high, bright, short); FULL STORY = whip + short **level-clear jingle** (Mario-like, original).
 - Sounds land on the exact frame of impact.
+- **Nothing may clip** (Nov 18). A fast safety limiter (-3 dB, ratio 20, 1 ms attack) sits after the master fader, because very short hits (a 12 ms whip crack) slip past the slower glue compressor. Prove it with an offline render of every film cut at its real timings (peak must stay under 1.0). Measuring is not listening, so say so in any proof.
 
 ## 9. Components and screens
 

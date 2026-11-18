@@ -20,7 +20,15 @@ function ensure() {
   ac = new AC();
   master = ac.createGain();
   master.gain.value = 0.9;
-  master.connect(ac.destination);
+  // safety limiter: fast transients (a whip crack lasts 12 ms) slip past the slower glue
+  // compressor, so this catches them before the speakers and nothing ever clips
+  const limiter = ac.createDynamicsCompressor();
+  limiter.threshold.value = -3;
+  limiter.knee.value = 0;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.001;
+  limiter.release.value = 0.08;
+  master.connect(limiter).connect(ac.destination);
   sfxBus = ac.createGain();
   sfxBus.gain.value = 0.7; // louder overall; the compressor keeps the big film moments from clipping
   const glue = ac.createDynamicsCompressor(); // keeps the layered film foley from clipping
@@ -702,7 +710,7 @@ const VOICES = {
   whip: (bus, at, v = 1) => {
     sweep(bus, at, 450, 5200, 0.11, 0.55 * v, 1.1);
     const c = at + 0.11;
-    noise(bus, { at: c, dur: 0.012, type: 'highpass', freq: 1400, q: 0.4, gain: 1.4 * v }); // the crack
+    noise(bus, { at: c, dur: 0.012, type: 'highpass', freq: 1400, q: 0.4, gain: 0.9 * v }); // the crack
     noise(bus, { at: c, dur: 0.05, type: 'bandpass', freq: 3200, q: 1.2, gain: 0.6 * v });
     tone(bus, { at: c, dur: 0.035, from: 2600, to: 900, type: 'square', gain: 0.12 * v });
     tone(bus, { at: c, dur: 0.1, from: 190, to: 60, type: 'sine', gain: 0.7 * v }); // body
