@@ -102,7 +102,7 @@ function boardMarkup(ctx) {
     <svg class="strings" id="strings" aria-hidden="true"></svg>
 
     <section class="col col-skills" aria-label="Skills">
-      <h2 class="col-label" data-board-item><span class="ransom" data-ransom="SKILLS"></span><small>LV level · IN projects</small>${(store.get().lit || []).length ? '' : '<span class="try-one" aria-hidden="true">TRY ONE ↓</span>'}</h2>
+      <h2 class="col-label" data-board-item><span class="ransom" data-ransom="SKILLS"></span><small>LV = skill level · IN = live projects using it</small>${(store.get().lit || []).length ? '' : '<span class="try-one" aria-hidden="true">TRY ONE ↓</span>'}</h2>
       ${roster(skills)}
     </section>
 
