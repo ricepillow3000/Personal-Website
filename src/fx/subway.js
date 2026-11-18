@@ -30,17 +30,21 @@ const SIDE = 'assets/film/train.webp';
 const TRASH_ART = 'assets/film/trash.webp';
 const TRASH_W = 1550; // CELLS below are measured on a 1550x200 strip (the file can be any multiple)
 const CELLS = { news: [0, 200, 111], bag: [204, 200, 167], can: [408, 130, 190], cup: [542, 200, 140], flyer: [746, 200, 139], wrapper: [950, 200, 126], receipt: [1154, 200, 141], ball: [1358, 188, 190] };
+// Flat pieces (paper, wrapper) lie ON the floor: they turn in the floor's plane and are squashed
+// by the floor's perspective, centered on their spot. Solid pieces (can, cup, bag, ball) stand on
+// it: their lowest painted pixel touches the spot, upright, never tilted off their base.
+const FLAT = new Set(['news', 'receipt', 'flyer', 'wrapper']);
 const TRASH = [
-  [600, 880, 'news', 1.2, -6],
-  [700, 800, 'receipt', 0.7, 8],
-  [790, 902, 'can', 0.6, -4],
-  [915, 722, 'wrapper', 0.55, 5],
-  [1000, 852, 'flyer', 0.95, -7],
-  [1150, 905, 'cup', 0.85, 4],
+  [600, 838, 'news', 1.2, -6],
+  [700, 776, 'receipt', 0.7, 8],
+  [790, 902, 'can', 0.6, 0],
+  [915, 708, 'wrapper', 0.55, 5],
+  [1000, 814, 'flyer', 0.95, -7],
+  [1150, 905, 'cup', 0.85, 0],
   [858, 664, 'ball', 0.42, 0],
-  [1260, 790, 'bag', 0.7, -3],
-  [655, 700, 'news', 0.65, 9],
-  [1060, 652, 'receipt', 0.5, -5],
+  [1260, 790, 'bag', 0.7, 0],
+  [655, 687, 'news', 0.65, 9],
+  [1060, 645, 'receipt', 0.5, -5],
 ];
 
 const reduce = () => document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -75,7 +79,8 @@ export function mountSubway(camBox, img) {
   ctx = cv.getContext('2d');
   const img2 = load(TRASH_ART);
   img2.onload = () => {
-    trash = { lit: litCopy(img2), ink: tintCopy(img2, '#0B0B0B') };
+    const lit = litCopy(img2);
+    trash = { lit, ink: tintCopy(img2, '#0B0B0B'), box: paintedBoxes(lit) };
     draw();
   };
   new ResizeObserver(() => size()).observe(box);
@@ -142,18 +147,43 @@ function litCopy(img) {
   return c;
 }
 
+/* Each cell has empty margins around its piece. Find the painted box of every cell (in the
+   1550px strip's units) so a piece's real edge, not its cell's edge, meets the floor. */
+function paintedBoxes(c) {
+  const s = c.width / TRASH_W;
+  const data = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  const out = {};
+  for (const [kind, [cx, cw, ch]] of Object.entries(CELLS)) {
+    const x0 = Math.round(cx * s), x1 = Math.round((cx + cw) * s), y1 = Math.min(c.height, Math.round(ch * s));
+    let l = x1, r = x0, t = y1, b = 0;
+    for (let y = 0; y < y1; y++) {
+      for (let x = x0; x < x1; x++) {
+        if (data[(y * c.width + x) * 4 + 3] > 60) {
+          if (x < l) l = x;
+          if (x > r) r = x;
+          if (y < t) t = y;
+          if (y > b) b = y;
+        }
+      }
+    }
+    out[kind] = r > l ? [l / s, t / s, (r + 1 - l) / s, (b + 1 - t) / s] : [cx, 0, cw, ch];
+  }
+  return out;
+}
+
 /* where a floor point sits in depth (so trash blows away the moment the nose reaches it) */
 const depthOf = (y) => (F * SKIRT) / Math.max(8, y - VP.y);
 
 function drawTrash(t) {
   if (!trash) return;
   TRASH.forEach(([x0, y0, kind, sz, tilt], i) => {
-    const [cx, cw, ch] = CELLS[kind];
+    const [bx, by, bw, bh] = trash.box[kind];
+    const flat = FLAT.has(kind);
     const near = Math.max(0.35, (y0 - VP.y) / (IH - VP.y)); // 1 at the bottom of the shot
-    let gx = x0; // where it touches the floor
+    let gx = x0; // where it rests on the floor
     let gy = y0;
     let lift = 0;
-    let w = cw * sz * (0.28 + near * 0.62);
+    let grow = 1;
     let rot = (tilt * Math.PI) / 180;
     let squash = 1;
     let back = false;
@@ -164,56 +194,79 @@ function drawTrash(t) {
       lift = Math.abs(Math.sin(t * 47 + i * 3)) * shiver * 1.5;
       if (st.at !== null) {
         const u = t - st.at;
-        const g = 1 / (1 - Math.min(0.86, u * 0.9)); // swept toward the camera by the train's wind
-        gx = VP.x + (x0 - VP.x) * g - st.push * (u + u * u * 2.2);
-        gy = VP.y + (y0 - VP.y) * g;
-        lift = Math.max(0, st.lift * 1.3 * u - 260 * u * u) * g;
-        w *= g;
+        grow = 1 / (1 - Math.min(0.86, u * 0.9)); // swept toward the camera by the train's wind
+        gx = VP.x + (x0 - VP.x) * grow - st.push * (u + u * u * 2.2);
+        gy = VP.y + (y0 - VP.y) * grow;
+        lift = Math.max(0, st.lift * 1.3 * u - 260 * u * u) * grow;
         rot += st.spin * u;
         const flip = Math.cos(st.flip * u);
         squash = Math.max(0.14, Math.abs(flip));
         back = flip < 0;
       }
     }
-    const h = (w * ch) / cw;
+    const m = sz * (0.28 + near * 0.62) * grow;
+    const w = bw * m; // the painted piece, not its cell
+    const h = bh * m;
+    // a flat piece is seen at the floor's angle: the farther away, the flatter it looks
+    const fs = flat ? 0.5 + 0.32 * near : 1;
     const fog = (1 - near) * 0.45; // farther pieces sink into the gloom
-    const air = Math.min(1, lift / (h * 2 + 1)); // 0 on the floor, 1 well off it
+    const air = Math.min(1, lift / (h * fs * 2 + 1)); // 0 on the floor, 1 well off it
+    const piece = (img, alpha) => {
+      ctx.globalAlpha = alpha;
+      const s = img.width / TRASH_W; // boxes are in the 1550px strip's pixels; sharper strips scale them
+      ctx.drawImage(img, bx * s, by * s, bw * s, bh * s, -w / 2, -h / 2, w, h);
+    };
+    const shade = fog + (back ? 0.45 : 0);
 
-    // contact shadow on the floor (it stays down there when the piece lifts)
+    // soft occlusion on the floor under it (stays down there when the piece lifts)
     ctx.save();
     ctx.translate(gx, gy);
-    ctx.scale(1, 0.2);
-    const r = w * (0.58 - air * 0.2);
+    ctx.scale(1, flat ? fs * 0.5 : 0.22);
+    const r = w * (flat ? 0.56 : 0.55) * (1 - air * 0.3);
     const sh = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-    sh.addColorStop(0, `rgba(0,0,0,${0.62 * (1 - air)})`);
+    sh.addColorStop(0, `rgba(0,0,0,${(flat ? 0.4 : 0.62) * (1 - air)})`);
     sh.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = sh;
     ctx.fillRect(-r, -r, r * 2, r * 2);
     ctx.restore();
 
-    const piece = (img, alpha) => {
-      ctx.globalAlpha = alpha;
-      const s = img.width / TRASH_W; // CELLS are in the 1550px strip's pixels; sharper strips scale them
-      ctx.drawImage(img, cx * s, 0, cw * s, ch * s, -w / 2, -h / 2, w, h);
-    };
-    // its reflection in the glossy floor tiles, upside down and faint
-    if (air < 0.9) {
+    if (flat) {
+      // lying down: turned in the floor's plane, then squashed by the floor's perspective.
+      // A tight dark copy right under its edge glues it to the tiles.
+      if (air < 0.95) {
+        ctx.save();
+        ctx.translate(gx, gy + Math.max(1, h * fs * 0.05));
+        ctx.scale(1, fs);
+        ctx.rotate(rot);
+        piece(trash.ink, 0.5 * (1 - air));
+        ctx.restore();
+      }
       ctx.save();
-      ctx.translate(gx, gy + lift + h * 0.42 * squash);
-      ctx.rotate(-rot);
-      ctx.scale(1, -0.6 * squash);
-      piece(trash.lit, 0.14 * (1 - air) * (1 - fog));
+      ctx.translate(gx, gy - lift);
+      ctx.scale(1, fs * squash);
+      ctx.rotate(rot);
+      piece(trash.lit, 1);
+      if (shade > 0.02) piece(trash.ink, Math.min(0.8, shade));
+      ctx.restore();
+    } else {
+      // standing: its lowest pixel on the spot, and a faint mirror image in the glossy tiles
+      // that starts exactly where it touches
+      if (air < 0.9) {
+        ctx.save();
+        ctx.translate(gx, gy + lift + h * 0.25 * squash);
+        ctx.rotate(-rot);
+        ctx.scale(1, -0.5 * squash);
+        piece(trash.lit, 0.12 * (1 - air) * (1 - fog));
+        ctx.restore();
+      }
+      ctx.save();
+      ctx.translate(gx, gy - lift - (h / 2) * squash);
+      ctx.rotate(rot);
+      ctx.scale(1, squash);
+      piece(trash.lit, 1);
+      if (shade > 0.02) piece(trash.ink, Math.min(0.8, shade));
       ctx.restore();
     }
-    // the piece itself, lit like the platform, darker in the distance and on its back side
-    ctx.save();
-    ctx.translate(gx, gy - lift - h * 0.42 * squash);
-    ctx.rotate(rot);
-    ctx.scale(1, squash);
-    piece(trash.lit, 1);
-    const shade = fog + (back ? 0.45 : 0);
-    if (shade > 0.02) piece(trash.ink, Math.min(0.8, shade));
-    ctx.restore();
     ctx.globalAlpha = 1;
   });
 }
