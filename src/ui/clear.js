@@ -15,6 +15,14 @@ import { resume } from '../data/resume.js';
 const KEY = 'clear-pending';
 let pending = null;
 let left = false;
+let leftAt = 0; // when the visitor left
+let wasHidden = false; // the page was really hidden (they switched to the project tab/app)
+const AWAY_MS = 1500; // a focus blip shorter than this is the tap itself, not a visit (phones blur on tap)
+function markLeft(hidden) {
+  if (!left) leftAt = performance.now();
+  left = true;
+  if (hidden) wasHidden = true;
+}
 
 const MISSION_IDS = new Set(resume.missions.map((m) => m.id));
 const validId = (v) => (typeof v === 'string' && MISSION_IDS.has(v) ? v : null);
@@ -250,8 +258,15 @@ async function markCleared(id, { animate = true } = {}) {
 let returning = false;
 async function onReturn() {
   if (document.visibilityState !== 'visible' || !left || returning) return;
+  // only a real visit counts: the page was hidden, or the window was away long enough to have
+  // looked at the project. A quick blur/focus (the tap opening the link) keeps it pending.
+  if (!wasHidden && performance.now() - leftAt < AWAY_MS) {
+    left = false;
+    return;
+  }
   const id = pending || readPending();
   left = false;
+  wasHidden = false;
   pending = null;
   writePending(null);
   if (!id) return;
@@ -271,21 +286,22 @@ export function initClearing() {
     pending = validId(a.dataset.clear);
     if (!pending) return;
     left = false;
+    wasHidden = false;
     writePending(pending);
   }, true);
   // they left for the project...
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && (pending || readPending())) left = true;
+    if (document.visibilityState === 'hidden' && (pending || readPending())) markLeft(true);
     else onReturn();
   });
   window.addEventListener('blur', () => {
-    if (pending || readPending()) left = true;
+    if (pending || readPending()) markLeft(false);
   });
   // ...and came back (new tab closed/switched, or the back button to this page)
   window.addEventListener('focus', onReturn);
   window.addEventListener('pageshow', (e) => {
     if (readPending() && (e.persisted || performance.getEntriesByType?.('navigation')?.[0]?.type === 'back_forward')) {
-      left = true;
+      markLeft(true);
       onReturn();
     }
   });

@@ -38,6 +38,11 @@ function planMarkup(ctx) {
         <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
       </div>
       <p class="plan-role">${esc(resume.role)}<span class="plan-status"> · GSU ${esc(e.grad.replace('Class of ', "'").replace(/^'20/, "'"))} · ${esc(resume.status)}</span></p>
+      <ul class="plan-proof" aria-label="At a glance">
+        <li class="pp pp0"><b>2</b> live apps</li>
+        <li class="pp pp1"><b>2,000+</b> tests</li>
+        <li class="pp pp2"><b>${esc(e.gpa)}</b> GPA</li>
+      </ul>
       ${note}
     </header>
 
@@ -48,6 +53,7 @@ function planMarkup(ctx) {
         <h2 class="pc-name"></h2>
         <p class="pc-tease"></p>
       </div>
+      <p class="plan-coach" aria-hidden="true">6 stops = my whole resume. Start here, I'll walk you through it.</p>
       <a class="plan-continue" href="#/stats" data-nav data-magnetic>
         <small class="pcn-kicker">START HERE</small><b class="pcn-title">BOARD THE TRAIN ▸</b>
       </a>
@@ -58,7 +64,7 @@ function planMarkup(ctx) {
         <a class="pl-item" href="#/${id}" data-nav data-ch="${id}" aria-label="Chapter ${no(i)}, ${esc(label(id))}">
           <span class="pl-dot" aria-hidden="true"><span class="pl-no">${no(i)}</span></span>
           <span class="pl-name" aria-hidden="true">${esc(label(id))}</span>
-          <span class="pl-here" aria-hidden="true">YOU ARE HERE</span>
+          <span class="pl-here" aria-hidden="true"><img src="assets/film/trainnose.webp" alt="" width="40" height="47" decoding="async"><span>YOU ARE HERE</span></span>
         </a></li>`).join('')}</ol>
     </nav>
 
@@ -104,6 +110,7 @@ export function createBoard(root, ctx) {
   function refresh() {
     const seen = store.get().visited || [];
     items.forEach((a) => a.classList.toggle('seen', seen.includes(a.dataset.ch)));
+    root.querySelector('.plan').classList.toggle('first', !seen.some((c) => CHAPTERS.includes(c))); // first ride: the coach shows
     next = nextChapter() || 'contact';
     const hereAt = nextChapter() ? CHAPTERS.indexOf(next) : CHAPTERS.length - 1;
     items.forEach((a, i) => a.classList.toggle('here', i === hereAt));
@@ -131,6 +138,8 @@ export function createBoard(root, ctx) {
       .from(root.querySelectorAll('.pl-dot'), { scale: 0, rotation: -90, duration: 0.3, ease: 'back.out(3)', stagger: 0.07, clearProps: 'transform' }, 0.35)
       .from(root.querySelectorAll('.pl-name'), { y: 12, opacity: 0, duration: 0.2, stagger: 0.07, clearProps: 'transform,opacity' }, 0.45)
       .from(root.querySelector('.pl-item.here .pl-here'), { y: -40, opacity: 0, duration: 0.32, ease: 'bounce.out', clearProps: 'transform,opacity' }, 0.85)
+      .from(root.querySelectorAll('.pp'), { scale: 1.8, rotation: () => gsap.utils.random(-20, 20), opacity: 0, duration: 0.26, ease: 'back.out(2.6)', stagger: 0.07, clearProps: 'transform,opacity' }, 0.2)
+      .from(root.querySelector('.plan-coach'), { x: -30, opacity: 0, duration: 0.3, ease: 'back.out(2)', clearProps: 'transform,opacity' }, 1.0)
       .from(root.querySelector('.plan-foot'), { opacity: 0, duration: 0.2, clearProps: 'opacity' }, 0.9);
     return tl;
   }

@@ -175,6 +175,7 @@ async function show(id) {
       renderPage(id);
       pageEnter(id, style === 'slash' || prev === null); // builds in while the wipe lifts: no full page, blank, rebuild
     }
+    if (mode !== 'page') { guideObs?.disconnect(); guide.hidden = true; }
     if (mode === 'board') enterBoard();
   };
 
@@ -412,6 +413,46 @@ function root0Class(id) {
    scroll-to-next-page bar. Keep scrolling (or swiping) past the bottom and the fuse fills;
    when it's full the next chapter rolls in with THE DROP. A click or Enter does it at once. */
 const EPISODES = CHAPTERS; // the resume in reading order (src/scenes/board.js)
+/* THE GUIDE (Nov 18): the visitor is walked through the resume like a train ride.
+   Every chapter opens with a STOP strip (where you are on the line, tap any stop), and a guide
+   button at the bottom says what's next until the NEXT STOP card itself comes into view. */
+function stopStripMarkup(id) {
+  const i = CHAPTERS.indexOf(id);
+  if (i < 0) return '';
+  const seen = store.get().visited || [];
+  const nextId = CHAPTERS[i + 1];
+  return `<nav class="stop-strip" aria-label="You are at stop ${i + 1} of ${CHAPTERS.length}">
+    <span class="ss-label">STOP <b>${String(i + 1).padStart(2, '0')}</b> / ${String(CHAPTERS.length).padStart(2, '0')}</span>
+    <ol class="ss-line">${CHAPTERS.map((c, k) => `<li><a class="ss-dot${k === i ? ' now' : seen.includes(c) ? ' seen' : ''}" href="#/${c}" data-nav aria-label="Stop ${k + 1}, ${esc(SECTION_TITLES[c])}${k === i ? ' (you are here)' : ''}"${k === i ? ' aria-current="step"' : ''}></a></li>`).join('')}</ol>
+    <span class="ss-next">${nextId ? `NEXT · ${esc(SECTION_TITLES[nextId])}` : 'LAST STOP'}</span>
+  </nav>`;
+}
+const guide = document.createElement('button');
+guide.type = 'button';
+guide.className = 'guide';
+guide.hidden = true;
+guide.innerHTML = '<span class="g-arrow" aria-hidden="true">↓</span><span class="g-text"></span>';
+document.body.appendChild(guide);
+let guideObs = null;
+function updateGuide(id) {
+  guideObs?.disconnect();
+  guide.hidden = true;
+  const i = CHAPTERS.indexOf(id);
+  const ep = $('#page .next-ep');
+  const sc = $('#screen-page');
+  if (i < 0 || !ep) return;
+  const nextId = CHAPTERS[i + 1];
+  guide.querySelector('.g-text').textContent = `KEEP READING · NEXT STOP: ${nextId ? SECTION_TITLES[nextId] : 'THE PLAN'}`;
+  guide.setAttribute('aria-label', `Scroll on. Next stop: ${nextId ? SECTION_TITLES[nextId] : 'the plan'}`);
+  // only while there is more page below; it bows out once the NEXT STOP card is on screen
+  guideObs = new IntersectionObserver(([e]) => { guide.hidden = e.isIntersecting || screen !== 'page'; }, { root: sc, threshold: 0.35 });
+  guideObs.observe(ep);
+}
+guide.addEventListener('click', () => {
+  sfx('select');
+  $('#page .next-ep')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'center' });
+});
+
 function nextEpisodeMarkup(id) {
   const i = EPISODES.indexOf(id);
   if (i < 0) return '';
@@ -489,6 +530,7 @@ function renderPage(id) {
   root0Class(id);
   const root = $('#page');
   root.innerHTML = r.html + nextEpisodeMarkup(id);
+  root.querySelector('.back-btn')?.insertAdjacentHTML('afterend', stopStripMarkup(id));
   epReset();
   root.querySelectorAll('[data-ransom]').forEach((h, i) => ransom(h, h.dataset.ransom, i + id.length));
   root.querySelectorAll('[data-mission]').forEach((b) => b.addEventListener('click', () => openDossier(b.dataset.mission, b)));
@@ -499,6 +541,7 @@ function renderPage(id) {
   if (id === 'contact') sfx('sparkle');
   store.addTo('visited', id);
   if (CHAPTERS.every((c) => store.has('visited', c))) unlock('full-recon'); // every chapter opened
+  updateGuide(id);
 }
 
 let cutinShown = false;
