@@ -288,3 +288,7 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
 /* the off-the-record starburst lives on the ID card (it moved here from the old board) */
 .idcard { position: relative; }
 .idcard .gpa-burst { position: absolute; top: 54px; right: 18px; }
+@media (max-width: 760px) {
+  .id-band { flex-direction: column; gap: 2px; font-size: 17px; letter-spacing: 2px; }
+  .idcard .gpa-burst { top: auto; bottom: 12px; right: 10px; transform: rotate(10deg) scale(.82); }
+}

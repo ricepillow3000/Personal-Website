@@ -240,3 +240,14 @@ button.gpa-burst{ border: 0; padding: 0; cursor: pointer; perspective: 400px; }
   .plan-head .progress-chip{ transform: scale(.86); transform-origin: left center; margin: 0; }
   .plan-role{ font-size: 13px; }
 }
+/* review fixes: every chapter row sits on an ink slab (no text ghosting over the light band);
+   the selected one goes solid black with the red hard shadow */
+.pl-item::before { background: rgba(11, 11, 11, .62); box-shadow: none; transform: skew(var(--skew)) scaleX(1); transition: background .12s, box-shadow .12s; }
+.pl-item.on::before, .pl-item:hover::before, .pl-item:focus-visible::before { background: var(--black); box-shadow: 7px 7px 0 var(--red); }
+.pc-how { margin: 0; font: 400 15px/1 var(--f-menu); letter-spacing: 2px; color: var(--yellow); }
+@media (max-width: 900px) {
+  /* phones: CONTINUE is one compact line so it never hides the plan */
+  .plan-continue { display: flex; justify-content: center; align-items: baseline; gap: 10px; padding: 10px 18px 12px; }
+  .pcn-kicker { font-size: 13px; letter-spacing: 2px; }
+  .pcn-title { font-size: clamp(20px, 6vw, 26px); }
+}

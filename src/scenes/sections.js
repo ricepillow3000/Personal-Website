@@ -114,7 +114,7 @@ function skills(ctx) {
                 <span class="crew-name" aria-hidden="true">${esc(s.name)}</span>
                 <span class="crew-dot" aria-hidden="true">•</span>
                 <span class="crew-lv" aria-hidden="true"><small>LV</small>${n >= 10 ? 'MAX' : n}</span>
-                <span class="crew-m rk" aria-hidden="true"><b>${n * 10}%</b><i style="--v:${n * 10}%"></i></span>
+                <span class="crew-m rk" aria-hidden="true"><i style="--v:${n * 10}%"></i></span>
                 <span class="crew-m in" aria-hidden="true"><small>IN</small><b>${s.uses.length}/${total}</b><i style="--v:${(s.uses.length / total) * 100}%"></i></span>
               </li>`;
             })
@@ -172,7 +172,7 @@ function skills(ctx) {
 function different() {
   return {
     title: 'MY EDGE',
-    html: `${watermark('FACTS')}${back}${head('WHAT MAKES ME DIFFERENT', 'Four facts. No pitch.')}
+    html: `${watermark('FACTS')}${back}${head('MY EDGE', 'What makes me different. Four facts, no pitch.')}
       <div class="comic">${resume.different
         .map((d, i) => `<article class="panel panel-${i}" data-nav tabindex="0"><span class="panel-num" aria-hidden="true">${i + 1}</span><h3>${esc(d.title)}</h3><p>${mark(d.fact)}</p></article>`)
         .join('')}</div>`,

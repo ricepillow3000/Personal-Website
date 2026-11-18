@@ -39,7 +39,7 @@ function planMarkup(ctx) {
         <h1 class="ransom" id="boardName"></h1>
         <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
       </div>
-      <p class="plan-role">${esc(resume.role)} · GSU ${esc(e.grad.replace('Class of ', "'").replace(/^'20/, "'"))}<span class="plan-status"> · ${esc(resume.status)}</span></p>
+      <p class="plan-role">${esc(resume.role)}<span class="plan-status"> · GSU ${esc(e.grad.replace('Class of ', "'").replace(/^'20/, "'"))} · ${esc(resume.status)}</span></p>
       <button type="button" class="progress-chip" id="progressChip"></button>
       ${note}
     </header>
@@ -60,7 +60,7 @@ function planMarkup(ctx) {
         <span class="pc-ch"></span>
         <h2 class="pc-name"></h2>
         <p class="pc-tease"></p>
-        <a class="btn-cartoon pc-go" href="#/stats" data-nav>ENTER ▸</a>
+        <p class="pc-how" aria-hidden="true">Click the name to open it ▸</p>
       </aside>
     </div>
 
@@ -89,7 +89,6 @@ export function createBoard(root, ctx) {
     card.querySelector('.pc-ch').textContent = `CHAPTER ${no(i)}`;
     card.querySelector('.pc-name').textContent = label(id);
     card.querySelector('.pc-tease').textContent = menuTeasers[id] || '';
-    card.querySelector('.pc-go').setAttribute('href', `#/${id}`);
     if (!silent) sfx('hover');
     if (!reducedMotion()) gsap.fromTo(card, { x: 18, rotation: 1.5 }, { x: 0, rotation: 0, duration: 0.22, ease: 'back.out(2.4)', clearProps: 'transform' });
   }
@@ -109,7 +108,7 @@ export function createBoard(root, ctx) {
     const id = next || 'contact';
     const i = CHAPTERS.indexOf(id);
     cont.setAttribute('href', `#/${id}`);
-    cont.querySelector('.pcn-kicker').textContent = !seen.some((s) => CHAPTERS.includes(s)) ? 'START HERE' : next ? 'CONTINUE' : 'ALL SIX SEEN · REVISIT';
+    cont.querySelector('.pcn-kicker').textContent = !seen.some((s) => CHAPTERS.includes(s)) ? 'START HERE' : next ? 'CONTINUE' : 'REVISIT';
     cont.querySelector('.pcn-title').textContent = `CHAPTER ${no(i)} · ${label(id)} ▸`;
     shown = null;
     preview(id, { silent: true });
