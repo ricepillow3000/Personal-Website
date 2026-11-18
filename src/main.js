@@ -19,7 +19,7 @@ import { initMagnetic, initTilt, initScrollMeter, slamOnScroll, scramble, rollIn
 import { initTooltips } from './ui/tooltip.js';
 import { initClearing, hydrateStamps } from './ui/clear.js';
 import { progress } from './core/progress.js';
-import { fallWipe, riseWipe, trainWipe, cardWipe, preloadFilm, slashWipe, blindsWipe, paperWipe, irisWipe, shatterWipe, stripesWipe, flipWipe, inkWipe, titlePunch, ripTransition, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
+import { fallWipe, riseWipe, trainWipe, cardWipe, preloadFilm, slashWipe, blindsWipe, paperWipe, irisWipe, shatterWipe, stripesWipe, flipWipe, inkWipe, titlePunch, tunnelWipe, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate } from './ui/hud.js';
 import { createBoard } from './scenes/board.js';
@@ -178,8 +178,8 @@ async function show(id) {
     swap();
   } else if (prev === 'title' && id === 'board' && pendingStart) {
     pendingStart = false;
-    revealDelay = 1.3; // cards slam in on the frame the torn pieces are yanked away
-    await ripTransition(swap);
+    revealDelay = 1.25; // cards slam in as the star-flash clears
+    await tunnelWipe(swap);
   } else {
     // mix it up: each kind of move has its own wipe
     // the film cuts: CONTACT gets the calling card, NEXT EPISODE the train, board -> page THE DROP,

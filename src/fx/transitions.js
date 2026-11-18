@@ -2,13 +2,15 @@ import { gsap } from 'gsap';
 import { $, reducedMotion } from '../core/util.js';
 import { ransom, NAME_SEED } from '../ui/ransom.js';
 import { burst } from './impact.js';
-import { sfx } from '../audio/audio.js';
+import { sfx, hush } from '../audio/audio.js';
+import { trainShot, preloadSubway } from './subway.js';
 
 /* Every big animation runs through here so ONE click / Esc can skip it. */
 let current = null;
 
 export function skipCurrent() {
   if (current && current.isActive()) {
+    hush(); // a skipped shot takes its sound with it
     current.progress(1);
     return true;
   }
@@ -140,161 +142,77 @@ export function cutIn(text = '') {
   return track(tl);
 }
 
-/* Copy of the current title page (wall + title + HUD) frozen exactly as it looks, for the rip pieces.
-   Fixed-position copies sit inside a transformed piece, so they line up with the real screen. */
-function snapshotTitle() {
-  const frag = document.createElement('div');
-  frag.className = 'rip-page';
-  [$('#backdrop'), $('#screen-title'), $('.hud-tl'), $('.hud-tr')].filter(Boolean).forEach((src) => {
-    const copy = src.cloneNode(true);
-    // only the few things that move or hide by screen state are read (cheap: no full-page style pass)
-    const MOVING = '.bd-drift, .spin-slow, .press-start';
-    const live = src.querySelectorAll(MOVING);
-    const dead = copy.querySelectorAll(MOVING);
-    live.forEach((el, i) => {
-      const t = getComputedStyle(el).transform;
-      if (t !== 'none') dead[i].style.transform = t;
-    });
-    if (src.matches('.hud-tl, .hud-tr')) {
-      const liveAll = src.querySelectorAll('*');
-      const deadAll = copy.querySelectorAll('*');
-      liveAll.forEach((el, i) => {
-        if (getComputedStyle(el).display === 'none') deadAll[i].style.display = 'none';
-      });
-    }
-    if (copy.classList.contains('screen')) copy.classList.replace('screen', 'rip-screen'); // stay out of screen switching
-    copy.querySelectorAll('button, a').forEach((el) => el.setAttribute('tabindex', '-1'));
-    frag.appendChild(copy);
-  });
-  return frag;
-}
-
-/** Jagged tear path in px: right edge → the ATL tape → diagonally up to the top-left.
-    Each point carries s (0..1 along the tear) and a ragged paper-fibre width. */
-function tearPath(W, H, tape) {
-  // Lightning-bolt shape: big sharp kinks that snap left/right of the straight path,
-  // with uneven segment lengths, on the way from the tape to the top-left corner.
-  const end0 = [0, H * gsap.utils.random(0.04, 0.09)];
-  const ux = end0[0] - tape.x;
-  const uy = end0[1] - tape.y;
-  const ul = Math.hypot(ux, uy);
-  const px = -uy / ul;
-  const py = ux / ul;
-  const amp = Math.max(50, Math.min(W, H) * 0.15);
-  const corners = [[W, tape.y + gsap.utils.random(-10, 10)], [tape.x, tape.y]];
-  const kinks = 5;
-  let side = Math.random() < 0.5 ? 1 : -1;
-  for (let i = 1; i <= kinks; i++) {
-    // uneven spacing: short snap, long run, short snap... like a bolt
-    const t = (i - (i % 2 ? gsap.utils.random(0.55, 0.75) : gsap.utils.random(0.05, 0.2))) / (kinks + 0.3);
-    const off = side * amp * gsap.utils.random(0.7, 1.2);
-    corners.push([Math.min(W - 8, Math.max(8, tape.x + ux * t + px * off)), Math.min(H - 8, Math.max(8, tape.y + uy * t + py * off))]);
-    side *= -1;
-  }
-  corners.push(end0);
-  const legs = [];
-  let total = 0;
-  for (let i = 0; i < corners.length - 1; i++) {
-    const [ax, ay] = corners[i];
-    const [bx, by] = corners[i + 1];
-    const len = Math.hypot(bx - ax, by - ay);
-    legs.push({ ax, ay, bx, by, len, from: total });
-    total += len;
-  }
-  const end = corners[corners.length - 1];
-  const dx = (end[0] - W) / Math.hypot(end[0] - W, end[1] - corners[0][1]);
-  const dy = (end[1] - corners[0][1]) / Math.hypot(end[0] - W, end[1] - corners[0][1]);
-  const n = { x: dy, y: -dx }; // normal pointing at the lower piece
-  if (n.y < 0) (n.x *= -1), (n.y *= -1);
-  const pts = [];
-  let flip = 1;
-  legs.forEach((leg) => {
-    // every bolt corner is an exact point, so the kinks stay razor sharp
-    for (let d = 0; d < leg.len; d += gsap.utils.random(14, 34)) {
-      const k = d / leg.len;
-      const jag = d === 0 ? 0 : flip * gsap.utils.random(2, 6);
-      pts.push({ x: leg.ax + (leg.bx - leg.ax) * k + n.x * jag, y: leg.ay + (leg.by - leg.ay) * k + n.y * jag, s: (leg.from + d) / total, f: gsap.utils.random(3, 8) });
-      flip *= -1;
-    }
-  });
-  pts.push({ x: end[0], y: end[1], s: 1, f: 4 });
-  return { pts, n };
-}
-
-/** PRESS START: the ATL tape pops, the page tears diagonally from the right side up to the
-    top-left in three visible tugs, then the two pieces are yanked away and the board is underneath. (~1.6s) */
-export function ripTransition(swap) {
-  if (reducedMotion()) {
+/** PRESS START: the opening shot comes alive. Headlights in the dark tunnel and a rumble, the
+    horn, then the train bursts out and roars past along the platform: the camera shakes, red and
+    white afterimages trail its nose, the trash on the floor and the title itself are blown away
+    by its wind, and a white star-flash cuts to the board. (~1.5s) */
+export function tunnelWipe(swap) {
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  // tall screens only see the platform's middle: the camera pans left to catch the track
+  const shot = trainShot({ panTo: W / H < 1.1 ? 0.3 : null });
+  if (!shot) {
     swap();
     return Promise.resolve();
   }
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-  const tapeEl = document.querySelector('#backdrop .atl-tape');
-  const tr = tapeEl?.getBoundingClientRect();
-  const tape = tr && tr.width ? { x: Math.min(W - 40, tr.left + tr.width / 2), y: tr.top + tr.height / 2 } : { x: W * 0.84, y: H * 0.46 };
-  const { pts, n } = tearPath(W, H, tape);
-  const G = 24; // widest opening of the tear, px
+  const el = document.createElement('div');
+  el.className = 'fall tunnel';
+  el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = `<div class="fall-flash"></div>${LETTERBOX}`;
+  document.body.appendChild(el);
+  const bars = el.querySelectorAll('.lb');
+  const flash = el.querySelector('.fall-flash');
+  const cam = $('#backdrop');
+  const screen = $('#screen-title');
+  const title = screen.querySelector('.title-block');
+  const clock = { t: 0 };
+  const jitter = () => (Math.random() * 2 - 1).toFixed(1);
+  const SWAP = 1.25;
+  const posters = [...document.querySelectorAll('#backdrop .bd-graffiti, #backdrop .bd-shards')].map((l) => l.firstElementChild);
+  const blown = [];
 
-  const layer = document.createElement('div');
-  layer.className = 'rip';
-  layer.setAttribute('aria-hidden', 'true');
-  const piece = (cls) => {
-    const wrap = document.createElement('div');
-    wrap.className = `rip-piece ${cls}`;
-    const edge = document.createElement('div'); // white torn-paper fibre (cheap: no filters)
-    edge.className = 'rip-edge';
-    const clip = document.createElement('div');
-    clip.className = 'rip-clip';
-    clip.appendChild(snapshotTitle());
-    wrap.append(edge, clip);
-    return { wrap, edge, clip };
-  };
-  const up = piece('rip-top');
-  const low = piece('rip-bottom');
-  const tip = document.createElement('div');
-  tip.className = 'rip-tip';
-  layer.append(low.wrap, up.wrap, tip);
-  document.body.appendChild(layer);
-  swap(); // the board is live underneath; the torn gap shows it
-
-  const st = { p: 0, g: 1 };
-  const P = (x, y) => `${x.toFixed(1)}px ${y.toFixed(1)}px`;
-  const draw = () => {
-    const off = pts.map((q) => G * st.g * Math.min(1, Math.max(0, (st.p - q.s) / 0.16)));
-    const line = (sign, fibre) => pts.map((q, i) => {
-      const o = sign * Math.max(0, off[i] - (fibre ? Math.min(q.f, off[i]) : 0));
-      return P(q.x + n.x * o, q.y + n.y * o);
-    }).join(', ');
-    up.clip.style.clipPath = `polygon(${line(-1, false)}, 0px 0px, ${W}px 0px)`;
-    up.edge.style.clipPath = `polygon(${line(-1, true)}, 0px 0px, ${W}px 0px)`;
-    low.clip.style.clipPath = `polygon(${line(1, false)}, 0px ${H}px, ${W}px ${H}px)`;
-    low.edge.style.clipPath = `polygon(${line(1, true)}, 0px ${H}px, ${W}px ${H}px)`;
-    const j = pts.findIndex((q) => q.s >= st.p);
-    const q = pts[j < 0 ? pts.length - 1 : j];
-    gsap.set(tip, { x: q.x, y: q.y });
-  };
-  draw();
-
-  const tug = (to, dur, at) => {
-    tl.add(() => {
-      sfx('tear', dur + 0.05);
-      shake(layer);
-    }, at).to(st, { p: to, duration: dur, ease: 'power3.out', onUpdate: draw }, at);
-  };
-  const tl = gsap.timeline({ onComplete: () => layer.remove() });
-  tl.add(() => burst(tape.x, tape.y, 1.8), 0)
-    .fromTo(tip, { scale: 0, rotation: 0 }, { scale: 1, rotation: 360, duration: 0.2, ease: 'back.out(3)' }, 0.04)
-    .to(tip, { rotation: '+=900', duration: 1.1, ease: 'none' }, 0.24);
-  tug(0.14, 0.16, 0.12); // tape rips off
-  tug(0.5, 0.32, 0.4); //  tug
-  tug(1, 0.38, 0.84); //   all the way to the top-left
-  tl.to(tip, { scale: 0, duration: 0.1, ease: 'power2.in' }, 1.22)
-    .to(st, { g: 1.9, duration: 0.08, ease: 'power2.out', onUpdate: draw }, 1.22) // anticipation: pieces pull apart
-    .add(() => sfx('zip'), 1.26)
-    .add(() => sfx('thwack'), 1.42)
-    .to(up.wrap, { x: W * 0.12, y: -H * 0.95, rotation: 13, transformOrigin: '0% 0%', duration: 0.38, ease: 'power4.in' }, 1.3)
-    .to(low.wrap, { x: -W * 0.06, y: H * 1.05, rotation: -7, transformOrigin: '100% 100%', duration: 0.42, ease: 'power4.in' }, 1.33);
+  const tl = gsap.timeline({
+    onComplete: () => {
+      shot.end();
+      cam.style.translate = '';
+      screen.style.translate = '';
+      gsap.set(title, { clearProps: 'transform,opacity,visibility' });
+      el.remove();
+    },
+  });
+  tl.set(el, { visibility: 'visible' });
+  barsIn(tl, bars);
+  tl.add(() => sfx('tunnel'), 0)
+    .to(clock, {
+      t: SWAP,
+      duration: SWAP,
+      ease: 'none',
+      onUpdate: () => {
+        const t = clock.t;
+        const near = shot.closeness(t); // 0 while it's in the tunnel, 1 as it passes the camera
+        shot.tick(t, { rumble: Math.min(1, t / 0.5), lines: Math.min(1, near * 1.6), panP: gsap.parseEase('power2.inOut')(Math.min(1, t / 0.45)) });
+        // the camera shakes harder the closer the train gets
+        const amp = 1 + 2.5 * Math.min(1, t / 0.5) + 15 * near;
+        cam.style.translate = `${jitter() * amp}px ${jitter() * amp}px`;
+        screen.style.translate = `${jitter() * amp * 0.6}px ${jitter() * amp * 0.6}px`;
+      },
+    }, 0)
+    // its wind takes the title with it, and rips the posters off the wall
+    .to(title, { x: -W * 0.75, y: H * 0.15, rotation: -26, skewX: 16, autoAlpha: 0, duration: 0.42, ease: 'power3.in' }, 0.6)
+    .add(() => posters.forEach((p, i) => blown.push(p.animate(
+      [{ translate: '0 0', rotate: '0deg', opacity: 1 }, { translate: `${-W * (0.9 + i * 0.3)}px ${H * (0.1 - i * 0.12)}px`, rotate: `${-34 + i * 50}deg`, opacity: 0 }],
+      { duration: 480, delay: i * 60, easing: 'cubic-bezier(.55,0,.9,.5)', fill: 'forwards' }
+    ))), 0.66)
+    // the cut: white star-flash, swap, clear
+    .fromTo(flash, { scale: 0, rotation: -40, opacity: 1 }, { scale: 3.2, rotation: 0, duration: 0.2, ease: 'power3.in' }, SWAP - 0.2)
+    .add(() => {
+      shot.end(); // the platform is gone the instant the flash covers it
+      blown.forEach((a) => a.cancel()); // posters back on the wall, unseen behind the flash
+      swap();
+      sfx('thwack');
+    }, SWAP)
+    .to(bars, { scaleY: 0, duration: 0.2, ease: 'power2.in' }, SWAP)
+    .to(flash, { opacity: 0, duration: 0.22, ease: 'power2.out' }, SWAP + 0.02);
   return track(tl);
 }
 
@@ -548,6 +466,7 @@ const FILM = { upshot: window.innerWidth <= 900 ? 'assets/film/city-800.webp' : 
 const filmCache = [];
 export function preloadFilm() {
   if (filmCache.length) return;
+  preloadSubway();
   Object.values(FILM).forEach((src) => {
     const img = new Image();
     img.decoding = 'async';
