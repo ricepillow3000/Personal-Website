@@ -28,7 +28,18 @@ function ensure() {
   limiter.ratio.value = 20;
   limiter.attack.value = 0.001;
   limiter.release.value = 0.08;
-  master.connect(limiter).connect(ac.destination);
+  // last stop: a soft clipper (tanh curve) so even a transient that outruns the limiter can never
+  // clip; it rounds peaks smoothly instead of crackling
+  const clip = ac.createWaveShaper();
+  const n = 2048;
+  const curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1;
+    curve[i] = Math.abs(x) < 0.74 ? x : Math.sign(x) * (0.74 + 0.18 * Math.tanh((Math.abs(x) - 0.74) / 0.18)); // ceiling 0.92
+  }
+  clip.curve = curve;
+  clip.oversample = '4x';
+  master.connect(limiter).connect(clip).connect(ac.destination);
   sfxBus = ac.createGain();
   sfxBus.gain.value = 0.7; // louder overall; the compressor keeps the big film moments from clipping
   const glue = ac.createDynamicsCompressor(); // keeps the layered film foley from clipping
@@ -372,17 +383,33 @@ function clack(bus, at, v) {
   noise(bus, { at, dur: 0.02, type: 'highpass', freq: 5200, q: 0.7, gain: 0.16 * v });
   tone(bus, { at, dur: 0.07, from: 120, to: 55, gain: 0.55 * v });
 }
+/* one punchy steel wheel slamming over a rail joint (John, Nov 18: "louder, punchy in the ear"):
+   a hard click for the attack, the steel body, a short metallic ring, and a deep thump you feel */
+function railHit(bus, at, v, side = 0) {
+  const b = pan(bus, side);
+  noise(b, { at, dur: 0.016, type: 'highpass', freq: 2400, q: 0.7, gain: 2.6 * v }); // the click
+  noise(b, { at, dur: 0.08, type: 'bandpass', freq: 1700, q: 1.0, gain: 2.3 * v }); // steel body
+  [[880, 0.26], [1390, 0.2], [2310, 0.13], [3570, 0.08]].forEach(([f, g]) => tone(b, { at, dur: 0.15, from: f, to: f * 0.985, type: 'triangle', gain: g * v })); // ring
+  tone(b, { at, dur: 0.14, from: 105, to: 42, gain: 0.9 * v }); // thump
+}
 /* wheels on the track: "ka-chunk ka-chunk" pairs for each car, the gap between them shrinking as
-   the train speeds up (or growing as it brakes), over a steel rumble */
-function rails(bus, at, dur, { gapFrom = 0.3, gapTo = 0.1, vFrom = 0.3, vTo = 1, gain = 0.5, rumble = 0.4 } = {}) {
+   the train speeds up (or growing as it brakes), over a steel rumble. punch: railHit instead of the
+   dull clack, panned from the tunnel (left) toward us (right) as the train passes. */
+function rails(bus, at, dur, { gapFrom = 0.3, gapTo = 0.1, vFrom = 0.3, vTo = 1, gain = 0.5, rumble = 0.4, punch = false } = {}) {
   const end = at + dur;
   let t = at;
   while (t < end - 0.02) {
     const p = (t - at) / dur;
     const gap = gapFrom + (gapTo - gapFrom) * p;
     const v = gain * (vFrom + (vTo - vFrom) * p);
-    clack(bus, t, v);
-    clack(bus, t + Math.min(0.08, gap * 0.32), v * 0.85);
+    if (punch) {
+      const side = -0.5 + p * 1.1;
+      railHit(bus, t, v, side);
+      railHit(bus, t + Math.min(0.08, gap * 0.32), v * 0.8, side);
+    } else {
+      clack(bus, t, v);
+      clack(bus, t + Math.min(0.08, gap * 0.32), v * 0.85);
+    }
     t += gap;
   }
   const lp = ac.createBiquadFilter();
@@ -502,7 +529,7 @@ const VOICES = {
   /* NEXT STOP, riding inside the car: the floor rumbling, the car rattling, wheels over the rail
      joints slowing down, muffled tunnel wind outside, the brakes squealing, then the station chime */
   train: (bus, at) => {
-    rails(bus, at, 1.0, { gapFrom: 0.085, gapTo: 0.3, vFrom: 1, vTo: 0.45, gain: 0.42, rumble: 0.5 });
+    rails(bus, at, 1.0, { gapFrom: 0.085, gapTo: 0.3, vFrom: 1, vTo: 0.45, gain: 0.6, rumble: 0.6, punch: true });
     rattle(bus, at, 0.95, { gain: 0.12, from: 1.4, to: 0.4 });
     airRoar(bus, at, 0.8, { from: 520, to: 200, gain: 0.7, up: false });
     squeal(bus, at + 0.45, 0.55, 0.05);
@@ -512,12 +539,12 @@ const VOICES = {
   // PRESS START: a rumble deep in the tunnel, the horn, wheels hammering the rail joints faster and
   // louder, the horn's pitch dropping as it passes, the blast of air and the paper flying
   tunnel: (bus, at) => {
-    rails(bus, at, 1.25, { gapFrom: 0.34, gapTo: 0.075, vFrom: 0.12, vTo: 1, gain: 0.5, rumble: 0.45 });
+    rails(bus, at, 1.3, { gapFrom: 0.3, gapTo: 0.07, vFrom: 0.3, vTo: 1, gain: 1.0, rumble: 0.85, punch: true }); // the track: loud and punchy
     // one long horn: faint as the headlights appear, loudest as the nose passes us (~0.74s), then gone
-    trainHorn(bus, at + 0.02, 1.5, 0.24, { fadeIn: 0.3, peak: 0.74, drop: 0.88 });
+    trainHorn(bus, at + 0.02, 1.5, 0.15, { fadeIn: 0.3, peak: 0.74, drop: 0.88 }); // lower so the wheels are heard
     // the wall of air the train shoves out of the tunnel ahead of itself, then its wake
-    airRoar(bus, at + 0.2, 0.6, { from: 160, to: 1600, gain: 1.4 });
-    airRoar(bus, at + 0.78, 0.6, { from: 1800, to: 300, gain: 1.2, up: false });
+    airRoar(bus, at + 0.2, 0.6, { from: 160, to: 1600, gain: 1.1 }); // pulled back so the wheels cut through
+    airRoar(bus, at + 0.78, 0.6, { from: 1800, to: 300, gain: 1.0, up: false });
     rattle(bus, at + 0.3, 1.0, { gain: 0.16, from: 0.4, to: 1.6 }); // the cars shaking as they storm past
     screech(bus, at + 0.55, 0.5, 0.03);
     flutter(bus, at + 0.6, 0.45, 0.14);
