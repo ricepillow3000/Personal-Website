@@ -750,6 +750,10 @@ $('#menuBtn').addEventListener('click', () => {
   menu.isOpen() ? menu.close() : menu.open();
 });
 
+// key hints mean nothing to mouse/touch visitors: they appear once the keyboard is used
+window.addEventListener('keydown', (e) => { if (!e.metaKey && !e.ctrlKey && e.key !== 'Shift') document.body.classList.add('kbd'); }, true);
+window.addEventListener('pointerdown', () => document.body.classList.remove('kbd'), true);
+
 function renderKeyHints(mode) {
   const sets = {
     board: [['↑↓', 'MOVE'], ['⏎', 'OPEN'], ['1-6', 'CHAPTERS'], [MENU_KEY, 'MENU'], ['Q', 'QUICK VIEW']],

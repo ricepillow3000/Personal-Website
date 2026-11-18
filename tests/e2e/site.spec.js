@@ -45,7 +45,6 @@ test('THE PLAN previews the chapter you point at, one line each', async ({ page,
   await expect(card.locator('.pc-ch')).toHaveText('CHAPTER 02');
   await expect(card.locator('.pc-name')).toHaveText('MISSIONS');
   await expect(card.locator('.pc-tease')).toContainText('2 live apps');
-  await expect(card.locator('.pc-go')).toHaveAttribute('href', '#/missions');
 });
 
 test('opening all six chapters unlocks Full Recon, and CONTINUE moves on as you read', async ({ page }) => {

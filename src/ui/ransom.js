@@ -23,7 +23,9 @@ export function ransom(el, text, seed = 7) {
     w.setAttribute('aria-hidden', 'true');
     [...word].forEach((ch) => {
       const l = document.createElement('span');
-      l.className = `rl f${Math.floor(rnd() * 5)} ${COLORS[Math.floor(rnd() * COLORS.length)]}`;
+      let f = Math.floor(rnd() * 5);
+      if (f === 2 && /[A4]/i.test(ch)) f = 0; // the marker font's A reads as a 4 ("ST4TS")
+      l.className = `rl f${f} ${COLORS[Math.floor(rnd() * COLORS.length)]}`;
       l.style.setProperty('--r', `${(rnd() * 24 - 12).toFixed(1)}deg`);
       l.style.setProperty('--y', `${(rnd() * 0.16 - 0.08).toFixed(2)}em`);
       l.textContent = ch;

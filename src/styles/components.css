@@ -639,3 +639,24 @@ body[data-mode="title"] .scroll-meter { display: none; }
 @keyframes menuRing { from { opacity: 1; scale: 1; } to { opacity: 0; scale: 1.5; } }
 @media (prefers-reduced-motion: reduce) { .hud-btn.menu-hot, .hud-btn.menu-hot::after { animation: none; } }
 body.reduce-motion .hud-btn.menu-hot, body.reduce-motion .hud-btn.menu-hot::after { animation: none; }
+
+/* ---- Nov 18 review fixes (independent design review of the whole flow) ---- */
+/* key hints: only for keyboard users (they meant nothing to mouse/touch, and sat on top of content) */
+.keyhints { display: none; }
+body.kbd:not([data-screen="title"]):not([data-mode="quick"]):not([data-mode="board"]) .keyhints { display: flex; }
+/* menu: black words with a white ink outline read on the red AND the black diagonal; seen chapters get THE PLAN's star */
+.stair-item:not(.on) { -webkit-text-stroke: 2px var(--white); paint-order: stroke fill; }
+.stair.has-on .stair-item:not(.on) { text-shadow: none; }
+.stair-item { white-space: nowrap; }
+.si-seen { width: .34em; height: .34em; flex: none; position: relative; z-index: 2; background: var(--yellow); -webkit-text-stroke: 0;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); filter: drop-shadow(2px 2px 0 var(--black)); }
+@media (max-width: 760px) {
+  .stair li { margin: 0 0 8px calc(var(--i) * 10px); }
+  .stair-item { transform: rotate(-3deg) scale(var(--sc, 1)); }
+  .stair-item.on { transform: rotate(-4deg) scale(var(--sc)); }
+  .ach-word { display: none; }
+}
+/* page subtitles sit on an ink strip so they read over the busy city */
+.page-sub { display: inline-block; background: rgba(11, 11, 11, .82); padding: 4px 12px; text-shadow: none; }
+/* inside a chapter the tiny status tags (scaled to ~6px) were unreadable: the chapter itself is the content */
+body[data-mode="page"] .hud-tl { display: none; }
