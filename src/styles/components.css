@@ -660,3 +660,33 @@ body.kbd:not([data-screen="title"]):not([data-mode="quick"]):not([data-mode="boa
 .page-sub { display: inline-block; background: rgba(11, 11, 11, .82); padding: 4px 12px; text-shadow: none; }
 /* inside a chapter the tiny status tags (scaled to ~6px) were unreadable: the chapter itself is the content */
 body[data-mode="page"] .hud-tl { display: none; }
+
+/* ---- THE GUIDE: STOP strip at the top of every chapter + the guide button (Nov 18) ---- */
+.stop-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 14px 0 6px; }
+.ss-label { font: 400 18px/1 var(--f-menu); letter-spacing: 3px; color: var(--white); background: var(--black); padding: 6px 12px 4px; transform: skew(var(--skew)); box-shadow: 4px 4px 0 var(--red); }
+.ss-label b { font-weight: 400; color: var(--yellow); }
+.ss-line { list-style: none; margin: 0; padding: 0 6px; display: flex; align-items: center; position: relative; }
+.ss-line::before { content: ""; position: absolute; left: 14px; right: 14px; top: 50%; height: 5px; margin-top: -2.5px; background: var(--black); }
+.ss-line li { position: relative; display: flex; }
+.ss-line li + li { margin-left: 14px; }
+.ss-dot { display: block; width: 18px; height: 18px; border-radius: 50%; background: var(--black); border: 3px solid var(--white); transition: transform .14s var(--ease-pop); }
+.ss-dot.seen { background: var(--red); }
+.ss-dot.now { width: 26px; height: 26px; background: var(--yellow); border-color: var(--black); box-shadow: 0 0 0 3px var(--yellow); }
+.ss-dot:hover, .ss-dot:focus-visible { transform: scale(1.25); outline: none; }
+.ss-dot:focus-visible { box-shadow: 0 0 0 3px var(--yellow); }
+.ss-next { font: 700 italic 14px/1 var(--f-ui); letter-spacing: .6px; color: var(--black); background: var(--white); padding: 5px 10px; transform: skew(var(--skew)); }
+.guide { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom, 0px)); z-index: 38; translate: -50% 0; display: inline-flex; align-items: center; gap: 10px;
+  border: 3px solid var(--black); background: var(--yellow); color: var(--black); padding: 9px 18px 7px; font: 400 17px/1 var(--f-menu); letter-spacing: 2px;
+  transform: skew(var(--skew)); box-shadow: 6px 6px 0 var(--black); cursor: pointer; white-space: nowrap; }
+.guide > * { transform: skew(calc(var(--skew) * -1)); }
+.guide .g-arrow { font: 400 22px/1 var(--f-head); animation: g-bob 1.1s ease-in-out infinite; }
+.guide:hover, .guide:focus-visible { background: var(--white); outline: none; }
+.guide:focus-visible { box-shadow: 6px 6px 0 var(--black), 0 0 0 4px var(--red); }
+@keyframes g-bob { 50% { translate: 0 4px; } }
+@media (max-width: 760px) {
+  .ss-label { font-size: 15px; } .ss-line li + li { margin-left: 10px; } .ss-dot { width: 16px; height: 16px; } .ss-dot.now { width: 22px; height: 22px; }
+  .guide { font-size: 13px; letter-spacing: 1px; padding: 8px 12px 6px; max-width: calc(100vw - 32px); }
+  .ss-dot { position: relative; } .ss-dot::after { content: ""; position: absolute; inset: -12px; } /* 40px+ tap area */
+}
+@media (prefers-reduced-motion: reduce) { .guide .g-arrow { animation: none; } }
+body[data-mode="page"] .screen-page { padding-bottom: 120px; } /* nothing important ever sits under the guide button */

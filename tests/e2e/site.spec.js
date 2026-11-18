@@ -90,11 +90,17 @@ test('a case is CLEARED only after visiting its project link and coming back', a
   await page.locator('.poster[data-mission="arcas"]').click();
   const [popup] = await Promise.all([context.waitForEvent('page'), page.locator('#modal a[data-clear]').first().click()]);
   await popup.close();
-  // simulate the visitor leaving and coming back to this tab
+  // a quick blur/focus blip (what a phone does on the tap itself) must NOT clear it
   await page.evaluate(() => {
     window.dispatchEvent(new Event('blur'));
     window.dispatchEvent(new Event('focus'));
   });
+  await page.waitForTimeout(600);
+  await expect(page.locator('#modal .clear-stamp')).toHaveCount(0);
+  // a real visit: away for a while, then back
+  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+  await page.waitForTimeout(1700);
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await page.keyboard.press('Escape');
   const poster = page.locator('.poster[data-mission="arcas"]');
   await expect(poster.locator('.clear-stamp')).toHaveCount(1);
@@ -112,7 +118,7 @@ test('?company=Google pins a personal note', async ({ page }) => {
 test('?company= is sanitized and rendered as text only', async ({ page }) => {
   await openBoard(page, '/?company=%3Cimg%20src=x%20onerror=alert(1)%3EAcme#/board');
   await expect(page.locator('.plan-note')).toContainText('Wait, someone from img srcx onerroralert1Acme?');
-  await expect(page.locator('#board img')).toHaveCount(0);
+  await expect(page.locator('#board img:not([src="assets/film/trainnose.webp"])')).toHaveCount(0); // only our own train icon
 });
 
 test('deep links open sections directly, and Esc returns to the board', async ({ page }) => {
@@ -506,4 +512,24 @@ test('every menu item fits on short laptop screens and phones held sideways', as
     for (const b of bottoms) expect(b, `${width}x${height}`).toBeLessThanOrEqual(height);
     await page.keyboard.press('Escape');
   }
+});
+
+test('the guide: every chapter shows where you are, and the guide button leads to the next stop', async ({ page, isMobile }) => {
+  await page.goto('/#/skills');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'skills');
+  const strip = page.locator('#page .stop-strip');
+  await expect(strip).toContainText('STOP 03 / 06');
+  await expect(strip).toContainText('NEXT · SIDE QUESTS');
+  await expect(strip.locator('.ss-dot.now')).toHaveAttribute('href', '#/skills');
+  if (isMobile) {
+    const guide = page.locator('.guide');
+    await expect(guide).toBeVisible();
+    await expect(guide).toContainText('NEXT STOP: SIDE QUESTS');
+    await guide.click(); // scrolls to the NEXT STOP card, then bows out
+    await expect(page.locator('#page .next-ep')).toBeInViewport();
+    await expect(guide).toBeHidden();
+  }
+  await page.locator('#page .back-btn').click();
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  await expect(page.locator('.guide')).toBeHidden();
 });
