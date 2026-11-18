@@ -285,3 +285,6 @@ body.reduce-motion .panel::before { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .next-ep.lit .ne-go { animation: none; } }
 body.reduce-motion .next-ep.lit .ne-go { animation: none; }
 @media print { .next-ep { display: none; } }
+/* the off-the-record starburst lives on the ID card (it moved here from the old board) */
+.idcard { position: relative; }
+.idcard .gpa-burst { position: absolute; top: 54px; right: 18px; }
