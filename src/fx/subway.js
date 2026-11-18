@@ -17,7 +17,6 @@ const SIDE_X = -63; // the train's platform-side wall
 const ROOF = -62;
 const SKIRT = 54; // platform level
 const WIDE = 100; // the train's width
-const PERIOD = ((SKIRT - ROOF) * 1600) / 914; // one repeat of the car-side art, in world units
 const LEN = 5200; // the whole train
 const MOUTH = 1000;
 const START = 2700; // where the nose is when the shot opens (deep in the dark tunnel)
@@ -223,6 +222,7 @@ function trainSide(lead, kk, alpha = 1, tex = side) {
   if (!side?.complete || !side.naturalWidth) return;
   const tw = side.naturalWidth;
   const th = side.naturalHeight;
+  const period = ((SKIRT - ROOF) * tw) / th; // one repeat of the car-side art (door to door), in world units
   const tail = lead + LEN;
   const near = Math.max(lead, 18);
   // screen columns from the near end to the far end; step ~3 screen px
@@ -235,13 +235,68 @@ function trainSide(lead, kk, alpha = 1, tex = side) {
     const a = alpha * dark(d);
     if (a <= 0.01) break;
     const s = d - lead;
-    const u = ((s % PERIOD) / PERIOD) * tw;
-    const sw = Math.max(1, Math.min(tw - u, ((d2 - d) / PERIOD) * tw));
+    const u = ((s % period) / period) * tw;
+    const sw = Math.max(1, Math.min(tw - u, ((d2 - d) / period) * tw));
     const top = sy(ROOF, d);
     ctx.globalAlpha = a;
     ctx.drawImage(tex, u, 0, sw, th, x, top, step + 0.8, sy(SKIRT, d) - top);
   }
   ctx.globalAlpha = 1;
+}
+
+/* The cabin light spilling onto the platform (John, Nov 18: warm light-gold, seen reflecting on its
+   surroundings): cel-shaded pools beside every window, three hard-edged bands that are brightest at
+   the platform edge, moving with the train. Where the windows are comes from the car art itself. */
+let glowProfile = null; // how warm (lit window) each slice of one door-to-door repeat is, 0..1
+function windowProfile() {
+  if (glowProfile || !side?.complete || !side.naturalWidth) return glowProfile;
+  const c = document.createElement('canvas');
+  c.width = 96;
+  c.height = 24;
+  const g = c.getContext('2d');
+  g.drawImage(side, 0, 0, 96, 24);
+  const px = g.getImageData(0, 0, 96, 24).data;
+  const out = new Float32Array(96);
+  for (let x = 0; x < 96; x++) {
+    let w = 0;
+    for (let y = 4; y < 12; y++) { const i = (y * 96 + x) * 4; w += Math.max(0, px[i] - px[i + 2]); } // warm = red over blue
+    out[x] = w;
+  }
+  // light spreads: blur around the loop so the windows of a car make broad patches, not stripes
+  const soft = out.map((_, x) => {
+    let t = 0;
+    for (let k = -8; k <= 8; k++) t += out[(x + k + 96) % 96];
+    return t / 17;
+  });
+  const max = Math.max(...soft) || 1;
+  glowProfile = soft.map((v) => Math.min(1, (v / max) * 1.15));
+  return glowProfile;
+}
+const POOLS = [[40, 0.16], [90, 0.1], [150, 0.06]]; // width from the platform edge (world units), strength
+function cabinLight(lead) {
+  const prof = windowProfile();
+  if (!prof) return;
+  const period = ((SKIRT - ROOF) * side.naturalWidth) / side.naturalHeight;
+  const step = period / 24;
+  const end = Math.min(lead + LEN, 1900);
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (let d = Math.max(lead, 26); d < end; d += step) {
+    const v = prof[Math.floor((((d - lead) % period) / period) * 96) % 96];
+    const a = v * dark(d);
+    if (a < 0.04) continue;
+    const d2 = d + step;
+    for (const [w, k] of POOLS) {
+      ctx.fillStyle = `rgba(255, 196, 96, ${(k * a).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.moveTo(sx(SIDE_X, d), sy(SKIRT, d));
+      ctx.lineTo(sx(SIDE_X, d2), sy(SKIRT, d2));
+      ctx.lineTo(sx(SIDE_X + w, d2), sy(SKIRT, d2));
+      ctx.lineTo(sx(SIDE_X + w, d), sy(SKIRT, d));
+      ctx.fill();
+    }
+  }
+  ctx.restore();
 }
 
 function noseRect(d) {
@@ -343,6 +398,7 @@ function draw() {
   const lead = START - SPEED * t;
   const img = nose?.complete && nose.naturalWidth ? nose : null;
   afterimages(lead, kk, img, Math.max(0, Math.min(1, (MOUTH + 200 - lead) / 500)));
+  cabinLight(lead); // warm pools on the floor first, the train on top
   trainSide(lead, kk);
   trainNose(lead, img, 1);
   headlights(lead, 1 + Math.max(0, 1 - lead / MOUTH) * 1.6, Math.min(1, t / 0.3)); // the lights fade up with the horn
