@@ -8,11 +8,10 @@ import { sfx } from '../audio/audio.js';
 import { store } from '../core/store.js';
 
 /* =========================================================================
-   THE PLAN — the hub after PRESS START (replaced the crowded heist board, Nov 18).
-   One screen, one job: the resume as six chapters in reading order, a big
-   Persona-style staircase of chapter names, ONE preview card for the chapter
-   you point at (one line, one number), and a big CONTINUE that always points
-   to the next chapter you haven't seen. Every detail lives in the chapters.
+   THE PLAN — the hub after PRESS START, drawn as ONE SUBWAY LINE (Nov 18, John's pick).
+   The resume is a red train line with six stations in reading order. The screen shows
+   one thing to do: the NEXT STOP sign (one chapter, one line) and BOARD THE TRAIN.
+   Seen stations light up and the line fills as the visitor rides it start to finish.
    ========================================================================= */
 
 /** The resume, start to finish: who he is, what he built, what he can do, where he worked,
@@ -28,7 +27,6 @@ export function nextChapter() {
 }
 
 function planMarkup(ctx) {
-  const seen = store.get().visited || [];
   const e = resume.education;
   const note = ctx.company
     ? `<p class="plan-note"><b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you.</p>`
@@ -40,33 +38,31 @@ function planMarkup(ctx) {
         <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
       </div>
       <p class="plan-role">${esc(resume.role)}<span class="plan-status"> · GSU ${esc(e.grad.replace('Class of ', "'").replace(/^'20/, "'"))} · ${esc(resume.status)}</span></p>
-      <button type="button" class="progress-chip" id="progressChip"></button>
       ${note}
     </header>
 
-    <div class="plan-body">
-      <nav class="plan-list" aria-label="Chapters">
-        <p class="plan-kicker" data-board-item>THE PLAN <span>· ${CHAPTERS.length} chapters, in order</span></p>
-        <ol>${CHAPTERS.map((id, i) => `<li style="--i:${i}" data-board-item>
-          <a class="pl-item${seen.includes(id) ? ' seen' : ''}" href="#/${id}" data-nav data-ch="${id}">
-            <span class="pl-no">${no(i)}</span>
-            <span class="pl-name">${esc(label(id))}</span>
-            <span class="pl-star" aria-label="${seen.includes(id) ? 'seen' : ''}"></span>
-            <span class="pl-tease">${esc(menuTeasers[id] || '')}</span>
-          </a></li>`).join('')}</ol>
-      </nav>
-
-      <aside class="plan-card" data-board-item aria-live="polite">
+    <section class="plan-stop" data-board-item aria-live="polite">
+      <p class="ps-kicker">NEXT STOP</p>
+      <div class="plan-card">
         <span class="pc-ch"></span>
         <h2 class="pc-name"></h2>
         <p class="pc-tease"></p>
-        <p class="pc-how" aria-hidden="true">Click the name to open it ▸</p>
-      </aside>
-    </div>
+      </div>
+      <a class="plan-continue" href="#/stats" data-nav data-magnetic>
+        <small class="pcn-kicker">START HERE</small><b class="pcn-title">BOARD THE TRAIN ▸</b>
+      </a>
+    </section>
 
-    <a class="plan-continue" href="#/stats" data-nav data-board-item data-magnetic>
-      <small class="pcn-kicker">START HERE</small><b class="pcn-title">CHAPTER 01 · STATS ▸</b>
-    </a>
+    <nav class="plan-line" aria-label="The resume, one stop at a time" data-board-item>
+      <ol style="--n:${CHAPTERS.length}">${CHAPTERS.map((id, i) => `<li style="--i:${i}">
+        <a class="pl-item" href="#/${id}" data-nav data-ch="${id}" aria-label="Chapter ${no(i)}, ${esc(label(id))}">
+          <span class="pl-dot" aria-hidden="true"><span class="pl-no">${no(i)}</span></span>
+          <span class="pl-name" aria-hidden="true">${esc(label(id))}</span>
+          <span class="pl-here" aria-hidden="true">YOU ARE HERE</span>
+        </a></li>`).join('')}</ol>
+    </nav>
+
+    <div class="plan-foot" data-board-item><button type="button" class="progress-chip" id="progressChip"></button></div>
   </div>`;
 }
 
@@ -76,42 +72,44 @@ export function createBoard(root, ctx) {
   root.innerHTML = planMarkup(ctx);
   ransom(root.querySelector('#boardName'), resume.first, NAME_SEED);
   const items = [...root.querySelectorAll('.pl-item')];
+  const line = root.querySelector('.plan-line ol');
   const card = root.querySelector('.plan-card');
   const cont = root.querySelector('.plan-continue');
+  let next = 'stats';
 
-  /* the preview card follows whatever chapter you point at */
+  /* the sign shows the station you point at; let go and it returns to the next stop */
   let shown = null;
   function preview(id, { silent = false } = {}) {
     if (!id || id === shown) return;
     shown = id;
     const i = CHAPTERS.indexOf(id);
+    const seen = store.get().visited || [];
     items.forEach((a) => a.classList.toggle('on', a.dataset.ch === id));
     card.querySelector('.pc-ch').textContent = `CHAPTER ${no(i)}`;
     card.querySelector('.pc-name').textContent = label(id);
     card.querySelector('.pc-tease').textContent = menuTeasers[id] || '';
+    cont.setAttribute('href', `#/${id}`);
+    cont.querySelector('.pcn-kicker').textContent = id !== next
+      ? (seen.includes(id) ? 'RIDE AGAIN' : 'JUMP AHEAD')
+      : !seen.some((s) => CHAPTERS.includes(s)) ? 'START HERE' : nextChapter() ? 'CONTINUE' : 'ALL STOPS SEEN';
     if (!silent) sfx('hover');
-    if (!reducedMotion()) gsap.fromTo(card, { x: 18, rotation: 1.5 }, { x: 0, rotation: 0, duration: 0.22, ease: 'back.out(2.4)', clearProps: 'transform' });
+    if (!reducedMotion()) gsap.fromTo(card, { x: 22, rotation: 1.5 }, { x: 0, rotation: 0, duration: 0.22, ease: 'back.out(2.4)', clearProps: 'transform' });
   }
   items.forEach((a) => {
     a.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && preview(a.dataset.ch));
     a.addEventListener('focus', () => preview(a.dataset.ch));
   });
+  root.querySelector('.plan-line').addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && preview(next, { silent: true }));
 
   function refresh() {
     const seen = store.get().visited || [];
-    items.forEach((a) => {
-      const on = seen.includes(a.dataset.ch);
-      a.classList.toggle('seen', on);
-      a.querySelector('.pl-star').setAttribute('aria-label', on ? 'seen' : '');
-    });
-    const next = nextChapter();
-    const id = next || 'contact';
-    const i = CHAPTERS.indexOf(id);
-    cont.setAttribute('href', `#/${id}`);
-    cont.querySelector('.pcn-kicker').textContent = !seen.some((s) => CHAPTERS.includes(s)) ? 'START HERE' : next ? 'CONTINUE' : 'REVISIT';
-    cont.querySelector('.pcn-title').textContent = `CHAPTER ${no(i)} · ${label(id)} ▸`;
+    items.forEach((a) => a.classList.toggle('seen', seen.includes(a.dataset.ch)));
+    next = nextChapter() || 'contact';
+    const hereAt = nextChapter() ? CHAPTERS.indexOf(next) : CHAPTERS.length - 1;
+    items.forEach((a, i) => a.classList.toggle('here', i === hereAt));
+    line.style.setProperty('--done', String(hereAt));
     shown = null;
-    preview(id, { silent: true });
+    preview(next, { silent: true });
   }
   refresh();
 
@@ -121,16 +119,19 @@ export function createBoard(root, ctx) {
     if (reducedMotion()) return;
     const parts = root.querySelectorAll('[data-board-item]');
     if (revealedOnce) {
-      // coming back: a quick slam, the full entrance only plays the first time
-      return gsap.from(parts, { x: -30, opacity: 0, duration: 0.22, ease: 'power3.out', stagger: 0.025, delay, clearProps: 'transform,opacity' });
+      return gsap.from(parts, { x: -30, opacity: 0, duration: 0.22, ease: 'power3.out', stagger: 0.03, delay, clearProps: 'transform,opacity' });
     }
     revealedOnce = true;
     const tl = gsap.timeline({ delay });
-    // the chapter names slam in one after another along the staircase, the card swings in, CONTINUE punches
+    // the sign swings down like a station board, the line draws itself left to right, the stations
+    // punch in one after another, and the YOU ARE HERE pin drops on the next stop
     tl.from(root.querySelector('.plan-head'), { y: -40, opacity: 0, duration: 0.3, ease: 'power3.out', clearProps: 'transform,opacity' }, 0)
-      .from(root.querySelectorAll('.plan-list li, .plan-kicker'), { x: () => -window.innerWidth * 0.35, rotation: -10, opacity: 0, duration: 0.34, ease: 'back.out(1.8)', stagger: 0.05, clearProps: 'transform,opacity' }, 0.08)
-      .from(card, { x: 160, rotation: 8, opacity: 0, duration: 0.36, ease: 'back.out(2)', clearProps: 'transform,opacity' }, 0.3)
-      .from(cont, { scale: 1.6, rotation: -10, opacity: 0, duration: 0.3, ease: 'back.out(2.6)', clearProps: 'transform,opacity' }, 0.5);
+      .from(root.querySelector('.plan-stop'), { y: -90, rotation: -6, opacity: 0, duration: 0.42, ease: 'back.out(1.9)', clearProps: 'transform,opacity' }, 0.1)
+      .fromTo(line, { '--draw': 0 }, { '--draw': 1, duration: 0.5, ease: 'power2.inOut' }, 0.3)
+      .from(root.querySelectorAll('.pl-dot'), { scale: 0, rotation: -90, duration: 0.3, ease: 'back.out(3)', stagger: 0.07, clearProps: 'transform' }, 0.35)
+      .from(root.querySelectorAll('.pl-name'), { y: 12, opacity: 0, duration: 0.2, stagger: 0.07, clearProps: 'transform,opacity' }, 0.45)
+      .from(root.querySelector('.pl-item.here .pl-here'), { y: -40, opacity: 0, duration: 0.32, ease: 'bounce.out', clearProps: 'transform,opacity' }, 0.85)
+      .from(root.querySelector('.plan-foot'), { opacity: 0, duration: 0.2, clearProps: 'opacity' }, 0.9);
     return tl;
   }
 

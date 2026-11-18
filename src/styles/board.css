@@ -176,77 +176,91 @@ button.gpa-burst{ border: 0; padding: 0; cursor: pointer; perspective: 400px; }
 /* declutter: on wide screens the HUD corner already shows the status line, so the board doesn't repeat it */
 
 /* =========================================================================
-   THE PLAN (Nov 18): the hub after PRESS START. Six chapters as a big
-   Persona-style staircase, one preview card, one big CONTINUE. Nothing else.
+   THE PLAN as ONE SUBWAY LINE (Nov 18): a header, the NEXT STOP sign with one
+   button, and a red line with six stations. Nothing else on the first screen.
    ========================================================================= */
-.plan{ display: grid; gap: clamp(18px, 3.2vh, 34px); min-height: calc(100vh - 232px); align-content: start; }
-.plan-head{ display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 22px; }
-.plan-name{ display: flex; align-items: flex-end; gap: 14px; }
-.plan-name .ransom{ font-size: clamp(40px, 5.2vw, 78px); margin: 0; }
-.plan-role{ margin: 0 0 8px; font: 700 italic clamp(13px, 1.15vw, 16px)/1.2 var(--f-ui); letter-spacing: .4px; color: var(--black); background: var(--white); padding: 4px 12px; transform: skew(var(--skew)); }
-.plan-head .progress-chip{ margin: 0 0 4px; }
-.plan-note{ flex-basis: 100%; margin: 0; max-width: 560px; font: 600 16px/1.35 var(--f-body); background: var(--black); color: var(--white); padding: 8px 14px; box-shadow: 5px 5px 0 var(--red); }
-.plan-note b{ color: var(--yellow); }
+.plan { display: grid; gap: clamp(16px, 3.4vh, 38px); min-height: calc(100vh - 232px); align-content: space-between; }
+.plan-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 22px; }
+.plan-name { display: flex; align-items: flex-end; gap: 14px; }
+.plan-name .ransom { font-size: clamp(40px, 5.2vw, 78px); margin: 0; }
+.plan-role { margin: 0 0 8px; font: 700 italic clamp(13px, 1.15vw, 16px)/1.2 var(--f-ui); letter-spacing: .4px; color: var(--black); background: var(--white); padding: 4px 12px; transform: skew(var(--skew)); }
+@media (min-width: 761px) { .plan-status { display: none; } } /* the HUD shows the status on wide screens */
+.plan-note { flex-basis: 100%; margin: 0; max-width: 560px; font: 600 16px/1.35 var(--f-body); background: var(--black); color: var(--white); padding: 8px 14px; box-shadow: 5px 5px 0 var(--red); }
+.plan-note b { color: var(--yellow); }
 
-.plan-body{ display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); gap: clamp(20px, 4vw, 70px); align-items: center; }
-.plan-kicker{ margin: 0 0 10px; font: 400 clamp(18px, 1.6vw, 24px)/1 var(--f-menu); letter-spacing: 4px; color: var(--yellow); }
-.plan-kicker span{ color: var(--white); letter-spacing: 2px; }
-.plan-list ol{ list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(2px, .9vh, 10px); }
-.plan-list li{ margin-left: calc(var(--i) * clamp(10px, 2.4vw, 38px)); } /* the staircase */
-.pl-item{ position: relative; display: inline-grid; grid-template-columns: auto auto auto; align-items: center; column-gap: 14px; padding: 2px 22px 2px 10px; text-decoration: none; color: var(--white);
-  font: 400 clamp(30px, min(4.6vw, 6.6vh), 72px)/1.02 var(--f-head); text-shadow: 4px 4px 0 var(--black); transform: rotate(-4deg); transition: transform .16s var(--ease-pop), color .1s; }
-.pl-item::before{ content: ""; position: absolute; inset: 4px 0 2px -6px; z-index: -1; background: var(--black); box-shadow: 7px 7px 0 var(--red); transform: skew(var(--skew)) scaleX(0); transform-origin: left; transition: transform .16s var(--ease-pop); }
-.pl-no{ font: 400 .36em/1 var(--f-menu); letter-spacing: 1px; color: var(--black); background: var(--yellow); padding: 4px 7px 2px; transform: skew(var(--skew)); text-shadow: none; }
-.pl-name{ white-space: nowrap; }
-.pl-star{ width: .42em; height: .42em; }
-.pl-item.seen .pl-star{ background: var(--yellow); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
-.pl-tease{ display: none; }
-.pl-item.on, .pl-item:hover, .pl-item:focus-visible{ transform: rotate(-4deg) scale(1.07) translateX(6px); }
-.pl-item.on::before, .pl-item:hover::before, .pl-item:focus-visible::before{ transform: skew(var(--skew)) scaleX(1); }
-.pl-item:focus-visible{ outline: none; }
-.pl-item:focus-visible::after{ content: ""; position: absolute; inset: -4px -8px; border: 3px solid var(--yellow); transform: skew(var(--skew)); pointer-events: none; }
-
-.plan-card{ position: relative; justify-self: start; width: min(100%, 460px); padding: 26px 30px 30px; background: var(--black); color: var(--white);
-  clip-path: polygon(0 4%, 96% 0, 100% 92%, 6% 100%); filter: drop-shadow(10px 10px 0 var(--red)); display: grid; gap: 10px; justify-items: start; }
-.pc-ch{ font: 400 20px/1 var(--f-menu); letter-spacing: 4px; color: var(--yellow); }
-.pc-name{ margin: 0; font: 400 clamp(40px, 4.4vw, 66px)/.95 var(--f-head); transform: skew(var(--skew)); text-shadow: 4px 4px 0 var(--red); }
-.pc-tease{ margin: 0 0 6px; font: 600 clamp(16px, 1.3vw, 19px)/1.35 var(--f-body); color: #E9E7DF; max-width: 34ch; }
-
-.plan-continue{ justify-self: start; display: inline-grid; gap: 2px; padding: 12px 34px 14px 26px; text-decoration: none; background: var(--red); color: var(--white);
+/* the NEXT STOP sign: a station board with a red stripe, one chapter, one line */
+.plan-stop { justify-self: center; display: grid; justify-items: center; gap: 14px; width: min(100%, 560px); }
+.ps-kicker { margin: 0; font: 400 clamp(18px, 1.7vw, 24px)/1 var(--f-menu); letter-spacing: 6px; color: var(--black); background: var(--yellow); padding: 6px 14px 4px; transform: skew(var(--skew)); }
+.plan-card { width: 100%; display: grid; justify-items: center; gap: 6px; padding: 22px 26px 24px; text-align: center; background: var(--black); color: var(--white);
+  border-top: 10px solid var(--red); box-shadow: 10px 10px 0 var(--red), 10px 10px 0 4px var(--black); transform: rotate(-2deg); }
+.pc-ch { font: 400 18px/1 var(--f-menu); letter-spacing: 5px; color: var(--yellow); }
+.pc-name { margin: 0; font: 400 clamp(46px, 6vw, 84px)/.95 var(--f-head); letter-spacing: 1px; text-shadow: 5px 5px 0 var(--red); }
+.pc-tease { margin: 2px 0 0; font: 600 clamp(15px, 1.3vw, 19px)/1.35 var(--f-body); color: #E9E7DF; }
+.plan-continue { display: inline-grid; justify-items: center; gap: 2px; padding: 12px 40px 14px; text-decoration: none; background: var(--red); color: var(--white);
   transform: skew(var(--skew)); box-shadow: 8px 8px 0 var(--black), 8px 8px 0 3px var(--white); transition: transform .16s var(--ease-pop); }
-.plan-continue > *{ transform: skew(calc(var(--skew) * -1)); }
-.pcn-kicker{ font: 400 16px/1 var(--f-menu); letter-spacing: 4px; color: var(--yellow); }
-.pcn-title{ font: 400 clamp(24px, 2.4vw, 36px)/1 var(--f-head); letter-spacing: .5px; }
-.plan-continue:hover, .plan-continue:focus-visible{ transform: skew(var(--skew)) scale(1.05); outline: none; }
-.plan-continue:focus-visible{ box-shadow: 8px 8px 0 var(--black), 8px 8px 0 3px var(--white), 0 0 0 4px var(--yellow); }
+.plan-continue > * { transform: skew(calc(var(--skew) * -1)); }
+.pcn-kicker { font: 400 14px/1 var(--f-menu); letter-spacing: 4px; color: var(--yellow); }
+.pcn-title { font: 400 clamp(24px, 2.4vw, 34px)/1 var(--f-head); letter-spacing: .5px; }
+.plan-continue:hover, .plan-continue:focus-visible { transform: skew(var(--skew)) scale(1.06); outline: none; }
+.plan-continue:focus-visible { box-shadow: 8px 8px 0 var(--black), 8px 8px 0 3px var(--white), 0 0 0 4px var(--yellow); }
 
-@media (max-width: 900px) {
-  .plan-body{ grid-template-columns: 1fr; }
-  .plan-card{ display: none; } /* phones: each chapter carries its own one-liner instead */
-  .pl-tease{ display: block; grid-column: 2 / -1; font: 600 14px/1.25 var(--f-body); color: #E9E7DF; text-shadow: none; white-space: normal; margin-top: 2px; }
-  .pl-item{ grid-template-columns: auto 1fr auto; font-size: clamp(28px, 8.6vw, 44px); padding: 6px 14px 8px 8px; transform: rotate(-2deg); }
-  .pl-item.on, .pl-item:hover, .pl-item:focus-visible{ transform: rotate(-2deg) scale(1.02); }
-  .plan-list li{ margin-left: calc(var(--i) * 6px); }
-  .plan-continue{ position: sticky; bottom: 14px; z-index: 5; justify-self: stretch; text-align: center; margin: 0 6px; }
-  .plan{ min-height: 0; }
-}
-@media (prefers-reduced-motion: reduce) { .pl-item, .pl-item::before, .plan-continue{ transition: none; } }
-/* the HUD already shows the status on wide screens (one status line, not two); phones keep this one */
-@media (min-width: 761px) { .plan-status{ display: none; } }
+/* the line: a thick red rail with an ink edge; the ridden part is solid, the rest is dashed */
+.plan-line ol { --draw: 1; --done: 0; position: relative; list-style: none; margin: 0 auto; padding: 0; max-width: 1100px; display: grid; grid-template-columns: repeat(var(--n), 1fr); }
+.plan-line ol::before, .plan-line ol::after { content: ""; position: absolute; top: 25px; left: calc(50% / var(--n)); height: 10px; transform-origin: left; transform: scaleX(var(--draw)); }
+.plan-line ol::before { right: calc(50% / var(--n)); background: repeating-linear-gradient(90deg, var(--white) 0 18px, transparent 18px 28px); opacity: .55; }
+.plan-line ol::after { width: calc((100% - 100% / var(--n)) * var(--done) / (var(--n) - 1)); background: var(--red); box-shadow: 0 0 0 3px var(--black); }
+.plan-line li { display: flex; justify-content: center; position: relative; z-index: 1; }
+.pl-item { position: relative; display: grid; justify-items: center; gap: 8px; text-decoration: none; color: var(--white); padding: 0 4px; min-width: 60px; }
+.pl-dot { position: relative; width: 60px; height: 60px; display: grid; place-items: center; border-radius: 50%; background: var(--black); border: 5px solid var(--white); box-shadow: 4px 4px 0 var(--black);
+  transition: transform .16s var(--ease-pop), background .12s, border-color .12s; }
+.pl-no { font: 400 22px/1 var(--f-head); color: var(--white); }
+.pl-name { font: 400 clamp(15px, 1.5vw, 22px)/1.05 var(--f-head); letter-spacing: .5px; text-align: center; text-shadow: 3px 3px 0 var(--black); }
+.pl-item.seen .pl-dot { background: var(--red); border-color: var(--white); }
+.pl-item.seen .pl-dot::after { content: ""; position: absolute; top: -12px; right: -14px; width: 24px; height: 24px; background: var(--yellow);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); filter: drop-shadow(2px 2px 0 var(--black)); }
+.pl-item.on .pl-dot, .pl-item:hover .pl-dot, .pl-item:focus-visible .pl-dot { transform: scale(1.18); border-color: var(--yellow); }
+.pl-item.on .pl-name { color: var(--yellow); }
+.pl-item:focus-visible { outline: none; }
+.pl-here { display: none; position: absolute; top: -44px; font: 400 13px/1 var(--f-menu); letter-spacing: 2px; white-space: nowrap; color: var(--black); background: var(--yellow); padding: 5px 8px 3px; }
+.pl-here::after { content: ""; position: absolute; left: 50%; bottom: -8px; margin-left: -7px; border: 7px solid transparent; border-top-color: var(--yellow); border-bottom: 0; }
+.pl-item.here .pl-here { display: block; }
+.plan-foot { display: flex; justify-content: flex-start; }
+.plan-foot .progress-chip { margin: 0; transform: scale(.9); transform-origin: left center; }
+
 @media (max-width: 760px) {
-  .screen-board{ padding-bottom: 24px; } /* lets CONTINUE pin to the real bottom of the screen */
-  .plan-head .pc-hint{ display: none; }
-  .plan-head .progress-chip{ transform: scale(.86); transform-origin: left center; margin: 0; }
-  .plan-role{ font-size: 13px; }
+  .screen-board { padding-bottom: 24px; }
+  .plan { min-height: calc(100vh - 160px); }
+  .plan-role { font-size: 13px; }
+  .plan-stop { gap: 10px; }
+  .plan-card { padding: 16px 16px 18px; }
+  .plan-line ol::before, .plan-line ol::after { top: 19px; height: 8px; }
+  .pl-item { min-width: 0; padding: 0 1px; gap: 6px; }
+  .pl-dot { width: 46px; height: 46px; border-width: 4px; }
+  .pl-no { font-size: 17px; }
+  .pl-name { font-size: 12px; letter-spacing: 0; }
+  .pl-here { top: -36px; font-size: 11px; letter-spacing: 1px; padding: 4px 6px 2px; }
+  .pl-item.seen .pl-dot::after { width: 17px; height: 17px; top: -9px; right: -10px; }
+  .plan-foot .progress-chip .pc-hint { display: none; }
 }
-/* review fixes: every chapter row sits on an ink slab (no text ghosting over the light band);
-   the selected one goes solid black with the red hard shadow */
-.pl-item::before { background: rgba(11, 11, 11, .62); box-shadow: none; transform: skew(var(--skew)) scaleX(1); transition: background .12s, box-shadow .12s; }
-.pl-item.on::before, .pl-item:hover::before, .pl-item:focus-visible::before { background: var(--black); box-shadow: 7px 7px 0 var(--red); }
-.pc-how { margin: 0; font: 400 15px/1 var(--f-menu); letter-spacing: 2px; color: var(--yellow); }
-@media (max-width: 900px) {
-  /* phones: CONTINUE is one compact line so it never hides the plan */
-  .plan-continue { display: flex; justify-content: center; align-items: baseline; gap: 10px; padding: 10px 18px 12px; }
-  .pcn-kicker { font-size: 13px; letter-spacing: 2px; }
-  .pcn-title { font-size: clamp(20px, 6vw, 26px); }
+@media (prefers-reduced-motion: reduce) { .pl-dot, .plan-continue { transition: none; } }
+/* room for the YOU ARE HERE pin, and station names on ink slabs so they read over any background */
+.plan-line { margin-top: 34px; }
+.pl-name { background: var(--black); padding: 3px 7px 1px; text-shadow: none; transform: skew(var(--skew)); }
+.pl-item.on .pl-name { box-shadow: 3px 3px 0 var(--red); }
+@media (max-width: 760px) { .plan-line { margin-top: 30px; } .pl-name { padding: 2px 3px 1px; } }
+/* short screens (iPhone SE, 720p laptops): the whole line must still fit without scrolling */
+@media (max-height: 760px) {
+  .plan { gap: 12px; }
+  .plan-name .ransom { font-size: clamp(34px, 4.4vw, 58px); }
+  .plan-card { padding: 12px 18px 14px; gap: 2px; }
+  .pc-name { font-size: clamp(38px, 4.6vw, 60px); }
+  .plan-stop { gap: 8px; }
+  .plan-line { margin-top: 26px; }
+}
+@media (max-width: 760px) and (max-height: 620px) {
+  .screen-board { padding-top: 64px; }
+  .plan-role { display: none; }
+  .ps-kicker { font-size: 15px; padding: 4px 10px 2px; }
+  .pcn-title { font-size: 21px; }
+  .plan-continue { padding: 8px 26px 10px; }
 }

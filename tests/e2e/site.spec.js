@@ -37,7 +37,7 @@ test('old #/talk links land on the board', async ({ page }) => {
   await openBoard(page, '/#/talk');
 });
 
-test('THE PLAN previews the chapter you point at, one line each', async ({ page, isMobile }) => {
+test('THE PLAN: pointing at a station shows it on the NEXT STOP sign', async ({ page, isMobile }) => {
   test.skip(isMobile, 'phones show the one-liners in the list instead of a card');
   await openBoard(page);
   await page.locator('.pl-item[data-ch="missions"]').hover();
@@ -60,14 +60,15 @@ test('opening all six chapters unlocks Full Recon, and CONTINUE moves on as you 
   await expect(page.locator('#achCount')).toHaveText('1/7');
 });
 
-test('phone: every chapter shows its one-liner and CONTINUE stays on screen', async ({ page, isMobile }) => {
+test('phone: the whole line, the next stop and BOARD THE TRAIN fit on one screen', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'phone only');
   await openBoard(page);
-  await expect(page.locator('.pl-item[data-ch="missions"] .pl-tease')).toBeVisible();
   const vh = page.viewportSize().height;
-  const box = await page.locator('#board .plan-continue').boundingBox();
-  expect(box.y + box.height).toBeLessThanOrEqual(vh);
-  expect(box.y).toBeGreaterThan(vh / 2); // pinned near the bottom, where the thumb is
+  for (const sel of ['#board .plan-continue', '#board .pl-item[data-ch="contact"]', '#board .plan-card']) {
+    const box = await page.locator(sel).boundingBox();
+    expect(box.y + box.height, sel).toBeLessThanOrEqual(vh);
+  }
+  await expect(page.locator('#board .pl-item.here')).toHaveAttribute('data-ch', 'stats');
 });
 
 test('case file opens a dossier with objectives, loot and live links', async ({ page }) => {
