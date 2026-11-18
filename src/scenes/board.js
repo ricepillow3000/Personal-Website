@@ -99,7 +99,7 @@ function boardMarkup(ctx) {
   const skills = reorder(resume.skills, ctx.company?.order?.skills);
   const note = ctx.company
     ? `<aside class="note note-company card-pop" data-board-item>${pin}<b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you. Pick any skill to see where I used it.</aside>`
-    : `<aside class="note note-hint note-case0 card-pop" data-board-item>${pin}<b class="c0-tag">CASE 00 · THIS SITE</b> Resumes are boring, so I directed 3 AI agents to build mine as a game. <span class="hint-desk">Hover a skill and the string finds the proof.</span><span class="hint-phone">Skills are further down. Tap one and it lights the proof.</span></aside>`;
+    : ''; // CASE 00 used to sit here; it only repeated the title and the calling card (decluttered)
 
   return `
   <header class="board-head" data-board-item>

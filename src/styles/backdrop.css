@@ -72,3 +72,8 @@ body[data-mode="title"] .bd-p5 { opacity: 0; }
 /* the platform's trash + the PRESS START train (src/fx/subway.js): title only */
 .bd-cam canvas { opacity: 0; transition: opacity .3s ease-out; }
 body[data-mode="title"] .bd-cam canvas { opacity: 1; }
+
+/* declutter: the posters, arrow and star outline are the title's set dressing; behind the board and pages
+   they only compete with the content (the city, the red plane and the starburst stay) */
+.bd-graffiti { transition: opacity .3s steps(3); }
+body:not([data-mode="title"]) .bd-graffiti { opacity: 0; }

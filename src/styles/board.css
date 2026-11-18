@@ -452,3 +452,6 @@ button.gpa-burst { border: 0; padding: 0; cursor: pointer; perspective: 400px; }
 .card-pop[data-tilt]:hover, .calling.card-pop[data-tilt]:hover {
   transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translate(-3px, -6px) !important;
 }
+
+/* declutter: on wide screens the HUD corner already shows the status line, so the board doesn't repeat it */
+@media (min-width: 761px) { .board-status { display: none; } }

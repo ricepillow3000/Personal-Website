@@ -195,6 +195,11 @@ function p5Layer() {
   const dots = torn(0, 0, 360, 250, 41);
   return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   <defs><pattern id="p5dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="5.2" fill="${C.black}"/></pattern></defs>
+  <!-- the big split: a flat red plane slicing the right side, and a jagged white band with an ink edge
+       cutting across, in the bold P5 way (original shapes) -->
+  ${poly([[1010, -20], [1620, -20], [1620, 920], [760, 920]], C.red2)}
+  ${poly([[1010, -20], [1040, -20], [790, 920], [760, 920]], C.black)}
+  ${poly([[-20, 700], [300, 636], [282, 668], [622, 588], [604, 616], [1000, 516], [1012, 594], [626, 690], [646, 664], [304, 746], [322, 714], [-20, 800]], C.white, `stroke="${C.black}" stroke-width="7"`)}
   <g class="p5-burst" transform="translate(1540 300)"><g class="spin-slow" style="--spin:140s">${burst}</g></g>
   <g transform="translate(-60 640) rotate(-9)">
     ${poly(dots, C.white, `stroke="${C.black}" stroke-width="7"`)}${poly(dots, 'url(#p5dots)')}
