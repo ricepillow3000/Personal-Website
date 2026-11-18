@@ -28,9 +28,11 @@ test('title → PRESS START → THE PLAN: six chapters in order and a CONTINUE t
   const chapters = page.locator('#board .pl-item');
   await expect(chapters).toHaveCount(6);
   expect(await chapters.evaluateAll((els) => els.map((e) => e.dataset.ch))).toEqual(['stats', 'missions', 'skills', 'side-quests', 'different', 'contact']);
+  // the next chapter is already picked: one tap on the big word continues
   await expect(page.locator('#board .plan-continue')).toHaveAttribute('href', '#/stats');
-  await expect(page.locator('#board .plan-continue')).toContainText('BOARD THE TRAIN');
-  await expect(page.locator('#board .plan-coach')).toBeVisible(); // first ride: the hint says what this is
+  await expect(page.locator('#board .plan-continue')).toHaveAccessibleName(/STATS/);
+  await expect(page.locator('#board .pcn-kicker')).toHaveText(''); // quiet: no "start here", the pick says it
+  await expect(page.locator('#board .pl-item.on')).toHaveAttribute('data-ch', 'stats');
   expect(errors).toEqual([]);
 });
 
@@ -38,14 +40,17 @@ test('old #/talk links land on the board', async ({ page }) => {
   await openBoard(page, '/#/talk');
 });
 
-test('THE PLAN: pointing at a station shows it on the NEXT STOP sign', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'phones show the one-liners in the list instead of a card');
+test('THE PLAN: pointing at a chapter picks it (number, preview stickers, big word), letting go returns to the next one', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'phones tap straight into a chapter');
   await openBoard(page);
   await page.locator('.pl-item[data-ch="missions"]').hover();
-  const card = page.locator('#board .plan-card');
-  await expect(card.locator('.pc-ch')).toHaveText('CHAPTER 02');
-  await expect(card.locator('.pc-name')).toHaveText('MISSIONS');
-  await expect(card.locator('.pc-tease')).toContainText('2 live apps');
+  await expect(page.locator('#board .pl-item.on')).toHaveAttribute('data-ch', 'missions');
+  await expect(page.locator('#board .cn-no .sr-only')).toHaveText('02');
+  await expect(page.locator('#board .cmd-loot')).toContainText('727 of 728 checks');
+  await expect(page.locator('#board .plan-continue')).toHaveAttribute('href', '#/missions');
+  await expect(page.locator('#board .pcn-kicker')).toHaveText('JUMP AHEAD');
+  await page.mouse.move(5, 5);
+  await expect(page.locator('#board .pl-item.on')).toHaveAttribute('data-ch', 'stats');
 });
 
 test('opening all six chapters unlocks Full Recon, and CONTINUE moves on as you read', async ({ page }) => {
@@ -61,11 +66,11 @@ test('opening all six chapters unlocks Full Recon, and CONTINUE moves on as you 
   await expect(page.locator('#achCount')).toHaveText('1/7');
 });
 
-test('phone: the whole line, the next stop and BOARD THE TRAIN fit on one screen', async ({ page, isMobile }) => {
+test('phone: all six chapters, the number and the big word fit on one screen', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'phone only');
   await openBoard(page);
   const vh = page.viewportSize().height;
-  for (const sel of ['#board .plan-continue', '#board .pl-item[data-ch="contact"]', '#board .plan-card']) {
+  for (const sel of ['#board .plan-continue', '#board .pl-item[data-ch="contact"]', '#board .cmd-right']) {
     const box = await page.locator(sel).boundingBox();
     expect(box.y + box.height, sel).toBeLessThanOrEqual(vh);
   }
@@ -119,7 +124,7 @@ test('?company=Google pins a personal note', async ({ page }) => {
 test('?company= is sanitized and rendered as text only', async ({ page }) => {
   await openBoard(page, '/?company=%3Cimg%20src=x%20onerror=alert(1)%3EAcme#/board');
   await expect(page.locator('.plan-note')).toContainText('Wait, someone from img srcx onerroralert1Acme?');
-  await expect(page.locator('#board img:not([src="assets/film/trainnose.webp"])')).toHaveCount(0); // only our own train icon
+  await expect(page.locator('#board img')).toHaveCount(0); // the hub is all type and shapes
 });
 
 test('deep links open sections directly, and Esc returns to the board', async ({ page }) => {
@@ -532,4 +537,49 @@ test('the guide: every chapter shows where you are, and the guide button leads t
   await page.locator('#page .back-btn').click();
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
   await expect(page.locator('.guide')).toBeHidden();
+});
+
+test('the guided ride: every chapter arrives with its own transition (six stops, six different moves)', async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  const errors = errorsOf(page);
+  await page.addInitScript(() => {
+    window.__moves = [];
+    new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => {
+      if (n.nodeType === 1 && /\b(fall|fxw)\b/.test(n.className)) window.__moves.push(`${n.className}|${n.firstElementChild?.className || ''}`);
+    }))).observe(document, { childList: true, subtree: true }); // init scripts run before <html> exists
+  });
+  await page.goto('/#/board');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  await page.waitForTimeout(1200);
+  const ride = ['stats', 'missions', 'skills', 'side-quests', 'different', 'contact'];
+  const seen = [];
+  for (const [k, id] of ride.entries()) {
+    const before = await page.evaluate(() => window.__moves.length);
+    if (k === 0) await page.locator('#board .plan-continue').click();
+    else await page.locator('#page .next-ep .ne-go').click({ force: true });
+    await expect(page.locator('body')).toHaveAttribute('data-screen', id, { timeout: 6000 });
+    seen.push(await page.evaluate((b) => window.__moves[b], before));
+    await page.waitForTimeout(1600);
+  }
+  expect(seen.every(Boolean)).toBe(true);
+  expect(new Set(seen).size).toBe(6);
+  expect(errors).toEqual([]);
+  await ctx.close();
+});
+
+test('THE PLAN holds still: nothing on the hub jumps between frames (a scrollbar loop once made it jitter)', async ({ page }) => {
+  await openBoard(page);
+  await page.waitForTimeout(800);
+  const tops = await page.evaluate(async () => {
+    const out = [];
+    for (let i = 0; i < 8; i++) {
+      await new Promise((r) => requestAnimationFrame(r));
+      out.push([...document.querySelectorAll('#board .pl-item, #board .plan-continue')].map((e) => Math.round(e.getBoundingClientRect().top)).join(','));
+    }
+    return out;
+  });
+  expect(new Set(tops).size).toBe(1);
+  const over = await page.evaluate(() => { const s = document.querySelector('#screen-board'); return s.scrollHeight - s.clientHeight; });
+  expect(over).toBeLessThanOrEqual(0);
 });

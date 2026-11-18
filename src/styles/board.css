@@ -176,169 +176,165 @@ button.gpa-burst{ border: 0; padding: 0; cursor: pointer; perspective: 400px; }
 /* declutter: on wide screens the HUD corner already shows the status line, so the board doesn't repeat it */
 
 /* =========================================================================
-   THE PLAN as ONE SUBWAY LINE (Nov 18): a header, the NEXT STOP sign with one
-   button, and a red line with six stations. Nothing else on the first screen.
+   THE PLAN as a COMMAND SELECT screen (Nov 18, John's P5 command-menu reference; shapes, type
+   and words original). Header on top; then the chapter stack (cut type, zigzag) on the left, the
+   giant chapter number on the right over the starburst, and the picked chapter's name huge at the
+   bottom as the one button. See src/scenes/board.js for the quiet guidance rules.
    ========================================================================= */
-.plan { display: grid; gap: clamp(16px, 3.4vh, 38px); min-height: calc(100vh - 232px); align-content: space-between; }
-.plan-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 22px; }
+.screen-board { padding-bottom: 28px; scrollbar-gutter: stable; } /* sizes use vw: a scrollbar popping in and out made the hub jitter every frame (Nov 18) */
+.plan { display: grid; grid-template-rows: auto 1fr; gap: clamp(10px, 2.4vh, 28px); min-height: calc(100vh - 76px - 28px); }
+
+/* header: cut-out name, role line, proof stickers, progress */
+.plan-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px 24px; }
+.plan-id { display: grid; justify-items: start; gap: 10px; }
 .plan-name { display: flex; align-items: flex-end; gap: 14px; }
-.plan-name .ransom { font-size: clamp(40px, 5.2vw, 78px); margin: 0; }
-.plan-role { margin: 0 0 8px; font: 700 italic clamp(13px, 1.15vw, 16px)/1.2 var(--f-ui); letter-spacing: .4px; color: var(--black); background: var(--white); padding: 4px 12px; transform: skew(var(--skew)); }
-@media (min-width: 761px) { .plan-status { display: none; } } /* the HUD shows the status on wide screens */
-.plan-note { flex-basis: 100%; margin: 0; max-width: 560px; font: 600 16px/1.35 var(--f-body); background: var(--black); color: var(--white); padding: 8px 14px; box-shadow: 5px 5px 0 var(--red); }
+.plan-name .ransom { font-size: clamp(40px, min(5.2vw, 8vh), 78px); margin: 0; }
+.plan-role { margin: 0; font: 700 italic clamp(13px, 1.15vw, 16px)/1.2 var(--f-ui); letter-spacing: .4px; color: var(--black); background: var(--white); padding: 4px 12px; transform: skew(var(--skew)); }
+.plan-note { grid-column: 1 / -1; margin: 0; max-width: 560px; font: 600 16px/1.35 var(--f-body); background: var(--black); color: var(--white); padding: 8px 14px; box-shadow: 5px 5px 0 var(--red); }
 .plan-note b { color: var(--yellow); }
-
-/* the NEXT STOP sign: a station board with a red stripe, one chapter, one line */
-.plan-stop { justify-self: center; display: grid; justify-items: center; gap: 14px; width: min(100%, 560px); }
-.ps-kicker { margin: 0; font: 400 clamp(18px, 1.7vw, 24px)/1 var(--f-menu); letter-spacing: 6px; color: var(--black); background: var(--yellow); padding: 6px 14px 4px; transform: skew(var(--skew)); }
-.plan-card { width: 100%; display: grid; justify-items: center; gap: 6px; padding: 22px 26px 24px; text-align: center; background: var(--black); color: var(--white);
-  border-top: 10px solid var(--red); box-shadow: 10px 10px 0 var(--red), 10px 10px 0 4px var(--black); transform: rotate(-2deg); }
-.pc-ch { font: 400 18px/1 var(--f-menu); letter-spacing: 5px; color: var(--yellow); }
-.pc-name { margin: 0; font: 400 clamp(46px, 6vw, 84px)/.95 var(--f-head); letter-spacing: 1px; text-shadow: 5px 5px 0 var(--red); }
-.pc-tease { margin: 2px 0 0; font: 600 clamp(15px, 1.3vw, 19px)/1.35 var(--f-body); color: #E9E7DF; }
-.plan-continue { display: inline-grid; justify-items: center; gap: 2px; padding: 12px 40px 14px; text-decoration: none; background: var(--red); color: var(--white);
-  transform: skew(var(--skew)); box-shadow: 8px 8px 0 var(--black), 8px 8px 0 3px var(--white); transition: transform .16s var(--ease-pop); }
-.plan-continue > * { transform: skew(calc(var(--skew) * -1)); }
-.pcn-kicker { font: 400 14px/1 var(--f-menu); letter-spacing: 4px; color: var(--yellow); }
-.pcn-title { font: 400 clamp(24px, 2.4vw, 34px)/1 var(--f-head); letter-spacing: .5px; }
-.plan-continue:hover, .plan-continue:focus-visible { transform: skew(var(--skew)) scale(1.06); outline: none; }
-.plan-continue:focus-visible { box-shadow: 8px 8px 0 var(--black), 8px 8px 0 3px var(--white), 0 0 0 4px var(--yellow); }
-
-/* the line: a thick red rail with an ink edge; the ridden part is solid, the rest is dashed */
-.plan-line ol { --draw: 1; --done: 0; position: relative; list-style: none; margin: 0 auto; padding: 0; max-width: 1100px; display: grid; grid-template-columns: repeat(var(--n), 1fr); }
-.plan-line ol::before, .plan-line ol::after { content: ""; position: absolute; top: 25px; left: calc(50% / var(--n)); height: 10px; transform-origin: left; transform: scaleX(var(--draw)); }
-.plan-line ol::before { right: calc(50% / var(--n)); background: repeating-linear-gradient(90deg, var(--white) 0 18px, transparent 18px 28px); opacity: .55; }
-.plan-line ol::after { width: calc((100% - 100% / var(--n)) * var(--done) / (var(--n) - 1)); background: var(--red); box-shadow: 0 0 0 3px var(--black); }
-.plan-line li { display: flex; justify-content: center; position: relative; z-index: 1; }
-.pl-item { position: relative; display: grid; justify-items: center; gap: 8px; text-decoration: none; color: var(--white); padding: 0 4px; min-width: 60px; }
-.pl-dot { position: relative; width: 60px; height: 60px; display: grid; place-items: center; border-radius: 50%; background: var(--black); border: 5px solid var(--white); box-shadow: 4px 4px 0 var(--black);
-  transition: transform .16s var(--ease-pop), background .12s, border-color .12s; }
-.pl-no { font: 400 22px/1 var(--f-head); color: var(--white); }
-.pl-name { font: 400 clamp(15px, 1.5vw, 22px)/1.05 var(--f-head); letter-spacing: .5px; text-align: center; text-shadow: 3px 3px 0 var(--black); }
-.pl-item.seen .pl-dot { background: var(--red); border-color: var(--white); }
-.pl-item.seen .pl-dot::after { content: ""; position: absolute; top: -12px; right: -14px; width: 24px; height: 24px; background: var(--yellow);
-  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); filter: drop-shadow(2px 2px 0 var(--black)); }
-.pl-item.on .pl-dot, .pl-item:hover .pl-dot, .pl-item:focus-visible .pl-dot { transform: scale(1.18); border-color: var(--yellow); }
-.pl-item.on .pl-name { color: var(--yellow); }
-.pl-item:focus-visible { outline: none; }
-.pl-here { display: none; position: absolute; top: -44px; font: 400 13px/1 var(--f-menu); letter-spacing: 2px; white-space: nowrap; color: var(--black); background: var(--yellow); padding: 5px 8px 3px; }
-.pl-here::after { content: ""; position: absolute; left: 50%; bottom: -8px; margin-left: -7px; border: 7px solid transparent; border-top-color: var(--yellow); border-bottom: 0; }
-.pl-item.here .pl-here { display: block; }
-.plan-foot { display: flex; justify-content: flex-start; }
-.plan-foot .progress-chip { margin: 0; transform: scale(.9); transform-origin: left center; }
-
-@media (max-width: 760px) {
-  .screen-board { padding-bottom: 24px; }
-  .plan { min-height: calc(100vh - 160px); }
-  .plan-role { font-size: 13px; }
-  .plan-stop { gap: 10px; }
-  .plan-card { padding: 16px 16px 18px; }
-  .plan-line ol::before, .plan-line ol::after { top: 19px; height: 8px; }
-  .pl-item { min-width: 0; padding: 0 1px; gap: 6px; }
-  .pl-dot { width: 46px; height: 46px; border-width: 4px; }
-  .pl-no { font-size: 17px; }
-  .pl-name { font-size: 12px; letter-spacing: 0; }
-  .pl-here { top: -36px; font-size: 11px; letter-spacing: 1px; padding: 4px 6px 2px; }
-  .pl-item.seen .pl-dot::after { width: 17px; height: 17px; top: -9px; right: -10px; }
-  .plan-foot .progress-chip .pc-hint { display: none; }
-}
-@media (prefers-reduced-motion: reduce) { .pl-dot, .plan-continue { transition: none; } }
-/* room for the YOU ARE HERE pin, and station names on ink slabs so they read over any background */
-.plan-line { margin-top: 34px; }
-.pl-name { background: var(--black); padding: 3px 7px 1px; text-shadow: none; transform: skew(var(--skew)); }
-.pl-item.on .pl-name { box-shadow: 3px 3px 0 var(--red); }
-@media (max-width: 760px) { .plan-line { margin-top: 30px; } .pl-name { padding: 2px 3px 1px; } }
-/* short screens (iPhone SE, 720p laptops): the whole line must still fit without scrolling */
-@media (max-height: 760px) {
-  .plan { gap: 12px; }
-  .plan-name .ransom { font-size: clamp(34px, 4.4vw, 58px); }
-  .plan-card { padding: 12px 18px 14px; gap: 2px; }
-  .pc-name { font-size: clamp(38px, 4.6vw, 60px); }
-  .plan-stop { gap: 8px; }
-  .plan-line { margin-top: 26px; }
-}
-@media (max-width: 760px) and (max-height: 620px) {
-  .screen-board { padding-top: 64px; }
-  .plan-role { display: none; }
-  .ps-kicker { font-size: 15px; padding: 4px 10px 2px; }
-  .pcn-title { font-size: 21px; }
-  .plan-continue { padding: 8px 26px 10px; }
-}
-
-/* ---- the dashboard, less empty but not crowded (Nov 18) ---- */
-/* three proof stickers, slapped on like sticker art */
-.plan-proof { list-style: none; margin: 0 0 6px auto; padding: 0; display: flex; gap: 12px; flex-wrap: wrap; }
+.plan-side { display: grid; justify-items: end; gap: 12px; }
+.plan-proof { list-style: none; margin: 0; padding: 0; display: flex; gap: 12px; flex-wrap: wrap; }
 .pp { font: 400 15px/1 var(--f-menu); letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 12px 6px; border: 3px solid var(--black); box-shadow: 4px 4px 0 var(--black); white-space: nowrap; }
 .pp b { font: 400 26px/1 var(--f-head); letter-spacing: 0; margin-right: 4px; }
 .pp0 { background: var(--yellow); color: var(--black); transform: rotate(-5deg); }
 .pp1 { background: var(--white); color: var(--black); transform: rotate(3deg) translateY(4px); }
-.pp2 { background: var(--red); color: var(--white); transform: rotate(-2deg); }
-/* first ride: a speech bubble next to the button says what this is */
-.plan-coach { display: none; position: relative; margin: 0; max-width: 340px; font: 600 16px/1.3 var(--f-body); color: var(--black); background: var(--white);
-  border: 3px solid var(--black); padding: 8px 14px; box-shadow: 5px 5px 0 var(--red); text-align: center; }
-.plan-coach::after { content: ""; position: absolute; left: 50%; bottom: -14px; margin-left: -10px; border: 10px solid transparent; border-top-color: var(--black); border-bottom: 0; }
-.plan.first .plan-coach { display: block; }
-.plan.first .plan-continue { animation: board-me 1.6s ease-in-out infinite; }
-@keyframes board-me { 0%, 70%, 100% { transform: skew(var(--skew)); } 80% { transform: skew(var(--skew)) scale(1.07); } 90% { transform: skew(var(--skew)) scale(.98); } }
-/* the train sits at YOU ARE HERE */
-.pl-here { display: none; top: -84px; padding: 0; background: none; text-align: center; }
-.pl-here::after { display: none; }
-.pl-here img { display: block; width: 40px; height: auto; margin: 0 auto 2px; filter: drop-shadow(3px 3px 0 var(--black)); animation: idle-bob 1.4s ease-in-out infinite; }
-.pl-here span { display: block; font: 400 12px/1 var(--f-menu); letter-spacing: 2px; color: var(--black); background: var(--yellow); padding: 4px 7px 2px; }
-.pl-item.here .pl-here { display: block; }
-@keyframes idle-bob { 50% { translate: 0 -3px; } }
-.plan-line { margin-top: 74px; }
-@media (max-width: 760px) {
-  .plan-proof { margin: 0; gap: 8px; }
-  .pp { font-size: 11px; padding: 5px 8px 4px; letter-spacing: 1px; }
-  .pp b { font-size: 17px; }
-  .plan-coach { font-size: 14px; padding: 6px 10px; }
-  .pl-here { top: -66px; }
-  .pl-here img { width: 30px; }
-  .pl-here span { font-size: 10px; letter-spacing: 1px; }
-  .plan-line { margin-top: 62px; }
-}
-@media (max-height: 760px) { .plan-line { margin-top: 64px; } }
-@media (prefers-reduced-motion: reduce) { .plan.first .plan-continue, .pl-here img { animation: none; } }
-/* phones: the stickers carry the who/what, so the role line steps aside; everything fits one screen */
-@media (max-width: 760px) {
-  .plan { gap: 10px; }
-  .plan-role { display: none; }
-  .plan-card { padding: 12px 14px 14px; gap: 2px; }
-  .pc-name { font-size: clamp(36px, 11vw, 50px); }
-  .pc-ch { font-size: 14px; }
-  .plan-stop { gap: 8px; }
-  .ps-kicker { font-size: 14px; padding: 4px 10px 2px; }
-  .plan-coach { font-size: 13px; padding: 5px 9px; }
-  .pcn-title { font-size: 22px; }
-  .plan-continue { padding: 10px 26px 12px; min-height: 48px; }
-}
-@media (max-width: 760px) and (max-height: 620px) { .plan-proof { display: none; } .plan-coach { display: none !important; } }
-/* name, role and status stacked on the left; the proof stickers and progress on the right */
-.plan-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px 24px; }
-.plan-id { display: grid; justify-items: start; gap: 10px; }
-.plan-side { display: grid; justify-items: end; gap: 12px; }
-.plan-side .plan-proof { margin: 0; }
-.plan-side .progress-chip { margin: 0; transform: scale(.9); transform-origin: right center; }
-.plan-head .plan-note { grid-column: 1 / -1; }
-.plan-status { display: inline !important; } /* one status line, on the dashboard itself */
+.pp2 { background: var(--red-ink); color: var(--white); transform: rotate(-2deg); }
 body[data-mode="board"] .hud-tl { display: none; } /* the tiny rotated status tags were unreadable */
-.plan.first .pcn-kicker:empty { display: none; }
-.plan-coach { white-space: nowrap; }
-.plan-stop { gap: 18px; }
+@media (min-width: 761px) { .screen-board { padding-top: 76px; } }
+
+/* the command area */
+.cmd { position: relative; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) auto; grid-template-rows: 1fr auto; grid-template-areas: "list loot num" "go go go"; align-items: center; gap: 8px clamp(12px, 3vw, 48px); }
+
+/* the chapter stack: cut type in a zigzag, tilted like a command list */
+.plan-line { grid-area: list; align-self: center; position: relative; }
+.plan-line::before { content: ""; position: absolute; z-index: -1; inset: -4% 8% -6% -40vw; background: rgba(11, 11, 11, .78); clip-path: polygon(0 4%, 100% 0, 88% 100%, 0 96%); rotate: -5deg; pointer-events: none; }
+.plan-line ol { list-style: none; margin: 0; padding: 0 0 0 clamp(4px, 2vw, 40px); display: grid; justify-items: start; gap: clamp(0px, .5vh, 6px); rotate: -5deg; }
+.plan-line li { font-size: clamp(26px, min(4vw, 5.1vh), 58px); padding-left: calc(var(--zig) * .5em); }
+.pl-item { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: .04em .28em 0 .2em; color: var(--white); text-decoration: none; line-height: 1;
+  transform-origin: left center; transition: scale .18s var(--ease-pop), translate .18s var(--ease-pop); } /* state sizing uses scale/translate; GSAP's entrance owns transform + opacity (a CSS transition on those made the entrance flash and lag) */
+.pl-word { position: relative; z-index: 2; display: inline-flex; align-items: baseline; white-space: nowrap;
+  text-shadow: .07em .07em 0 var(--black), -.04em -.04em 0 var(--black), .04em -.04em 0 var(--black), -.04em .04em 0 var(--black), .04em .04em 0 var(--black), 0 .05em 0 var(--black); } /* a thick ink edge: reads on the grey band too */
+.pl-no { position: relative; z-index: 2; align-self: center; margin-right: .22em; font: 400 .36em/1 var(--f-menu); letter-spacing: 1px; color: var(--white); background: var(--black); border: 2px solid var(--white); padding: .22em .3em .1em; transform: skew(var(--skew)); }
+.pl-item.on .pl-no { color: var(--black); background: var(--yellow); border-color: var(--black); }
+.ct { display: inline-block; font-size: calc(var(--s) * 1em); transform: translateY(var(--y)) rotate(var(--r)); margin-right: .015em; }
+.ct.f0 { font-family: var(--f-head); }
+.ct.f1 { font-family: var(--f-menu); font-size: calc(var(--s) * 1.08em); }
+.ct.f2 { font-family: var(--f-mark); font-size: calc(var(--s) * .9em); }
+.ct.f3 { font-family: var(--f-type); font-weight: 700; font-size: calc(var(--s) * .92em); }
+.ct.f4 { font-family: var(--f-serif); font-weight: 900; font-style: italic; }
+.ct.box { background: var(--white); color: var(--black); padding: 0 .07em; text-shadow: none; box-shadow: .06em .06em 0 var(--black); }
+.ct-gap { display: inline-block; width: .26em; }
+
+/* read chapters step back (smaller, dimmer, a yellow star); unread ones stay loud */
+.pl-item.seen { scale: .76; opacity: .66; }
+.pl-item.seen::after { content: ""; position: relative; z-index: 2; width: .5em; height: .5em; margin-left: .18em; align-self: flex-start; background: var(--yellow);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); filter: drop-shadow(2px 2px 0 var(--black)); }
+
+/* the picked chapter: biggest, a red blade slices out behind it, a star cursor in front */
+.pl-blade { position: absolute; z-index: 1; left: -70vw; right: -.5em; top: .04em; bottom: -.02em; filter: drop-shadow(.1em .1em 0 var(--black)); transform-origin: right center; scale: 0 1; transition: scale .2s cubic-bezier(.2, 1.2, .4, 1); pointer-events: none; }
+.pl-blade i { position: absolute; inset: 0; background: var(--red); clip-path: polygon(0 26%, 100% 0, 97% 100%, 0 78%); }
+.pl-star { position: absolute; z-index: 3; left: -.62em; top: 50%; width: .56em; height: .56em; margin-top: -.3em; background: var(--yellow); opacity: 0; transform: scale(0) rotate(-90deg);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); filter: drop-shadow(2px 2px 0 var(--black)); transition: transform .2s var(--ease-pop), opacity .1s; }
+.pl-item.on { scale: 1.16; translate: .18em 0; opacity: 1; }
+.pl-item.on .pl-blade { scale: 1; }
+.pl-item.on .pl-star { opacity: 1; transform: scale(1) rotate(0); animation: cmd-boil .9s steps(3) infinite; }
+.pl-item.on.seen::after { display: none; }
+.pl-item:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+@keyframes cmd-boil { 33% { rotate: 8deg; } 66% { rotate: -6deg; } }
+
+/* what's inside the picked chapter: three proof stickers fanned in the middle (the eye's path runs
+   list -> stickers -> the big word) */
+.cmd-inside { grid-area: loot; align-self: center; justify-self: center; position: relative; display: grid; justify-items: start; gap: 12px; padding: 18px 26px 22px 22px; rotate: -3deg;
+  background: radial-gradient(circle, rgba(245, 245, 240, .16) 30%, transparent 32%) 0 0 / 12px 12px, var(--black); border: 4px solid var(--white); box-shadow: 10px 10px 0 var(--red), 10px 10px 0 4px var(--black); }
+.ci-kick { position: absolute; top: -16px; left: 18px; font: 400 16px/1 var(--f-menu); letter-spacing: 4px; color: var(--black); background: var(--yellow); padding: 6px 12px 3px; transform: skew(var(--skew)); }
+.cmd-loot { list-style: none; margin: 0; padding: 0; display: grid; justify-items: start; gap: clamp(8px, 1.6vh, 14px); }
+.lt { font: 400 clamp(18px, min(1.9vw, 3vh), 28px)/1 var(--f-head); letter-spacing: .5px; padding: .38em .7em .3em; white-space: nowrap; border: 3px solid var(--black); }
+.lt0 { background: var(--yellow); color: var(--black); box-shadow: 6px 6px 0 var(--black); rotate: -4deg; }
+.lt1 { background: var(--white); color: var(--black); box-shadow: 6px 6px 0 var(--red); rotate: 2deg; margin-left: .8em; }
+.lt2 { background: var(--red-ink); color: var(--white); box-shadow: 6px 6px 0 var(--black); rotate: -1.5deg; margin-left: .3em; }
+
+/* the chapter number on the starburst */
+.cmd-right { grid-area: num; align-self: center; display: grid; justify-items: center; gap: 22px; margin-right: clamp(0px, 3vw, 56px); }
+.cmd-right .progress-chip { margin: 0; transform: rotate(-3deg); }
+.cmd-right .progress-chip .pc-hint { font-size: 14px; color: #E9E7DF; }
+.cmd-num { display: grid; justify-items: center; gap: 10px; rotate: 6deg; pointer-events: none; }
+.cn-kick { font: 400 clamp(16px, 1.6vw, 22px)/1 var(--f-menu); letter-spacing: 5px; color: var(--white); background: var(--black); padding: 7px 16px 4px; box-shadow: 5px 5px 0 var(--red); transform: skew(var(--skew)); }
+.cn-box { display: block; padding: .1em .16em .04em; font-size: clamp(70px, min(9vw, 14vh), 160px); background: var(--white); border: .05em solid var(--black); box-shadow: .09em .09em 0 var(--black); transform: skew(-6deg); }
+.cn-no { gap: 0; }
+.cn-no .rw { margin: 0; gap: .04em; }
+.cn-no .rl.c-white, .cn-no .rl.c-paper { outline: .04em solid var(--black); }
+.cn-of { font: 400 clamp(14px, 1.3vw, 18px)/1 var(--f-menu); letter-spacing: 3px; color: var(--black); background: var(--yellow); padding: 5px 10px 3px; transform: skew(var(--skew)); }
+.cn-of b { font-weight: 400; }
+
+/* the picked chapter's name, huge: the one button */
+.plan-continue { grid-area: go; justify-self: center; display: grid; justify-items: center; gap: 6px; padding: 4px 18px 6px; text-decoration: none; color: var(--white); outline: none; }
+.pcn-kicker { font: 400 clamp(14px, 1.3vw, 18px)/1 var(--f-menu); letter-spacing: 4px; color: var(--black); background: var(--yellow); padding: 6px 14px 3px; transform: skew(var(--skew)); }
+.pcn-kicker:empty { display: none; }
+.pcn-btn { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: .1em; padding: .2em .45em .24em .4em; filter: drop-shadow(8px 8px 0 var(--black)); transition: transform .16s var(--ease-pop); }
+.pcn-btn::before { content: ""; position: absolute; z-index: -1; inset: 0; background: var(--red); clip-path: polygon(2% 10%, 100% 0, 97% 90%, 0 100%); }
+.pcn-btn::after { content: ""; position: absolute; z-index: -2; inset: -6px -10px; background: var(--white); clip-path: polygon(2% 10%, 100% 0, 97% 90%, 0 100%); }
+.pcn-arrow { display: block; flex: none; width: .34em; height: .42em; margin-left: .06em; background: var(--white); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.plan-continue:hover .pcn-btn, .plan-continue:focus-visible .pcn-btn { transform: scale(1.05) rotate(-1deg); }
+.pcn-btn { font-size: clamp(44px, min(6.4vw, 8.8vh), 108px); }
+.pcn-title { justify-content: center; flex-wrap: nowrap; font-size: 1em; white-space: nowrap; rotate: -2deg; }
+.pcn-title .rw:last-child { margin-right: 0; }
+.pcn-tease { font: 600 clamp(14px, 1.25vw, 18px)/1.3 var(--f-body); color: var(--white); background: var(--black); padding: 6px 16px; box-shadow: 5px 5px 0 var(--red); rotate: -1.5deg; }
+@media (min-width: 761px) { .pcn-tease { display: none; } } /* wide screens: the INSIDE panel says what's in it, the arrow says go */
+.pcn-tease::after { content: "  \25B8"; color: var(--yellow); white-space: pre; }
+.plan-continue:focus-visible .pcn-tease { outline: 3px solid var(--yellow); outline-offset: 3px; }
+/* a small jolt every few seconds while the picked chapter is the next unread one: the eye goes there */
+.plan:has(.pl-item.here.on) .pcn-btn { animation: cmd-nudge 3.2s ease-in-out 2.4s infinite; }
+@keyframes cmd-nudge { 0%, 86%, 100% { transform: none; } 90% { transform: scale(1.06) rotate(-1deg); } 95% { transform: scale(.98); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-item, .pl-blade, .pl-star, .pcn-title { transition: none; }
+  .pcn-btn { transition: none; }
+  .pl-item.on .pl-star, .plan:has(.pl-item.here.on) .pcn-btn { animation: none; }
+}
+
+/* phones: header, then the stack with the number tucked top-right, then the big word */
 @media (max-width: 760px) {
+  .plan { min-height: calc(100vh - 88px - 28px); min-height: calc(100svh - 88px - 28px); gap: 8px; } /* fills to the bottom: no dead band under the button */
   .plan-head { grid-template-columns: 1fr; }
   .plan-side { justify-items: start; }
-  .plan-side .progress-chip { display: none; } /* phones: the stations already show progress */
-  .plan-role { display: block; font-size: 12px; padding: 3px 10px; }
-  .plan-stop { gap: 10px; }
+  .cmd-right .progress-chip { display: none; } /* phones: read chapters already shrink and get a star */
+  .plan-role { font-size: 12px; padding: 3px 10px; }
+  .plan-proof { gap: 8px; }
+  .pp { font-size: 11px; padding: 5px 8px 4px; letter-spacing: 1px; }
+  .pp b { font-size: 17px; }
+  .cmd { grid-template-columns: 1fr; grid-template-areas: "list" "go"; }
+  .cmd-inside { display: none; } /* phones: the one line under the big word says what's inside */
+  .cmd { grid-template-rows: auto auto; align-content: space-evenly; }
+  .cmd-right { position: absolute; top: 2%; right: 2px; margin: 0; }
+  .cmd-num { gap: 4px; rotate: 8deg; } /* beside the short words (MISSIONS, SKILLS), never over a long one */
+  .cn-kick { font-size: 11px; letter-spacing: 3px; padding: 4px 8px 2px; }
+  .cn-box { font-size: clamp(40px, 12.5vw, 60px); }
+  .cn-of { font-size: 11px; letter-spacing: 1.5px; padding: 3px 6px 2px; }
+  .plan-line ol { padding-left: 14px; rotate: -4deg; }
+  .plan-line li { font-size: clamp(24px, min(8.2vw, 5vh), 38px); padding-left: calc(var(--zig) * .32em); }
+  .screen-board { padding-top: 88px; } /* the HUD row is ~60px on phones; no dead gap above the name */
+  .pcn-btn { font-size: clamp(30px, min(8.4vw, 6.2vh), 50px); }
+  .pcn-tease { font-size: 13px; padding: 5px 12px; }
 }
-@media (min-width: 761px) { .screen-board { padding-top: 76px; } } /* the HUD status tags are gone from the dashboard */
-/* short phones (Galaxy S9+, iPhone 13 class): a little tighter so the whole line always fits */
+/* short phones (iPhone SE, Galaxy S9+): tighter, so everything fits one screen */
 @media (max-width: 760px) and (max-height: 700px) {
-  .plan { gap: 6px; }
+  .screen-board { padding-top: 80px; }
+  .plan { min-height: calc(100vh - 80px - 28px); min-height: calc(100svh - 80px - 28px); }
+  .plan-line li { font-size: clamp(22px, min(7.6vw, 4.4vh), 34px); }
+  .pcn-btn { font-size: clamp(28px, min(8.4vw, 5.6vh), 42px); }
   .pp { padding: 4px 7px 3px; } .pp b { font-size: 15px; }
-  .pc-name { font-size: 40px; }
-  .plan-card { padding: 10px 12px 12px; }
 }
-@media (max-width: 360px) and (min-height: 621px) { .screen-board { padding-top: 96px; } } /* narrow phones: the HUD row is short, start a bit higher */
+@media (max-width: 760px) and (max-height: 620px) { .screen-board { padding-top: 64px; } .plan { min-height: calc(100vh - 92px); } .plan-role, .plan-proof { display: none; } }
+@media (max-width: 360px) and (min-height: 621px) { .screen-board { padding-top: 84px; } }
+/* short laptops (1280x720, 1366x768): the header and the word shrink a little */
+@media (min-width: 761px) and (max-height: 760px) {
+  .plan { gap: 8px; }
+  .plan-name .ransom { font-size: clamp(34px, 4.4vw, 58px); }
+  .pcn-btn { font-size: clamp(44px, 8.4vh, 70px); }
+  .plan-continue { gap: 4px; }
+}
+@media (pointer: fine) { .pl-item { min-height: 0; } } /* the 44px tap floor is for fingers */
+/* portrait tablets (iPad Mini): tall, not wide. The preview panel gets its own row under the stack */
+@media (min-width: 761px) and (max-aspect-ratio: 1/1) {
+  .cmd { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto; grid-template-areas: "list num" "loot loot" "go go"; align-content: space-evenly; }
+}

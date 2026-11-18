@@ -1,6 +1,5 @@
-/* Menu transitions: each page you pick from the MENU gets its own move from the heist-movie world
-   (a case file, subway doors, comic panels, breaking glass, a night street, a security monitor).
-   Only one of them is a train: the film cuts already have three.
+/* Chapter entrances from the heist-movie world (a case file, comic panels, breaking glass, a night
+   street, a security monitor). Each chapter plays its own one however the visitor arrives.
    ~0.7-0.85s each, one beat each, sound on the frame of impact. Every one is skippable (it runs
    through track) and is an instant swap with reduced motion. */
 import { gsap } from 'gsap';
@@ -48,29 +47,6 @@ export function caseWipe(swap, label = 'MISSIONS') {
     // the folder opens: the cover swings away on its spine
     .to(cover, { rotationY: -100, transformPerspective: 1400, duration: 0.34, ease: 'power3.in' }, 0.55)
     .add(() => sfx('paper'), 0.56);
-  return track(tl);
-}
-
-/** SKILLS: subway doors slam shut across the frame (the page name in the door window), the train
-    chime plays, then the doors hiss open on the new page. */
-export function doorsWipe(swap, label = 'SKILLS') {
-  if (reducedMotion()) return instant(swap);
-  const door = (side) => `<div class="dr dr-${side}"><i class="dr-win"></i><i class="dr-stripe"></i>${side === 'l' ? '<span class="dr-sign"><small>NEXT STOP</small><b class="ransom" data-label></b></span>' : ''}</div>`;
-  const el = scene('doors', door('l') + door('r'), label);
-  const [l, r] = el.children;
-  const tl = gsap.timeline({ onComplete: () => el.remove() });
-  tl.set(el, { visibility: 'visible' })
-    .fromTo(l, { xPercent: -101 }, { xPercent: 0, duration: 0.22, ease: 'power3.in' }, 0)
-    .fromTo(r, { xPercent: 101 }, { xPercent: 0, duration: 0.22, ease: 'power3.in' }, 0)
-    .add(() => {
-      sfx('thunk');
-      shake(el);
-    }, 0.22)
-    .fromTo([l, r], { x: 0 }, { x: (i) => (i ? 5 : -5), duration: 0.05, yoyo: true, repeat: 1 }, 0.22) // the bump of rubber edges meeting
-    .add(() => sfx('doors'), 0.26)
-    .add(swap, 0.3)
-    .to(l, { xPercent: -101, duration: 0.3, ease: 'power2.inOut' }, 0.5)
-    .to(r, { xPercent: 101, duration: 0.3, ease: 'power2.inOut' }, 0.5);
   return track(tl);
 }
 
