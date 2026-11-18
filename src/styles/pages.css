@@ -317,3 +317,10 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
   .stop-clear { font-size: 16px; padding: 0 7px; border-width: 3px; right: 10px; top: 10px; }
   .stop-meta { font-size: 12px; }
 }
+/* skill bars in the brand palette (John, Nov 18): yellow on the dark rows, red on the selected white slab
+   (yellow on white would vanish); the selected slab's offset band is red too */
+.crew-m.rk i { background: var(--yellow); }
+.crew-m.in i { background: var(--red); }
+.crew-row.on .crew-m.rk i { background: var(--red); }
+.crew-row.on .crew-lv { text-shadow: 2px 2px 0 var(--red); }
+.crew-cursor i::before { background: var(--red); }

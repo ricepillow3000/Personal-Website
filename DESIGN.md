@@ -128,7 +128,7 @@ From John's research notes (kept verbatim in spirit):
 ## 4. Color
 
 - Core triad: **red `#E5191C`, black `#0B0B0B`, white `#F5F5F0`**, plus **yellow `#FFE11A` for highlights only** (loot, key numbers, stars, focus, sticker pops).
-- Teal and pink only for skill meters and a single sticker each; never as page colors.
+- Skill level bars are **yellow** (red on the selected row; John, Nov 18: "make the skill bars yellow and red"). Teal survives only as small accents (the GPA flip sticker, the CLEARED glitch edge); pink is retired.
 - Two cards side by side must not be "the same red twice": same family, different interior shapes, patterns or fonts (Meliona vs ARCAS).
 - Contrast: body text ≥ 4.5:1. Numbers on stars: **black on yellow** (red stars with outlined white numbers failed contrast).
 - **Yellow text on red fails** (3.6:1). Put yellow text on a black slab, or use white/black on red.
