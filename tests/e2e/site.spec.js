@@ -488,3 +488,19 @@ test('Ctrl+K opens and closes the menu', async ({ page, isMobile }) => {
   await page.keyboard.press('Control+k');
   await expect(page.locator('#menu')).toBeHidden();
 });
+
+test('every menu item fits on short laptop screens and phones held sideways', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'sizes are set by hand');
+  for (const [width, height] of [[1440, 900], [1366, 768], [1280, 720], [844, 390]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('/#/missions');
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'missions');
+    await page.locator('#menuBtn').click();
+    await expect(page.locator('#menu')).toBeVisible();
+    await page.waitForTimeout(1200); // the staircase slides in
+    const bottoms = await page.$$eval('#stair .stair-item', (els) => els.map((e) => e.getBoundingClientRect().bottom));
+    expect(bottoms.length).toBe(7);
+    for (const b of bottoms) expect(b, `${width}x${height}`).toBeLessThanOrEqual(height);
+    await page.keyboard.press('Escape');
+  }
+});

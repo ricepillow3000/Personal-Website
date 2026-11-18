@@ -136,7 +136,8 @@ body[data-screen="title"] .keyhints, body[data-mode="quick"] .keyhints { display
 .stair li { margin: 0 0 4px calc(var(--i) * 4.2vw); }
 .stair-item {
   position: relative; display: inline-flex; align-items: center; gap: 14px; border: 0; background: none; padding: 0 22px 0 0;
-  font-family: var(--f-head); font-size: clamp(42px, 7.5vw, 104px); line-height: 1.04; color: var(--black);
+  /* sized by width AND height: 7 items must fit short laptop screens and phones held sideways */
+  font-family: var(--f-head); font-size: clamp(30px, min(max(7.5vw, 42px), 10vh), 104px); line-height: 1.04; color: var(--black);
   transform: rotate(-6deg) scale(var(--sc, 1)); opacity: var(--op, 1); transition: transform .16s var(--ease-pop), opacity .16s, color .1s;
 }
 .stair-item .si-text { position: relative; z-index: 1; padding: 0 12px; }
