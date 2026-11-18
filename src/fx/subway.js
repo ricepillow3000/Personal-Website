@@ -66,6 +66,9 @@ export function mountSubway(camBox, img) {
   if (cv) return;
   box = camBox;
   art = img;
+  // the platform is on screen: fetch the train while the visitor reads the title, so PRESS START
+  // never waits on it (idle time, after the scene has faded in)
+  (window.requestIdleCallback || setTimeout)(() => preloadSubway(), { timeout: 2500 });
   cv = document.createElement('canvas');
   cv.setAttribute('aria-hidden', 'true');
   box.appendChild(cv);
@@ -85,7 +88,9 @@ export function preloadSubway() {
   nose = load(NOSE);
   side = load(SIDE);
   nose.decode?.().catch(() => {});
-  side.decode?.().catch(() => {});
+  // build the working copies ahead of time (idle), so the shot's first frame doesn't pay for them
+  const prep = () => (window.requestIdleCallback || setTimeout)(() => { sideArt(); windowProfile(); tinted(sideArt()); tinted(nose); });
+  (side.decode?.() || Promise.resolve()).then(prep, prep);
 }
 
 function size() {
@@ -218,15 +223,33 @@ const sx = (X, d) => VP.x + (X * F) / d;
 const sy = (Y, d) => VP.y + (Y * F) / d;
 const dark = (d) => Math.max(0, Math.min(1, 1 - (d - MOUTH) / 420)); // fades into the tunnel's dark
 
-function trainSide(lead, kk, alpha = 1, tex = side) {
-  if (!side?.complete || !side.naturalWidth) return;
-  const tw = side.naturalWidth;
-  const th = side.naturalHeight;
+/* The car-side art is 2770px wide for sharpness, but the train never covers more than ~900 art
+   pixels of height, and drawing hundreds of slices a frame from the full file is slow on phones.
+   So the slices come from one cached working copy at most 912px tall. */
+let sideCopy = null;
+function sideArt() {
+  if (sideCopy) return sideCopy;
+  if (!side?.complete || !side.naturalWidth) return null;
+  const s = Math.min(1, 912 / side.naturalHeight);
+  const c = document.createElement('canvas');
+  c.width = Math.round(side.naturalWidth * s);
+  c.height = Math.round(side.naturalHeight * s);
+  const g = c.getContext('2d');
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(side, 0, 0, c.width, c.height);
+  sideCopy = c;
+  return c;
+}
+
+function trainSide(lead, kk, alpha = 1, tex = sideArt()) {
+  if (!tex) return;
+  const tw = tex.width;
+  const th = tex.height;
   const period = ((SKIRT - ROOF) * tw) / th; // one repeat of the car-side art (door to door), in world units
   const tail = lead + LEN;
   const near = Math.max(lead, 18);
   // screen columns from the near end to the far end; step ~3 screen px
-  const step = 3 / kk;
+  const step = 5 / kk; // 5 screen px per strip: smooth to the eye, 40% fewer draws than 3px (the side is drawn 3x a frame)
   const xNear = Math.max(-200, sx(SIDE_X, near));
   const xFar = sx(SIDE_X, Math.min(tail, 6000));
   for (let x = xNear; x < xFar; x += step) {
@@ -279,23 +302,30 @@ function cabinLight(lead) {
   const period = ((SKIRT - ROOF) * side.naturalWidth) / side.naturalHeight;
   const step = period / 24;
   const end = Math.min(lead + LEN, 1900);
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
+  // strength is stepped into 4 levels so each band is a handful of batched fills, not hundreds
+  const LEVELS = 4;
+  const paths = POOLS.map(() => Array.from({ length: LEVELS }, () => new Path2D()));
   for (let d = Math.max(lead, 26); d < end; d += step) {
     const v = prof[Math.floor((((d - lead) % period) / period) * 96) % 96];
     const a = v * dark(d);
     if (a < 0.04) continue;
+    const lv = Math.min(LEVELS - 1, Math.floor(a * LEVELS));
     const d2 = d + step;
-    for (const [w, k] of POOLS) {
-      ctx.fillStyle = `rgba(255, 196, 96, ${(k * a).toFixed(3)})`;
-      ctx.beginPath();
-      ctx.moveTo(sx(SIDE_X, d), sy(SKIRT, d));
-      ctx.lineTo(sx(SIDE_X, d2), sy(SKIRT, d2));
-      ctx.lineTo(sx(SIDE_X + w, d2), sy(SKIRT, d2));
-      ctx.lineTo(sx(SIDE_X + w, d), sy(SKIRT, d));
-      ctx.fill();
-    }
+    POOLS.forEach(([w], i) => {
+      const path = paths[i][lv];
+      path.moveTo(sx(SIDE_X, d), sy(SKIRT, d));
+      path.lineTo(sx(SIDE_X, d2), sy(SKIRT, d2));
+      path.lineTo(sx(SIDE_X + w, d2), sy(SKIRT, d2));
+      path.lineTo(sx(SIDE_X + w, d), sy(SKIRT, d));
+      path.closePath();
+    });
   }
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  POOLS.forEach(([, k], i) => paths[i].forEach((path, lv) => {
+    ctx.fillStyle = `rgba(255, 196, 96, ${(k * (lv + 0.5) / LEVELS).toFixed(3)})`;
+    ctx.fill(path);
+  }));
   ctx.restore();
 }
 
@@ -354,11 +384,12 @@ function speedLines(t, power) {
 /* a solid red copy of an image (keeps its shape), for the afterimages */
 const reds = new Map();
 function tinted(img) {
-  if (!img?.naturalWidth) return null;
+  const w = img?.naturalWidth || img?.width; // an <img> or a canvas
+  if (!w) return null;
   if (reds.has(img)) return reds.get(img);
   const c = document.createElement('canvas');
-  c.width = img.naturalWidth;
-  c.height = img.naturalHeight;
+  c.width = w;
+  c.height = img.naturalHeight || img.height;
   const g = c.getContext('2d');
   g.drawImage(img, 0, 0);
   g.globalCompositeOperation = 'source-in';
@@ -373,9 +404,9 @@ function tinted(img) {
    itself stays gray/white with its red stripe: never a red wash) */
 function afterimages(lead, kk, img, power) {
   if (power <= 0) return;
-  const redSide = tinted(side);
+  const redSide = tinted(sideArt());
   const redNose = tinted(img);
-  [[1.12, side, img, 0.22], [1.06, redSide, redNose, 0.75]].forEach(([z, tex, im, a]) => {
+  [[1.12, sideArt(), img, 0.22], [1.06, redSide, redNose, 0.75]].forEach(([z, tex, im, a]) => {
     ctx.save();
     ctx.translate(VP.x, VP.y);
     ctx.scale(z, z);
