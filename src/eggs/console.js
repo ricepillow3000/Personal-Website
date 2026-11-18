@@ -25,7 +25,7 @@ export function installConsole() {
         '> orchestrator agent ....... online',
         '> researcher agent ......... online',
         '> builder agent ............ online',
-        '> test suite ............... 727/728 passed',
+        '> risk engine checks ....... 727/728 passed',
         '> status ................... open to opportunities',
         '> achievement unlocked, Inspector'
       ];

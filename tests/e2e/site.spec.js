@@ -76,7 +76,7 @@ test('case file opens a dossier with objectives, loot and live links', async ({ 
   await page.locator('.case[data-case="arcas"] .case-open').click();
   const modal = page.locator('#modal');
   await expect(modal).toBeVisible();
-  await expect(modal).toContainText('199 of 201 hidden errors caught');
+  await expect(modal).toContainText('199 of 201 planted errors caught');
   await expect(modal.locator('a[href*="excel-anomaly-hunter"]')).toHaveCount(2);
   await page.keyboard.press('Escape');
   await expect(modal).toBeHidden();
@@ -127,7 +127,7 @@ test('deep links open sections directly, and Esc returns to the board', async ({
 test('Quick View has the real PDF, and the PDF is served', async ({ page, request }) => {
   await page.goto('/#/quick');
   await expect(page.locator('#paper')).toContainText('Georgia State University');
-  await expect(page.locator('#paper')).toContainText('727 of 728 checks passed');
+  await expect(page.locator('#paper')).toContainText('0 failures (727 of 728 checks)'); // word for word from the PDF
   const href = await page.locator('#quickPdf').getAttribute('href');
   const res = await request.get(`/${href}`);
   expect(res.status()).toBe(200);

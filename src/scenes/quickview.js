@@ -2,7 +2,8 @@ import { resume } from '../data/resume.js';
 import { esc } from '../core/util.js';
 import { ransom } from '../ui/ransom.js';
 
-/* One-page, ATS-friendly resume. Readable text, red/black accents only. */
+/* One-page, ATS-friendly resume. Readable text, red/black accents only. Every bullet is word for
+   word from the PDF resume (`resume` arrays in resume.js), so it always matches the real thing. */
 export function renderQuickView(el) {
   const r = resume;
   const e = r.education;
@@ -35,7 +36,7 @@ export function renderQuickView(el) {
           <h2>LEADERSHIP</h2>
           ${r.sideQuests
             .slice(0, 1)
-            .map((q) => `<h3>${esc(q.title)}</h3><p class="meta">${esc(q.place)} · ${esc(q.dates)}</p><ul>${q.did.map((d) => `<li>${esc(d)}</li>`).join('')}</ul>`)
+            .map((q) => `<h3>${esc(q.title)}, ${esc(q.place)}</h3><p class="meta">${esc(q.dates)}</p><ul>${q.resume.map((d) => `<li>${esc(d)}</li>`).join('')}</ul>`)
             .join('')}
         </section>
       </aside>
@@ -44,9 +45,9 @@ export function renderQuickView(el) {
           <h2>PROJECTS</h2>
           ${r.missions
             .map(
-              (m) => `<h3><a href="${esc(m.live)}" target="_blank" rel="noopener">${esc(m.target)} — ${esc(m.name)}</a></h3>
+              (m) => `<h3><a href="${esc(m.live)}" target="_blank" rel="noopener">${esc(m.resumeTitle)}</a></h3>
               <p class="meta">${esc(m.stack.join(', '))} · ${esc(m.dates)} · <a href="${esc(m.repo)}" target="_blank" rel="noopener">code</a></p>
-              <ul>${m.objectives.map((o) => `<li>${esc(o)}</li>`).join('')}<li><span class="q-num">${esc(m.loot.slice(0, 2).join(' · '))}</span></li></ul>`
+              <ul>${m.resume.map((o) => `<li>${esc(o)}</li>`).join('')}</ul>`
             )
             .join('')}
         </section>
@@ -54,7 +55,7 @@ export function renderQuickView(el) {
           <h2>EXPERIENCE</h2>
           ${r.sideQuests
             .slice(1)
-            .map((q) => `<h3>${esc(q.place)} — ${esc(q.title)}</h3><p class="meta">${esc(q.dates)}</p><ul>${q.did.map((d) => `<li>${esc(d)}</li>`).join('')}</ul>`)
+            .map((q) => `<h3>${esc(q.org || q.place)} — ${esc(q.title)}</h3><p class="meta">${esc(q.dates)}</p><ul>${q.resume.map((d) => `<li>${esc(d)}</li>`).join('')}</ul>`)
             .join('')}
         </section>
       </div>
