@@ -292,3 +292,28 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
   .id-band { flex-direction: column; gap: 2px; font-size: 17px; letter-spacing: 2px; }
   .idcard .gpa-burst { top: auto; bottom: 12px; right: 10px; transform: rotate(10deg) scale(.82); }
 }
+
+/* ---- Nov 18 spacing review fixes ---- */
+/* Skills: one reading per row (level out of 10 + its bar); "used in X of 2 apps" moved into the receipt */
+.crew-m.in { display: none; }
+.crew-row { grid-template-columns: minmax(0, 1fr) 14px 86px 140px; }
+@media (max-width: 760px) {
+  .crew-row { grid-template-columns: minmax(0, 1fr) 64px 96px; grid-template-areas: "name lv rk"; min-height: 48px; padding: 6px 4px; }
+  .crew-tag { display: none; }
+}
+/* My Edge: panels size to their words, no empty halftone below */
+.panel { min-height: 0; }
+/* Side quests: a current role is ACTIVE, not CLEAR */
+.stop-clear.active { color: var(--black); border-color: var(--black); background: var(--yellow); }
+/* Stats: a calmer GPA on phones so the first screen isn't just one number */
+@media (max-width: 760px) { .gpa-num b { font-size: 58px; } .gpa-card { padding: 18px 18px 14px; } }
+@media (max-width: 760px) {
+  .crew-cursor i::before { translate: -6px 4px; } /* the offset band stays inside the selected row */
+  .crew-row { padding-block: 9px; }
+  /* side quests: a slim rail, full-width cards */
+  .stop { grid-template-columns: 36px 1fr; }
+  .stop-pin { width: 32px; height: 32px; font-size: 18px; }
+  .stop-head { padding-right: 78px; }
+  .stop-clear { font-size: 16px; padding: 0 7px; border-width: 3px; right: 10px; top: 10px; }
+  .stop-meta { font-size: 12px; }
+}

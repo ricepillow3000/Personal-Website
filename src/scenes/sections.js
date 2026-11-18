@@ -19,7 +19,7 @@ let crewResizeBound = false;
 /* Highlight numbers in a sentence with the yellow marker. */
 const mark = (text) =>
   String(text)
-    .split(/(\d[\d,.]*\+?\s?(?:%|of \d[\d,]*|lines|tests|years|checks|errors|bugs|workflows)?|−\d+%)/g)
+    .split(/(\d[\d,.]*\+?(?:%|\s(?:of \d[\d,]*|lines|tests|years|checks|errors|bugs|workflows))?|−\d+%)/g)
     .map((part, i) => (i % 2 ? `<span class="hl">${esc(part)}</span>` : esc(part)))
     .join('');
 
@@ -34,7 +34,7 @@ function missions(ctx) {
   const list = reorder(resume.missions, ctx.company?.order?.missions);
   return {
     title: 'MISSIONS',
-    html: `${watermark('TARGETS')}${back}${head('MISSIONS', 'Two live apps. Pick a poster to open the file.')}
+    html: `${watermark('TARGETS')}${back}${head('MISSIONS', 'Two live apps. Pick a target to open its file.')}
       <ul class="wanted">${list
         .map(
           (m, i) => `<li class="wanted-slot" style="--tilt:${i % 2 ? 2.4 : -2.8}deg;--d:${i * -1.3}s">
@@ -97,18 +97,17 @@ function skills(ctx) {
   const total = resume.missions.length;
   return {
     title: 'SKILLS',
-    html: `${watermark('LEVELS')}${back}${head('SKILLS', 'Level = how deep I go. IN = how many live projects prove it.')}
+    html: `${watermark('LEVELS')}${back}${head('SKILLS', 'Level out of 10. Point at a skill to see where I proved it.')}
       <div class="crew">
         <div class="crew-star" aria-hidden="true"></div>
-        <div class="crew-tabs" aria-hidden="true"><span class="tab-a">THE SKILL SET</span><span class="tab-b">RANKS</span><span class="tab-c">RECEIPTS</span></div>
-        <div class="crew-board">
+                <div class="crew-board">
         <span class="crew-cursor" aria-hidden="true"><i></i></span>
         <ol class="crew-list">
           ${list
             .map((s, i) => {
               const n = lv(s.rank);
               const tag = i === 0 ? '<span class="crew-tag t-core" aria-hidden="true">CORE</span>' : i === 3 ? '<span class="crew-tag t-kit" aria-hidden="true">KIT</span>' : '';
-              return `<li class="crew-row" data-nav tabindex="0" data-proof="${esc(s.proof)}" data-name="${esc(s.name)}"
+              return `<li class="crew-row" data-nav tabindex="0" data-proof="${esc(s.proof)} · used in ${s.uses.length} of ${total} live apps" data-name="${esc(s.name)}"
                 aria-label="${esc(s.name)}: level ${esc(s.rank)}, used in ${s.uses.length} of ${total} projects. ${esc(s.proof)}">
                 ${tag}
                 <span class="crew-name" aria-hidden="true">${esc(s.name)}</span>
@@ -131,6 +130,10 @@ function skills(ctx) {
       const cursor = root.querySelector('.crew-cursor');
       const say = root.querySelector('.crew-say');
       let current = null;
+      // the highlight follows its row's real size: fonts arriving or a resize change the row heights
+      const resync = () => current && gsap.set(cursor, { y: current.offsetTop, height: current.offsetHeight });
+      if (window.ResizeObserver) new ResizeObserver(resync).observe(root.querySelector('.crew-list'));
+      document.fonts?.ready.then(resync);
       const select = (row, instant) => {
         if (!row || row === current) return;
         current = row;
@@ -162,7 +165,6 @@ function skills(ctx) {
     intro(root) {
       if (reducedMotion()) return;
       slamIn(root.querySelectorAll('.crew-row'), { x: 160, skewX: -22, autoAlpha: 0 }, { stagger: 0.04, duration: 0.26 });
-      slamIn(root.querySelectorAll('.crew-tabs span'), { y: -60, rotation: -12, autoAlpha: 0 }, { stagger: 0.06 });
       gsap.from(root.querySelector('.crew-star'), { scale: 0, rotation: -180, duration: 0.5, ease: 'back.out(1.8)', clearProps: 'transform' });
       gsap.from(root.querySelector('.crew-cursor i'), { scaleX: 0, duration: 0.3, ease: 'back.out(2.4)', delay: 0.25 });
     }
@@ -250,7 +252,7 @@ function sideQuests() {
               <div class="stop-head"><span class="stop-title">${esc(q.title)}</span><span class="stop-meta">${esc(q.place)} · ${esc(q.dates)}</span></div>
               <p class="stop-stat"><b>${esc(q.stat[0])}</b><span>${esc(q.stat[1])}</span></p>
               <span class="lesson"><b class="ql-tag">REWARD ★</b><span class="ql-text">${esc(q.lesson)}</span></span>
-              <span class="stop-clear" aria-hidden="true">CLEAR</span>
+              <span class="stop-clear${/present/i.test(q.dates) ? ' active' : ''}" aria-hidden="true">${/present/i.test(q.dates) ? 'ACTIVE' : 'CLEAR'}</span>
             </div></article>`
           )
           .join('')}

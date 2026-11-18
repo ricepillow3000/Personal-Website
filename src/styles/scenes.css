@@ -201,3 +201,9 @@
 @media (max-width: 440px) { .qb-long { display: none; } }
 /* the title's cut-out name and labels wait for their web fonts (see fontsReady in core/util.js) */
 #screen-title.title-wait :is(#titleName, .title-codename, .title-role, #pressStart, .quick-link) { opacity: 0; }
+/* highlighted numbers breathe: a little padding inside, a normal space after (no "2,000+automated") */
+.hl { padding: 0 .3em; margin: 0 .08em; }
+/* subtitles use their full strip (balanced wrapping left an empty band on phones) */
+.page-sub { text-wrap: pretty; }
+/* the email keeps its real lowercase letters (the button font only has capitals) */
+.contact-btns a[href^="mailto:"] { font-family: var(--f-body); font-weight: 700; letter-spacing: .2px; text-transform: none; }

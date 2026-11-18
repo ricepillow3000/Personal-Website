@@ -690,3 +690,14 @@ body[data-mode="page"] .hud-tl { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .guide .g-arrow { animation: none; } }
 body[data-mode="page"] .screen-page { padding-bottom: 120px; } /* nothing important ever sits under the guide button */
+/* the guide is a small corner chip now (it used to sit over content in the middle) */
+.guide { left: auto; right: max(16px, env(safe-area-inset-right, 0px)); translate: none; font-size: 15px; padding: 8px 14px 6px; gap: 8px; }
+.guide .g-arrow { font-size: 19px; }
+@media (max-width: 760px) { .guide { font-size: 13px; } }
+/* the stop strip sits right under the fixed back button, close to the title */
+.stop-strip { margin: 4px 0 2px; }
+/* MENU no longer shouts: the guided ride leads now, and the pulse ring crossed the label */
+.hud-btn.menu-hot { animation: none; }
+.hud-btn.menu-hot::after { display: none; }
+/* email shows as written, not in capitals */
+.contact-btns a[href^="mailto:"] { text-transform: none; }

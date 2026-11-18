@@ -311,6 +311,26 @@ button.gpa-burst{ border: 0; padding: 0; cursor: pointer; perspective: 400px; }
   .ps-kicker { font-size: 14px; padding: 4px 10px 2px; }
   .plan-coach { font-size: 13px; padding: 5px 9px; }
   .pcn-title { font-size: 22px; }
-  .plan-continue { padding: 8px 26px 10px; }
+  .plan-continue { padding: 10px 26px 12px; min-height: 48px; }
 }
 @media (max-width: 760px) and (max-height: 620px) { .plan-proof { display: none; } .plan-coach { display: none !important; } }
+/* name, role and status stacked on the left; the proof stickers and progress on the right */
+.plan-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px 24px; }
+.plan-id { display: grid; justify-items: start; gap: 10px; }
+.plan-side { display: grid; justify-items: end; gap: 12px; }
+.plan-side .plan-proof { margin: 0; }
+.plan-side .progress-chip { margin: 0; transform: scale(.9); transform-origin: right center; }
+.plan-head .plan-note { grid-column: 1 / -1; }
+.plan-status { display: inline !important; } /* one status line, on the dashboard itself */
+body[data-mode="board"] .hud-tl { display: none; } /* the tiny rotated status tags were unreadable */
+.plan.first .pcn-kicker:empty { display: none; }
+.plan-coach { white-space: nowrap; }
+.plan-stop { gap: 18px; }
+@media (max-width: 760px) {
+  .plan-head { grid-template-columns: 1fr; }
+  .plan-side { justify-items: start; }
+  .plan-side .progress-chip { display: none; } /* phones: the stations already show progress */
+  .plan-role { display: block; font-size: 12px; padding: 3px 10px; }
+  .plan-stop { gap: 10px; }
+}
+@media (min-width: 761px) { .screen-board { padding-top: 76px; } } /* the HUD status tags are gone from the dashboard */
