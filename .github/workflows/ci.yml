@@ -21,6 +21,11 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Build + end-to-end tests (desktop + phone)
         run: npm test
+      - name: The published site at the repo root matches the code (run `npm run site` and commit if this fails)
+        run: |
+          npm run site
+          git status --porcelain -- index.html assets favicon.svg robots.txt .nojekyll
+          test -z "$(git status --porcelain -- index.html assets favicon.svg robots.txt .nojekyll)"
       - name: Lighthouse budgets (performance ≥ 90 mobile, accessibility ≥ 95)
         run: npx --yes @lhci/cli@0.14.0 autorun
       - if: failure()
