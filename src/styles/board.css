@@ -115,7 +115,6 @@ body[data-mode="board"] .keyhints{ display: none; }
 .quest:nth-child(3){ --qt: -.4deg; }
 .quest:hover{ transform: rotate(0) translateX(4px); } /* black on yellow: readable at a glance */
 
-.quest-more{ font-size: 16px !important; text-decoration: none; }
 
 /* ----- CALLING CARD: a cream paper notice (deliberately unlike the red/black menu) ----- */
 
