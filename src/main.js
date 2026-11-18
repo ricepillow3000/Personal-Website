@@ -19,8 +19,8 @@ import { initMagnetic, initTilt, initScrollMeter, slamOnScroll, scramble, rollIn
 import { initTooltips } from './ui/tooltip.js';
 import { initClearing, hydrateStamps } from './ui/clear.js';
 import { progress } from './core/progress.js';
-import { caseWipe, doorsWipe, panelsWipe, glassWipe, cityWipe, crtWipe } from './fx/menuwipes.js';
-import { fallWipe, riseWipe, trainWipe, cardWipe, preloadFilm, slashWipe, blindsWipe, paperWipe, titlePunch, tunnelWipe, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
+import { caseWipe, panelsWipe, glassWipe, cityWipe, crtWipe } from './fx/menuwipes.js';
+import { fallWipe, riseWipe, trainWipe, cardWipe, preloadFilm, slashWipe, paperWipe, titlePunch, tunnelWipe, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { renderDate } from './ui/hud.js';
 import { createBoard, CHAPTERS } from './scenes/board.js';
@@ -51,13 +51,7 @@ function flipGpa() {
 document.addEventListener('click', (e) => {
   if (e.target.closest?.('.gpa-burst')) flipGpa();
 });
-/* how the next screen change should look; the menu asks for blinds */
-let viaMenu = false;
-let viaEpisode = false; // the move came from a NEXT EPISODE card
-const menu = createMenu((id) => {
-  viaMenu = true;
-  navigate(id);
-});
+const menu = createMenu((id) => navigate(id));
 renderDate();
 
 let screen = null; // title | board | page | quick
@@ -125,12 +119,12 @@ function activate(id) {
   requestAnimationFrame(syncMeter);
 }
 
-/* every menu destination gets its own transition */
-// each menu page has its own move from the heist-movie world (src/fx/menuwipes.js); CONTACT gets the calling card
-const MENU_STYLE = { missions: 'casefile', skills: 'doors', different: 'panels', stats: 'glass', 'side-quests': 'city', system: 'crt' };
-// from THE PLAN every chapter enters with its own move (never the same one twice in a row)
-const PLAN_STYLE = { stats: 'fall', missions: 'casefile', skills: 'doors', 'side-quests': 'city', different: 'panels', contact: 'card', system: 'crt' };
-const WIPES = { fall: fallWipe, rise: riseWipe, train: trainWipe, card: cardWipe, slash: slashWipe, blinds: blindsWipe, paper: paperWipe, casefile: caseWipe, doors: doorsWipe, panels: panelsWipe, glass: glassWipe, city: cityWipe, crt: crtWipe };
+/* Every chapter has ONE signature entrance, played however the visitor gets there (THE PLAN, NEXT
+   EPISODE, the stop dots, the menu, a number key), so the guided ride start to finish shows six
+   different moves and never the same one twice (Nov 18, John: "every tab when switching has a
+   different transition"). Back to THE PLAN is THE RISE; Quick View is paper. */
+const CHAPTER_STYLE = { stats: 'fall', missions: 'casefile', skills: 'train', 'side-quests': 'city', different: 'panels', contact: 'card', system: 'crt', secret: 'glass' };
+const WIPES = { fall: fallWipe, rise: riseWipe, train: trainWipe, card: cardWipe, slash: slashWipe, paper: paperWipe, casefile: caseWipe, panels: panelsWipe, glass: glassWipe, city: cityWipe, crt: crtWipe };
 /* Focus a target once its entrance animation has made it visible (a hidden element can't take focus).
    Gives up if the visitor has already moved focus somewhere themselves. */
 function focusSoon(el, tries = 16, from = document.activeElement) {
@@ -156,7 +150,6 @@ let navSeq = 0; // a newer navigation cancels whatever an older one still had le
 async function show(id) {
   const prev = screen;
   if ((prev === 'page' && pageId === id) || (prev === id && id !== 'page')) {
-    viaMenu = false; // already here: nothing to do, and nothing in progress is cancelled
     menu.close();
     return;
   }
@@ -183,32 +176,19 @@ async function show(id) {
     swap();
   } else if (prev === 'title' && id === 'board' && pendingStart) {
     pendingStart = false;
-    revealDelay = 1.25; // cards slam in as the star-flash clears
+    revealDelay = 0.28; // the screen swaps under the star-flash; THE PLAN slams in as it clears and the city fades up
     await tunnelWipe(swap);
   } else {
-    // mix it up: each kind of move has its own wipe
-    // the film cuts: CONTACT gets the calling card, NEXT EPISODE the train, THE PLAN -> a chapter its
-    // own move (THE DROP, case file, subway doors, city, comic panels), back to THE PLAN is THE RISE.
-    style = id === 'contact'
-      ? 'card'
-      : viaEpisode && mode === 'page'
-      ? 'train'
-      : prev === 'board' && mode === 'page'
-      ? PLAN_STYLE[id] || 'fall'
+    style = mode === 'page' && CHAPTER_STYLE[id]
+      ? CHAPTER_STYLE[id]
       : mode === 'board' && prev !== 'title'
       ? 'rise'
-      : viaMenu
-      ? MENU_STYLE[id] || 'blinds'
-      : id === 'system' || id === 'secret'
-        ? 'blinds'
-        : mode === 'quick'
-          ? 'paper'
-          : 'slash';
+      : mode === 'quick'
+        ? 'paper'
+        : 'slash';
     await WIPES[style](swap, SECTION_TITLES[id] || '');
   }
   if (tok !== navSeq) return;
-  viaMenu = false;
-  viaEpisode = false;
 
   if (mode === 'title') introTitle();
   if (mode === 'page') {
@@ -253,13 +233,14 @@ function renderProgress(celebrate) {
   const p = progress();
   const left = p.items.filter((i) => !i.done).map((i) => i.label);
   chip.classList.toggle('all', p.all);
-  chip.setAttribute('aria-label', p.all ? 'Case log, all clear' : `Case log, ${p.done} of ${p.total}. Still to do: ${left.join(', ')}`);
+  // the spoken name starts with the words on screen (PROGRESS 2/8), then says what's left
+  chip.setAttribute('aria-label', p.all ? 'PROGRESS ALL CLEAR!' : `PROGRESS ${p.done}/${p.total} 6 chapters + 2 project visits. Still to do: ${left.join(', ')}`);
   chip.title = p.all ? 'Everything cleared. Thanks for playing.' : `Still to do: ${left.join(' · ')}`;
   chip.innerHTML = p.all
-    ? '<span class="pc-label">PROGRESS</span><span class="pc-all">ALL CLEAR!</span>'
-    : `<span class="pc-label">PROGRESS</span><span class="pc-count"><b>${p.done}</b>/${p.total}</span>
+    ? '<span class="pc-label">PROGRESS</span> <span class="pc-all">ALL CLEAR!</span>'
+    : `<span class="pc-label">PROGRESS</span> <span class="pc-count"><b>${p.done}</b>/${p.total}</span>
        <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>
-       <span class="pc-hint" aria-hidden="true">open all 6 chapters · try both projects' Live or Code links</span>`;
+       <span class="pc-hint" aria-hidden="true">6 chapters + 2 project visits</span>`;
   if (celebrate && !reducedMotion()) gsap.fromTo(chip, { scale: 1.6, rotation: -12 }, { scale: 1, rotation: -3, duration: 0.5, ease: 'elastic.out(1.4, .4)' });
   else if (lastDone !== null && p.done > lastDone) rollIn(chip.querySelector('.pc-count b')); // one more case rolls in
   lastDone = p.done;
@@ -516,7 +497,6 @@ function rollEpisode() {
   const b = $('#page [data-episode]');
   if (!b) return;
   epReset();
-  viaEpisode = true;
   sfx('select');
   navigate(b.dataset.episode);
 }
@@ -902,7 +882,6 @@ function handle(action, e) {
           return true;
         }
         if (screen !== 'title' && MENU_ITEMS[n - 1]) {
-          viaMenu = true;
           navigate(MENU_ITEMS[n - 1].id);
           return true;
         }

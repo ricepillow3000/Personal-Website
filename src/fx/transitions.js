@@ -249,29 +249,6 @@ function layer(cls, html) {
   return el;
 }
 
-/** BLINDS (menu + settings): slanted slats snap shut from alternating sides, then open. (~0.6s) */
-export function blindsWipe(swap) {
-  if (reducedMotion()) {
-    swap();
-    return Promise.resolve();
-  }
-  const N = 7;
-  const el = layer('blinds', Array.from({ length: N }, (_, i) => `<i style="--i:${i}"></i>`).join(''));
-  const slats = [...el.children];
-  const tl = gsap.timeline();
-  tl.set(el, { visibility: 'visible' })
-    .add(() => sfx('rip', 0.3), 0)
-    .fromTo(slats, { xPercent: (i) => (i % 2 ? 110 : -110) }, { xPercent: 0, duration: 0.2, ease: 'power4.in', stagger: 0.025 }, 0)
-    .add(() => {
-      swap();
-      sfx('thunk');
-      shake(el);
-    }, 0.36)
-    .to(slats, { xPercent: (i) => (i % 2 ? -110 : 110), duration: 0.24, ease: 'expo.out', stagger: { each: 0.025, from: 'end' } }, 0.42)
-    .set(el, { visibility: 'hidden' });
-  return track(tl);
-}
-
 /** PAPER (Quick View): a white sheet with a torn top edge slides up over the screen and off. (~0.65s) */
 export function paperWipe(swap) {
   if (reducedMotion()) {

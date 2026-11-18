@@ -556,12 +556,6 @@ const VOICES = {
     flapping(bus, at + 0.15, 0.9, 0.22);
     cityBelow(bus, at, 1.05, { gain: 0.6 });
   },
-  /* subway doors: the two-tone door chime, then the air hiss as they slide */
-  doors: (bus, at) => {
-    tone(bus, { at, dur: 0.18, from: 988, to: 988, type: 'sine', gain: 0.14 });
-    tone(bus, { at: at + 0.16, dur: 0.26, from: 784, to: 784, type: 'sine', gain: 0.14 });
-    noise(bus, { at: at + 0.22, dur: 0.32, type: 'highpass', freq: 3000, q: 0.5, gain: 0.12 });
-  },
   /* glass taking a hit: a sharp tink and the crackle of cracks running out */
   crack: (bus, at) => {
     tone(bus, { at, dur: 0.12, from: 4200, to: 3900, type: 'sine', gain: 0.16 });

@@ -1,6 +1,7 @@
 :root {
   --red: #E5191C;
   --red-dark: #9E0F12;
+  --red-ink: #D61519; /* the brand red, a hair deeper: white text under 19px on it passes 4.5:1 (4.82) */
   --black: #0B0B0B;
   --white: #F5F5F0;
   --paper: #DDD8C8;
