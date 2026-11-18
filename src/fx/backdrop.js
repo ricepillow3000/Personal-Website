@@ -9,6 +9,7 @@
    ========================================================================= */
 
 import { mountSubway } from './subway.js';
+import { artSrc } from './art.js';
 
 const C = { black: '#050505', red: '#D80000', red2: '#E60012', white: '#FFFFFF', blood: '#7A0008' };
 const VB = '0 0 1600 900';
@@ -213,12 +214,8 @@ function p5Layer() {
 /** The far city: Nano Banana night-city art (cartoon ink style: black sky, gray towers, white
     windows, red only on screens and billboards), tilted to a Dutch angle and pushed back so it
     never fights the content in front. On the title it is printed faintly into the red wall. */
-const CITY = 'assets/film/city.webp';
-const CITY_SMALL = 'assets/film/city-800.webp';
 /** The title's opening shot: an empty night subway platform (Nano Banana, clean toon-shaded 3D like
     a P5 cutscene: dark, glossy floor, red safety lines, fluorescent strips, no people), slow camera push. */
-const SUBWAY = 'assets/film/subway.webp';
-const SUBWAY_SMALL = 'assets/film/subway-800.webp';
 
 export function mountBackdrop(el) {
   el.classList.add('backdrop');
@@ -236,7 +233,7 @@ export function mountBackdrop(el) {
   // competes with the title text on a phone's first load
   const small = () => window.innerWidth <= 900;
   const loadCity = () => {
-    [[el.querySelector('.bd-subway img'), small() ? SUBWAY_SMALL : SUBWAY], [el.querySelector('.bd-city img'), small() ? CITY_SMALL : CITY]].forEach(([img, src]) => {
+    [[el.querySelector('.bd-subway img'), artSrc('subway')], [el.querySelector('.bd-city img'), artSrc('city')]].forEach(([img, src]) => {
       img.onload = () => {
         img.classList.add('in'); // fades in once it's ready, never a half-drawn image
         if (img.parentNode.classList.contains('bd-cam')) mountSubway(img.parentNode, img); // trash on the floor + the PRESS START train

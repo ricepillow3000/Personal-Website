@@ -29,6 +29,7 @@ const SIDE = 'assets/film/train.webp';
 // trash on the platform floor: [x, y] on the art (where it touches the floor), kind, size, tilt.
 // The pieces are Nano Banana art (toon ink outlines, halftone shading): one strip, cells below.
 const TRASH_ART = 'assets/film/trash.webp';
+const TRASH_W = 1550; // CELLS below are measured on a 1550x200 strip (the file can be any multiple)
 const CELLS = { news: [0, 200, 111], bag: [204, 200, 167], can: [408, 130, 190], cup: [542, 200, 140], flyer: [746, 200, 139], wrapper: [950, 200, 126], receipt: [1154, 200, 141], ball: [1358, 188, 190] };
 const TRASH = [
   [600, 880, 'news', 1.2, -6],
@@ -188,7 +189,8 @@ function drawTrash(t) {
 
     const piece = (img, alpha) => {
       ctx.globalAlpha = alpha;
-      ctx.drawImage(img, cx, 0, cw, ch, -w / 2, -h / 2, w, h);
+      const s = img.width / TRASH_W; // CELLS are in the 1550px strip's pixels; sharper strips scale them
+      ctx.drawImage(img, cx * s, 0, cw * s, ch * s, -w / 2, -h / 2, w, h);
     };
     // its reflection in the glossy floor tiles, upside down and faint
     if (air < 0.9) {
