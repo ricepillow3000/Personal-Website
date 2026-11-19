@@ -208,6 +208,11 @@
 @media (max-width: 440px), (min-width: 761px) and (max-width: 1099px) { .qb-long { display: none; } }
 /* the title's cut-out name and labels wait for their web fonts (see fontsReady in core/util.js) */
 #screen-title.title-wait :is(#titleName, .title-codename, .title-role, #pressStart, .quick-link) { opacity: 0; }
+/* (while it waits, the block itself is invisible and only the hook shows: the hook paints from the first
+   frame, under the loading screen, as the page's largest text; the name filling in above it then moves
+   nothing a browser counts as a layout shift) */
+#screen-title.title-wait .title-block { visibility: hidden; }
+#screen-title.title-wait :is(#titleHook, #pressStart) { visibility: visible; } /* (PRESS START too, still see-through: it takes the keyboard focus at once; it sits at the bottom and never moves) */
 /* highlighted numbers breathe: a little padding inside, a normal space after (no "2,000+automated") */
 .hl { padding: 0 .3em; margin: 0 .08em; }
 /* subtitles use their full strip (balanced wrapping left an empty band on phones) */

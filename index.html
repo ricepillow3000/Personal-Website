@@ -26,8 +26,8 @@
   <link id="gfonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800&family=Barlow+Semi+Condensed:wght@500;600;700&family=Permanent+Marker&family=Special+Elite&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800&family=Barlow+Semi+Condensed:wght@500;600;700&family=Permanent+Marker&family=Special+Elite&display=swap"></noscript>
   <style>.loader{position:fixed;inset:0;z-index:9999;background:#0B0B0B;display:grid;place-items:center}.ld-seal{position:absolute;width:0;overflow:hidden}.ld-ring{width:.5em;height:.78em}</style>
-  <script type="module" crossorigin src="/assets/main-CtHsUPO-.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/main-wgs2mqog.css">
+  <script type="module" crossorigin src="/assets/main-DQTI1eAL.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/main-D6PKAJJ1.css">
 </head>
 <body data-screen="boot">
   <!-- the loading screen (src/ui/loader.js): on screen from the first paint. TAKE YOUR TIME is the
@@ -40,12 +40,10 @@
       <p class="ld-pct" aria-hidden="true"><b id="ldNum">0</b><i>%</i></p>
     </div>
     <button class="ld-go" type="button" hidden>ENTER THE STATION <span aria-hidden="true">▸</span></button>
-    <div class="ld-seal" aria-hidden="true"><svg viewBox="-100 -100 200 200">
-        <defs><path id="ldSealPath" d="M0,-78 a78,78 0 1,1 -0.01,0"/></defs>
-        <circle class="ld-seal-rim" r="96"/><circle class="ld-seal-in" r="62"/>
-        <g class="ld-seal-spin"><text class="ld-seal-txt"><textPath href="#ldSealPath" textLength="486" lengthAdjust="spacing">RESUMES DON'T HAVE TO BE BORING ★ BUILT BY DIRECTING A CREW OF AI AGENTS ★ </textPath></text></g>
-        <polygon class="ld-seal-mis" points="6.0,-44.0 18.3,-11.0 53.6,-9.5 26.0,12.5 35.4,46.5 6.0,27.0 -23.4,46.5 -14.0,12.5 -41.6,-9.5 -6.3,-11.0"/><polygon class="ld-seal-star" points="0.0,-50.0 12.3,-17.0 47.6,-15.5 20.0,6.5 29.4,40.5 0.0,21.0 -29.4,40.5 -20.0,6.5 -47.6,-15.5 -12.3,-17.0"/>
-      </svg></div>
+    <div class="ld-seal" aria-hidden="true">
+      <svg class="ld-seal-ring" viewBox="-100 -100 200 200"><defs><path id="ldSealPath" d="M0,-78 a78,78 0 1,1 -0.01,0"/></defs><circle class="ld-seal-rim" r="96"/><text class="ld-seal-txt"><textPath href="#ldSealPath" textLength="486" lengthAdjust="spacing">RESUMES DON'T HAVE TO BE BORING ★ BUILT BY DIRECTING A CREW OF AI AGENTS ★ </textPath></text></svg>
+      <svg class="ld-seal-core" viewBox="-100 -100 200 200"><circle class="ld-seal-in" r="62"/><polygon class="ld-seal-mis" points="6.0,-44.0 18.3,-11.0 53.6,-9.5 26.0,12.5 35.4,46.5 6.0,27.0 -23.4,46.5 -14.0,12.5 -41.6,-9.5 -6.3,-11.0"/><polygon class="ld-seal-star" points="0.0,-50.0 12.3,-17.0 47.6,-15.5 20.0,6.5 29.4,40.5 0.0,21.0 -29.4,40.5 -20.0,6.5 -47.6,-15.5 -12.3,-17.0"/></svg>
+    </div>
   </div>
   <a class="skip-link" href="#/quick">Skip to the one-page resume</a>
 
@@ -54,12 +52,14 @@
 
   <main id="app">
     <!-- TITLE -->
-    <section class="screen" id="screen-title" aria-label="Title screen">
+    <!-- (active and holding its hook from the first frame: under the loading screen it paints at once, so
+         the page's largest text never waits for the web fonts or the script; the script takes over) -->
+    <section class="screen active title-wait" id="screen-title" aria-label="Title screen">
       <div class="title-block">
         <h1 class="ransom ransom-xl" id="titleName"></h1>
         <div class="slab title-codename"><span>NGUYEN</span></div>
         <p class="title-role" id="titleRole"></p>
-        <p class="title-hook" id="titleHook"></p>
+        <p class="title-hook" id="titleHook">Resumes are boring. So I directed a crew of AI agents to turn mine into a game.</p>
         <button class="press-start" id="pressStart" type="button" data-magnetic>PRESS START</button>
         <a class="quick-link" href="#/quick">Quick View (1-page resume) ▸</a>
       </div>
