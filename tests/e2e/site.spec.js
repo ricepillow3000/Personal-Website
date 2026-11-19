@@ -515,7 +515,7 @@ test('SAVE DATA is a stack: every card peeks out, and picking one opens it and s
     const t = document.querySelector('#saves .sv-title').getBoundingClientRect();
     const arms = [...document.querySelectorAll('#saves .sv-arm')].map((a) => a.getBoundingClientRect());
     return { bg: getComputedStyle(document.querySelector('#saves')).backgroundColor, band: document.querySelectorAll('#saves .sv-band').length,
-      up: arms[2].top <= t.bottom, tall: arms[2].height > 200, others: arms.filter((a, k) => k !== 2).every((a) => a.height < 40), /* (a folded arm is a flat line, tilted) */ red: getComputedStyle(document.querySelectorAll('#saves .sv-arm')[2]).backgroundColor };
+      up: arms[2].top <= t.bottom, tall: arms[2].height > 200, others: [...document.querySelectorAll('#saves .sv-arm')].filter((a, k) => k !== 2).every((a) => /^matrix\(1, 0, 0, 0,/.test(getComputedStyle(a).transform)), /* (the others are folded flat: scaleY 0) */ red: getComputedStyle(document.querySelectorAll('#saves .sv-arm')[2]).backgroundColor };
   });
   expect(arm).toEqual({ bg: 'rgb(11, 11, 11)', band: 0, up: true, tall: true, others: true, red: 'rgb(229, 25, 28)' });
   expect(errors).toEqual([]);
