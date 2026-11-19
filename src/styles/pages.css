@@ -55,69 +55,6 @@
 .poster-brief { padding: 0 18px; font-size: 16px; line-height: 1.45; font-weight: 600; max-width: 46ch; }
 .poster-open { justify-self: start; margin: 4px 18px 0; background: var(--black); color: var(--yellow); font-family: var(--f-menu); font-size: 22px; letter-spacing: 2px; padding: 2px 14px; transform: skew(var(--skew)); }
 
-/* ============================ SKILLS: crew stat list ============================ */
-.crew { position: relative; display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 20px; max-width: 1180px; margin-top: 10px; }
-.crew-star { /* big black/white starburst behind the list, slow stepped spin */
-  position: absolute; right: 4%; top: -40px; width: 340px; height: 340px; z-index: -1; pointer-events: none;
-  background: repeating-conic-gradient(from 0deg, var(--white) 0 10deg, var(--black) 10deg 20deg);
-  clip-path: polygon(50% 0, 60% 30%, 92% 12%, 74% 42%, 100% 55%, 70% 64%, 84% 96%, 52% 76%, 24% 100%, 30% 66%, 0 60%, 26% 44%, 8% 12%, 40% 28%);
-  animation: crewSpin 9s steps(18) infinite;
-}
-@keyframes crewSpin { to { rotate: 360deg; } }
-.crew-tabs { grid-column: 1 / -1; display: flex; align-items: flex-end; gap: 16px; margin: 0 0 4px 60px; }
-.crew-tabs span { font-family: var(--f-head); text-transform: uppercase; letter-spacing: 1px; padding: 2px 14px; }
-.tab-a { background: var(--white); color: var(--black); font-size: 18px; transform: rotate(-3deg) skew(var(--skew)); box-shadow: 4px 4px 0 var(--black); }
-.tab-b { background: var(--red); color: var(--white); font-size: 26px; transform: rotate(-8deg); box-shadow: 4px 4px 0 var(--black); }
-.tab-c { background: var(--black); color: var(--white); border: 3px solid var(--white); font-size: 22px; transform: rotate(4deg); }
-
-.crew-board {
-  position: relative; padding: 18px 26px 22px 110px;
-  background: rgba(8, 8, 8, .92); clip-path: polygon(0 3%, 100% 0, 96% 100%, 2% 97%);
-}
-.crew-list { list-style: none; margin: 0; padding: 0; }
-.crew-cursor { position: absolute; left: 0; right: 0; top: 0; height: 52px; pointer-events: none; z-index: 0; }
-.crew-cursor i { /* two stacked slanted bands: cyan under, white over */
-  position: absolute; inset: -4px 0 -6px 40px; display: block; transform-origin: 0 50%;
-}
-.crew-cursor i::before, .crew-cursor i::after { content: ""; position: absolute; inset: 0; clip-path: polygon(0 18%, 100% 0, 97% 82%, 3% 100%); }
-.crew-cursor i::before { background: #3FE6D0; translate: -12px 8px; }
-.crew-cursor i::after { background: var(--white); }
-.crew-row {
-  position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) 14px 86px 108px 108px; align-items: center; gap: 12px;
-  min-height: 52px; padding: 2px 6px; color: var(--white); outline: none; cursor: default;
-}
-.crew-row:nth-child(odd) { margin-left: 8px; }
-.crew-row:nth-child(4n) { margin-left: -6px; }
-.crew-name { justify-self: end; text-align: right; font-weight: 800; font-size: 18px; line-height: 1.1; white-space: nowrap; }
-.crew-dot { color: var(--grey); font-size: 18px; }
-.crew-lv { font-family: var(--f-head); font-size: 36px; line-height: 1; font-style: italic; letter-spacing: 1px; }
-.crew-lv small { font-size: 13px; font-style: italic; margin-right: 2px; vertical-align: 4px; }
-.crew-m { position: relative; display: flex; align-items: baseline; gap: 6px; padding-bottom: 6px; font-family: var(--f-head); font-style: italic; }
-.crew-m small { font-size: 12px; }
-.crew-m b { font-weight: 400; font-size: 24px; letter-spacing: 1px; }
-.crew-m i { position: absolute; left: 0; bottom: 0; height: 5px; width: var(--v); transform-origin: 0 50%; transform: skewX(-20deg); }
-.crew-m.rk i { background: #3FE6D0; }
-.crew-m.in i { background: #FF4FD8; }
-.crew-m::after { content: ""; position: absolute; left: 0; right: 0; bottom: 1px; height: 1px; background: rgba(245, 245, 240, .25); }
-.crew-row.on { color: var(--black); }
-.crew-row.on .crew-dot { color: var(--black); }
-.crew-row.on .crew-lv { color: var(--black); text-shadow: 2px 2px 0 #3FE6D0; }
-.crew-row.on .crew-m.rk i, .crew-row.on .crew-m.in i { height: 7px; box-shadow: 0 0 0 2px var(--black); }
-.crew-tag {
-  position: absolute; left: -96px; top: 50%; translate: 0 -50%; font-family: var(--f-head); font-size: 22px; letter-spacing: 1px;
-  padding: 2px 12px; background: var(--white); color: var(--black); box-shadow: 4px 4px 0 var(--red); transform: rotate(-10deg) skew(var(--skew));
-}
-.crew-tag.t-kit { background: var(--black); color: var(--white); border: 3px solid var(--white); transform: rotate(-14deg) skew(var(--skew)); }
-
-.crew-side { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-content: end; justify-items: end; gap: 18px; padding-bottom: 6px; }
-.crew-say {
-  position: relative; margin: 0; max-width: 340px; background: var(--white); color: var(--black); padding: 12px 16px 14px;
-  border: 4px solid var(--black); box-shadow: 8px 8px 0 var(--red); rotate: -3deg; font-weight: 700; line-height: 1.35;
-}
-.crew-say::after { content: ""; position: absolute; left: 28px; bottom: -18px; width: 26px; height: 18px; background: var(--black); clip-path: polygon(0 0, 100% 0, 10% 100%); }
-.crew-say-name { display: block; font-family: var(--f-head); font-weight: 400; font-size: 22px; text-transform: uppercase; color: var(--red); }
-.crew-word { font-size: clamp(40px, 3.8vw, 60px); rotate: -6deg; }
-
 /* ============================ DIFFERENT: comic page ============================ */
 .comic {
   display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; margin-top: 18px; max-width: 1080px;
@@ -223,18 +160,6 @@
   .wanted { grid-template-columns: 1fr; gap: 34px; }
   .poster-name { padding-right: 100px; }
   .poster-grade { width: 74px; height: 74px; font-size: 40px; }
-  .crew { grid-template-columns: minmax(0, 1fr); }
-  .crew-star { width: 200px; height: 200px; top: -20px; }
-  .crew-tabs { margin-left: 8px; }
-  .crew-board { padding: 14px 12px 18px 14px; }
-  .crew-row { grid-template-columns: minmax(0, 1fr) 70px; grid-template-areas: "name lv" "rk in"; gap: 2px 12px; padding: 6px 4px 8px; min-height: 64px; margin-left: 0 !important; }
-  .crew-name { grid-area: name; justify-self: start; text-align: left; font-size: 17px; white-space: normal; }
-  .crew-dot { display: none; }
-  .crew-lv { grid-area: lv; justify-self: end; font-size: 28px; }
-  .crew-m.rk { grid-area: rk; } .crew-m.in { grid-area: in; }
-  .crew-cursor i { left: 0; }
-  .crew-tag { left: auto; right: 74px; top: 4px; translate: none; font-size: 14px; padding: 0 8px; }
-  .crew-side { justify-items: start; }
   .comic { grid-template-columns: 1fr; }
   .panel { min-height: 0; }
   .panel-num { font-size: 140px; }
@@ -254,7 +179,6 @@
 body.reduce-motion :is(.pg-mark span, .wanted-slot, .poster-grade, .crew-star, .route-dash, .pg-rays, .stop-pin),
 body.reduce-motion .panel::before { animation: none !important; }
 
-.crew { overflow-x: clip; }
 /* the rays stay inside the page (no sideways overflow on phones) */
 .card-stage { overflow: clip; padding: 30px 0; margin: -30px 0; }
 
@@ -294,13 +218,6 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
 }
 
 /* ---- Nov 18 spacing review fixes ---- */
-/* Skills: one reading per row (level out of 10 + its bar); "used in X of 2 apps" moved into the receipt */
-.crew-m.in { display: none; }
-.crew-row { grid-template-columns: minmax(0, 1fr) 14px 86px 140px; }
-@media (max-width: 760px) {
-  .crew-row { grid-template-columns: minmax(0, 1fr) 64px 96px; grid-template-areas: "name lv rk"; min-height: 48px; padding: 6px 4px; }
-  .crew-tag { display: none; }
-}
 /* My Edge: panels size to their words, no empty halftone below */
 .panel { min-height: 0; }
 /* Side quests: a current role is ACTIVE, not CLEAR */
@@ -308,8 +225,6 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
 /* Stats: a calmer GPA on phones so the first screen isn't just one number */
 @media (max-width: 760px) { .gpa-num b { font-size: 58px; } .gpa-card { padding: 18px 18px 14px; } }
 @media (max-width: 760px) {
-  .crew-cursor i::before { translate: -6px 4px; } /* the offset band stays inside the selected row */
-  .crew-row { padding-block: 9px; }
   /* side quests: a slim rail, full-width cards */
   .stop { grid-template-columns: 36px 1fr; }
   .stop-pin { width: 32px; height: 32px; font-size: 18px; }
@@ -317,10 +232,78 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
   .stop-clear { font-size: 16px; padding: 0 7px; border-width: 3px; right: 10px; top: 10px; }
   .stop-meta { font-size: 12px; }
 }
-/* skill bars in the brand palette (John, Nov 18): yellow on the dark rows, red on the selected white slab
-   (yellow on white would vanish); the selected slab's offset band is red too */
-.crew-m.rk i { background: var(--yellow); }
-.crew-m.in i { background: var(--red); }
-.crew-row.on .crew-m.rk i { background: var(--red); }
-.crew-row.on .crew-lv { text-shadow: 2px 2px 0 var(--red); }
-.crew-cursor i::before { background: var(--red); }
+
+
+/* ============================ SKILLS: the party roster ============================
+   Nov 19, from John's party-lineup reference (an original design): a black slanted panel of rows,
+   name · sparkle · big italic LV · one underlined bar (one reading per row: LV out of 10; the bars stay
+   John's yellow, red on the picked row); jagged white arrow tags (CORE, KIT) pointing at their rows; the
+   picked row on a white slab over a teal wedge; a detail strip under the list (name in red, LV, five
+   stars, the receipt); RECEIPTS huge on the right with a tilted question. */
+.crew { position: relative; display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 20px; max-width: 1180px; margin-top: 10px; overflow-x: clip; }
+.crew-star { /* big black/white starburst behind the list, slow stepped spin */
+  position: absolute; right: 4%; top: -40px; width: 340px; height: 340px; z-index: -1; pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, var(--white) 0 10deg, var(--black) 10deg 20deg);
+  clip-path: polygon(50% 0, 60% 30%, 92% 12%, 74% 42%, 100% 55%, 70% 64%, 84% 96%, 52% 76%, 24% 100%, 30% 66%, 0 60%, 26% 44%, 8% 12%, 40% 28%);
+  animation: crewSpin 9s steps(18) infinite;
+}
+@keyframes crewSpin { to { rotate: 360deg; } }
+.crew-board { position: relative; padding: 18px 30px 16px 140px; background: rgba(8, 8, 8, .94); clip-path: polygon(0 3%, 100% 0, 96% 100%, 2% 97%); }
+.crew-list { list-style: none; margin: 0; padding: 0; }
+.crew-cursor { position: absolute; left: 0; right: 0; top: 0; height: 52px; pointer-events: none; z-index: 0; }
+.crew-cursor i { position: absolute; inset: -4px -30px -6px 70px; display: block; transform-origin: 0 50%; } /* runs past the panel's right edge, like a highlight band */
+.crew-cursor i::before, .crew-cursor i::after { content: ""; position: absolute; inset: 0; clip-path: polygon(0 18%, 100% 0, 97% 82%, 3% 100%); }
+.crew-cursor i::before { background: var(--teal); translate: -16px 8px; }
+.crew-cursor i::after { background: var(--white); }
+.crew-row {
+  position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) 24px 96px 150px; align-items: center; gap: 14px;
+  min-height: 50px; padding: 2px 6px; color: var(--white); outline: none; cursor: default;
+}
+.crew-row:nth-child(odd) { margin-left: 10px; }
+.crew-row:nth-child(4n) { margin-left: -8px; }
+.crew-name { justify-self: end; text-align: right; font-family: var(--f-serif); font-weight: 900; font-size: 21px; line-height: 1.1; letter-spacing: .2px; white-space: nowrap; }
+.crew-dot { justify-self: center; font-size: 14px; color: var(--white); }
+.crew-spark { display: block; width: 20px; height: 20px; background: var(--white); rotate: 18deg; clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%); }
+.crew-lv { font-family: var(--f-head); font-size: 38px; line-height: 1; font-style: italic; letter-spacing: 1px; }
+.crew-lv small { font-size: 13px; font-style: italic; margin-right: 3px; vertical-align: 5px; }
+.crew-m { position: relative; height: 24px; }
+.crew-m::after { content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 2px; background: rgba(245, 245, 240, .3); transform: skewX(-20deg); }
+.crew-m i { position: absolute; left: 0; bottom: 3px; height: 8px; width: var(--v); background: var(--yellow); transform-origin: 0 50%; transform: skewX(-20deg); z-index: 1; }
+.crew-row.on { color: var(--black); }
+.crew-row.on .crew-spark { background: var(--black); }
+.crew-row.on .crew-lv { text-shadow: 2px 2px 0 var(--teal); }
+.crew-row.on .crew-m i { height: 10px; background: var(--red); box-shadow: 0 0 0 2px var(--black); }
+.crew-row.on .crew-m::after { background: var(--black); }
+/* jagged white arrow tags pointing at their rows, sealed in a black outline */
+.crew-tag { position: absolute; left: -132px; top: 50%; translate: 0 -50%; rotate: -10deg;
+  filter: drop-shadow(3px 0 0 var(--black)) drop-shadow(-3px 0 0 var(--black)) drop-shadow(0 3px 0 var(--black)) drop-shadow(0 -3px 0 var(--black)) drop-shadow(4px 5px 0 var(--red)); }
+.crew-tag b { display: block; padding: 4px 36px 4px 14px; font: 400 25px/1 var(--f-head); letter-spacing: 1px; background: var(--white); color: var(--black);
+  clip-path: polygon(0 8%, 72% 0, 74% 20%, 100% 46%, 75% 64%, 78% 100%, 5% 92%); }
+/* the picked skill, spelled out under the list */
+.crew-detail { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 18px; margin: 14px 0 0 -96px; padding: 12px 0 4px 6px; border-top: 2px solid rgba(245, 245, 240, .18); color: var(--white); }
+.cd-name { font-family: var(--f-head); font-weight: 400; font-size: 32px; line-height: 1.05; color: var(--red); rotate: -3deg; }
+.cd-rank { font-family: var(--f-head); font-style: italic; }
+.cd-rank small { font-size: 15px; margin-right: 3px; }
+.cd-rank b { font-weight: 400; font-size: 40px; line-height: 1; }
+.cd-stars { display: flex; gap: 4px; rotate: -6deg; }
+.cd-stars i { width: 20px; height: 20px; background: rgba(245, 245, 240, .22); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.cd-stars i.on { background: var(--yellow); }
+.cd-proof { flex-basis: 100%; margin: 4px 0 0; font-family: var(--f-ui); font-style: italic; font-weight: 700; font-size: 17px; line-height: 1.35; }
+/* RECEIPTS huge on the right, with a tilted question under it */
+.crew-side { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-content: end; justify-items: end; gap: 12px; padding-bottom: 10px; }
+.crew-word { font-size: clamp(44px, 4.6vw, 76px); rotate: -8deg; }
+.crew-ask { margin: 0; padding: 4px 14px; font-family: var(--f-ui); font-style: italic; font-weight: 700; font-size: 18px; background: var(--black); color: var(--white); border: 2px solid var(--white); rotate: -8deg; }
+@media (max-width: 760px) {
+  .crew { grid-template-columns: minmax(0, 1fr); }
+  .crew-star { width: 200px; height: 200px; top: -20px; }
+  .crew-board { padding: 14px 12px 14px 14px; }
+  .crew-row { grid-template-columns: minmax(0, 1fr) 64px 96px; min-height: 48px; padding: 9px 4px; margin-left: 0 !important; }
+  .crew-name { justify-self: start; text-align: left; font-size: 17px; white-space: normal; }
+  .crew-dot, .crew-tag { display: none; }
+  .crew-lv { justify-self: end; font-size: 28px; }
+  .crew-cursor i { left: 0; right: 0; }
+  .crew-cursor i::before { translate: -6px 4px; } /* the offset band stays inside the picked row */
+  .crew-detail { margin-left: 0; }
+  .cd-name { font-size: 26px; }
+  .crew-side { justify-items: start; }
+}

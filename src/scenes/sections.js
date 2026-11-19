@@ -107,29 +107,34 @@ function skills(ctx) {
           ${list
             .map((s, i) => {
               const n = lv(s.rank);
-              const tag = i === 0 ? '<span class="crew-tag t-core" aria-hidden="true">CORE</span>' : i === 3 ? '<span class="crew-tag t-kit" aria-hidden="true">KIT</span>' : '';
+              const tag = i === 0 ? '<span class="crew-tag" aria-hidden="true"><b>CORE</b></span>' : i === 3 ? '<span class="crew-tag" aria-hidden="true"><b>KIT</b></span>' : '';
               return `<li class="crew-row" data-nav tabindex="0" data-proof="${esc(s.proof)} · used in ${s.uses.length} of ${total} live apps" data-name="${esc(s.name)}"
                 aria-label="${esc(s.name)}: level ${esc(s.rank)}, used in ${s.uses.length} of ${total} projects. ${esc(s.proof)}">
                 ${tag}
                 <span class="crew-name" aria-hidden="true">${esc(s.name)}</span>
-                <span class="crew-dot" aria-hidden="true">•</span>
+                <span class="crew-dot" aria-hidden="true">${n >= 8 ? '<i class="crew-spark"></i>' : '•'}</span>
                 <span class="crew-lv" aria-hidden="true"><small>LV</small>${n >= 10 ? 'MAX' : n}</span>
                 <span class="crew-m rk" aria-hidden="true"><i style="--v:${n * 10}%"></i></span>
-                <span class="crew-m in" aria-hidden="true"><small>IN</small><b>${s.uses.length}/${total}</b><i style="--v:${(s.uses.length / total) * 100}%"></i></span>
               </li>`;
             })
             .join('')}
         </ol>
+        <div class="crew-detail" aria-hidden="true">
+          <b class="cd-name"></b>
+          <span class="cd-rank"><small>LV</small><b class="cd-lv"></b></span>
+          <span class="cd-stars">${'<i></i>'.repeat(5)}</span>
+          <p class="cd-proof"></p>
+        </div>
         </div>
         <div class="crew-side" aria-hidden="true">
-          <p class="crew-say"><b class="crew-say-name"></b><span class="crew-say-proof"></span></p>
           <div class="ransom crew-word" data-ransom="RECEIPTS"></div>
+          <p class="crew-ask">Which skill do you want proof of?</p>
         </div>
       </div>`,
     after(root) {
       const rows = [...root.querySelectorAll('.crew-row')];
       const cursor = root.querySelector('.crew-cursor');
-      const say = root.querySelector('.crew-say');
+      const say = root.querySelector('.crew-detail');
       let current = null;
       // the highlight follows its row's real size: fonts arriving or a resize change the row heights
       const resync = () => current && gsap.set(cursor, { y: current.offsetTop, height: current.offsetHeight });
@@ -139,8 +144,13 @@ function skills(ctx) {
         if (!row || row === current) return;
         current = row;
         rows.forEach((r) => r.classList.toggle('on', r === row));
-        say.querySelector('.crew-say-name').textContent = row.dataset.name;
-        say.querySelector('.crew-say-proof').textContent = row.dataset.proof;
+        // the detail strip under the list: name, level, five stars (a star per two levels), the receipt
+        const lvTxt = row.querySelector('.crew-lv').lastChild.textContent;
+        const lvNum = lvTxt === 'MAX' ? 10 : Number(lvTxt);
+        say.querySelector('.cd-name').textContent = row.dataset.name;
+        say.querySelector('.cd-lv').textContent = lvTxt;
+        say.querySelectorAll('.cd-stars i').forEach((st, k) => st.classList.toggle('on', k < Math.round(lvNum / 2)));
+        say.querySelector('.cd-proof').textContent = row.dataset.proof;
         const to = { y: row.offsetTop, height: row.offsetHeight };
         if (instant || reducedMotion()) {
           gsap.set(cursor, to);
@@ -148,7 +158,7 @@ function skills(ctx) {
         }
         gsap.to(cursor, { ...to, duration: 0.2, ease: 'back.out(2.2)', overwrite: true });
         gsap.fromTo(cursor.firstElementChild, { scaleX: 0.6 }, { scaleX: 1, duration: 0.22, ease: 'back.out(2.6)' });
-        gsap.fromTo(say, { scale: 0.7, rotation: -6 }, { scale: 1, rotation: -3, duration: 0.24, ease: 'back.out(2.8)' });
+        gsap.fromTo(say.children, { x: 24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.2, ease: 'back.out(2.4)', stagger: 0.03, clearProps: 'transform,opacity' });
         gsap.fromTo(row.querySelectorAll('.crew-m i'), { scaleX: 0 }, { scaleX: 1, duration: 0.26, ease: 'back.out(2)', stagger: 0.04 });
       };
       rows.forEach((r) => {
