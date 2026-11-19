@@ -38,6 +38,12 @@ body.reduce-motion .bd-layer { transform: none !important; }
 
 /* on tall screens the wall is cropped to its middle, and the arrow would read as a stray white band */
 @media (max-aspect-ratio: 1/1) { .bd-arrow { display: none; } }
+/* wide, short screens (a phone held sideways, Nov 19, John: "it's cutting off the lower part"): the
+   art covers the screen, so a 2:1 screen loses its top and bottom strips and the ATL poster ran off
+   the bottom. Lift and shrink the poster (viewBox units) so all of it stays in view. */
+.bd-poster { transform-origin: 1260px 500px; }
+@media (min-aspect-ratio: 19/10) { .bd-poster { transform: translateY(-60px) scale(.82); } }
+@media (min-aspect-ratio: 23/10) { .bd-poster { transform: translateY(-90px) scale(.76); } }
 
 /* Background art (Nano Banana, cel-shaded + comic ink, grayscale with red accents only).
    Title: the empty night subway platform, the movie's opening shot, with a slow camera push.

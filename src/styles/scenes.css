@@ -195,7 +195,7 @@
    screen's width), so here it is sized by its height and the gaps tighten; the calendar is fitted by
    the title fit guard (src/ui/titlefit.js) */
 @media (max-height: 520px) and (min-width: 560px) {
-  #screen-title.active { padding-bottom: 5vh; }
+  #screen-title.active { padding-bottom: max(5vh, calc(env(safe-area-inset-bottom, 0px) + 8px)); } /* clears the home bar */
   #screen-title .ransom-xl { font-size: clamp(40px, 14vh, 72px); }
   .title-codename { margin: 6px 0 6px; font-size: 20px; }
   .title-role { margin-bottom: 6px; font-size: 15px; }
