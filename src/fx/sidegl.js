@@ -34,10 +34,53 @@ uniform sampler2D uTex;
 uniform float uPeriod;  // world units per repeat of the art (door to door)
 uniform float uAlpha;
 uniform float uMouth;   // the tunnel mouth: deeper than this the train fades into the dark
+uniform float uMat;     // 1 = the heavy steel material (the car itself), 0 = flat (the afterimage echoes)
+uniform float uRefl;    // 1 = its reflection in the glossy platform floor
+uniform vec2 uTexel;    // one texel of the art, for the ink outlines
 out vec4 outColor;
+float luma(vec2 uv) { return dot(texture(uTex, uv).rgb, vec3(0.299, 0.587, 0.114)); }
 void main() {
   float dark = clamp(1.0 - (vD - uMouth) / 420.0, 0.0, 1.0);
   vec4 c = texture(uTex, vec2(vSV.x / uPeriod, vSV.y)); // REPEAT wraps the car; mipmaps keep the far end calm
+  if (uMat > 0.5 && c.a > 0.0) {
+    /* Weight (Nov 19, John: "it looks like a cutout, make it feel heavy, like an actual subway train").
+       Cel-shaded steel: hard value bands, never soft gradients. The lit windows keep their glow. */
+    vec2 uv = vec2(vSV.x / uPeriod, vSV.y);
+    vec3 col = c.rgb / c.a;
+    float lum = dot(col, vec3(0.299, 0.587, 0.114));
+    float glass = clamp((min(col.r, col.g) - col.b) * 5.0, 0.0, 1.0) * step(0.45, lum); // warm lit windows
+    float metal = 1.0 - glass;
+    float v = vSV.y;
+    // deeper steel: more contrast, darker mid-tones, so it reads as a heavy painted body, not paper
+    vec3 steel = pow(col, vec3(1.45)) * 0.8;
+    // hard shade bands: the roof edge curves away, the lower body sinks into the shadow over the track
+    float band = 1.0;
+    band *= v < 0.06 ? 0.5 : 1.0;
+    band *= v > 0.74 ? 0.8 : 1.0;
+    band *= v > 0.86 ? 0.75 : 1.0;
+    band *= v > 0.94 ? 0.7 : 1.0;
+    steel *= band;
+    // bold ink: the art's own panel lines, door seams and frames, thickened into heavy cel outlines
+    vec2 o = uTexel * 1.6;
+    float gx = luma(uv + vec2(o.x, 0.0)) - luma(uv - vec2(o.x, 0.0));
+    float gy = luma(uv + vec2(0.0, o.y)) - luma(uv - vec2(0.0, o.y));
+    float ink = smoothstep(0.07, 0.2, length(vec2(gx, gy)));
+    steel *= 1.0 - 0.7 * ink;
+    // the station's ceiling lights mirrored on the steel: fixed in the station (world depth), so the
+    // car slides UNDER them, the way real metal looks when it moves. Crisp anime streaks, slanted.
+    float f = fract((vD + v * 60.0) / 310.0);
+    float streak = step(0.45, f) * step(f, 0.5) + 0.6 * step(0.535, f) * step(f, 0.555);
+    float sheen = streak * (v > 0.06 && v < 0.88 ? 1.0 : 0.0) * (vD < 60.0 ? 0.55 : 1.0); // right at the lens a streak is huge: a glint, not a wash
+    steel += sheen * vec3(0.44, 0.46, 0.5) * (1.0 - v * 0.55);
+    col = mix(col, steel, metal) * (1.0 - 0.35 * ink * glass) + glass * sheen * 0.12;
+    if (uRefl > 0.5) {
+      // in the floor: a little cooler and fainter, strongest where the car meets the platform (hard
+      // steps). It mirrors light (the lit windows become warm streaks), it doesn't dim the floor.
+      col *= vec3(0.82, 0.85, 0.94);
+      c.a *= v > 0.86 ? 0.36 : (v > 0.66 ? 0.22 : (v > 0.4 ? 0.11 : 0.05));
+    }
+    c = vec4(clamp(col, 0.0, 1.0) * c.a, c.a);
+  }
   outColor = c * (uAlpha * dark); // premultiplied
 }`;
 
@@ -67,6 +110,7 @@ export function createSideRenderer() {
     pos: gl.getAttribLocation(prog, 'aPos'), d: gl.getAttribLocation(prog, 'aD'), sv: gl.getAttribLocation(prog, 'aSV'),
     size: gl.getUniformLocation(prog, 'uSize'), tex: gl.getUniformLocation(prog, 'uTex'), period: gl.getUniformLocation(prog, 'uPeriod'),
     alpha: gl.getUniformLocation(prog, 'uAlpha'), mouth: gl.getUniformLocation(prog, 'uMouth'),
+    mat: gl.getUniformLocation(prog, 'uMat'), refl: gl.getUniformLocation(prog, 'uRefl'), texel: gl.getUniformLocation(prog, 'uTexel'),
   };
   const buf = gl.createBuffer();
   const vao = gl.createVertexArray();
@@ -158,8 +202,9 @@ export function createSideRenderer() {
       return true;
     },
     /** Draw one side quad on top of what this frame already has. corners: four [x, y, d, s, v] in
-        canvas pixels (near roof, near skirt, far roof, far skirt). False if it couldn't. */
-    quad(img, corners, { period, alpha, mouth }) {
+        canvas pixels (near roof, near skirt, far roof, far skirt). mat: the steel material; refl: as
+        its reflection in the floor. False if it couldn't. */
+    quad(img, corners, { period, alpha, mouth, mat = 0, refl = 0 }) {
       if (lost || gl.isContextLost()) return false;
       const t = texture(img);
       if (!t) return false;
@@ -176,6 +221,9 @@ export function createSideRenderer() {
       gl.uniform1f(loc.period, period);
       gl.uniform1f(loc.alpha, alpha);
       gl.uniform1f(loc.mouth, mouth);
+      gl.uniform1f(loc.mat, mat);
+      gl.uniform1f(loc.refl, refl);
+      gl.uniform2f(loc.texel, 1 / (img.naturalWidth || img.width), 1 / (img.naturalHeight || img.height));
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       return true;
     },

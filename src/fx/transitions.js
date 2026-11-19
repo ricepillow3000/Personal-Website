@@ -167,7 +167,6 @@ export function tunnelWipe(swap) {
   const screen = $('#screen-title');
   const title = screen.querySelector('.title-block');
   const clock = { t: 0 };
-  const jitter = () => (Math.random() * 2 - 1).toFixed(1);
   const SWAP = 1.25;
   const posters = [...document.querySelectorAll('#backdrop .bd-graffiti, #backdrop .bd-shards')].map((l) => l.firstElementChild);
   const blown = [];
@@ -176,6 +175,7 @@ export function tunnelWipe(swap) {
     onComplete: () => {
       shot.end();
       cam.style.translate = '';
+      cam.style.scale = '';
       screen.style.translate = '';
       gsap.set(title, { clearProps: 'transform,opacity,visibility' });
       el.remove();
@@ -192,10 +192,12 @@ export function tunnelWipe(swap) {
         const t = clock.t;
         const near = shot.closeness(t); // 0 while it's in the tunnel, 1 as it passes the camera
         shot.tick(t, { rumble: Math.min(1, t / 0.5), lines: Math.min(1, near * 1.6), panP: gsap.parseEase('power2.inOut')(Math.min(1, t / 0.45)) });
-        // the camera shakes harder the closer the train gets
-        const amp = 1 + 2.5 * Math.min(1, t / 0.5) + 15 * near;
-        cam.style.translate = `${jitter() * amp}px ${jitter() * amp}px`;
-        screen.style.translate = `${jitter() * amp * 0.6}px ${jitter() * amp * 0.6}px`;
+        // a heavy train: a deep rumble that swells as it comes, a thump per wheel set, the air
+        // wall's shove as the nose passes (never a random buzz: that read as weightless)
+        const m = shot.motion(t);
+        cam.style.translate = `${m.x.toFixed(1)}px ${m.y.toFixed(1)}px`;
+        cam.style.scale = m.s.toFixed(4);
+        screen.style.translate = `${(m.x * 0.6).toFixed(1)}px ${(m.y * 0.6).toFixed(1)}px`;
       },
     }, 0)
     // its wind takes the title with it, and rips the posters off the wall

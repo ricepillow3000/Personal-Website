@@ -667,27 +667,60 @@ test('sound: the recordings download only after sound is turned on (never on pag
   await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(8);
 });
 
-test('city billboard: JOHN NGUYEN ★ travels from LED ring to LED ring (rests on the middle ring with reduced motion)', async ({ page, browser }) => {
+test('city billboard: TAKE YOUR NETWORK crawls across the ring above JOHN NGUYEN ★, both looping (both rest centered with reduced motion)', async ({ page, browser }) => {
   await openBoard(page);
-  await expect(page.locator('.bd-billboard .bb-ring')).toHaveCount(3);
-  await expect(page.locator('.bb-top .bb-ch')).toHaveCount(12); // J O H N _ N G U Y E N ★
-  // reduced motion (this context): the name sits still on the middle ring, nothing on the others
-  await expect.poll(() => page.locator('.bb-middle .bb-ch').evaluateAll((els) => els.filter((e) => e.style.visibility === 'visible').length)).toBeGreaterThan(8);
-  expect(await page.locator('.bb-top .bb-ch, .bb-bottom .bb-ch').evaluateAll((els) => els.filter((e) => e.style.visibility === 'visible').length)).toBe(0);
-  // with motion: it moves, and over a full loop it shows up on all three rings
+  await expect(page.locator('.bd-billboard .bb-ring')).toHaveCount(2);
+  const word = (ring) => page.locator(`.bb-${ring} .bb-ch text`).evaluateAll((els) => els.map((e) => e.textContent || ' ').join(''));
+  expect((await word('top')).replace(/\s+/g, ' ').trim()).toBe('TAKE YOUR NETWORK');
+  expect((await word('middle')).replace(/\s+/g, ' ').trim()).toBe('JOHN NGUYEN');
+  await expect(page.locator('.bb-middle .bb-ch')).toHaveCount(12); // J O H N _ N G U Y E N ★
+  const visible = (ring) => page.locator(`.bb-${ring} .bb-ch`).evaluateAll((els) => els.filter((e) => e.style.visibility === 'visible').length);
+  // reduced motion (this context): each line sits still in the middle of its ring, whole
+  await expect.poll(() => visible('top')).toBeGreaterThan(13);
+  await expect.poll(() => visible('middle')).toBeGreaterThan(8);
+  // with motion: both lines move, and each one leaves its screen and comes back (a loop)
   const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
   const p2 = await ctx.newPage();
   await p2.goto('/#/board');
-  const seen = new Set();
-  const positions = new Set();
-  for (let i = 0; i < 40; i++) {
-    const r = await p2.evaluate(() => { const v = [...document.querySelectorAll('.bb-ch')].find((e) => e.style.visibility === 'visible'); return v ? [v.closest('.bb-ring').dataset.ring, v.getAttribute('transform')] : null; });
-    if (r) { seen.add(r[0]); positions.add(r[1]); }
-    if (seen.size === 3) break;
-    await p2.waitForTimeout(700);
+  const firsts = { top: new Set(), middle: new Set() };
+  const gone = { top: false, middle: false };
+  for (let i = 0; i < 30; i++) {
+    const r = await p2.evaluate(() => Object.fromEntries(['top', 'middle'].map((n) => {
+      const first = document.querySelector(`.bb-${n} .bb-ch`);
+      return [n, first.style.visibility === 'visible' ? first.getAttribute('transform') : null];
+    })));
+    for (const n of ['top', 'middle']) { if (r[n]) firsts[n].add(r[n]); else gone[n] = true; }
+    if (firsts.top.size > 3 && firsts.middle.size > 3 && gone.top && gone.middle) break;
+    await p2.waitForTimeout(400);
   }
-  expect([...seen].sort()).toEqual(['bottom', 'middle', 'top']);
-  expect(positions.size).toBeGreaterThan(3);
+  for (const n of ['top', 'middle']) {
+    expect(firsts[n].size, n).toBeGreaterThan(3); // the first letter crossed the screen
+    expect(gone[n], n).toBe(true); // and left it, to come back round
+  }
+  await ctx.close();
+});
+
+test('heavy train: the camera moves like a heavy train (steady rumble + wheel-set thumps, never a random buzz), and the heavy nose is ready on the first frame', async ({ browser }) => {
+  // the motion is pure math: the same moment always moves the camera the same way
+  const { cameraMotion, NOSE_PASS } = await import('../../src/fx/subway.js');
+  const near = (t) => (t < NOSE_PASS - 0.27 ? 0 : Math.min(1, (t - (NOSE_PASS - 0.27)) / 0.27));
+  const ys = [];
+  for (let t = 0; t <= 1.25; t += 1 / 60) ys.push(cameraMotion(t, near(t)).y);
+  expect(cameraMotion(0.9, 1)).toEqual(cameraMotion(0.9, 1));
+  const early = Math.max(...ys.slice(0, 30).map(Math.abs)); // still in the tunnel
+  const late = Math.max(...ys.slice(44).map(Math.abs)); // the wheel sets pass the camera
+  const jump = ys.slice(1).reduce((a, y, i) => a + Math.abs(y - ys[i]), 0) / (ys.length - 1);
+  expect(late).toBeGreaterThan(early * 2); // it builds to the thumps as the train arrives
+  expect(late).toBeLessThan(30); // strong, never jarring
+  expect(jump).toBeLessThan(4); // a slow, heavy shake (the old random buzz jumped ~6px a frame)
+  expect(cameraMotion(NOSE_PASS, 1).s).toBeGreaterThan(1.01); // the air wall shoves the camera as the nose passes
+
+  // a returning-visitor-speed tap: START right away still gets the shaded (heavy) nose
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
+  const page = await ctx.newPage();
+  await page.goto('/');
+  await page.locator('#pressStart').click({ force: true });
+  await expect(page.locator('.bd-cam')).toHaveAttribute('data-train-art', 'heavy', { timeout: 6000 });
   await ctx.close();
 });
 

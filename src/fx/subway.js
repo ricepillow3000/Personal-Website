@@ -86,12 +86,18 @@ const idle = (fn, timeout = 800) => new Promise((res) => (window.requestIdleCall
 function kick() {
   if (kicked || !cv) return;
   kicked = true;
-  preloadSubway().then(() => { gpuPrep(); resolveReady(); });
+  preloadSubway().then(() => {
+    gpuPrep();
+    if (urgent) heavyNose(true); // they're waiting on the button: finish the heavy nose now
+    resolveReady();
+  });
 }
-/** The visitor pressed START: load the train now instead of in idle time. */
+/** The visitor pressed START: load the train now instead of in idle time (and finish the heavy
+    nose if its idle slices haven't yet, so the train never runs with the plain art). */
 export function hurrySubway() {
   urgent = true;
   kick();
+  heavyNose(true);
 }
 
 /** Mount on the title's camera box (holds the platform <img>). Called once the art has loaded. */
@@ -130,6 +136,7 @@ export function preloadSubway() {
   const dec = (img) => (img.decode ? img.decode().catch(() => new Promise((r) => { if (img.complete) r(); else img.onload = img.onerror = r; })) : new Promise((r) => { img.onload = img.onerror = r; }));
   // build the working copies ahead of time (idle), so the shot's first frame doesn't pay for them
   artReady = Promise.all([dec(nose), dec(side)]).then(() => idle(() => { sideArt(); windowProfile(); tinted(sideArt()); tinted(nose); }));
+  artReady.then(() => idle(heavyNose)); // its own idle turn (the train doesn't wait for it)
   return artReady;
 }
 
@@ -146,6 +153,7 @@ function gpuPrep() {
   } catch {
     dropGPU(); // this device draws the side with the 2D slices instead
   }
+  if (!gpuOK) prepFallback(); // the 2D fallback's shaded copies, in idle slices
 }
 
 function size() {
@@ -224,7 +232,7 @@ function paintedBoxes(c) {
 /* where a floor point sits in depth (so trash blows away the moment the nose reaches it) */
 const depthOf = (y) => (F * SKIRT) / Math.max(8, y - VP.y);
 
-function drawTrash(t) {
+function drawTrash(t, keep = null) {
   if (!trash) return;
   TRASH.forEach(([x0, y0, kind, sz, tilt], i) => {
     const [bx, by, bw, bh] = trash.box[kind];
@@ -254,6 +262,7 @@ function drawTrash(t) {
         back = flip < 0;
       }
     }
+    if (keep && !keep(depthOf(y0) / grow)) return; // drawn in the other pass (in front of / behind the nose)
     const m = sz * (0.28 + near * 0.62) * grow;
     const w = bw * m; // the painted piece, not its cell
     const h = bh * m;
@@ -321,6 +330,191 @@ function drawTrash(t) {
   });
 }
 
+/* ---------------------------------------------------------------- weight (Nov 19)
+   John: "it looks and feels like a cutout... make it look heavy and feel heavy, like an actual
+   subway train". A heavy train is read from small physical cues, so it gets all of them:
+   the body rides its springs (slow, small), every wheel set slams the rail joint as it passes
+   the camera (a hard thump, not a buzz), its air wall shoves the camera as the nose passes,
+   the steel is cel-shaded with station lights sliding along it (src/fx/sidegl.js), it is
+   mirrored in the glossy floor, and a dark gap grounds it against the platform edge. */
+const CAR = 620; // one car, in world units (about 3.5 door bays of the art)
+const PASS_D = 40; // a wheel set "passes the camera" at this depth
+const AXLES = [];
+for (let c = 0; c < 5; c++) for (const b of [90, CAR - 90]) for (const a of [-32, 32]) AXLES.push(c * CAR + b + a);
+export const NOSE_PASS = (START - PASS_D) / SPEED; // when the nose passes the camera (~0.74s)
+/** the hard thumps of the wheel sets near the camera: a damped jolt per axle */
+function jolts(t) {
+  let j = 0;
+  for (const s of AXLES) {
+    const u = t - (START + s - PASS_D) / SPEED;
+    if (u >= 0 && u < 0.25) j += Math.exp(-u * 20) * Math.cos(u * 48);
+  }
+  return j;
+}
+/** the car body bouncing on its springs (world units, + is down), and kicked by each joint */
+function bounce() {
+  if (!state) return 0;
+  const t = state.t;
+  return 0.9 * Math.sin(t * 10.7) + 0.45 * Math.sin(t * 20.7 + 1.3) + 0.6 * jolts(t);
+}
+/** Camera motion for time t: a low rumble that swells as the train comes (smooth, not random
+    jitter: heavy things shake slow and deep), a thump per wheel set, and the air wall's shove. */
+export function cameraMotion(t, near) {
+  const swell = 1 + 2 * Math.min(1, t / 0.5) + 5 * near;
+  const ry = Math.sin(t * 46) * 0.55 + Math.sin(t * 74.8 + 1.1) * 0.3 + Math.sin(t * 107.4 + 2.3) * 0.15;
+  const rx = Math.sin(t * 39.3 + 0.7) * 0.6 + Math.sin(t * 66.1 + 1.9) * 0.4;
+  const j = jolts(t);
+  const push = Math.exp(-(((t - NOSE_PASS) / 0.07) ** 2)); // the air wall, centered on the nose
+  return { x: rx * swell + j * 3.5 - push * 10, y: ry * swell + j * 11, s: 1 + 0.018 * push };
+}
+
+/* the dark gap where the car meets the platform edge: grounds it (no daylight under a heavy body) */
+function seam(lead) {
+  const near = Math.max(lead, 18);
+  const far = Math.min(lead + LEN, MOUTH + 420);
+  if (far <= near) return;
+  const by = bounce();
+  ctx.fillStyle = 'rgba(4, 5, 8, 0.78)';
+  ctx.beginPath();
+  ctx.moveTo(sx(SIDE_X, near), sy(SKIRT + by * 0.3, near));
+  ctx.lineTo(sx(SIDE_X, far), sy(SKIRT + by * 0.3, far));
+  ctx.lineTo(sx(SIDE_X + 2.4, far), sy(SKIRT, far));
+  ctx.lineTo(sx(SIDE_X + 2.4, near), sy(SKIRT, near));
+  ctx.closePath();
+  ctx.fill();
+}
+
+/* The same cel-shaded steel as the GPU shader, baked into working copies for the nose (always 2D)
+   and for the 2D fallback side and its reflection: deeper steel, hard shade bands, lit windows kept. */
+const STEEL = Array.from({ length: 256 }, (_, i) => Math.round(((i / 255) ** 1.45) * 0.8 * 255));
+/** A shading job over a copy (at most maxH tall), done row by row so it can run in idle slices:
+    step(ms) works for about that long and returns true when the copy is finished. */
+function steelJob(src, refl = false, maxH = 900) {
+  const sw = src.naturalWidth || src.width;
+  const sh = src.naturalHeight || src.height;
+  if (!sw || !sh) return null;
+  const k = Math.min(1, maxH / sh);
+  const w = Math.round(sw * k);
+  const h = Math.round(sh * k);
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.imageSmoothingQuality = 'high';
+  if (refl) {
+    g.translate(0, h);
+    g.scale(1, -1); // upside down: the roof lands farthest from the floor line
+  }
+  g.drawImage(src, 0, 0, w, h);
+  const im = g.getImageData(0, 0, w, h);
+  const px = im.data;
+  const L = new Float32Array(w * h); // luminance, filled a few rows ahead, for the ink outlines
+  const o = Math.max(1, Math.round(h / 1100)); // ~1.6 texels of the 1828px art
+  let lumRow = 0;
+  let y = 0;
+  let finished = false;
+  const row = (yy) => {
+    for (; lumRow <= Math.min(h - 1, yy + o); lumRow++) {
+      for (let x = 0, i = lumRow * w; x < w; x++, i++) L[i] = (0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2]) / 255;
+    }
+    const v = refl ? 1 - (yy + 0.5) / h : (yy + 0.5) / h; // v of the original art: 0 roof .. 1 skirt
+    const band = (v < 0.06 ? 0.5 : 1) * (v > 0.74 ? 0.8 : 1) * (v > 0.86 ? 0.75 : 1) * (v > 0.94 ? 0.7 : 1);
+    const ra = v > 0.86 ? 0.36 : v > 0.66 ? 0.22 : v > 0.4 ? 0.11 : 0.05;
+    const ya = Math.max(0, yy - o) * w;
+    const yb = Math.min(h - 1, yy + o) * w;
+    for (let x = 0; x < w; x++) {
+      const i = (yy * w + x) * 4;
+      if (!px[i + 3]) continue;
+      const r = px[i], gg = px[i + 1], b = px[i + 2];
+      const lum = L[yy * w + x];
+      const glass = lum >= 0.45 ? Math.min(1, Math.max(0, ((Math.min(r, gg) - b) / 255) * 5)) : 0;
+      const m = 1 - glass;
+      const gx = L[yy * w + Math.min(w - 1, x + o)] - L[yy * w + Math.max(0, x - o)];
+      const gy = L[yb + x] - L[ya + x];
+      const e = Math.min(1, Math.max(0, (Math.sqrt(gx * gx + gy * gy) - 0.07) / 0.13));
+      const ink = e * e * (3 - 2 * e);
+      const keep = (1 - 0.7 * ink) * band;
+      const dim = 1 - 0.35 * ink * glass;
+      let nr = (r + (STEEL[r] * keep - r) * m) * dim;
+      let ng = (gg + (STEEL[gg] * keep - gg) * m) * dim;
+      let nb = (b + (STEEL[b] * keep - b) * m) * dim;
+      if (refl) {
+        nr *= 0.82;
+        ng *= 0.85;
+        nb *= 0.94;
+        px[i + 3] *= ra;
+      }
+      px[i] = nr;
+      px[i + 1] = ng;
+      px[i + 2] = nb;
+    }
+  };
+  return {
+    c,
+    step(ms) {
+      const end = performance.now() + ms;
+      while (y < h) {
+        row(y++);
+        if ((y & 7) === 0 && performance.now() > end) return false;
+      }
+      if (!finished) g.putImageData(im, 0, 0);
+      finished = true;
+      return true;
+    },
+  };
+}
+/** Run a job in idle slices (never one long task: the title stays smooth on slow phones). */
+function inIdle(job, done) {
+  if (!job) return;
+  const ric = window.requestIdleCallback || ((f) => setTimeout(() => f({ timeRemaining: () => 8 }), 16));
+  const tick = (dl) => {
+    if (job.step(Math.max(4, Math.min(12, dl.timeRemaining() - 1)))) done(job.c);
+    else ric(tick, { timeout: 200 });
+  };
+  ric(tick, { timeout: 200 });
+}
+let noseSteel = null;
+let sideSteel = null;
+let sideMirror = null;
+let noseJob = null;
+/** the nose's heavy copy: shaded in idle slices, used once finished (the plain art until then).
+    finish = true (the visitor pressed START and is waiting anyway): do what's left right now. */
+function heavyNose(finish = false) {
+  if (!noseSteel && !noseJob && nose?.complete && nose.naturalWidth) {
+    noseJob = steelJob(nose, false, 900); // 900px tall like the side's working copy (a plain canvas draw: cheap)
+    inIdle(noseJob, noseDone);
+  }
+  if (finish && noseJob && !noseSteel && noseJob.step(1e9)) noseDone(noseJob.c);
+  return noseSteel;
+}
+function noseDone(c) {
+  if (noseSteel) return;
+  noseSteel = c;
+  if (box) box.dataset.trainArt = 'heavy'; // devtools and tests can see the heavy nose is ready
+}
+/* the 2D fallback's copies: built in idle slices after the GPU test fails; if the GPU drops out
+   in the middle of a shot they are finished right there (rare) */
+const sideJobs = {};
+function sideCopyFor(refl) {
+  const key = refl ? 'mirror' : 'steel';
+  if (!sideJobs[key] && sideArt()) sideJobs[key] = steelJob(sideArt(), refl, sideArt().height);
+  return sideJobs[key];
+}
+function heavySide() {
+  if (!sideSteel) { const j = sideCopyFor(false); if (j && j.step(1e9)) sideSteel = j.c; }
+  return sideSteel;
+}
+function reflSide() {
+  if (!sideMirror) { const j = sideCopyFor(true); if (j && j.step(1e9)) sideMirror = j.c; }
+  return sideMirror;
+}
+function prepFallback() {
+  const a = sideCopyFor(false);
+  const b = sideCopyFor(true);
+  inIdle(a, (c) => { sideSteel = c; });
+  inIdle(b, (c) => { sideMirror = c; });
+}
+
 /* ---------------------------------------------------------------- the train */
 const sx = (X, d) => VP.x + (X * F) / d;
 const sy = (Y, d) => VP.y + (Y * F) / d;
@@ -365,16 +559,7 @@ function dropGPU() {
 }
 /* the GPU gets the full-resolution car art (1828px tall), except on low-memory phones */
 const sideTexFor = (tex) => (tex === sideCopy && side?.naturalWidth && sharpArt() ? side : tex);
-function sideOnGPU(lead, alpha, tex) {
-  if (!glOn) return false;
-  try {
-    return sideQuad(lead, alpha, tex);
-  } catch {
-    dropGPU();
-    return false;
-  }
-}
-function sideQuad(lead, alpha, tex) {
+function sideQuad(lead, alpha, tex, { mat = 0, refl = 0 } = {}) {
   const img = sideTexFor(tex);
   const tw = img.naturalWidth || img.width;
   const th = img.naturalHeight || img.height;
@@ -386,13 +571,30 @@ function sideQuad(lead, alpha, tex) {
     const p = m.transformPoint(new DOMPoint(sx(SIDE_X, d), sy(Y, d)));
     return [p.x, p.y];
   };
-  return sideGL.quad(img, [[...P(ROOF, near), near, near - lead, 0], [...P(SKIRT, near), near, near - lead, 1], [...P(ROOF, far), far, far - lead, 0], [...P(SKIRT, far), far, far - lead, 1]],
-    { period: ((SKIRT - ROOF) * tw) / th, alpha, mouth: MOUTH });
+  const by = bounce(); // the body riding its springs
+  // the reflection is the car mirrored in the floor plane: roof below, skirt on the floor line
+  const top = refl ? 2 * SKIRT - (ROOF + by) : ROOF + by;
+  const bot = refl ? SKIRT - by : SKIRT + by;
+  return sideGL.quad(img, [[...P(top, near), near, near - lead, 0], [...P(bot, near), near, near - lead, 1], [...P(top, far), far, far - lead, 0], [...P(bot, far), far, far - lead, 1]],
+    { period: ((SKIRT - ROOF) * tw) / th, alpha, mouth: MOUTH, mat, refl });
 }
 
-function trainSide(lead, kk, alpha = 1, tex = sideArt()) {
+function trainSide(lead, kk, alpha = 1, tex = sideArt(), { mat = 0, refl = 0 } = {}) {
   if (!tex) return;
-  if (sideOnGPU(lead, alpha, tex)) return;
+  if (glOn) {
+    try {
+      if (sideQuad(lead, alpha, tex, { mat, refl })) return;
+    } catch {
+      dropGPU();
+    }
+  }
+  // 2D slices: the steel material and the reflection are baked into working copies instead
+  if (refl) tex = reflSide();
+  else if (mat) tex = heavySide() || tex;
+  if (!tex) return;
+  const by = bounce();
+  const yTop = refl ? SKIRT - by : ROOF + by; // the reflection copy is already upside down
+  const yBot = refl ? 2 * SKIRT - (ROOF + by) : SKIRT + by;
   const tw = tex.width;
   const th = tex.height;
   const period = ((SKIRT - ROOF) * tw) / th; // one repeat of the car-side art (door to door), in world units
@@ -410,9 +612,9 @@ function trainSide(lead, kk, alpha = 1, tex = sideArt()) {
     const s = d - lead;
     const u = ((s % period) / period) * tw;
     const sw = Math.max(1, Math.min(tw - u, ((d2 - d) / period) * tw));
-    const top = sy(ROOF, d);
+    const top = sy(yTop, d);
     ctx.globalAlpha = a;
-    ctx.drawImage(tex, u, 0, sw, th, x, top, step + 0.8, sy(SKIRT, d) - top);
+    ctx.drawImage(tex, u, 0, sw, th, x, top, step + 0.8, sy(yBot, d) - top);
   }
   ctx.globalAlpha = 1;
 }
@@ -480,10 +682,11 @@ function cabinLight(lead) {
 }
 
 function noseRect(d) {
+  const by = bounce();
   const l = sx(SIDE_X - WIDE, d);
   const r = sx(SIDE_X, d);
-  const t = sy(ROOF - 8, d);
-  return { l, t, w: r - l, h: sy(SKIRT + 4, d) - t };
+  const t = sy(ROOF - 8 + by, d);
+  return { l, t, w: r - l, h: sy(SKIRT + 4 + by, d) - t };
 }
 
 function trainNose(d, img, alpha) {
@@ -577,7 +780,7 @@ function draw() {
   });
   ctx = under;
   const t = state?.t ?? 0;
-  drawTrash(t);
+  if (!state) drawTrash(t); // at rest; during the shot it is drawn in front of the car, below
   // the GPU layer: drawn only while the train runs (made on first use, cleared at rest)
   const r = state && gpuOK ? gpu() : sideGL;
   try {
@@ -589,10 +792,16 @@ function draw() {
   const lead = START - SPEED * t;
   const img = nose?.complete && nose.naturalWidth ? nose : null;
   afterimages(lead, kk, img, Math.max(0, Math.min(1, (MOUTH + 200 - lead) / 500)));
-  cabinLight(lead); // warm pools on the floor first, the train on top
-  trainSide(lead, kk);
-  if (glOn) ctx = over; // the side is on the GPU layer: the nose and lights go above it
-  trainNose(lead, img, 1);
+  trainSide(lead, kk, 1, sideArt(), { mat: 1, refl: 1 }); // mirrored in the glossy floor
+  trainSide(lead, kk, 1, sideArt(), { mat: 1 }); // the car: heavy cel-shaded steel
+  if (glOn) ctx = over; // the side is on the GPU layer: everything in front of it goes above
+  cabinLight(lead); // its warm window light on the floor, on top of the reflection (light adds up)
+  seam(lead);
+  // the trash lies on the platform, between the camera and the car, so it is drawn in front of
+  // the car; against the nose it goes by depth (in front of it only once it is nearer)
+  drawTrash(t, (d) => d >= lead);
+  trainNose(lead, heavyNose() || img, 1);
+  drawTrash(t, (d) => d < lead);
   headlights(lead, 1 + Math.max(0, 1 - lead / MOUTH) * 1.6, Math.min(1, t / 0.3)); // the lights fade up with the horn
   speedLines(t, state.lines);
   ctx = under;
@@ -628,6 +837,10 @@ export function trainShot({ panTo = null } = {}) {
       pan = panTo === null ? null : startPan + (panTo - startPan) * panP;
       if (art && pan !== null) art.style.objectPosition = `${(pan * 100).toFixed(2)}% 55%`;
       draw();
+    },
+    /** the camera's motion at time t: {x, y} px and a scale (rumble, wheel-set thumps, air push) */
+    motion(t) {
+      return cameraMotion(t, this.closeness(t));
     },
     /** where the nose is (screen px), for the camera shake strength */
     closeness(t) {
