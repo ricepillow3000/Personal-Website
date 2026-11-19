@@ -31,10 +31,12 @@ let lastPointer = 'mouse';
 /* the stack (Nov 19, John: "stacked... the other cards peeking out... hovering, the rest moves to make
    room"): saves.css lays every card over the lower part of the one above */
 const pile = (i) => `--i:${i}`; // (the stack's shape lives in saves.css: overlap, size and offset by --i)
+/* two points pinned to each card's left end (top and bottom), so the red L can be drawn to meet it exactly */
+const MK = '<i class="sv-mk" data-mk="a" aria-hidden="true"></i><i class="sv-mk" data-mk="b" aria-hidden="true"></i>';
 function slip(s, i) {
   const no = `<span class="sv-no" aria-hidden="true"><small>No.</small>${i + 1}</span>`;
   if (!s) {
-    return `<li class="sv-li" style="${pile(i)}"><i class="sv-arm" aria-hidden="true"></i><button class="sv-slot sv-empty" type="button" data-i="${i}" aria-label="File ${i + 1}: empty. Start a new game.">
+    return `<li class="sv-li" style="${pile(i)}"><button class="sv-slot sv-empty" type="button" data-i="${i}" aria-label="File ${i + 1}: empty. Start a new game.">${MK}
       ${no}<span class="sv-new" aria-hidden="true">${cutType('NEW GAME', 60 + i)}</span><span class="sv-hint" aria-hidden="true">EMPTY FILE</span>
       <span class="sv-more" aria-hidden="true"><span class="sv-go">START NEW GAME ▸</span></span></button></li>`;
   }
@@ -45,14 +47,14 @@ function slip(s, i) {
   const label = `File ${i + 1}: ${where}, ${p.done} of ${p.total} cleared${p.all ? ', completed' : ''}. Saved ${MONTHS[d.getMonth()]} ${d.getDate()}, ${tod}. Play time ${playTime(s.meta.playMs)}. Continue.`;
   const time = playTime(s.meta.playMs);
   if (p.all) { // a finished file: the whole slip is COMPLETED (Nov 19, John: "the whole saved data will say completed")
-    return `<li class="sv-li" style="${pile(i)}"><i class="sv-arm" aria-hidden="true"></i><button class="sv-slot sv-complete" type="button" data-i="${i}" aria-label="${esc(label)}">
+    return `<li class="sv-li" style="${pile(i)}"><button class="sv-slot sv-complete" type="button" data-i="${i}" aria-label="${esc(label)}">${MK}
     ${no}
     <span class="sv-done" aria-hidden="true"><svg class="sv-burst" viewBox="-50 -50 100 100"><polygon points="${burst()}"/></svg>${cutType('COMPLETED', 77)}</span>
     <span class="sv-ctime" aria-hidden="true"><small>PLAY TIME</small><b>${time}</b></span>
     <span class="sv-more" aria-hidden="true"><span class="sv-go">CONTINUE ▸</span></span>
   </button>${chip(i)}</li>`;
   }
-  return `<li class="sv-li" style="${pile(i)}"><i class="sv-arm" aria-hidden="true"></i><button class="sv-slot" type="button" data-i="${i}" aria-label="${esc(label)}">
+  return `<li class="sv-li" style="${pile(i)}"><button class="sv-slot" type="button" data-i="${i}" aria-label="${esc(label)}">${MK}
     ${no}
     <span class="sv-date" aria-hidden="true"><b>${d.getMonth() + 1}/${String(d.getDate()).padStart(2, '0')}</b><i>${WD[d.getDay()]}</i><em>${esc(tod)}</em></span>
     <span class="sv-place" aria-hidden="true"><span>${esc(where)}</span><span class="sv-pips">${p.items.map((it) => `<i${it.done ? ' class="on"' : ''}></i>`).join('')}</span></span>
@@ -76,6 +78,7 @@ function markup() {
   return `<div class="sv-stripes" aria-hidden="true"><i></i><i></i><i></i></div>
     <h2 class="sv-title" id="svTitle"><span class="sr-only">Save data</span><span aria-hidden="true">${cutType('SAVE DATA', 41, { mixCase: true })}</span></h2>
     <p class="sv-sub${full ? ' sv-full' : ''}">${full ? `All ${SLOTS} files are in use. CLEAR DATA on one to start a new game.` : 'Pick a file: your progress saves itself to it. An empty file starts a new game.'}</p>
+    <svg class="sv-l" aria-hidden="true"><polygon class="sv-l-red"/><line class="sv-l-dash"/><polyline class="sv-l-edge"/></svg>
     <ol class="sv-list">${files.map(slip).join('')}</ol>
     <div class="sv-keys"><button class="sv-key" type="button" data-sv-back><kbd>Esc</kbd><span>BACK</span></button><span class="sv-key sv-key-ok" aria-hidden="true"><kbd>Enter</kbd><span>CONFIRM</span></span></div>`;
 }
@@ -83,12 +86,71 @@ function markup() {
 /** a picked slip plays its file */
 const activate = (btn) => play(btn);
 
+/* the red L (Nov 19, John's close-up of his reference: "make the extension seamless, not a second rectangle,
+   part of the shape, and make sure it covers the entire headline"): ONE red shape behind the stack, drawn
+   on the screen (not inside the tilted cards) so it can always reach the whole title. Its outer edge is one
+   straight slanted line from above the title's left end down to the picked card's bottom-left corner; its
+   top runs past the title's right end; it tucks under the picked card, which is the same red, so the card
+   and the column read as one L. The cards above lie on top of it. Black film-strip dashes run just inside
+   the slanted edge, and a thin white double line sits outside its lower part. Picking a card makes it shoot
+   up from the card; the shape follows the card while the stack slides. */
+let lRaf = 0;
+let lUntil = 0;
+function drawL() {
+  const svg = root.querySelector('.sv-l');
+  const on = root.querySelector('.sv-slot.on');
+  if (!svg || !on) return;
+  const box = root.getBoundingClientRect();
+  const pt = (el) => { const r = el.getBoundingClientRect(); return [r.left - box.left, r.top - box.top]; };
+  const [ax, ay] = pt(on.querySelector('[data-mk="a"]'));
+  const [bx, by] = pt(on.querySelector('[data-mk="b"]'));
+  const t = root.querySelector('.sv-title').getBoundingClientRect();
+  const top = -12;
+  const tl = Math.min(t.left - box.left - 24, bx - (by - top) * 0.3); // (the slanted outer edge, at least as slanted as the reference)
+  const tr = Math.max(t.right - box.left + 30, ax + 40);
+  const cx = ax + Math.min(160, box.width * 0.12);
+  const cy = (ay + by) / 2;
+  const f = (n) => n.toFixed(1);
+  svg.querySelector('.sv-l-red').setAttribute('points', `${f(tl)},${top} ${f(tr)},${top} ${f(cx)},${f(cy)} ${f(cx)},${f(by - 2)} ${f(bx)},${f(by)}`);
+  // the dashes: a line parallel to the slanted edge, a little inside it
+  const len = Math.hypot(bx - tl, by - top); const nx = (by - top) / len; const ny = -(bx - tl) / len; const d = Math.max(14, Math.min(30, box.width * 0.02));
+  const dash = svg.querySelector('.sv-l-dash');
+  dash.setAttribute('x1', f(tl + nx * d)); dash.setAttribute('y1', f(top + ny * d));
+  dash.setAttribute('x2', f(bx + nx * d - (bx - tl) * 0.12)); dash.setAttribute('y2', f(by + ny * d - (by - top) * 0.12));
+  dash.style.strokeWidth = String(Math.max(6, Math.min(14, box.width * 0.009)));
+  // the white double line outside the lower part of the edge
+  const o = Math.max(10, d * 0.9); const k0 = 0.55; const k1 = 0.98;
+  const p0 = [tl + (bx - tl) * k0 - nx * o, top + (by - top) * k0 - ny * o]; const p1 = [tl + (bx - tl) * k1 - nx * o, top + (by - top) * k1 - ny * o];
+  const w = o * 0.55;
+  const edge = svg.querySelector('.sv-l-edge');
+  edge.style.display = Math.min(p0[0], p1[0]) - nx * w < 4 ? 'none' : ''; // (only where it fits on screen)
+  edge.setAttribute('points', `${f(p0[0])},${f(p0[1])} ${f(p1[0])},${f(p1[1])} ${f(p1[0] - nx * w)},${f(p1[1] - ny * w)} ${f(p0[0] - nx * w)},${f(p0[1] - ny * w)} ${f(p0[0])},${f(p0[1])}`);
+  svg.dataset.foot = f(by);
+}
+/** keep the L on its card for a while (the stack slides when a card opens) */
+function followL(ms) {
+  lUntil = Math.max(lUntil, performance.now() + ms);
+  if (lRaf) return;
+  const step = () => { drawL(); lRaf = performance.now() < lUntil ? requestAnimationFrame(step) : 0; };
+  lRaf = requestAnimationFrame(step);
+}
+/** the L shoots up from the picked card's foot */
+function shootL() {
+  const svg = root.querySelector('.sv-l');
+  drawL();
+  followL(420);
+  if (reducedMotion()) { svg.style.clipPath = ''; return; }
+  const from = Math.max(0, Number(svg.dataset.foot || 0) - 60);
+  gsap.fromTo(svg, { clipPath: `inset(${from}px 0 0 0)` }, { clipPath: 'inset(0px 0 0 0)', duration: 0.3, ease: 'back.out(1.6)', clearProps: 'clipPath', overwrite: true });
+}
+
 const slots = () => [...root.querySelectorAll('.sv-slot')];
 function pick(btn, quiet) {
   if (!btn || btn.classList.contains('on')) return;
   slots().forEach((b) => b.classList.toggle('on', b === btn));
   disarm();
   root.querySelector('.sv-list').classList.add('has-on');
+  if (quiet) { drawL(); followL(500); } else shootL();
   if (!quiet) sfx('hover');
   if (!reducedMotion() && !quiet) gsap.fromTo(btn, { x: -14 }, { x: 0, duration: 0.22, ease: 'back.out(3)', clearProps: 'transform' });
 }
@@ -101,9 +163,9 @@ function play(btn) {
   if (fresh) sfx('stamp');
   const done = () => { close(true); opts.onPick(i, fresh); };
   if (reducedMotion()) { done(); return; }
-  const arm = btn.parentElement.querySelector('.sv-arm');
+  const red = root.querySelector('.sv-l-red');
   gsap.timeline({ onComplete: done })
-    .fromTo(arm, { backgroundColor: '#F5F5F0' }, { backgroundColor: '#E5191C', duration: 0.18, ease: 'steps(3)', clearProps: 'backgroundColor' }, 0)
+    .fromTo(red, { fill: '#F5F5F0' }, { fill: '#E5191C', duration: 0.18, ease: 'steps(3)', clearProps: 'fill' }, 0)
     .fromTo(btn, { scale: 1.12 }, { scale: 1, duration: 0.2, ease: 'back.out(3)' }, 0)
     .to(root, { xPercent: -110, skewX: 12, duration: 0.32, ease: 'power3.in' }, 0.24);
 }
@@ -162,6 +224,7 @@ export function openSaves(o) {
       if (lastPointer !== 'mouse' && e.detail !== 0 && !btn.classList.contains('on')) { pick(btn); return; } // a finger: first tap picks
       activate(btn);
     });
+    window.addEventListener('resize', () => { if (savesOpen()) followL(300); });
     root.addEventListener('keydown', (e) => { // keep Tab inside
       if (e.key !== 'Tab') return;
       const f = [...root.querySelectorAll('button:not([hidden])')].filter((b) => b.offsetParent !== null);
@@ -174,6 +237,7 @@ export function openSaves(o) {
   gsap.set(root, { clearProps: 'all' });
   render();
   document.body.classList.add('sv-open');
+  followL(1100); // (the cards fly in; the L rides along)
   sfx('paper');
   if (reducedMotion()) return;
   gsap.timeline()
