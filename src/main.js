@@ -64,7 +64,7 @@ let screen = null; // title | board | page | quick
 const SLAM_PAGE = '.sq, .sys, .stop-card, .crew-row, .wanted-slot, .idcard, .panel'; // page blocks that punch in on scroll
 /* ...and each kind is heard as it lands (Nov 19, John: "scrolling down, I don't hear the sound effects
    for each box"; "don't make all the sound effects sound the same") */
-const SLAM_VOICE = [['.stop-card', 'questPin'], ['.panel', 'panelSlap'], ['.idcard', 'cardSnap'], ['.wanted-slot', 'staple'], ['.sys, .sq', 'panelOn'], ['.crew-row', 'rowSlide']];
+const SLAM_VOICE = [['.panel', 'panelSlap'], ['.idcard', 'cardSnap'], ['.wanted-slot', 'staple'], ['.sys, .sq', 'panelOn'], ['.crew-row', 'rowSlide']];
 function slamSound(el) {
   const hit = SLAM_VOICE.find(([sel]) => el.matches(sel));
   if (!hit) return;

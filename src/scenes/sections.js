@@ -299,11 +299,21 @@ function sideQuests() {
       if (reducedMotion()) return;
       const path = root.querySelector('.route-under');
       gsap.fromTo(path, { strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.8, ease: 'power2.inOut', clearProps: 'strokeDasharray,strokeDashoffset' });
+      // every stop is heard once, the first time it is on screen: as its pin lands if it is on screen
+      // from the start, else as it comes into view (one watcher, so a stop at the fold is never missed)
+      const t0 = performance.now();
+      const io = 'IntersectionObserver' in window && new IntersectionObserver((entries) => entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        io.unobserve(en.target);
+        const i = Number(en.target.dataset.i);
+        const wait = Math.max(0, (0.1 + i * 0.22 + 0.12) * 1000 - (performance.now() - t0)); // (never before its pin lands)
+        setTimeout(() => root.isConnected && sfx('questPin', i), wait);
+      }), { threshold: 0.15 });
       root.querySelectorAll('.stop').forEach((st, i) => {
         const at = 0.1 + i * 0.22;
         gsap.from(st.querySelector('.stop-pin'), { scale: 0, rotation: -120, duration: 0.3, ease: 'back.out(3)', delay: at, clearProps: 'transform' });
-        // each stop on screen is heard as its pin lands (the ones further down sound when scrolled to)
-        if (st.getBoundingClientRect().top < window.innerHeight) gsap.delayedCall(at + 0.12, () => root.isConnected && sfx('questPin', i));
+        st.dataset.i = String(i);
+        if (io) io.observe(st);
         gsap.from(st.querySelector('.stop-card'), { x: st.classList.contains('right') ? 160 : -160, skewX: st.classList.contains('right') ? -14 : 14, autoAlpha: 0, duration: 0.32, ease: 'back.out(2)', delay: at + 0.05, clearProps: 'transform,opacity,visibility' });
         gsap.from(st.querySelector('.stop-clear'), { scale: 3, rotation: -40, autoAlpha: 0, duration: 0.2, ease: 'power4.in', delay: at + 0.35, clearProps: 'transform,opacity,visibility' });
       });

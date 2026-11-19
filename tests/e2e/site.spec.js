@@ -914,6 +914,7 @@ test('loading screen: TAKE YOUR TIME is the progress bar (its letters fill as th
   await expect(page.locator('#loader .ld-o .ld-ring')).toHaveCount(2); // the O whose hole is the doorway (empty slot + ink)
   await expect(page.locator('#loader .ld-seal textPath')).toContainText("RESUMES DON'T HAVE TO BE BORING");
   await expect(page.locator('#loader .ld-go')).toBeHidden(); // no button until the bar is full
+  expect(await page.locator('#loader').evaluate((e) => getComputedStyle(e).backgroundImage)).not.toContain('radial-gradient'); // flat: no soft glow
   const seen = new Set();
   let most = 0;
   for (let i = 0; i < 200 && !(await page.locator('#loader .ld-go').isVisible()); i++) {
@@ -1059,42 +1060,55 @@ test('sound for every box: side quests are heard as they land and as you scroll 
   await ctx.close();
 });
 
-test('departure board: LET US START THE GAME scrolls right to left, the clock shows the visitor\'s time, it never covers the title, the calendar, the contact card or the top bar; none on a phone held upright', async ({ browser }) => {
+test('departure board: a 3D box in the station\'s perspective; LET US START THE GAME scrolls right to left, the clock shows the visitor\'s time (12-hour), it never covers the title, the calendar, the contact card or the top bar; none on a phone held upright', async ({ browser }) => {
   for (const [w, h, mob] of [[1440, 900, false], [852, 393, true]]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mob, hasTouch: mob, reducedMotion: 'no-preference' });
     const page = await ctx.newPage();
     await page.goto('/');
-    const sign = page.locator('.ss-sign');
+    const sign = page.locator('.ss');
     await expect(sign).toHaveClass(/\bin\b/, { timeout: 15000 });
+    await expect(sign.locator('.ss-3d polygon')).toHaveCount(3); // its side, its underside and its front
     await expect(sign.locator('.ss-run span').first()).toHaveText('LET US START THE GAME');
     await expect(sign.locator('.ss-code')).toHaveText('JN');
-    const shown = await sign.locator('.ss-time').innerText();
-    const now = await page.evaluate(() => { const d = new Date(); return [d.getHours(), d.getMinutes()]; });
-    const [hh, mm] = shown.split(':').map(Number);
-    expect(Math.abs(hh * 60 + mm - (now[0] * 60 + now[1])) % 1440).toBeLessThanOrEqual(1);
-    // it moves right to left
+    const shown = (await sign.locator('.ss-time').innerText()).replace(/\s+/g, '');
+    const want = await page.evaluate(() => { const d = new Date(); const hr = d.getHours(); return [`${hr % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}${hr < 12 ? 'AM' : 'PM'}`, d.getSeconds()]; });
+    if (want[1] < 58) expect(shown).toBe(want[0]); // (unless the minute turns over right now)
     const x = () => sign.locator('.ss-run').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).m41);
     const a = await x();
     await page.waitForTimeout(500);
-    expect(await x()).toBeLessThan(a);
-    // clear of the title's text and panels
+    expect(await x()).toBeLessThan(a); // right to left
     const hits = await page.evaluate(() => {
-      const b = document.querySelector('.ss-box').getBoundingClientRect();
+      const b = document.querySelector('.ss-screen').getBoundingClientRect();
       return [...document.querySelectorAll('#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr, #pressStart, #titleHook')]
         .filter((e) => getComputedStyle(e).visibility !== 'hidden')
         .filter((e) => { const o = e.getBoundingClientRect(); return o.width && b.left < o.right && b.right > o.left && b.top < o.bottom && b.bottom > o.top; })
         .map((e) => e.id || e.className);
     });
     expect(hits).toEqual([]);
-    const box = await sign.locator('.ss-box').boundingBox();
-    expect(box.y).toBeGreaterThanOrEqual(0); // wholly on screen
+    const box = await sign.locator('.ss-screen').boundingBox();
+    expect(box.y).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(w);
+    if (w === 1440) await expect(page.locator('#contactCard')).toBeVisible(); // Ways to Connect always stays
     await ctx.close();
   }
   const up = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const p = await up.newPage();
   await p.goto('/');
   await p.waitForTimeout(3000);
-  expect(await p.locator('.ss-sign').evaluate((e) => e.hidden || getComputedStyle(e).display === 'none')).toBe(true);
+  expect(await p.locator('.ss').evaluate((e) => e.hidden || getComputedStyle(e).display === 'none')).toBe(true);
   await up.close();
+});
+
+test('the floor mirrors the tubes: a tube going off takes its own stretch of the floor reflection with it', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('.st-body')).toHaveCount(1, { timeout: 15000 });
+  const refl = (i) => page.locator(`.st-body .sl[data-l="${i}"] .sl-off ellipse`);
+  for (const i of [2, 5, 11, 14]) await expect(refl(i)).toHaveCount(1); // centre tubes on screen + the right tube
+  await expect(refl(0)).toHaveCount(0); // (the nearest tube reflects below the screen)
+  const op = (i) => page.locator(`.st-body .sl[data-l="${i}"] .sl-off`).evaluate((e) => Number(getComputedStyle(e).opacity));
+  await page.evaluate(() => document.querySelectorAll('.sl[data-l="5"]').forEach((g) => { g.dataset.st = 'off'; }));
+  await expect.poll(() => op(5)).toBe(1); // the tube's reflection is gone with it...
+  expect(await op(6)).toBe(0); // ...and only its own
+  await page.evaluate(() => document.querySelectorAll('.sl[data-l="5"]').forEach((g) => { g.dataset.st = 'on'; }));
+  await expect.poll(() => op(5)).toBe(0);
 });
