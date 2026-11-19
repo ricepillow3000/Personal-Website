@@ -495,7 +495,7 @@ test('SAVE DATA is a stack: every card peeks out, and picking one opens it and s
   expect(overlap).toBeGreaterThan(4);
   const y = async (i) => (await slot(i).boundingBox()).y;
   await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('ArrowDown'); // file 5 picked: nothing below it but CLEAR DATA
+  await page.keyboard.press('ArrowDown'); // file 5 picked: nothing below it
   await expect(slot(4)).toHaveClass(/\bon\b/);
   await settle();
   expect(await peeksOut()).toEqual([true, true, true, true, true]);
@@ -511,7 +511,7 @@ test('SAVE DATA is a stack: every card peeks out, and picking one opens it and s
   expect(errors).toEqual([]);
 });
 
-test('SAVE DATA: five files; a new game starts clean in its own file, the old file keeps its progress, ERASE asks twice; keys work', async ({ page }) => {
+test('SAVE DATA: five files; a new game starts clean in its own file, the old file keeps its progress, its CLEAR DATA tag asks twice; keys work', async ({ page }) => {
   const errors = errorsOf(page);
   // file 1 has played STATS (a deep link saves to the visitor's first file)
   await page.goto('/#/stats');
@@ -521,7 +521,8 @@ test('SAVE DATA: five files; a new game starts clean in its own file, the old fi
   await page.locator('#pressStart').click();
   const saves = page.locator('#saves');
   await expect(saves).toBeVisible();
-  await expect(saves.locator('.sv-slot[data-i]')).toHaveCount(5); // (+ the CLEAR DATA box)
+  await expect(saves.locator('.sv-slot')).toHaveCount(5); // (no CLEAR DATA box: each file has its own tag)
+  await expect(saves.locator('.sv-erase')).toHaveCount(1); // (only a file with a game has one)
   await expect(saves.locator('.sv-empty')).toHaveCount(4);
   await expect(saves.locator('.sv-slot[data-i="0"]')).toHaveClass(/\bon\b/); // the last file played is picked
   await expect(saves.locator('.sv-slot[data-i="0"]')).toBeFocused();
@@ -552,12 +553,14 @@ test('SAVE DATA: five files; a new game starts clean in its own file, the old fi
   expect(await page.evaluate(() => [...document.querySelectorAll('#board .pl-item.read, #board .pl-item[data-read]')].length >= 0)).toBe(true);
   await expect(page.locator('#progressChip')).toContainText('1/8');
   expect(await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('jn-resume-v1')); return [d.active, d.slots[0].visited, d.slots[1].visited]; })).toEqual([0, ['stats'], ['skills']]);
-  // ERASE file 2: the first press asks, the second erases
+  // CLEAR DATA on file 2 (its own small tag, there without picking the file): the first press asks, the second clears it
   await page.goto('/#/');
   await page.reload();
   await page.locator('#pressStart').click();
-  await saves.locator('.sv-slot[data-i="1"]').hover();
+  await saves.locator('.sv-slot[data-i="0"]').hover(); // (file 1 picked: file 2's tag is still there)
   const erase = saves.locator('.sv-erase[data-erase="1"]');
+  await expect(erase).toHaveText('CLEAR DATA');
+  await expect(saves.locator('.sv-erase[data-erase="0"]')).toBeVisible();
   await erase.click();
   await expect(erase).toHaveText('SURE?');
   await expect(saves.locator('.sv-empty')).toHaveCount(3); // not yet
@@ -1222,7 +1225,7 @@ test('the floor mirrors the tubes: a tube going off takes its own stretch of the
   await expect.poll(() => op(5)).toBe(0);
 });
 
-test('SAVE DATA really saves: five new games fill five files (each its own progress) until no file is left; button sounds; CLEAR DATA asks, then erases every file', async ({ page }) => {
+test('SAVE DATA really saves: five new games fill five files (each its own progress) until no file is left; button sounds; each file has a CLEAR DATA tag that asks, then clears that file', async ({ page }) => {
   const errors = errorsOf(page);
   await page.addInitScript(() => { window.__sfxLog = []; });
   const chapters = ['stats', 'missions', 'skills', 'side-quests', 'contact'];
@@ -1249,19 +1252,30 @@ test('SAVE DATA really saves: five new games fill five files (each its own progr
   await page.evaluate(() => { window.__sfxLog = []; });
   for (const n of [1, 2, 3]) { await saves.locator(`.sv-slot[data-i="${n}"]`).hover(); await page.waitForTimeout(60); }
   expect((await page.evaluate(() => window.__sfxLog)).filter((s) => s === 'hover').length).toBeGreaterThanOrEqual(3);
-  // CLEAR DATA: its own box; the first press asks, the second erases every file
-  const clear = saves.locator('.sv-clear');
-  await clear.hover();
-  await clear.click();
-  await expect(clear).toHaveClass(/armed/);
-  await expect(clear).toContainText('SURE? PRESS AGAIN');
-  await expect(saves.locator('.sv-empty')).toHaveCount(0); // not yet
-  await clear.click();
-  await expect(saves.locator('.sv-empty')).toHaveCount(5);
+  // CLEAR DATA: a small tag inside every file, bottom right; the first press asks, the second clears that file
+  const tags = saves.locator('.sv-erase');
+  await expect(tags).toHaveCount(5);
+  await expect(saves.locator('.sv-li-clear, .sv-clear')).toHaveCount(0); // (no box of its own any more)
+  const inside = await page.evaluate(() => [...document.querySelectorAll('#saves .sv-li')].map((li) => {
+    const c = li.querySelector('.sv-slot').getBoundingClientRect(); const t = li.querySelector('.sv-erase').getBoundingClientRect();
+    const hit = document.elementFromPoint(t.left + t.width / 2, t.top + t.height / 2);
+    return t.left > c.left + c.width / 2 && t.right <= innerWidth && t.top > c.top && t.height < 40 && hit === li.querySelector('.sv-erase');
+  }));
+  expect(inside).toEqual([true, true, true, true, true]); // on the right half of its card, small, on screen, on top
+  for (let n = 4; n >= 0; n--) {
+    const tag = saves.locator(`.sv-erase[data-erase="${n}"]`);
+    await tag.click();
+    await expect(tag).toHaveClass(/armed/);
+    await expect(tag).toHaveText('SURE?');
+    await expect(saves.locator('.sv-empty')).toHaveCount(4 - n); // not yet
+    await tag.click();
+    await expect(saves.locator('.sv-empty')).toHaveCount(5 - n);
+    await expect(saves.locator(`.sv-slot[data-i="${n}"]`)).toHaveClass(/sv-empty/);
+  }
+  await expect(tags).toHaveCount(0); // nothing left to clear
   expect(await page.evaluate(() => window.__sfxLog)).toEqual(expect.arrayContaining(['toggle', 'shatter']));
   const d = await page.evaluate(() => JSON.parse(localStorage.getItem('jn-resume-v1')));
   expect(d.slots.every((x) => x === null)).toBe(true);
-  expect(d.active).toBe(null);
   expect(d.settings).toBeTruthy(); // the settings stay
   await page.keyboard.press('Escape');
   await expect(page.locator('#pressStart')).toHaveText('PRESS START'); // nothing saved any more

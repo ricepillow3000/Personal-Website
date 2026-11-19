@@ -15,8 +15,8 @@ import { SECTION_TITLES } from './sections.js';
    where it was left, and how much is cleared. The picked slip becomes a big red slab, larger, with its
    play time and what it will do (CONTINUE or START NEW GAME); a finished file carries a COMPLETED stamp
    with a burst. An empty file is a NEW GAME. Mouse: point to pick, click to play. Touch: tap to pick,
-   tap again to play. Keys: arrows (W/S) to pick, Enter to play, Esc to go back. ERASE takes two
-   presses. Picking a file closes the screen and the train comes in, as PRESS START always did. */
+   tap again to play. Keys: arrows (W/S) to pick, Enter to play, Esc to go back. A file's CLEAR DATA
+   tag takes two presses. Picking a file closes the screen and the train comes in, as PRESS START always did. */
 
 const WD = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -50,7 +50,7 @@ function slip(s, i) {
     <span class="sv-done" aria-hidden="true"><svg class="sv-burst" viewBox="-50 -50 100 100"><polygon points="${burst()}"/></svg>${cutType('COMPLETED', 77)}</span>
     <span class="sv-ctime" aria-hidden="true"><small>PLAY TIME</small><b>${time}</b></span>
     <span class="sv-more" aria-hidden="true"><span class="sv-go">CONTINUE ▸</span></span>
-  </button><button class="sv-erase" type="button" data-erase="${i}" aria-label="Erase file ${i + 1}">ERASE</button></li>`;
+  </button>${chip(i)}</li>`;
   }
   return `<li class="sv-li" style="${pile(i)}"><button class="sv-slot" type="button" data-i="${i}" aria-label="${esc(label)}">
     ${no}
@@ -58,8 +58,12 @@ function slip(s, i) {
     <span class="sv-place" aria-hidden="true"><span>${esc(where)}</span><span class="sv-pips">${p.items.map((it) => `<i${it.done ? ' class="on"' : ''}></i>`).join('')}</span></span>
     <span class="sv-lv" aria-hidden="true"><small>CLEARED</small><b>${p.done}</b><i>/${p.total}</i></span>
     <span class="sv-more" aria-hidden="true"><span class="sv-time"><small>PLAY TIME</small><b>${time}</b></span><span class="sv-go">CONTINUE ▸</span></span>
-  </button><button class="sv-erase" type="button" data-erase="${i}" aria-label="Erase file ${i + 1}">ERASE</button></li>`;
+  </button>${chip(i)}</li>`;
 }
+/* CLEAR DATA (Nov 19, John: "don't make the clear data its own box... every box has a clear data box inside
+   that data saving box... bottom right side, pretty small"): a small black tag in the bottom-right corner of
+   every file that holds a game, always there; the first press asks (SURE?), the second clears that file */
+const chip = (i) => `<button class="sv-erase" type="button" data-erase="${i}" aria-label="Clear data of file ${i + 1}. Press twice.">CLEAR DATA</button>`;
 function burst() {
   const pts = [];
   for (let k = 0; k < 16; k++) { const a = (k / 16) * Math.PI * 2 - Math.PI / 2; const r = k % 2 ? 20 : 48; pts.push(`${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`); }
@@ -72,51 +76,19 @@ function markup() {
   return `<div class="sv-band" aria-hidden="true"><i class="sv-notch"></i></div>
     <div class="sv-stripes" aria-hidden="true"><i></i><i></i><i></i></div>
     <h2 class="sv-title" id="svTitle"><span class="sr-only">Save data</span><span aria-hidden="true">${cutType('SAVE DATA', 41, { mixCase: true })}</span></h2>
-    <p class="sv-sub${full ? ' sv-full' : ''}">${full ? `All ${SLOTS} files are in use. ERASE one, or CLEAR DATA, to start a new game.` : 'Pick a file: your progress saves itself to it. An empty file starts a new game.'}</p>
-    <ol class="sv-list">${files.map(slip).join('')}${clearBox(files.some(Boolean))}</ol>
+    <p class="sv-sub${full ? ' sv-full' : ''}">${full ? `All ${SLOTS} files are in use. CLEAR DATA on one to start a new game.` : 'Pick a file: your progress saves itself to it. An empty file starts a new game.'}</p>
+    <ol class="sv-list">${files.map(slip).join('')}</ol>
     <div class="sv-keys"><button class="sv-key" type="button" data-sv-back><kbd>Esc</kbd><span>BACK</span></button><span class="sv-key sv-key-ok" aria-hidden="true"><kbd>Enter</kbd><span>CONFIRM</span></span></div>`;
 }
 
-/* CLEAR DATA (Nov 19, John: "put the clear data in the save data section, its own box, Persona themed"):
-   a black slip with a white ink edge under the files, its own warning tab; picked, it turns white with a
-   red CLEAR ALL tag; the first press asks (SURE? PRESS AGAIN), the second erases every file with a
-   breaking-glass crash. With no files, it has nothing to clear. */
-function clearBox(any) {
-  return `<li class="sv-li sv-li-clear" style="${pile(SLOTS)}"><button class="sv-slot sv-clear${any ? '' : ' sv-clear-none'}" type="button" data-clear-all aria-label="${any ? 'Clear data: erase every file and start fresh. Press twice.' : 'Clear data: there is nothing to clear.'}">
-    <span class="sv-no sv-no-warn" aria-hidden="true">!</span>
-    <span class="sv-new" aria-hidden="true">${cutType('CLEAR DATA', 93)}</span>
-    <span class="sv-hint" aria-hidden="true">${any ? 'ERASE EVERY FILE' : 'NOTHING TO CLEAR'}</span>
-    <span class="sv-more" aria-hidden="true"><span class="sv-go sv-go-x">${any ? 'CLEAR ALL ▸' : 'EMPTY'}</span></span></button></li>`;
-}
-function clearAll(btn) {
-  if (btn.classList.contains('sv-clear-none')) { sfx('back'); return; }
-  const go = btn.querySelector('.sv-go');
-  if (!btn.classList.contains('armed')) {
-    btn.classList.add('armed');
-    go.textContent = 'SURE? PRESS AGAIN';
-    btn.setAttribute('aria-label', 'Sure? Press again to erase every file.');
-    sfx('toggle');
-    if (!reducedMotion()) gsap.fromTo(btn, { x: -10 }, { keyframes: [{ x: 8 }, { x: -6 }, { x: 0 }], duration: 0.24, ease: 'steps(4)' });
-    return;
-  }
-  store.clearAll();
-  sfx('shatter');
-  sfx('stamp');
-  render(0);
-}
-/** a picked slip does what it says: a file plays, CLEAR DATA clears */
-function activate(btn) {
-  if (btn.classList.contains('sv-clear')) clearAll(btn);
-  else play(btn);
-}
+/** a picked slip plays its file */
+const activate = (btn) => play(btn);
 
 const slots = () => [...root.querySelectorAll('.sv-slot')];
 function pick(btn, quiet) {
   if (!btn || btn.classList.contains('on')) return;
   slots().forEach((b) => b.classList.toggle('on', b === btn));
-  root.querySelectorAll('.sv-erase').forEach((e) => { e.classList.remove('armed'); e.textContent = 'ERASE'; });
-  const cl = root.querySelector('.sv-clear.armed');
-  if (cl) { cl.classList.remove('armed'); cl.querySelector('.sv-go').textContent = 'CLEAR ALL ▸'; cl.setAttribute('aria-label', 'Clear data: erase every file and start fresh. Press twice.'); }
+  disarm();
   root.querySelector('.sv-list').classList.add('has-on');
   if (!quiet) sfx('hover');
   if (!reducedMotion() && !quiet) gsap.fromTo(btn, { x: -14 }, { x: 0, duration: 0.22, ease: 'back.out(3)', clearProps: 'transform' });
@@ -135,16 +107,23 @@ function play(btn) {
     .to(root, { xPercent: -110, skewX: 12, duration: 0.32, ease: 'power3.in' }, 0.24);
 }
 
+function disarm(keep) {
+  root.querySelectorAll('.sv-erase.armed').forEach((e) => { if (e === keep) return; e.classList.remove('armed'); e.textContent = 'CLEAR DATA'; e.setAttribute('aria-label', `Clear data of file ${Number(e.dataset.erase) + 1}. Press twice.`); });
+}
 function erase(b) {
   if (!b.classList.contains('armed')) {
+    disarm(b);
     b.classList.add('armed');
     b.textContent = 'SURE?';
+    b.setAttribute('aria-label', `Sure? Press again to clear file ${Number(b.dataset.erase) + 1}.`);
     sfx('toggle');
+    if (!reducedMotion()) gsap.fromTo(b, { x: -6 }, { keyframes: [{ x: 5 }, { x: -3 }, { x: 0 }], duration: 0.2, ease: 'steps(4)', clearProps: 'transform' });
     return;
   }
   const i = Number(b.dataset.erase);
   store.eraseSlot(i);
-  sfx('back');
+  sfx('shatter');
+  sfx('stamp');
   render(i);
 }
 
