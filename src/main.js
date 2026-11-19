@@ -126,6 +126,7 @@ window.addEventListener('hashchange', () => show(route()));
 
 const modeOf = (id) => (id === 'title' || id === 'board' ? id : id === 'quick' ? 'quick' : 'page');
 
+let activated = false;
 function activate(id) {
   const mode = modeOf(id);
   document.body.dataset.screen = id;
@@ -133,7 +134,8 @@ function activate(id) {
   $$('.screen').forEach((s) => s.classList.remove('active'));
   const el = mode === 'page' ? $('#screen-page') : $(`#screen-${mode}`);
   el.classList.add('active');
-  el.scrollTop = 0;
+  if (activated) el.scrollTop = 0; // (not on the first screen: nothing is scrolled yet, and it forced a layout while the page loaded)
+  activated = true;
   document.body.classList.remove('scrolled');
   renderKeyHints(mode);
   requestAnimationFrame(syncMeter);
