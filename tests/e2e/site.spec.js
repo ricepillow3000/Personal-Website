@@ -509,18 +509,18 @@ test('SAVE DATA is a stack: every card peeks out, and picking one opens it and s
   expect(await slot(3).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeLessThan(2); // closed cards keep their details row shut
   expect(await slot(0).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeGreaterThan(20);
   // all black, no red L; the picked file pops with THE PLAN's language: a yellow star cursor at its left end
-  // and a white and a red blade slicing out behind it (only on the picked one); a red halftone corner
+  // and ONE red blade: the card itself running on to the left (no second white blade: it read as two shapes); a red halftone corner
   await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); // file 3 picked
   await settle();
   const pop = await page.evaluate(() => {
     const lis = [...document.querySelectorAll('#saves .sv-li')];
     const star = (li) => { const r = li.querySelector('.sv-star').getBoundingClientRect(); return { on: getComputedStyle(li.querySelector('.sv-star')).opacity === '1', inView: r.left >= 0 && r.right <= innerWidth && r.width > 20 }; };
-    const blade = (li) => getComputedStyle(li, '::before').backgroundColor;
+    const blade = (li) => getComputedStyle(li, '::before').display;
     return { bg: getComputedStyle(document.querySelector('#saves')).backgroundColor, gone: document.querySelectorAll('#saves .sv-l, #saves .sv-band, #saves .sv-arm').length,
       star: star(lis[2]), others: lis.filter((l, k) => k !== 2).every((l) => getComputedStyle(l.querySelector('.sv-star')).opacity === '0'),
       white: blade(lis[2]), red: getComputedStyle(lis[2], '::after').backgroundColor, dots: !!document.querySelector('#saves .sv-dots') };
   });
-  expect(pop).toEqual({ bg: 'rgb(11, 11, 11)', gone: 0, star: { on: true, inView: true }, others: true, white: 'rgb(245, 245, 240)', red: 'rgb(229, 25, 28)', dots: true });
+  expect(pop).toEqual({ bg: 'rgb(11, 11, 11)', gone: 0, star: { on: true, inView: true }, others: true, white: 'none', red: 'rgb(229, 25, 28)', dots: true });
   expect(errors).toEqual([]);
 });
 
@@ -811,10 +811,12 @@ test('sound: SETTINGS credits every real recording, and every clip the engine as
   await expect(credits).toContainText('Litlok'); // the NEXT STOP braking
   await expect(credits).toContainText('Campos'); // the PRESS START pass
   await expect(credits).toContainText('CC BY-SA 3.0');
-  await expect(credits.locator('li')).toHaveCount(7);
+  await expect(credits).toContainText('ProtoplasmaKid'); // the NEXT STOP metro braking
+  await expect(credits).toContainText('W.carter'); // THE DROP's gale
+  await expect(credits.locator('li')).toHaveCount(13);
   const src = readFileSync(join(process.cwd(), 'src/audio/audio.js'), 'utf8');
   const names = [...src.slice(src.indexOf('const CLIP_HIT = {'), src.indexOf('};', src.indexOf('const CLIP_HIT = {'))).matchAll(/'([a-z-]+)':/g)].map((m) => m[1]);
-  expect(names.length).toBe(8);
+  expect(names.length).toBe(13);
   for (const n of names) {
     const r = await request.get(`/assets/sfx/${n}.mp3`);
     expect(r.status(), n).toBe(200);
@@ -843,7 +845,7 @@ test('sound: on by default, but nothing downloads and nothing plays before the f
   expect(fetched).toEqual([]); // no gesture yet: no audio engine, no downloads
   expect(music).toEqual([]);
   await page.locator('.title-hook').click(); // the first tap anywhere
-  await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(8);
+  await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(13);
   await expect.poll(() => music.length, { timeout: 5000 }).toBe(1);
   await expect.poll(() => page.evaluate(() => document.querySelector('#soundBtn').getAttribute('aria-pressed'))).toBe('true');
 });
@@ -1035,7 +1037,7 @@ test('loading screen: TAKE YOUR TIME is the progress bar (its letters fill as th
   await expect(page.locator('#loader .ld-l')).toHaveCount(12); // T A K E  Y O U R  T I M E
   await expect(page.locator('#loader .ld-case')).toHaveText('CASE FILE · JOHN NGUYEN');
   await expect(page.locator('#loader .ld-o .ld-ring')).toHaveCount(2); // the O whose hole is the doorway (empty slot + ink)
-  await expect(page.locator('#loader .ld-seal textPath')).toContainText("RESUMES DON'T HAVE TO BE BORING");
+  await expect(page.locator('#loader .ld-seal')).toHaveCount(0); // (John, Nov 19: no star seal bottom right; keep it simple)
   await expect(page.locator('#loader .ld-go')).toBeHidden(); // no button until the bar is full
   await expect(page.locator('#loader .ld-wheel')).toContainText('NOW LOADING'); // the loading star, bottom left
   expect(await page.locator('#loader').evaluate((e) => getComputedStyle(e).backgroundImage)).not.toContain('radial-gradient'); // flat: no soft glow

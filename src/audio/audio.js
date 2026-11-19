@@ -70,7 +70,7 @@ function ensure() {
 }
 
 /* ---------- real recordings ----------
-   Fetched only once sound is on (8 clips, ~130 KB, mono MP3). Each entry is where its moment (the pass, the
+   Fetched only once sound is on (13 clips, ~210 KB, mono MP3). Each entry is where its moment (the pass, the
    crack, the hit) sits inside the clip, in seconds, so it can land on the exact frame. Until a clip
    has loaded (or if it fails), its voice plays the synthesized version instead. */
 const CLIP_HIT = {
@@ -82,6 +82,12 @@ const CLIP_HIT = {
   'train-pass': 0.82, // the loudest wheel crash as the tram passes the mic
   'train-brake': 0, // starts on the cut: the squeal peaks ~1.2s in, as the station stops in the windows
   'glass-break': 0.11, // the pane giving way
+  // Nov 19 (John: "the sounds I want revised are the train... the transition where you fall from a skyscraper")
+  'train-horn': 0, // a real metro car horn
+  'metro-brake': 0, // a real metro squealing into its station
+  'paper-rip': 0.338, // the paper giving way
+  'fall-wind': 0, // a real 25 m/s gale: the fall
+  'land-boom': 0.02, // a real deep boom with a thwack on top: the landing
 };
 const clips = {};
 let clipsReady = null;
@@ -966,7 +972,7 @@ const live = new Set();
    versions stay as SYNTH fallbacks until a clip has loaded. Levels were matched to them by offline renders. */
 const SYNTH = { ...VOICES };
 /* clip levels, matched to the synthesized versions by offline renders (peaks kept under 1.0) */
-const TRAIN = { pass: 0.66, horn: 0.1, brake: 0.32, glass: 0.5 };
+const TRAIN = { pass: 0.66, horn: 0.25, brake: 0.32, metro: 0.3, glass: 0.5 };
 /* ---------- the loading screen (src/ui/loader.js; first the lock, Nov 19, John: "the lock actually makes
    lock noises... hear the pins click up, then a sound easing into the first screen"; now TAKE YOUR
    TIME: lockTick for each letter that fills, wordDone for each word that completes, underline when TIME
@@ -1049,13 +1055,18 @@ Object.assign(VOICES, {
     const s0 = pass - CLIP_HIT['train-pass']; // the clip's own start, relative to at
     if (!clip(bus, 'train-pass', at + pass, { gain: TRAIN.pass, env: [[0, 1], [cut - s0, 1], [cut + 0.45 - s0, 0]] })) return SYNTH.tunnel(bus, at, v, { pass });
     clip(bus, 'train-brake', at + Math.max(0, pass - 0.9), { gain: TRAIN.brake * 0.55, env: [[0, 0], [0.35, 1], [cut + 0.45 - Math.max(0, pass - 0.9), 0]] }); // squeal peaks just after the nose
-    trainHorn(bus, at + 0.02, 1.5 + (pass - 0.74), TRAIN.horn, { fadeIn: 0.3, peak: pass, drop: HORN_DOPPLER });
+    // the horn: a real metro car horn (won 2 of 3 listening rounds over the pass alone); synthesized until it loads
+    if (!clip(bus, 'train-horn', at + 0.02, { gain: TRAIN.horn, align: false, env: [[0, 0.5], [pass - 0.04, 1], [cut - 0.05, 0.5], [cut + 0.35, 0]] })) {
+      trainHorn(bus, at + 0.02, 1.5 + (pass - 0.74), 0.1, { fadeIn: 0.3, peak: pass, drop: HORN_DOPPLER });
+    }
     flutter(bus, at + pass - 0.14, 0.45, 0.14);
   },
   /* NEXT STOP: a real train braking into a station (wheels grinding, the brake squeal swelling as
      the station stops in the windows), then the two-note station chime (a PA tone, synthesized) */
   train: (bus, at) => {
-    if (!clip(bus, 'train-brake', at, { gain: TRAIN.brake, env: [[0, 1], [1.3, 1], [1.75, 0]] })) return SYNTH.train(bus, at);
+    // a real metro braking into its station, the brakes squealing to a stop (won 2 of 3 rounds over the tram)
+    if (!clip(bus, 'metro-brake', at, { gain: TRAIN.metro, align: false, env: [[0, 1], [1.3, 1], [1.75, 0]] })
+      && !clip(bus, 'train-brake', at, { gain: TRAIN.brake, env: [[0, 1], [1.3, 1], [1.75, 0]] })) return SYNTH.train(bus, at);
     tone(bus, { at: at + 0.98, dur: 0.24, from: 1319, to: 1319, type: 'sine', gain: 0.1 }); // ding
     tone(bus, { at: at + 1.16, dur: 0.36, from: 1047, to: 1047, type: 'sine', gain: 0.1 }); // dong
   },
@@ -1064,6 +1075,13 @@ Object.assign(VOICES, {
     if (!clip(bus, 'glass-break', at, { gain: TRAIN.glass })) return SYNTH.shatter(bus, at);
     tone(bus, { at, dur: 0.18, from: 160, to: 70, gain: 0.3 });
   },
+  /* THE DROP, all real recordings (Nov 19; Gemini picked this mix 3 rounds of 3): the board tears like paper
+     (a real rip), the fall is a real gale rising as you speed up (25 m/s wind, swelling over the drop and cut
+     off on impact), the landing a real deep boom with a thwack. THE RISE runs the gale the other way. */
+  tear: (bus, at, v = 1, dur = 0.4) => clip(bus, 'paper-rip', at, { gain: 0.68 * v, align: false }) || SYNTH.tear(bus, at, v, dur),
+  fall: (bus, at) => clip(bus, 'fall-wind', at, { gain: 0.9, align: false, env: [[0, 0.05], [0.8, 1], [0.85, 1], [1.0, 0]] }) || SYNTH.fall(bus, at),
+  land: (bus, at) => clip(bus, 'land-boom', at, { gain: 0.9 }) || SYNTH.land(bus, at),
+  rise: (bus, at) => clip(bus, 'fall-wind', at, { gain: 0.55, align: false, env: [[0, 1], [0.25, 1], [0.8, 0]] }) || SYNTH.rise(bus, at),
   /* the city billboard: a real car rushes past under the light trails, a horn far off */
   city: (bus, at) => {
     if (!clip(bus, 'car-pass', at + 0.32, { gain: 0.2, side: 0.25 })) return SYNTH.city(bus, at);
