@@ -305,17 +305,33 @@ export function snapshotScreen() {
    (gemini-2.5-flash-image) to John's brief and approved by him: a low-angle look up at the towers
    against a red sky, the tower's crown, its glass facade, and the subway car. WebP, loaded while idle. */
 const FILM = { upshot: artSrc('city'), facade: 'assets/film/facade.webp', crown: 'assets/film/crown.webp', train: 'assets/film/train.webp', interior: 'assets/film/interior.webp' };
-const filmCache = [];
+const filmCache = {};
+const decoded = {};
 export function preloadFilm() {
-  if (filmCache.length) return;
+  if (Object.keys(filmCache).length) return;
   preloadSubway();
-  Object.values(FILM).forEach((src) => {
+  Object.entries(FILM).forEach(([key, src]) => {
     const img = new Image();
     img.decoding = 'async';
+    img.alt = '';
     img.src = src;
-    img.decode?.().catch(() => {});
-    filmCache.push(img); // keep a reference so the browser keeps it decoded
+    filmCache[key] = img; // keep a reference so the browser keeps it decoded
+    decoded[key] = (img.decode ? img.decode() : Promise.reject(new Error('no decode'))).catch(() => new Promise((r) => {
+      if (img.complete) r(); else { img.onload = r; img.onerror = r; }
+    }));
   });
+}
+/* A film cut never plays with a missing picture (Nov 19, John: NEXT STOP played "but the train car
+   didn't even go through"): it waits for its art to be decoded, at most `ms`, before it starts. */
+function filmReady(keys, ms = 1500) {
+  preloadFilm();
+  return Promise.race([Promise.all(keys.map((k) => decoded[k])), new Promise((r) => setTimeout(r, ms))]);
+}
+/* the cached, already-decoded picture (a fresh <img> would decode again and show up late) */
+function filmImg(key, cls) {
+  const img = filmCache[key];
+  img.className = cls;
+  return img;
 }
 
 /* Film letterbox: two black bars close in at the start of every film cut and open as it lands,
@@ -334,14 +350,16 @@ function citySet(label, extra = '') {
   el.className = 'fall';
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `<div class="fall-city">
-      <div class="fall-sky"><img class="fs-art" src="${FILM.upshot}" alt=""></div>
-      <div class="fall-tower" style="width:${TW}px;height:${TH}px"><img class="ft-crown" src="${FILM.crown}" alt=""><div class="ft-face" style="background-image:url(${FILM.facade})"></div></div>
+      <div class="fall-sky"></div>
+      <div class="fall-tower" style="width:${TW}px;height:${TH}px"><div class="ft-face" style="background-image:url(${FILM.facade})"></div></div>
       <div class="fall-lines">${'<i></i>'.repeat(14)}</div>
       <div class="fall-sign"><span class="ransom"></span></div>
     </div>${extra}
     <div class="fall-flash"></div>${LETTERBOX}`;
   ransom(el.querySelector('.fall-sign span'), label, label.length);
   const q = (sel) => el.querySelector(sel);
+  q('.fall-sky').appendChild(filmImg('upshot', 'fs-art'));
+  q('.fall-tower').prepend(filmImg('crown', 'ft-crown'));
   const lines = el.querySelectorAll('.fall-lines i');
   lines.forEach((l, i) => gsap.set(l, { left: `${6 + ((i * 41) % 88)}%`, height: 60 + ((i * 53) % 140) }));
   return { el, W, H, TW, TH, bars: el.querySelectorAll('.lb'), city: q('.fall-city'), sky: q('.fall-sky'), tower: q('.fall-tower'), lines, sign: q('.fall-sign'), flash: q('.fall-flash') };
@@ -360,11 +378,12 @@ function landing(tl, set, swap, at, hit = 'thwack') {
     .to(set.flash, { opacity: 0, duration: 0.22, ease: 'power2.out' }, at + 0.22);
 }
 
-export function fallWipe(swap, label = '') {
+export async function fallWipe(swap, label = '') {
   if (reducedMotion()) {
     swap();
-    return Promise.resolve();
+    return;
   }
+  await filmReady(['upshot', 'crown', 'facade']);
   const set = citySet(label, '<div class="fall-half left"></div><div class="fall-half right"></div>');
   const { el, W, H, TH, city, sky, tower, lines, sign } = set;
   const left = el.querySelector('.fall-half.left');
@@ -415,11 +434,12 @@ export function fallWipe(swap, label = '') {
 /* THE RISE (any page -> back to the board): the reverse shot. The page drops away below
    you, you rocket up the tower face, burst over the roof into the red sky, and the board
    lands with the star-flash. (~0.95s, kept short because Back is used a lot) */
-export function riseWipe(swap, label = 'THE PLAN') {
+export async function riseWipe(swap, label = 'THE PLAN') {
   if (reducedMotion()) {
     swap();
-    return Promise.resolve();
+    return;
   }
+  await filmReady(['upshot', 'crown', 'facade'], 900);
   const set = citySet(label || 'THE PLAN', '<div class="fall-half whole"></div>');
   const { el, H, TH, city, sky, tower, lines, sign } = set;
   const whole = el.querySelector('.fall-half.whole');
@@ -454,22 +474,23 @@ export function riseWipe(swap, label = 'THE PLAN') {
    interior: ring hoops, plain light strip, bench, see-through windows) you watch tunnel lights
    streak past the windows, the car rocks, the brakes squeal, and the next station slides into the
    windows and stops: its sign reads the next chapter. Ding-dong, star-flash, you're there. (~1.4s) */
-export function trainWipe(swap, label = '') {
+export async function trainWipe(swap, label = '') {
   if (reducedMotion()) {
     swap();
-    return Promise.resolve();
+    return;
   }
+  await filmReady(['interior']);
   const el = document.createElement('div');
   el.className = 'fall nextstop';
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `<div class="ns-cam">
       <div class="ns-out"><div class="ns-lights">${'<i></i>'.repeat(9)}</div>
         <div class="ns-station"><i class="ns-tiles"></i><i class="ns-stripe"></i><div class="ns-sign"><small>NEXT STOP</small><span class="ransom"></span></div><i class="ns-pillar"></i><i class="ns-pillar p2"></i></div></div>
-      <img class="ns-car" src="${FILM.interior}" alt="">
     </div><div class="fall-flash"></div>${LETTERBOX}`;
   ransom(el.querySelector('.ns-sign span'), label, label.length + 3);
   const q = (sel) => el.querySelector(sel);
   const cam = q('.ns-cam');
+  cam.appendChild(filmImg('interior', 'ns-car'));
   const lights = el.querySelectorAll('.ns-lights i');
   const station = q('.ns-station');
   const sign = q('.ns-sign');
@@ -516,7 +537,7 @@ export function trainWipe(swap, label = '') {
     }, 1.28)
     .to(bars, { scaleY: 0, duration: 0.2, ease: 'power2.in' }, 1.28)
     .to(flash, { opacity: 0, duration: 0.22, ease: 'power2.out' }, 1.3);
-  return track(tl);
+  await track(tl);
 }
 
 /* CALLING CARD (into CONTACT): a calling card is thrown at the camera, spinning in from far

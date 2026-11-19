@@ -13,7 +13,7 @@ import { readCompany } from './data/companies.js';
 import { store } from './core/store.js';
 import { $, $$, esc, reducedMotion, fontsReady } from './core/util.js';
 import { menuTeasers } from './data/script.js';
-import { mountBackdrop } from './fx/backdrop.js';
+import { mountBackdrop, sceneReady } from './fx/backdrop.js';
 import { initClickFx, burst } from './fx/impact.js';
 import { initMagnetic, initTilt, initScrollMeter, slamOnScroll, scramble, rollIn } from './fx/kinetic.js';
 import { initTooltips } from './ui/tooltip.js';
@@ -327,10 +327,27 @@ function renderUndoLine() {
 
 renderSaveLine();
 
-$('#pressStart').addEventListener('click', () => {
+/* PRESS START / CONTINUE always opens with the train (Nov 19, John: "the train is going to be the
+   main title every single time"). If the platform or the train art isn't ready yet (a returning
+   visitor taps CONTINUE before the phone has loaded the scene), the button "boards" for a moment
+   while they load, at most 4s, then the shot plays. */
+let starting = false;
+$('#pressStart').addEventListener('click', async () => {
+  if (starting) return;
+  starting = true;
+  const btn = $('#pressStart');
   dropUndo();
   sfx('select');
   unlock('first-words');
+  if (!reducedMotion()) {
+    let late = false;
+    const wait = sceneReady();
+    const t = setTimeout(() => { late = true; btn.classList.add('boarding'); btn.setAttribute('aria-busy', 'true'); }, 120);
+    await Promise.race([wait, new Promise((r) => setTimeout(r, 4000))]);
+    clearTimeout(t);
+    if (late) { btn.classList.remove('boarding'); btn.removeAttribute('aria-busy'); }
+  }
+  starting = false;
   pendingStart = true;
   navigate('board');
 });
