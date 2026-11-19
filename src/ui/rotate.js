@@ -1,14 +1,20 @@
 /* "Turn your phone" (Nov 19, John: "on the phone, held the normal way, it doesn't really show the
    entire subway... a quick screen reminder that covers the whole screen, fully red, a simple header
    and body, a picture of the phone with an arrow showing which way to turn it, animated, in the
-   Persona-ish style"). Our red, a cut-out header, a slanted black strip of body text, a phone that
-   tips onto its side under a curved arrow, on a loop.
+   Persona-ish style"; then: "not a static pop-up... a transition where it comes in from the side,
+   with that perspective feel, in our design"). Our red, a cut-out header, a slanted black strip of
+   body text, a phone that tips onto its side under a curved arrow, on a loop.
+   In: a black slab sweeps across and the red wipes in behind it on a slant; then the pieces fly in
+   with real perspective (3D, staggered): the phone spins in from the side, TURN YOUR swings in from
+   the left and PHONE from the right, the strip tips up into place, the button pops. Out (turning the
+   phone or GOT IT): the pieces swing away in 3D and the red wipes off to the right.
 
    A reminder, never a wall: once per visit, only on a phone held upright, after the loading star;
    it leaves by itself the moment the phone is turned, and GOT IT (or Esc) lets anyone carry on
    upright. Only the button closes it, so a stray tap can't hide it before it's read. Automated test browsers skip it unless the URL asks for it (?rotate). */
 import { cutType } from './cuttype.js';
 import { sfx } from '../audio/audio.js';
+import { reducedMotion } from '../core/util.js';
 
 const SEEN = 'jn-rotate-seen';
 const upright = () => window.matchMedia('(orientation: portrait) and (max-width: 600px) and (pointer: coarse)').matches;
@@ -24,6 +30,7 @@ export function maybeRotateHint() {
   el.setAttribute('aria-modal', 'true');
   el.setAttribute('aria-labelledby', 'rotTitle');
   el.innerHTML = `
+    <div class="rot-band" aria-hidden="true"></div>
     <div class="rot-dots" aria-hidden="true"></div>
     <div class="rot-phone" aria-hidden="true">
       <svg viewBox="-66 -66 132 132">
@@ -38,15 +45,42 @@ export function maybeRotateHint() {
   document.body.appendChild(el);
   const prev = document.activeElement;
   const btn = el.querySelector('.rot-ok');
-  requestAnimationFrame(() => { el.classList.add('in'); btn.focus({ preventScroll: true }); });
+  const still = reducedMotion();
+  const FULL = 'polygon(0 0, 130% 0, 100% 100%, -30% 100%)';
+  const parts = [
+    // [element, the 3D place it flies in from, delay ms]
+    [el.querySelector('.rot-phone'), { translate: '-70vw 0 -200px', rotate: 'y 75deg', scale: '.55' }, 200],
+    [el.querySelectorAll('.rot-slab')[0], { translate: '-90vw 0 -260px', rotate: 'y 55deg' }, 280],
+    [el.querySelectorAll('.rot-slab')[1], { translate: '90vw 0 -260px', rotate: 'y -55deg' }, 340],
+    [el.querySelector('.rot-body-text'), { translate: '0 40px -120px', rotate: 'x 75deg' }, 420],
+    [el.querySelector('.rot-ok'), { scale: '.3', rotate: '-14deg' }, 500],
+  ];
+  if (still) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
+  else {
+    el.animate([{ clipPath: 'polygon(0 0, 0 0, -30% 100%, -30% 100%)' }, { clipPath: FULL }], { duration: 420, easing: 'cubic-bezier(.7, 0, .2, 1)' });
+    el.querySelector('.rot-band').animate([{ translate: '-70vw 0' }, { translate: '140vw 0' }], { duration: 560, easing: 'cubic-bezier(.5, 0, .3, 1)', fill: 'forwards' });
+    parts.forEach(([p, from, delay]) => p?.animate([{ ...from, opacity: 0 }, { translate: '0 0 0', rotate: 'y 0deg', scale: '1', opacity: 1 }], { duration: 560, delay, easing: 'cubic-bezier(.2, 1.3, .4, 1)', fill: 'backwards' }));
+    sfx('swish');
+  }
+  setTimeout(() => btn.focus({ preventScroll: true }), still ? 0 : 560);
   const mq = window.matchMedia('(orientation: portrait)');
+  let closing = false;
   const close = () => {
     mq.removeEventListener?.('change', turned);
     window.removeEventListener('resize', turned);
     window.removeEventListener('keydown', key, true);
-    el.classList.remove('in');
-    el.classList.add('out');
-    setTimeout(() => el.remove(), 320);
+    if (closing) return;
+    closing = true;
+    if (still) {
+      el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: 'forwards' });
+      setTimeout(() => el.remove(), 190);
+    } else {
+      // the pieces swing away in 3D, then the red wipes off to the right
+      parts.forEach(([p], i) => p?.animate([{ opacity: 1 }, { translate: '60vw 0 -300px', rotate: 'y -80deg', opacity: 0 }], { duration: 300, delay: i * 30, easing: 'cubic-bezier(.6, 0, .9, .4)', fill: 'forwards' }));
+      el.animate([{ clipPath: FULL }, { clipPath: 'polygon(130% 0, 130% 0, 100% 100%, 100% 100%)' }], { duration: 380, delay: 160, easing: 'cubic-bezier(.7, 0, .3, 1)', fill: 'forwards' });
+      sfx('zip');
+      setTimeout(() => el.remove(), 560);
+    }
     if (prev?.focus) prev.focus({ preventScroll: true });
   };
   const turned = () => { if (!mq.matches || window.innerWidth > window.innerHeight) close(); }; // (some phone browsers only send a resize)

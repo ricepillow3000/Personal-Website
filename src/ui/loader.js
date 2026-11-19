@@ -16,6 +16,8 @@
    test browsers skip it unless the URL asks for it (?intro), so the other tests see the page at once. */
 import { reducedMotion, fontsReady } from '../core/util.js';
 import { stationReady } from '../fx/backdrop.js';
+import { sfx, setSound } from '../audio/audio.js';
+import { store } from '../core/store.js';
 
 let opened;
 /** resolves the moment the doorway opens (at once when there is no lock screen): the title's own
@@ -36,9 +38,33 @@ export function runLoader() {
     return Promise.resolve();
   }
   const t0 = performance.now();
+  const bar = el.querySelector('[role="progressbar"]');
   const num = el.querySelector('#ldNum');
   const level = el.querySelector('#ldLevel');
   const pins = [...el.querySelectorAll('.ld-pin')];
+  let pinsSet = 0;
+  /* sound (Nov 19): off by default like the rest of the site, and browsers stay silent until the
+     visitor taps or presses a key. The SOUND switch on the lock turns it on right here (that tap is
+     the gesture the browser needs) without skipping the lock; with sound already on from a last
+     visit, the clicks play wherever the browser allows. */
+  const sw = el.querySelector('.ld-sound');
+  const showSound = () => {
+    const on = store.get().settings.sound;
+    sw.setAttribute('aria-pressed', String(on));
+    sw.querySelector('b').textContent = on ? 'ON' : 'OFF';
+  };
+  if (sw) {
+    showSound();
+    sw.addEventListener('pointerdown', (e) => e.stopPropagation()); // (not a skip)
+    sw.addEventListener('keydown', (e) => e.stopPropagation());
+    sw.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setSound(!store.get().settings.sound);
+      showSound();
+      window.dispatchEvent(new Event('jn-sound')); // the HUD's sound button follows
+      if (store.get().settings.sound) sfx('toggle');
+    });
+  }
   let target = 12; // the page's own code is running
   let shown = 0;
   let last = -1;
@@ -67,9 +93,12 @@ export function runLoader() {
     if (n !== last) { // (only when the number changes: no work on the frames in between)
       last = n;
       num.textContent = String(n);
-      el.setAttribute('aria-valuenow', String(n));
+      bar.setAttribute('aria-valuenow', String(n));
       level.setAttribute('y', (44 - shown * 0.95).toFixed(1)); // the red rises from the keyhole's foot (y 42) past its top (-48)
       pins.forEach((p) => p.classList.toggle('set', n >= Number(p.dataset.at))); // each pin snaps up as its step lands
+      const now = pins.filter((p) => n >= Number(p.dataset.at)).length;
+      for (let k = pinsSet; k < now; k++) setTimeout(() => sfx('lockPin', k), (k - pinsSet) * 80); // a click per pin, never two at once
+      pinsSet = Math.max(pinsSet, now);
     }
     if (shown >= 100) {
       done = true;
@@ -119,9 +148,11 @@ function door(el) {
   });
   return new Promise((resolve) => {
     el.classList.add('turn'); // the key turns in the lock
+    sfx('lockTurn');
     setTimeout(() => el.classList.add('flash'), 260); // the keyhole flashes white
     setTimeout(() => {
       el.classList.add('door'); // the keyhole is a hole now: the station through it
+      sfx('doorway');
       opened();
       back.style.transformOrigin = `${cx}px ${cy}px`;
       back.animate([{ transform: 'scale(1.18)' }, { transform: 'none' }], { duration: 1500, easing: 'cubic-bezier(.2, .7, .3, 1)' });

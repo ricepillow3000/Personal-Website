@@ -906,7 +906,7 @@ test('the lock: its keyhole fills and its pins set as the page loads, the key tu
   let pinsSet = 0;
   const seen = new Set();
   for (let i = 0; i < 200 && (await page.locator('#loader').count()); i++) {
-    const v = await page.locator('#loader').getAttribute('aria-valuenow').catch(() => null);
+    const v = await page.locator('#loader [role=progressbar]').getAttribute('aria-valuenow', { timeout: 500 }).catch(() => null);
     if (v !== null) seen.add(Number(v));
     pinsSet = Math.max(pinsSet, await page.locator('#loader .ld-pin.set').count().catch(() => 0));
     await page.waitForTimeout(60);
@@ -947,5 +947,20 @@ test('turn your phone: a red reminder on phones held upright, once a visit; turn
   await expect(p2.locator('.rot')).toBeVisible();
   await p2.setViewportSize({ width: 844, height: 390 });
   await expect(p2.locator('.rot')).toHaveCount(0);
+  await ctx.close();
+});
+
+test('the lock: its SOUND switch turns sound on without skipping the lock, and the HUD sound button follows', async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
+  const page = await ctx.newPage();
+  await page.route('**/assets/film/subway*', async (r) => { await new Promise((s) => setTimeout(s, 2500)); await r.continue(); });
+  await page.goto('/?intro', { waitUntil: 'commit' });
+  const sw = page.locator('#loader .ld-sound');
+  await expect(sw).toHaveAttribute('aria-pressed', 'false');
+  await sw.click();
+  await expect(sw).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#loader')).toHaveCount(1); // still picking the lock (not a skip)
+  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 9000 });
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'true');
   await ctx.close();
 });
