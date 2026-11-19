@@ -1,51 +1,92 @@
-/* ---------------------------------------------------------------- the lock (src/ui/loader.js)
-   Black with a red slash and halftone; in the middle a cut-paper lock plate (white ink edge, red
-   misprint), four pins that snap up yellow as the page loads, and a keyhole filling with red from its
-   foot. The CSS fallback hides it after 9 s if the script never ran. */
+/* ---------------------------------------------------------------- the loading screen (src/ui/loader.js)
+   Nov 19, John: "instead of a lock... TAKE YOUR NETWORK in the middle, and TAKE YOUR NETWORK acts as the
+   loading bar; bottom right a spinning star or banner with the philosophy of our resume; when the bar
+   fully loads, a button underneath; click it and the transition opens to the subway... zooming into
+   the holes of letters, like a gateway". Black with a red slash and halftone; the words in cut-out
+   letters, each an empty grey slot until the ink fills it from the left (the bar); the O in NETWORK is
+   a drawn ring whose hole is the doorway. The CSS fallback hides it after 20 s if the script never ran. */
 .loader {
   position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; overflow: hidden;
+  grid-template-rows: auto auto; align-content: center; gap: clamp(10px, 3vmin, 22px);
   background:
-    radial-gradient(circle at 50% 46%, rgba(229, 25, 28, .18) 0, transparent 46%),
-    linear-gradient(118deg, transparent 0 58%, rgba(229, 25, 28, .9) 58% 61.5%, transparent 61.5%),
+    radial-gradient(circle at 50% 46%, rgba(229, 25, 28, .2) 0, transparent 50%),
+    linear-gradient(118deg, transparent 0 63%, rgba(229, 25, 28, .9) 63% 66.5%, transparent 66.5%),
     radial-gradient(rgba(245, 245, 240, .07) 1.4px, transparent 1.6px) 0 0 / 9px 9px,
     var(--black);
-  animation: ldFailsafe 0s 20s forwards; /* (it waits for a tap: up to load + 5 s) */
+  animation: ldFailsafe 0s 20s forwards;
   touch-action: none;
 }
+.loader.ld-live { animation: none; } /* (the script is running: it waits for the visitor's click) */
 @keyframes ldFailsafe { to { visibility: hidden; pointer-events: none; } }
-.ld-core { position: relative; display: grid; justify-items: center; gap: 6px; }
-.ld-lock { width: min(56vmin, 340px); height: auto; overflow: visible; }
-.loader.turn .ld-lock { animation: ldClick .3s steps(2) 1; } /* the lock jolts as it gives */
-@keyframes ldClick { 50% { transform: translate(2px, -2px) rotate(-1deg); } }
-.ld-mis { fill: var(--red); }
-.ld-plate { fill: #1A1A1C; stroke: var(--white); stroke-width: 5; stroke-linejoin: miter; }
-.ld-slot { fill: var(--black); stroke: #3A3A40; stroke-width: 2; }
-.ld-tumbler { fill: #6E6E72; transition: transform .22s cubic-bezier(.2, 1.8, .4, 1), fill .1s; transform-box: fill-box; }
-.ld-pin.set .ld-tumbler { fill: var(--yellow); transform: translateY(-14px); }
-.ld-shell { fill: var(--black); }
-.ld-fill { fill: var(--red); }
-.ld-edge { fill: none; stroke: var(--white); stroke-width: 5; stroke-linejoin: round; }
-.ld-key { transform-box: view-box; transform-origin: 0 -20px; /* (view-box: the origin is the lock's own 0,0) */ transition: transform .26s cubic-bezier(.2, 1.6, .4, 1); }
-.loader.turn .ld-key { transform: rotate(90deg); } /* the key turns */
-.ld-pct { margin: 0; font-family: var(--f-head); font-size: clamp(34px, 7vmin, 56px); line-height: 1; color: var(--white);
-  transform: skew(-12deg) rotate(-4deg); text-shadow: 4px 4px 0 var(--red); font-variant-numeric: tabular-nums; }
+.ld-core { position: relative; display: grid; justify-items: center; gap: 4px; }
+
+/* TAKE YOUR / NETWORK: two lines of cut-out letters; every chip has a fixed size, so the brand fonts
+   arriving never move anything */
+.ld-word { margin: 0; display: grid; justify-items: center; gap: .14em; font-size: clamp(30px, min(13.2vw, 15vh), 124px); line-height: 1; transform: rotate(-3deg); }
+.ld-line { display: flex; gap: .34em; }
+.ld-line:last-child { translate: .3em 0; }
+.ld-w { display: flex; gap: .05em; }
+.ld-l { position: relative; display: block; width: .74em; height: 1.04em; rotate: var(--r); translate: 0 var(--y); }
+.ld-l b { position: absolute; inset: 0; display: grid; place-items: center; font-weight: inherit; text-transform: uppercase; }
+.ld-e { background: #17171A; color: #333338; box-shadow: inset 0 0 0 .03em #26262B; } /* the empty slot */
+.ld-i { clip-path: inset(0 calc((1 - var(--f, 0)) * 100%) 0 0); } /* the ink, filling from the left (--f: 0 to 1) */
+.ld-l.in .ld-i { clip-path: none; box-shadow: .07em .07em 0 var(--red); }
+.ld-l.in .ld-i.c-red { box-shadow: .07em .07em 0 var(--white); }
+.ld-l.in { animation: ldPop .26s cubic-bezier(.2, 1.8, .4, 1); }
+@keyframes ldPop { 0% { scale: 1.32; rotate: calc(var(--r) * -1.6); } 100% { scale: 1; rotate: var(--r); } }
+.ld-i.c-black { background: var(--black); color: var(--white); outline: .035em solid var(--white); outline-offset: -.035em; }
+.ld-i.c-white { background: var(--white); color: var(--black); }
+.ld-i.c-red { background: var(--red); color: var(--white); }
+.ld-i.c-paper { background: var(--paper); color: var(--black); }
+.ld-l .f0 { font-family: var(--f-head); font-size: .86em; }
+.ld-l .f1 { font-family: var(--f-menu); font-size: 1em; }
+.ld-l .f2 { font-family: var(--f-mark); font-size: .8em; }
+.ld-l .f3 { font-family: var(--f-type); font-weight: 700; font-size: .84em; }
+.ld-l .f4 { font-family: var(--f-serif); font-weight: 900; font-style: italic; font-size: .84em; }
+/* the O: a drawn ring, so its hole is a real, measured shape (the doorway) */
+.ld-ring { width: .5em; height: .78em; overflow: visible; }
+.ld-ring ellipse { fill: none; stroke: currentColor; stroke-width: 13; }
+.ld-o .ld-e .ld-ring ellipse { stroke: #333338; }
+.loader.flash .ld-o .ld-i .ld-ring ellipse { fill: var(--white); } /* the hole flashes white, then opens */
+
+.ld-pct { margin: 0; font-family: var(--f-head); font-size: clamp(22px, 4.6vmin, 36px); line-height: 1; color: var(--white);
+  transform: skew(-12deg) rotate(-3deg); text-shadow: 3px 3px 0 var(--red); font-variant-numeric: tabular-nums; }
 .ld-pct i { font-style: normal; font-size: .55em; margin-left: .06em; }
-/* the prompt: TAP TO PICK THE LOCK, blinking while it waits; PICKING THE LOCK while it picks */
-.loader { grid-template-rows: auto auto; align-content: center; gap: 14px; }
-.ld-go { margin: 0; border: 0; font-family: var(--f-menu); font-size: clamp(18px, 3.4vmin, 26px); letter-spacing: .22em; color: var(--black);
-  background: var(--white); padding: 6px 16px 4px 20px; min-height: 44px; transform: skew(-12deg) rotate(2deg); box-shadow: 5px 5px 0 var(--red); cursor: pointer; }
+.loader.ready .ld-pct { display: none; }
+
+/* ENTER THE STATION: slams in under the words at 100% */
+.ld-go { grid-row: 2; margin: 0; border: 0; font-family: var(--f-menu); font-size: clamp(20px, 4vmin, 30px); letter-spacing: .12em; color: var(--black);
+  background: var(--white); padding: 8px 22px 6px 26px; min-height: 48px; transform: skew(-12deg) rotate(-2deg); box-shadow: 6px 6px 0 var(--red); cursor: pointer; }
+.ld-go:not([hidden]) { animation: ldSlam .34s cubic-bezier(.2, 1.7, .4, 1) both, ldBlink 1.2s steps(2) .6s infinite; }
+@keyframes ldSlam { from { translate: 0 30px; scale: 2.2; opacity: 0; } to { translate: 0 0; scale: 1; opacity: 1; } }
+@keyframes ldBlink { 50% { background: var(--yellow); box-shadow: 6px 6px 0 var(--black); } }
+.ld-go:hover { background: var(--yellow); }
 .ld-go:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
-.ld-go-busy { display: none; }
-.loader:not(.picking) .ld-go { animation: ldBlink 1.1s steps(2) infinite; }
-@keyframes ldBlink { 50% { background: var(--yellow); box-shadow: 5px 5px 0 var(--black); } }
-.loader.picking .ld-go { cursor: default; background: var(--black); color: var(--white); box-shadow: 5px 5px 0 var(--red); }
-.loader.picking .ld-go-wait { display: none; }
-.loader.picking .ld-go-busy { display: inline; }
-.loader:not(.picking) .ld-lock { animation: ldWait 1.6s ease-in-out infinite; } /* the lock waits, breathing */
-@keyframes ldWait { 50% { transform: scale(1.03) rotate(-1.5deg); } }
-.loader.flash .ld-go { opacity: 0; transition: opacity .15s; }
+.loader.going .ld-go { animation: none; background: var(--red); color: var(--white); box-shadow: 6px 6px 0 var(--white); }
+.ld-core, .ld-go { grid-column: 1; }
+.ld-core { grid-row: 1; }
+
+/* the seal, bottom right: the resume's philosophy round a star, turning */
+.ld-seal { position: absolute; right: max(var(--gutter), 2vmin); bottom: max(var(--gutter), 2vmin); width: clamp(96px, 22vmin, 190px); aspect-ratio: 1; }
+.ld-seal svg { width: 100%; height: 100%; overflow: visible; rotate: 8deg; }
+.ld-seal-rim { fill: var(--red); stroke: var(--black); stroke-width: 4; }
+.ld-seal-in { fill: var(--black); stroke: var(--white); stroke-width: 3; }
+.ld-seal-spin { animation: ldSpin 14s linear infinite; transform-origin: 0 0; }
+@keyframes ldSpin { to { transform: rotate(360deg); } }
+.ld-seal-txt { font-family: var(--f-menu); font-size: 17.5px; letter-spacing: .5px; fill: var(--white); }
+.ld-seal-mis { fill: var(--red); }
+.ld-seal-star { fill: var(--white); stroke: var(--black); stroke-width: 4; stroke-linejoin: miter; animation: ldStar 3.2s cubic-bezier(.2, 1.6, .4, 1) infinite; transform-origin: 0 0; }
+@keyframes ldStar { 0%, 70% { transform: rotate(0deg); } 85%, 100% { transform: rotate(72deg); } } /* a snap a turn, like a dial */
+.loader.going .ld-seal { transition: translate .35s cubic-bezier(.6, 0, .9, .5), rotate .35s; translate: 40vmin 30vmin; rotate: 120deg; }
+.loader.going .ld-pct { opacity: 0; }
+
 .loader.ld-fade { opacity: 0; transition: opacity .25s ease-out; }
-@media (prefers-reduced-motion: reduce) { .loader { animation-delay: 4s; } }
+@media (prefers-reduced-motion: reduce) {
+  .loader { animation-delay: 4s; }
+  .ld-seal-spin, .ld-seal-star, .ld-l.in, .ld-go:not([hidden]) { animation: none; }
+}
+/* phones held upright: the seal is smaller and sits lower so it never reaches the button */
+@media (max-aspect-ratio: 3/4) { .ld-seal { width: clamp(84px, 24vw, 120px); } }
 
 /* ---------------------------------------------------------------- turn your phone (src/ui/rotate.js)
    Our red, edge to edge; halftone in a corner; a phone that tips onto its side under a curved arrow;

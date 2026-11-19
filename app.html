@@ -25,27 +25,24 @@
   <!-- fonts load without blocking the first paint (they already use display=swap) -->
   <link id="gfonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800&family=Barlow+Semi+Condensed:wght@500;600;700&family=Permanent+Marker&family=Special+Elite&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800&family=Barlow+Semi+Condensed:wght@500;600;700&family=Permanent+Marker&family=Special+Elite&display=swap"></noscript>
-  <style>.loader{position:fixed;inset:0;z-index:9999;background:#0B0B0B;display:grid;place-items:center}.ld-lock{width:min(56vmin,340px);height:auto}</style>
+  <style>.loader{position:fixed;inset:0;z-index:9999;background:#0B0B0B;display:grid;place-items:center}.ld-seal{position:absolute;width:0;overflow:hidden}.ld-ring{width:.5em;height:.78em}</style>
 </head>
 <body data-screen="boot">
-  <!-- the lock (src/ui/loader.js): on screen from the first paint; its keyhole fills and its pins set as
-       the page loads, then the key turns and the keyhole becomes the doorway into the station -->
+  <!-- the loading screen (src/ui/loader.js): on screen from the first paint. TAKE YOUR NETWORK is the
+       progress bar (each cut-out letter fills with ink as the page loads); at 100% ENTER THE STATION
+       slams in under it, and the hole of the O in NETWORK becomes the doorway into the station -->
   <div class="loader" id="loader">
-    <div class="ld-core" role="progressbar" aria-label="Picking the lock, loading the station" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-      <svg class="ld-lock" viewBox="-115 -115 230 230" aria-hidden="true">
-        <defs><clipPath id="ldClip"><rect id="ldLevel" x="-60" y="44" width="120" height="120" /></clipPath></defs>
-        <path class="ld-mis" transform="translate(9 9)" d="M-80 -100L72 -108L100 -64L92 86L38 108L-70 100L-104 52L-96 -60Z" />
-        <path class="ld-plate" d="M-80 -100L72 -108L100 -64L92 86L38 108L-70 100L-104 52L-96 -60Z" />
-        <g class="ld-pin" data-at="25"><rect class="ld-slot" x="-47" y="-96" width="16" height="34" /><rect class="ld-tumbler" x="-45" y="-78" width="12" height="16" /></g><g class="ld-pin" data-at="50"><rect class="ld-slot" x="-21" y="-96" width="16" height="34" /><rect class="ld-tumbler" x="-19" y="-78" width="12" height="16" /></g><g class="ld-pin" data-at="75"><rect class="ld-slot" x="5" y="-96" width="16" height="34" /><rect class="ld-tumbler" x="7" y="-78" width="12" height="16" /></g><g class="ld-pin" data-at="100"><rect class="ld-slot" x="31" y="-96" width="16" height="34" /><rect class="ld-tumbler" x="33" y="-78" width="12" height="16" /></g>
-        <g class="ld-key">
-          <path class="ld-shell" d="M14.8 3.8L19.5 0.1L23.3 -4.5L26.1 -9.9L27.7 -15.7L27.9 -21.7L26.9 -27.7L24.7 -33.3L21.3 -38.2L16.9 -42.3L11.7 -45.4L6.0 -47.4L-0.0 -48.0L-6.0 -47.4L-11.7 -45.4L-16.9 -42.3L-21.3 -38.2L-24.7 -33.3L-26.9 -27.7L-27.9 -21.7L-27.7 -15.7L-26.1 -9.9L-23.3 -4.5L-19.5 0.1L-14.8 3.8L-22.4 41.6L22.4 41.6Z" />
-          <path class="ld-fill" clip-path="url(#ldClip)" d="M14.8 3.8L19.5 0.1L23.3 -4.5L26.1 -9.9L27.7 -15.7L27.9 -21.7L26.9 -27.7L24.7 -33.3L21.3 -38.2L16.9 -42.3L11.7 -45.4L6.0 -47.4L-0.0 -48.0L-6.0 -47.4L-11.7 -45.4L-16.9 -42.3L-21.3 -38.2L-24.7 -33.3L-26.9 -27.7L-27.9 -21.7L-27.7 -15.7L-26.1 -9.9L-23.3 -4.5L-19.5 0.1L-14.8 3.8L-22.4 41.6L22.4 41.6Z" />
-          <path class="ld-edge" d="M14.8 3.8L19.5 0.1L23.3 -4.5L26.1 -9.9L27.7 -15.7L27.9 -21.7L26.9 -27.7L24.7 -33.3L21.3 -38.2L16.9 -42.3L11.7 -45.4L6.0 -47.4L-0.0 -48.0L-6.0 -47.4L-11.7 -45.4L-16.9 -42.3L-21.3 -38.2L-24.7 -33.3L-26.9 -27.7L-27.9 -21.7L-27.7 -15.7L-26.1 -9.9L-23.3 -4.5L-19.5 0.1L-14.8 3.8L-22.4 41.6L22.4 41.6Z" />
-        </g>
-      </svg>
+    <div class="ld-core" role="progressbar" aria-label="Take your network: loading the station" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <p class="ld-word" aria-hidden="true"><span class="ld-line"><span class="ld-w"><span class="ld-l" style="--r:-6deg;--y:0.02em"><b class="ld-e f0">T</b><b class="ld-i f0 c-white">T</b></span><span class="ld-l" style="--r:5deg;--y:-0.04em"><b class="ld-e f4">A</b><b class="ld-i f4 c-red">A</b></span><span class="ld-l" style="--r:-3deg;--y:0.03em"><b class="ld-e f1">K</b><b class="ld-i f1 c-paper">K</b></span><span class="ld-l" style="--r:7deg;--y:-0.02em"><b class="ld-e f3">E</b><b class="ld-i f3 c-black">E</b></span></span><span class="ld-w"><span class="ld-l" style="--r:-8deg;--y:0.04em"><b class="ld-e f2">Y</b><b class="ld-i f2 c-white">Y</b></span><span class="ld-l" style="--r:4deg;--y:-0.03em"><b class="ld-e f0">O</b><b class="ld-i f0 c-paper">O</b></span><span class="ld-l" style="--r:-5deg;--y:0.02em"><b class="ld-e f4">U</b><b class="ld-i f4 c-black">U</b></span><span class="ld-l" style="--r:8deg;--y:-0.04em"><b class="ld-e f1">R</b><b class="ld-i f1 c-red">R</b></span></span></span><span class="ld-line"><span class="ld-w"><span class="ld-l" style="--r:-4deg;--y:0.03em"><b class="ld-e f4">N</b><b class="ld-i f4 c-white">N</b></span><span class="ld-l" style="--r:6deg;--y:-0.03em"><b class="ld-e f0">E</b><b class="ld-i f0 c-red">E</b></span><span class="ld-l" style="--r:-7deg;--y:0.02em"><b class="ld-e f3">T</b><b class="ld-i f3 c-paper">T</b></span><span class="ld-l" style="--r:3deg;--y:-0.04em"><b class="ld-e f1">W</b><b class="ld-i f1 c-black">W</b></span><span class="ld-l ld-o" style="--r:-5deg;--y:0.03em" data-r="-5"><b class="ld-e"><svg class="ld-ring" viewBox="0 0 60 80" aria-hidden="true"><ellipse cx="30" cy="40" rx="21" ry="28"/></svg></b><b class="ld-i c-paper"><svg class="ld-ring" viewBox="0 0 60 80" aria-hidden="true"><ellipse cx="30" cy="40" rx="21" ry="28"/></svg></b></span><span class="ld-l" style="--r:7deg;--y:-0.02em"><b class="ld-e f2">R</b><b class="ld-i f2 c-white">R</b></span><span class="ld-l" style="--r:-3deg;--y:0.04em"><b class="ld-e f0">K</b><b class="ld-i f0 c-red">K</b></span></span></span></p>
       <p class="ld-pct" aria-hidden="true"><b id="ldNum">0</b><i>%</i></p>
     </div>
-    <button class="ld-go" type="button"><span class="ld-go-wait">TAP TO PICK THE LOCK</span><span class="ld-go-busy">PICKING THE LOCK</span></button>
+    <button class="ld-go" type="button" hidden>ENTER THE STATION <span aria-hidden="true">▸</span></button>
+    <div class="ld-seal" aria-hidden="true"><svg viewBox="-100 -100 200 200">
+        <defs><path id="ldSealPath" d="M0,-78 a78,78 0 1,1 -0.01,0"/></defs>
+        <circle class="ld-seal-rim" r="96"/><circle class="ld-seal-in" r="62"/>
+        <g class="ld-seal-spin"><text class="ld-seal-txt"><textPath href="#ldSealPath" textLength="486" lengthAdjust="spacing">RESUMES DON'T HAVE TO BE BORING ★ BUILT BY DIRECTING A CREW OF AI AGENTS ★ </textPath></text></g>
+        <polygon class="ld-seal-mis" points="6.0,-44.0 18.3,-11.0 53.6,-9.5 26.0,12.5 35.4,46.5 6.0,27.0 -23.4,46.5 -14.0,12.5 -41.6,-9.5 -6.3,-11.0"/><polygon class="ld-seal-star" points="0.0,-50.0 12.3,-17.0 47.6,-15.5 20.0,6.5 29.4,40.5 0.0,21.0 -29.4,40.5 -20.0,6.5 -47.6,-15.5 -12.3,-17.0"/>
+      </svg></div>
   </div>
   <a class="skip-link" href="#/quick">Skip to the one-page resume</a>
 
