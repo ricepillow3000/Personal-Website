@@ -211,10 +211,13 @@ function p5Layer() {
 </svg>`;
 }
 
-/* The round tower's red LED screens are one moving billboard (Nov 19, John: "my name or star
-   moving from screen to screen"): JOHN NGUYEN ★ in LED dots travels across one ring, then the next (it narrows toward the edges as the screen curves away), on a loop. The outline and path
-   were measured on the art (1600x679 space; every art size has the same shape), and the layer
-   is fitted with the art's own object-fit math so it stays glued to the screen. */
+/* The round tower's red LED screens are moving billboards: JOHN NGUYEN ★ crawls across the middle
+   ring (Nov 19, John: "my name or star moving from screen to screen"), and the ring above it reads
+   TAKE YOUR NETWORK (Nov 19, John: "traverses from one side of the red screen to the other and
+   loops"). LED dots, narrowing toward the edges as the screen curves away. The outlines and paths
+   were measured on the art (1600x679 space; every art size has the same shape), and the layer is
+   fitted with the art's own object-fit math so it stays glued to the screen. The bottom ring stays
+   a plain red screen (it sits behind THE PLAN's big button on most screens). */
 const BB_RINGS = [
   ['top', 'M700.3 225.0 L701.0 221.1 L702.3 217.1 L704.0 213.3 L706.2 209.5 L708.9 205.8 L712.1 202.2 L715.7 198.8 L719.7 195.5 L724.1 192.4 L728.9 189.4 L734.1 186.6 L739.6 184.1 L745.4 181.7 L751.5 179.6 L757.8 177.8 L764.4 176.2 L771.2 174.8 L778.1 173.7 L785.1 172.9 L792.2 172.3 L799.4 172.0 L806.6 172.0 L813.8 172.3 L820.9 172.9 L827.9 173.7 L834.8 174.8 L841.6 176.2 L848.2 177.8 L854.5 179.6 L860.6 181.7 L866.4 184.1 L871.9 186.6 L877.1 189.4 L881.9 192.4 L886.3 195.5 L890.3 198.8 L893.9 202.2 L897.1 205.8 L899.8 209.5 L902.0 213.3 L903.7 217.1 L905.0 221.1 L905.7 225.0 L905.7 260.6 L905.0 257.2 L903.7 253.8 L902.0 250.5 L899.8 247.2 L897.1 244.1 L893.9 241.0 L890.3 238.0 L886.3 235.2 L881.9 232.5 L877.1 230.0 L871.9 227.6 L866.4 225.4 L860.6 223.4 L854.5 221.6 L848.2 220.0 L841.6 218.6 L834.8 217.4 L827.9 216.5 L820.9 215.7 L813.8 215.3 L806.6 215.0 L799.4 215.0 L792.2 215.3 L785.1 215.7 L778.1 216.5 L771.2 217.4 L764.4 218.6 L757.8 220.0 L751.5 221.6 L745.4 223.4 L739.6 225.4 L734.1 227.6 L728.9 230.0 L724.1 232.5 L719.7 235.2 L715.7 238.0 L712.1 241.0 L708.9 244.1 L706.2 247.2 L704.0 250.5 L702.3 253.8 L701.0 257.2 L700.3 260.6 Z'],
   ['middle', 'M692.3 327.9 L693.1 324.7 L694.4 321.6 L696.3 318.6 L698.7 315.6 L701.6 312.7 L705.0 309.9 L708.9 307.2 L713.2 304.5 L718.0 302.1 L723.2 299.7 L728.7 297.6 L734.7 295.5 L740.9 293.7 L747.5 292.0 L754.3 290.6 L761.4 289.3 L768.7 288.2 L776.1 287.3 L783.7 286.7 L791.4 286.2 L799.1 286.0 L806.9 286.0 L814.6 286.2 L822.3 286.7 L829.9 287.3 L837.3 288.2 L844.6 289.3 L851.7 290.6 L858.5 292.0 L865.1 293.7 L871.3 295.5 L877.3 297.6 L882.8 299.7 L888.0 302.1 L892.8 304.5 L897.1 307.2 L901.0 309.9 L904.4 312.7 L907.3 315.6 L909.7 318.6 L911.6 321.6 L912.9 324.7 L913.7 327.9 L913.7 371.4 L912.9 368.9 L911.6 366.3 L909.7 363.8 L907.3 361.3 L904.4 359.0 L901.0 356.6 L897.1 354.4 L892.8 352.3 L888.0 350.2 L882.8 348.3 L877.3 346.5 L871.3 344.8 L865.1 343.3 L858.5 342.0 L851.7 340.7 L844.6 339.7 L837.3 338.8 L829.9 338.1 L822.3 337.6 L814.6 337.2 L806.9 337.0 L799.1 337.0 L791.4 337.2 L783.7 337.6 L776.1 338.1 L768.7 338.8 L761.4 339.7 L754.3 340.7 L747.5 342.0 L740.9 343.3 L734.7 344.8 L728.7 346.5 L723.2 348.3 L718.0 350.2 L713.2 352.3 L708.9 354.4 L705.0 356.6 L701.6 359.0 L698.7 361.3 L696.3 363.8 L694.4 366.3 L693.1 368.9 L692.3 371.4 Z'],
@@ -226,13 +229,19 @@ const BB_GEO = {
   middle: { cx: 803, R: 111, t0: 286, ta: 45, b0: 337, ba: 37 },
   bottom: { cx: 803.5, R: 122.5, t0: 463, ta: 21.6, b0: 528, ba: 10.8 },
 };
-const BB_ORDER = ['top', 'middle', 'bottom'];
-const BB_TEXT = [...'JOHN NGUYEN', '★']; // the star is drawn as a shape, the rest is LED type
+/* what each ring says (the star is drawn as a shape, the rest is LED type), and how much of the
+   ring's height the type fills: the longer line is a little smaller so it fits the screen's face */
+const BB_TEXT = {
+  top: { text: [...'TAKE YOUR NETWORK'], fill: 0.45, offset: 0.45 }, // offset: its loop runs out of step with the name's
+  middle: { text: [...'JOHN NGUYEN', '★'], fill: 0.66, offset: 0 },
+};
+const BB_ORDER = Object.keys(BB_TEXT);
+const bbSize = (n) => (BB_GEO[n].b0 - BB_GEO[n].t0) * BB_TEXT[n].fill;
+const RINGS_USED = BB_RINGS.filter(([n]) => BB_TEXT[n]);
 function billboardLayer() {
   const letters = (n) => {
-    const g = BB_GEO[n];
-    const size = (g.b0 - g.t0) * 0.66; // type fills about two thirds of the ring's height
-    return BB_TEXT.map((ch) => (ch === '★'
+    const size = bbSize(n);
+    return BB_TEXT[n].text.map((ch) => (ch === '★'
       ? `<g class="bb-ch" data-w="1.05">${poly(star(0, 0, size * 0.48, 0.42, 5, -90), '#FFFFFF')}</g>`
       : `<g class="bb-ch" data-w="${ch === ' ' ? 0.42 : /[IJ]/.test(ch) ? 0.5 : /[MW]/.test(ch) ? 0.92 : 0.66}"><text font-size="${size.toFixed(1)}" text-anchor="middle" dominant-baseline="central">${ch === ' ' ? '' : ch}</text></g>`)).join('');
   };
@@ -241,27 +250,29 @@ function billboardLayer() {
     <pattern id="bbLed" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle cx="1.6" cy="1.6" r="1.4" fill="#fff"/></pattern>
     <mask id="bbDots" maskUnits="userSpaceOnUse" x="560" y="120" width="500" height="460"><rect x="560" y="120" width="500" height="460" fill="url(#bbLed)"/></mask>
     <filter id="bbGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    ${BB_RINGS.map(([n, d]) => `<clipPath id="bbRing-${n}"><path d="${d}"/></clipPath>`).join('')}
+    ${RINGS_USED.map(([n, d]) => `<clipPath id="bbRing-${n}"><path d="${d}"/></clipPath>`).join('')}
   </defs>
-  ${BB_RINGS.map(([n]) => `<g clip-path="url(#bbRing-${n})"><g filter="url(#bbGlow)"><g mask="url(#bbDots)"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></g></g></g>`).join('')}
+  ${RINGS_USED.map(([n]) => `<g clip-path="url(#bbRing-${n})"><g filter="url(#bbGlow)"><g mask="url(#bbDots)"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></g></g></g>`).join('')}
 </svg>`;
 }
 
-/* The ticker: JOHN NGUYEN ★ scrolls right to left across one ring, wrapping round the drum (each
-   letter sits at its own angle: x = cx + R sin θ, squashed by cos θ, riding the ring's curved
-   middle), then moves on to the next ring: top, middle, bottom, again. Runs only while the city is
-   on screen; with reduced motion the name rests in the middle of the middle ring. */
+/* The tickers: each ring's line scrolls right to left across its screen, wrapping round the drum
+   (each letter sits at its own angle: x = cx + R sin θ, squashed by cos θ, riding the ring's curved
+   middle), leaves at the left edge and comes back in from the right, on a loop. Both rings run at
+   the same calm speed, out of step. Runs only while the city is on screen; with reduced motion
+   each line rests in the middle of its ring. */
 function startTicker(svg) {
+  const SPEED = 0.95; // radians a second: a calm billboard crawl
+  const EDGE = 1.75; // starts/ends just past the visible edge (~100 degrees)
   const rings = BB_ORDER.map((n) => {
     const g = BB_GEO[n];
-    const size = (g.b0 - g.t0) * 0.66;
+    const size = bbSize(n);
     const chars = [...svg.querySelectorAll(`.bb-${n} .bb-ch`)];
     const widths = chars.map((c) => (Number(c.dataset.w) * size) / g.R); // each letter's width, as an angle
     const total = widths.reduce((a, w) => a + w, 0);
-    return { g, chars, widths, total };
+    const pass = (2 * EDGE + total) / SPEED; // one crossing, edge to edge
+    return { g, chars, widths, total, pass, offset: BB_TEXT[n].offset * pass };
   });
-  const SPEED = 0.95; // radians a second: a calm billboard crawl
-  const EDGE = 1.75; // starts/ends just past the visible edge (~100 degrees)
   const place = (ring, lead) => {
     let th = lead;
     ring.chars.forEach((c, i) => {
@@ -276,24 +287,16 @@ function startTicker(svg) {
       c.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${cos.toFixed(3)} 1)`);
     });
   };
-  const hideAll = (except) => rings.forEach((r) => r !== except && r.chars.forEach((c) => c.style.visibility = 'hidden'));
   const reduce = () => document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const passTime = rings.map((r) => (2 * EDGE + r.total) / SPEED);
-  const cycle = passTime.reduce((a, b) => a + b, 0);
-  let t0 = performance.now();
+  const t0 = performance.now();
   const frame = (now) => {
     requestAnimationFrame(frame);
     if (document.body.dataset.mode === 'title') return; // the city isn't shown on the title
-    if (reduce()) {
-      hideAll(rings[1]);
-      place(rings[1], -rings[1].total / 2);
-      return;
-    }
-    let t = (((now - t0) / 1000) % cycle);
-    let k = 0;
-    while (t > passTime[k]) { t -= passTime[k]; k++; }
-    hideAll(rings[k]);
-    place(rings[k], EDGE - t * SPEED); // the first letter enters at the right edge and travels left
+    const still = reduce();
+    rings.forEach((r) => {
+      if (still) place(r, -r.total / 2);
+      else place(r, EDGE - ((((now - t0) / 1000 + r.offset) % r.pass) * SPEED)); // enters at the right, travels left
+    });
   };
   requestAnimationFrame(frame);
 }
