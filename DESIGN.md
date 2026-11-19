@@ -184,7 +184,14 @@ From John's research notes (kept verbatim in spirit):
 ## 8. Sound
 
 - **Off by default.** Speaker icon + a gentle "sound?" hint. Browsers block audio until a gesture; music resumes on the first click if it was on last visit.
-- All sound is synthesized live (Web Audio), no audio files.
+- **Real recordings only where they beat the synth (Nov 18, John: "switch to real sounds", inspired by a sound-picking workflow: find free licensed sounds, then let an AI listen and throw out anything fake).** The process, in this order:
+  1. **Search free, openly licensed libraries.** Openverse (WordPress's open media search) first. From this cloud machine Freesound answers 403 and Wikimedia rate-limits the shared address (429), so the usable source was OpenGameArt. Keep **CC0, CC BY, OGA-BY and CC BY-SA** only (never NC, ND or GPL), with author, page and license recorded for every file.
+  2. **Measure** every candidate (clipping, noise floor, bandwidth, event length) and drop the broken ones.
+  3. **Ears check, alone:** Gemini listens to each clip with a one-line brief of the moment and returns what it heard, fit, realism, problems and pass/fail. **One listen is noisy** (a train window scored 10/10 once and 4/10 averaged), so a clip passes only on the **average of 3 listens**.
+  4. **Ears check, against the synth:** each voice is rendered alone, synth vs recording, and judged blind A/B **5 times**. The recording stays only if it wins the majority. (The paper tear scored 10/10 alone but lost 0/5 to the synth's single continuous rip.)
+  5. Cut gently (keep a one-shot's natural tail: trimming the ring cost the metal clang its pass), fade, normalize, mono MP3. Store where the moment sits in the clip (`CLIP_HIT`) so it lands on the exact frame. Match levels to the synth voice by offline renders (within ~3 dB). Peaks under 1.0 everywhere.
+  - **Result:** 5 clips, 64 KB, downloaded only when sound is turned on (a test guards that nothing loads before): the whoosh, the whip wind-up, Quick View's paper slide, the sticker slap and the CLEARED stamp's slap + metal clang (rubberduck and artisticdude, CC0), the car on the city billboard (Gregor Quendel, CC BY-SA 4.0). Everything else stays synthesized because the recordings lost or none was reachable: the train (no free subway recording passed), the wind, glass, paper tear, folder slap, whip crack, neon buzz, CRT, UI and fanfares. The synthesized voices remain as fallbacks while clips load.
+  - **Credits:** `src/data/credits.js`, shown on SETTINGS ("SOUND CREDITS"), plus `public/assets/sfx/CREDITS.txt`. CC BY-SA clips say they are modified and shared under the same license.
 - **Music:** original "Neon Rain" style theme: ethereal, jazzy, Persona-5-ish (electric piano, walking bass, swung ride, airy flute, bells, reverb). Never a copy of game music.
 - **SFX must not sound like the music's drums** (they used to clash with the beat). Hover/click voices are distinct from the track.
 - Every section type has its **own hover voice**, arcade and cartoony (cases "bip-BOP", person "boing", quests "do-mi-sol", calling card paper flick, rows tiny tick).

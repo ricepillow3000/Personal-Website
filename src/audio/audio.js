@@ -1,7 +1,10 @@
 import { store } from '../core/store.js';
 
 /* Sound engine. Off by default; the AudioContext is created on the first
-   click that turns sound on (browser autoplay rules). Every sound is synthesized here. */
+   click that turns sound on (browser autoplay rules). The realistic foley (train, wind, street,
+   glass, paper, impacts) is real recordings (CC0 / CC BY / CC BY-SA, credits in
+   src/data/credits.js and on SETTINGS), each picked by an ears check; game sounds (UI blips,
+   fanfares) and the few moments no recording passed (whip, neon buzz, CRT, horn) are synthesized. */
 
 let ac = null;
 let master = null;
@@ -59,7 +62,69 @@ function ensure() {
     last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
     bd[i] = last * 3.5;
   }
+  loadClips();
   return ac;
+}
+
+/* ---------- real recordings ----------
+   Fetched only once sound is on (5 clips, ~64 KB, mono MP3). Each entry is where its moment (the pass, the
+   crack, the hit) sits inside the clip, in seconds, so it can land on the exact frame. Until a clip
+   has loaded (or if it fails), its voice plays the synthesized version instead. */
+const CLIP_HIT = {
+  'whoosh-b': 0.04,
+  'paper-slide': 0.23,
+  'hit-slap': 0.1,
+  'metal-clang': 0.01,
+  'car-pass': 1.77,
+};
+const clips = {};
+let clipsReady = null;
+function loadClips() {
+  if (clipsReady || !ac) return clipsReady;
+  const decode = (b) => new Promise((res, rej) => ac.decodeAudioData(b, res, rej)); // callback form: older Safari
+  clipsReady = Promise.all(Object.keys(CLIP_HIT).map((name) => fetch(`assets/sfx/${name}.mp3`)
+    .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))))
+    .then(decode)
+    .then((buf) => { clips[name] = buf; })
+    .catch(() => {})));
+  return clipsReady;
+}
+/** For tests and offline renders: resolves once every recording has loaded (or failed). */
+export const soundsReady = () => (ensure() ? loadClips() : Promise.resolve());
+
+/** Play a recording. align: its moment lands at `at` (else it starts at `at`). env: [[t, gain]...]
+    gain ramps over its own time (seconds from its start). Returns false if it isn't loaded. */
+function clip(bus, name, at, { gain = 1, rate = 1, lowpass = 0, highpass = 0, align = true, env = null, rateTo = 0, side = 0 } = {}) {
+  const buf = clips[name];
+  if (!buf) return false;
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const start = align ? at - CLIP_HIT[name] / rate : at;
+  src.playbackRate.setValueAtTime(rate, Math.max(start, ac.currentTime));
+  if (rateTo) src.playbackRate.linearRampToValueAtTime(rateTo, start + buf.duration / ((rate + rateTo) / 2));
+  let node = src;
+  const filt = (type, f) => {
+    const b = ac.createBiquadFilter();
+    b.type = type;
+    b.frequency.value = f;
+    node.connect(b);
+    node = b;
+  };
+  if (lowpass) filt('lowpass', lowpass);
+  if (highpass) filt('highpass', highpass);
+  const g = ac.createGain();
+  if (env) {
+    g.gain.setValueAtTime(env[0][1] * gain, Math.max(start, 0));
+    env.slice(1).forEach(([t, v]) => g.gain.linearRampToValueAtTime(v * gain, start + t));
+  } else {
+    g.gain.value = gain;
+  }
+  node.connect(g).connect(side ? pan(bus, side) : bus);
+  const now = ac.currentTime;
+  if (start >= now) src.start(start);
+  else if (now - start < buf.duration / rate) src.start(now, (now - start) * rate);
+  else return true;
+  return true;
 }
 
 
@@ -753,6 +818,36 @@ const VOICES = {
     stamp/zip/thunk/sparkle/paper/rip/whip/fanfare/treasure.
     `arg` is seconds of ripping for rip/tear, or the volume (0-1) for thwack. */
 const live = new Set();
+/* Real recordings only where one passed BOTH ears checks (DESIGN.md "Sound"): alone (3 listens,
+   averaged) and against the synthesized voice in a blind A/B (5 rounds, majority): the whoosh, the
+   whip wind-up, Quick View's paper slide, the sticker slap, the CLEARED stamp's clang + slap, the car
+   on the city billboard. Everything else (train, wind, glass, paper tear, folder slap, whip crack,
+   neon buzz, CRT, UI, fanfares) stays synthesized: the recordings lost or none was reachable. The code-made versions stay as
+   SYNTH fallbacks until a clip has loaded. Levels were matched to them by offline renders. */
+const SYNTH = { ...VOICES };
+Object.assign(VOICES, {
+  whoosh: (bus, at, v = 1) => clip(bus, 'whoosh-b', at + 0.06, { gain: 0.6 * v, align: false }) || SYNTH.whoosh(bus, at, v),
+  whipWind: (bus, at) => (clip(bus, 'whoosh-b', at, { gain: 0.35, align: false, rate: 0.85 }) && clip(bus, 'whoosh-b', at + 0.13, { gain: 0.45, align: false, rate: 1.1 })) || SYNTH.whipWind(bus, at),
+  paper: (bus, at) => clip(bus, 'paper-slide', at, { gain: 0.35, align: false }) || SYNTH.paper(bus, at), // Quick View's sheet slides up
+  flip: (bus, at) => SYNTH.paper(bus, at), // the case file's cover swings open (the recording lost its A/B)
+  thunk: (bus, at) => clip(bus, 'hit-slap', at, { gain: 0.35, rate: 1.4 }) || SYNTH.thunk(bus, at),
+  /* CLEARED: the real metal clang + folder slap on the frame of impact, the synth sub drop under it,
+     then the victory sting (a game sound, so it stays synthesized) */
+  stamp: (bus, at) => {
+    if (!clips['metal-clang']) return SYNTH.stamp(bus, at);
+    clip(bus, 'metal-clang', at, { gain: 0.6 });
+    clip(bus, 'hit-slap', at, { gain: 0.75 });
+    tone(bus, { at, dur: 0.7, from: 95, to: 28, type: 'sine', gain: 0.8 });
+    [784, 1047, 1319].forEach((f, i) => tone(bus, { at: at + 0.14 + i * 0.05, dur: 0.1, from: f, to: f, type: 'triangle', gain: 0.22 }));
+    tone(bus, { at: at + 0.29, dur: 0.46, from: 1568, to: 1568, type: 'triangle', gain: 0.2 });
+  },
+  /* the city billboard: a real car rushes past under the light trails, a horn far off */
+  city: (bus, at) => {
+    if (!clip(bus, 'car-pass', at + 0.32, { gain: 0.2, side: 0.25 })) return SYNTH.city(bus, at);
+    carHorn(pan(bus, -0.4), at + 0.12, 0.16, [392, 494], 0.04);
+  },
+});
+
 export function sfx(name, arg) {
   if (!enabled() || !ensure()) return;
   if (ac.state === 'suspended') ac.resume();

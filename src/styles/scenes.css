@@ -207,3 +207,8 @@
 .page-sub { text-wrap: pretty; }
 /* the email keeps its real lowercase letters (the button font only has capitals) */
 .contact-btns a[href^="mailto:"] { font-family: var(--f-body); font-weight: 700; letter-spacing: .2px; text-transform: none; }
+/* SETTINGS: sound credits (small print, still readable) */
+.sys-credits p { margin: 0 0 8px; font-weight: 600; }
+.sys-credits ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
+.sys-credits a { color: var(--black); text-decoration-color: var(--red); text-underline-offset: 2px; }
+.sys-credits a:hover, .sys-credits a:focus-visible { background: var(--yellow); }
