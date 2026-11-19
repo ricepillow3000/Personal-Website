@@ -28,10 +28,9 @@ let root = null;
 let opts = null;
 let lastPointer = 'mouse';
 
-/* the pile (Nov 19, John: "not in order... stacking onto each other, like the reference"): each slip has
-   its own tilt and sideways offset, and each overlaps the bottom of the one above it */
-const PILE = [[-1.2, 0], [1.1, 3.4], [-1.9, 1.2], [0.7, 4.8], [-1.4, 2.2], [1.2, 5.6]];
-const pile = (i) => `--i:${i};--tilt:${PILE[i % PILE.length][0]}deg;--dx:${PILE[i % PILE.length][1]}vw`;
+/* the stack (Nov 19, John: "stacked... the other cards peeking out... hovering, the rest moves to make
+   room"): saves.css lays every card over the lower part of the one above */
+const pile = (i) => `--i:${i}`; // (the stack's shape lives in saves.css: overlap, size and offset by --i)
 function slip(s, i) {
   const no = `<span class="sv-no" aria-hidden="true"><small>No.</small>${i + 1}</span>`;
   if (!s) {

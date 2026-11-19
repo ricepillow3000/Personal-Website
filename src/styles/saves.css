@@ -2,7 +2,7 @@
    Black; a tall red band on the left with a black notched edge (a film strip); SAVE DATA in cut type;
    the files as slanted paper slips fanned down the screen; the picked one a big red slab. Flat, hard
    edges, ink outlines, no soft gradients. */
-.sv { position: fixed; inset: 0; z-index: 80; overflow: hidden; background: var(--black); color: var(--white); }
+.sv { position: fixed; inset: 0; z-index: 80; overflow: clip; /* (clip, not hidden: the stack runs off the edge, and focusing a card must never scroll the screen sideways) */ background: var(--black); color: var(--white); }
 .sv[hidden] { display: none; }
 body.sv-open { overflow: hidden; }
 
@@ -23,26 +23,33 @@ body.sv-open { overflow: hidden; }
   filter: drop-shadow(.05em 0 0 var(--black)) drop-shadow(-.05em 0 0 var(--black)) drop-shadow(0 .05em 0 var(--black)) drop-shadow(0 -.05em 0 var(--black)) drop-shadow(.07em .07em 0 var(--black)); }
 .sv-title .ct.box { background: var(--black); color: var(--white); }
 .sv-title .ct:first-child { background: var(--white); color: var(--red); padding: 0 .06em; }
-.sv-sub { position: absolute; z-index: 3; right: 4vw; top: max(26px, 6vh); margin: 0; padding: 4px 12px; background: var(--black); border: 2px solid var(--white);
+.sv-sub { position: absolute; z-index: 3; right: 4vw; bottom: max(18px, 4vh); margin: 0; padding: 4px 12px; background: var(--black); border: 2px solid var(--white);
   font-family: var(--f-body); font-weight: 700; font-size: clamp(14px, 1.4vw, 18px); rotate: -4deg; box-shadow: 4px 4px 0 var(--red); }
 
 /* the files: slanted paper slips, fanned (each a little further right and lower) */
-.sv-list { position: absolute; z-index: 2; left: max(16vw, 120px); right: 5vw; top: clamp(130px, 21vh, 220px); margin: 0; padding: 0; list-style: none;
-  display: grid; gap: 0; rotate: -6deg; transform-origin: left top; }
-.sv-li { position: relative; margin-left: var(--dx, 0); rotate: var(--tilt, 0deg); filter: drop-shadow(7px 7px 0 var(--black)); }
-/* a pile, not a list: each slip overlaps the bottom of the one above it (later ones lie on top) */
-.sv-li + .sv-li { margin-top: calc(-1 * clamp(4px, 1.3vh, 13px)); }
-.sv-slot { position: relative; width: 100%; display: grid; grid-template-columns: auto auto 1fr auto auto; align-items: center; gap: clamp(10px, 1.8vw, 26px);
-  min-height: clamp(52px, 12vh, 108px); padding: 0 clamp(30px, 4vw, 64px) 0 0; border: 0; text-align: left; cursor: pointer;
+/* the stack (Nov 19, John's save-screen reference: "stacked, but you can still see the other cards peeking
+   out; hovering a card, the rest of the stack moves to make room"): every card lies on the one above and
+   covers its lower part (--ov), so only its peek row shows; lower cards are a little bigger and further
+   left (the pile's perspective), all on one tilt, running off the right edge. The picked card opens its
+   details row, which pushes the cards below it down; they slide back when it closes. */
+.sv-list { --ov: clamp(14px, 2.8vh, 26px); position: absolute; z-index: 2; left: max(15vw, 110px); right: -10vw; top: clamp(130px, 22vh, 230px); margin: 0; padding: 0; list-style: none;
+  display: grid; gap: 0; rotate: -6deg; transform-origin: left top;
+  --off: 10vw; --er: calc(var(--off) + 34px); --erw: 110px; } /* (ERASE's spot from the card's right end, and the room kept for it) */
+.sv-li { position: relative; margin-left: calc(var(--i) * -.8vw); zoom: calc(1 + var(--i) * .035); filter: drop-shadow(6px 6px 0 var(--black)); }
+.sv-li + .sv-li { margin-top: calc(-1 * var(--ov)); transition: margin-top .26s cubic-bezier(.2, 1.1, .3, 1); }
+/* the card under the picked one steps out from under it, so its own peek row stays whole */
+.sv-li:has(.sv-slot.on) + .sv-li { margin-top: calc(var(--ov) * .25); }
+.sv-slot { position: relative; width: 100%; display: grid; grid-template-columns: auto auto 1fr auto; grid-template-rows: minmax(clamp(44px, 7.2vh, 74px), auto) 0fr;
+  align-items: center; column-gap: clamp(10px, 1.8vw, 26px); padding: 0 calc(var(--off) + clamp(24px, 3vw, 48px)) var(--ov) 0; border: 0; /* (the card runs off the edge; its words stop on screen) */ text-align: left; cursor: pointer;
   background: var(--white); color: var(--black); clip-path: polygon(0 0, 100% 0, calc(100% - 26px) 100%, 0 100%);
-  font-family: var(--f-body); transition: transform .14s var(--ease-pop), background .08s steps(1); }
+  font-family: var(--f-body); transition: grid-template-rows .26s cubic-bezier(.2, 1.1, .3, 1), transform .14s var(--ease-pop), background .08s steps(1); }
+.sv-slot.on { grid-template-rows: minmax(clamp(44px, 7.2vh, 74px), auto) 1fr; }
 .sv-slot:focus-visible { outline: none; }
-.sv-list.has-on .sv-slot:not(.on) { transform: scale(.96); transform-origin: left center; }
-.sv-slot.on { background: var(--red); color: var(--white); transform: scale(1.06); transform-origin: left center; z-index: 3; }
+.sv-slot.on { background: var(--red); color: var(--white); transform: scale(1.04); transform-origin: left center; z-index: 3; }
 .sv-li:has(.sv-slot.on) { z-index: 3; filter: drop-shadow(9px 9px 0 var(--black)); }
 
 /* the file number on a black tab */
-.sv-no { align-self: stretch; display: flex; align-items: flex-end; gap: 2px; padding: 0 .4em .12em .5em; background: var(--black); color: var(--white);
+.sv-no { grid-row: 1; align-self: stretch; display: flex; align-items: flex-end; gap: 2px; padding: 0 .4em .12em .5em; background: var(--black); color: var(--white);
   font-family: var(--f-head); font-size: clamp(30px, 4.6vh, 50px); line-height: 1; clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%); }
 .sv-no small { font-family: var(--f-serif); font-style: italic; font-weight: 900; font-size: .42em; margin-bottom: .3em; }
 .sv-slot.on .sv-no { background: var(--white); color: var(--black); }
@@ -66,9 +73,10 @@ body.sv-open { overflow: hidden; }
 .sv-lv b { font-weight: 400; font-size: clamp(28px, 5vh, 52px); }
 .sv-lv i { font-style: normal; font-size: clamp(16px, 2.6vh, 26px); }
 
-/* only the picked slip says what it will do (and its play time) */
-.sv-more { display: none; align-items: center; gap: 16px; }
-.sv-slot.on .sv-more { display: flex; }
+/* the details row: shut on every card but the picked one (its row grows from 0, pushing the stack) */
+.sv-more { grid-column: 1 / -1; grid-row: 2; align-self: stretch; min-height: 0; overflow: hidden; display: flex; align-items: center; justify-content: flex-end; gap: 16px;
+  padding-right: calc(var(--er) + var(--erw)); } /* (CONTINUE always ends left of ERASE) */
+.sv-slot.on .sv-more { padding-top: 4px; padding-bottom: 4px; }
 .sv-time { display: flex; align-items: baseline; gap: 6px; line-height: 1; font-family: var(--f-head); }
 .sv-time small { font: 400 clamp(11px, 1.6vh, 14px)/1 var(--f-menu); letter-spacing: 1px; color: var(--white); padding: 2px 4px 1px; background: var(--black); white-space: nowrap; }
 .sv-time b { font-weight: 400; font-size: clamp(22px, 3.8vh, 40px); }
@@ -119,7 +127,7 @@ body.sv-open { overflow: hidden; }
 .sv-sub.sv-full { background: var(--red); border-color: var(--white); box-shadow: 4px 4px 0 var(--black); }
 
 /* ERASE: on the picked file only; asks once */
-.sv-erase { position: absolute; z-index: 4; right: clamp(54px, 6vw, 92px); bottom: 7px; display: none; border: 0; cursor: pointer;
+.sv-erase { position: absolute; z-index: 4; right: var(--er); bottom: calc(var(--ov) + 8px); display: none; border: 0; cursor: pointer;
   font: 400 15px/1 var(--f-menu); letter-spacing: 2px; padding: 5px 10px 3px; background: var(--black); color: var(--white); box-shadow: 3px 3px 0 var(--white); }
 .sv-li:has(.sv-slot.on) .sv-erase { display: block; }
 .sv-erase.armed { background: var(--yellow); color: var(--black); box-shadow: 3px 3px 0 var(--black); }
@@ -134,50 +142,51 @@ body.sv-open { overflow: hidden; }
 .sv-key-ok { cursor: default; }
 @media (pointer: coarse) { .sv-key kbd, .sv-key-ok { display: none; } } /* (no keyboard on a phone: just BACK) */
 
-/* phones held upright: the slips go full width, the band narrows, less tilt */
+/* phones held upright: the stack goes full width, less tilt; each peek row holds the date over the place */
 @media (max-width: 760px) {
   .sv-band { width: 26vw; left: -14vw; }
   .sv-title { top: max(18px, 3vh); font-size: clamp(34px, 11vw, 52px); }
   .sv-sub { left: var(--gutter); right: var(--gutter); top: 74px; bottom: auto; font-size: 12px; padding: 3px 8px; rotate: -3deg; }
-  .sv-list { left: 8px; right: 12px; top: 136px; rotate: -4deg; }
+  .sv-list { --ov: 14px; left: 6px; right: -14px; top: 136px; rotate: -5deg; --off: 0px; }
   .sv-stripes i:nth-child(n+2) { display: none; }
-  .sv-li { margin-left: calc(var(--dx, 0) * .4); }
-  .sv-li + .sv-li { margin-top: -5px; }
-  .sv-slot { grid-template-columns: auto 1fr auto; padding-right: 24px; gap: 4px 10px; min-height: clamp(62px, 9.4vh, 96px); }
-  .sv-clear .sv-hint { grid-column: 2; grid-row: 2; margin-bottom: 8px; }
+  .sv-li { margin-left: calc(var(--i) * -.6vw); zoom: calc(1 + var(--i) * .02); }
+  .sv-slot { grid-template-columns: auto 1fr auto; grid-template-rows: auto auto 0fr; padding-right: 30px; column-gap: 10px; }
+  .sv-slot.on { grid-template-rows: auto auto 1fr; }
   .sv-no { grid-row: 1 / span 2; font-size: 30px; }
   .sv-date { grid-column: 2; grid-row: 1; padding-top: 8px; }
-  .sv-date b { font-size: clamp(30px, 4.4vh, 40px); }
-  .sv-place { grid-column: 2; grid-row: 2; text-align: left; font-size: 13px; padding-bottom: 8px; }
+  .sv-date b { font-size: clamp(28px, 4.2vh, 38px); }
+  .sv-place { grid-column: 2; grid-row: 2; justify-items: start; gap: 4px; text-align: left; font-size: 13px; padding-bottom: 6px; }
+  .sv-pips i { width: 9px; height: 7px; border-width: 1.5px; }
   .sv-lv { grid-column: 3; grid-row: 1 / span 2; }
   .sv-lv small { display: none; }
-  .sv-new { grid-column: 2; font-size: 26px; }
-  .sv-hint { grid-column: 3; }
-  .sv-slot.on .sv-more { grid-column: 2 / span 2; grid-row: 3; margin: 0 0 10px; gap: 10px; }
+  .sv-new { grid-column: 2; grid-row: 1 / span 2; font-size: 26px; padding: 10px 0; }
+  .sv-hint { grid-column: 3; grid-row: 1 / span 2; }
+  .sv-clear .sv-hint { grid-column: 3; }
+  .sv-more { grid-column: 2 / -1; grid-row: 3; justify-content: flex-start; gap: 10px; padding-right: 0; }
+  .sv-li:has(.sv-erase) .sv-more { padding-bottom: 44px; } /* (ERASE gets its own line under CONTINUE) */
+  .sv-slot:not(.on) .sv-more { padding-bottom: 0 !important; }
   .sv-slot.sv-complete { grid-template-columns: auto 1fr auto; }
-  .sv-done { grid-column: 2; grid-row: 1 / span 2; font-size: clamp(28px, 8.6vw, 40px); }
+  .sv-done { grid-column: 2; grid-row: 1 / span 2; font-size: clamp(28px, 8.6vw, 40px); padding-top: 8px; padding-bottom: 8px; }
   .sv-ctime { grid-column: 3; grid-row: 1 / span 2; flex-direction: column; align-items: flex-end; }
   .sv-ctime b { font-size: 24px; }
-  .sv-erase { right: 34px; bottom: 6px; min-height: 34px; padding: 8px 14px 6px; }
-  .sv-li:has(.sv-erase) .sv-slot.on { padding-bottom: 40px; }
-  .sv-place { justify-items: start; gap: 4px; }
-  .sv-pips i { width: 9px; height: 7px; border-width: 1.5px; }
+  .sv-erase { right: 34px; bottom: calc(var(--ov) + 6px); min-height: 34px; padding: 8px 14px 6px; }
 }
-/* short screens (phones on their side, small laptops): slimmer slips, less tilt, the line hides */
+/* short screens (phones on their side, small laptops): a slimmer stack, less tilt, the line hides */
 @media (max-height: 520px) {
   .sv-title { top: 10px; font-size: clamp(30px, 9vh, 44px); rotate: -3deg; }
-  .sv-list { top: 62px; rotate: -3deg; right: 4vw; }
-  .sv-li + .sv-li { margin-top: -1px; }
-  .sv-li { rotate: calc(var(--tilt, 0deg) * .45); }
+  .sv-list { --ov: 9px; top: 60px; rotate: -4deg; right: -6vw; --off: 6vw; }
+  .sv-li { zoom: calc(1 + var(--i) * .02); }
   .sv-li.sv-li-clear { margin-top: 8px; }
-  .sv-slot { min-height: 42px; }
-  .sv-date b { font-size: 30px; }
-  .sv-lv b { font-size: 28px; }
-  .sv-no { font-size: 28px; }
+  .sv-slot { grid-template-rows: minmax(40px, auto) 0fr; }
+  .sv-slot.on { grid-template-rows: minmax(40px, auto) 1fr; }
+  .sv-date b { font-size: 28px; }
+  .sv-lv b { font-size: 26px; }
+  .sv-no { font-size: 26px; }
   .sv-sub { display: none; }
-  .sv-erase { bottom: auto; top: 50%; translate: 0 -40%; right: 40px; font-size: 12px; padding: 3px 7px 2px; }
-  .sv-slot.on .sv-more { padding-right: 96px; }
+  .sv-list { --er: calc(var(--off) + 30px); --erw: 84px; }
+  .sv-erase { bottom: calc(var(--ov) + 3px); font-size: 12px; padding: 3px 7px 2px; }
   .sv-pips { display: none; }
-  .sv-done { font-size: 36px; }
+  .sv-done { font-size: 34px; }
 }
-@media (prefers-reduced-motion: reduce) { .sv-slot { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .sv-slot, .sv-li { transition: none; } }
+body.reduce-motion .sv-slot, body.reduce-motion .sv-li { transition: none; }
