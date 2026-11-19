@@ -605,14 +605,29 @@ test('sound: SETTINGS credits every real recording, and every clip the engine as
   const credits = page.locator('.sys-credits');
   await expect(credits).toContainText('Gregor Quendel');
   await expect(credits).toContainText('CC BY-SA 4.0');
-  await expect(credits.locator('li')).toHaveCount(4);
+  await expect(credits).toContainText('Litlok'); // the NEXT STOP braking
+  await expect(credits).toContainText('Campos'); // the PRESS START pass
+  await expect(credits).toContainText('CC BY-SA 3.0');
+  await expect(credits.locator('li')).toHaveCount(7);
   const src = readFileSync(join(process.cwd(), 'src/audio/audio.js'), 'utf8');
   const names = [...src.slice(src.indexOf('const CLIP_HIT = {'), src.indexOf('};', src.indexOf('const CLIP_HIT = {'))).matchAll(/'([a-z-]+)':/g)].map((m) => m[1]);
-  expect(names.length).toBeGreaterThan(0);
+  expect(names.length).toBe(8);
   for (const n of names) {
     const r = await request.get(`/assets/sfx/${n}.mp3`);
     expect(r.status(), n).toBe(200);
   }
+  // no recording ships without its credit: every file in the folder is in CREDITS.txt and on SETTINGS,
+  // and every share-alike clip says it was changed (CC BY-SA asks for both)
+  const dir = join(process.cwd(), 'public/assets/sfx');
+  const files = readdirSync(dir).filter((f) => f.endsWith('.mp3'));
+  expect(files.sort()).toEqual(names.map((n) => `${n}.mp3`).sort());
+  const txt = readFileSync(join(dir, 'CREDITS.txt'), 'utf8');
+  const { SOUND_CREDITS } = await import('../../src/data/credits.js');
+  for (const f of files) {
+    expect(txt, f).toContain(f);
+    expect(SOUND_CREDITS.some((c) => c.file.split(', ').includes(f)), f).toBe(true);
+  }
+  for (const c of SOUND_CREDITS.filter((x) => x.license.startsWith('CC BY-SA'))) expect(c.changes, c.file).toContain(c.license);
 });
 
 test('sound: the recordings download only after sound is turned on (never on page load)', async ({ page }) => {
@@ -622,7 +637,7 @@ test('sound: the recordings download only after sound is turned on (never on pag
   await page.waitForTimeout(2500);
   expect(fetched).toEqual([]); // sound is off by default: nothing extra on first load
   await page.locator('#soundBtn').click();
-  await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(5);
+  await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(8);
 });
 
 test('city billboard: JOHN NGUYEN ★ travels from LED ring to LED ring (rests on the middle ring with reduced motion)', async ({ page, browser }) => {
