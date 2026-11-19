@@ -51,7 +51,6 @@ export function createMenu(go) {
   const num = $('#menuNum');
   const big = $('#menuBig');
   const count = $('#menuCount');
-  overlay.querySelector('.mn-art').innerHTML = art();
 
   function render() {
     stair.innerHTML = MENU_ITEMS.map(
@@ -96,6 +95,8 @@ export function createMenu(go) {
   /* Menu has its own move: the panel unfolds diagonally from the top-left corner,
      items fly in one by one on a rising chime. Closing folds it back. */
   function open() {
+    const artBox = overlay.querySelector('.mn-art');
+    if (!artBox.firstChild) artBox.innerHTML = art(); // drawn on the first open, not while the title loads
     render();
     openState = true;
     anim?.kill();
