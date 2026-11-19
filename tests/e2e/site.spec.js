@@ -508,22 +508,19 @@ test('SAVE DATA is a stack: every card peeks out, and picking one opens it and s
   await expect(slot(0).locator('.sv-go')).toBeVisible();
   expect(await slot(3).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeLessThan(2); // closed cards keep their details row shut
   expect(await slot(0).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeGreaterThan(20);
-  // all black behind the files (no red band); the picked file and a red column are ONE L: the red runs from the
-  // picked card's left end up behind the whole SAVE DATA title, and meets the card exactly
+  // all black, no red L; the picked file pops with THE PLAN's language: a yellow star cursor at its left end
+  // and a white and a red blade slicing out behind it (only on the picked one); a red halftone corner
   await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); // file 3 picked
   await settle();
-  const L = await page.evaluate(() => {
-    const t = document.querySelector('#saves .sv-title').getBoundingClientRect();
-    const pts = document.querySelector('#saves .sv-l-red').getAttribute('points').split(' ').map((q) => q.split(',').map(Number));
-    const b = document.querySelector('#saves .sv-slot.on [data-mk="b"]').getBoundingClientRect();
-    const xs = pts.map((q) => q[0]); const ys = pts.map((q) => q[1]);
-    const red = getComputedStyle(document.querySelector('#saves .sv-l-red')).fill;
-    const slab = getComputedStyle(document.querySelector('#saves .sv-slot.on')).backgroundColor;
-    return { bg: getComputedStyle(document.querySelector('#saves')).backgroundColor, band: document.querySelectorAll('#saves .sv-band, #saves .sv-arm').length,
-      coversTitle: Math.min(...xs) <= t.left && Math.max(...xs) >= t.right && Math.min(...ys) <= t.top,
-      meetsCard: Math.abs(pts[4][0] - b.left) < 2 && Math.abs(pts[4][1] - b.top) < 2, sameRed: red === slab, red };
+  const pop = await page.evaluate(() => {
+    const lis = [...document.querySelectorAll('#saves .sv-li')];
+    const star = (li) => { const r = li.querySelector('.sv-star').getBoundingClientRect(); return { on: getComputedStyle(li.querySelector('.sv-star')).opacity === '1', inView: r.left >= 0 && r.right <= innerWidth && r.width > 20 }; };
+    const blade = (li) => getComputedStyle(li, '::before').backgroundColor;
+    return { bg: getComputedStyle(document.querySelector('#saves')).backgroundColor, gone: document.querySelectorAll('#saves .sv-l, #saves .sv-band, #saves .sv-arm').length,
+      star: star(lis[2]), others: lis.filter((l, k) => k !== 2).every((l) => getComputedStyle(l.querySelector('.sv-star')).opacity === '0'),
+      white: blade(lis[2]), red: getComputedStyle(lis[2], '::after').backgroundColor, dots: !!document.querySelector('#saves .sv-dots') };
   });
-  expect(L).toEqual({ bg: 'rgb(11, 11, 11)', band: 0, coversTitle: true, meetsCard: true, sameRed: true, red: 'rgb(229, 25, 28)' });
+  expect(pop).toEqual({ bg: 'rgb(11, 11, 11)', gone: 0, star: { on: true, inView: true }, others: true, white: 'rgb(245, 245, 240)', red: 'rgb(229, 25, 28)', dots: true });
   expect(errors).toEqual([]);
 });
 

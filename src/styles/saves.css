@@ -6,12 +6,14 @@
 .sv[hidden] { display: none; }
 body.sv-open { overflow: hidden; }
 
-/* all black (Nov 19, John: "make the whole background, the red part too, all black"); thin white stripes only.
-   The red now belongs to the picked file: its arm (below) */
+/* all black (Nov 19, John: "make the whole background, the red part too, all black"); one thin white stripe
+   low on the right, and a torn red halftone patch in the bottom-left corner */
+.sv-dots { position: absolute; left: 0; bottom: 0; z-index: 0; width: clamp(220px, 36vw, 560px); height: clamp(160px, 40vh, 420px); pointer-events: none;
+  background-image: radial-gradient(circle, var(--red) 0 2.6px, transparent 3.1px); background-size: 13px 13px; opacity: .65;
+  clip-path: polygon(0 4%, 9% 16%, 15% 12%, 27% 30%, 36% 27%, 47% 47%, 58% 50%, 66% 66%, 80% 72%, 86% 86%, 100% 100%, 0 100%); }
 .sv-stripes { position: absolute; inset: 0; pointer-events: none; }
 .sv-stripes i { position: absolute; left: 20%; right: -20%; height: 3px; background: var(--white); rotate: -9deg; opacity: .9; }
-.sv-stripes i:nth-child(1) { top: 9%; }
-.sv-stripes i:nth-child(2) { top: 13%; height: 10px; left: 40%; }
+.sv-stripes i:nth-child(-n+2) { display: none; } /* (John, Nov 19: no thin white line over the first file) */
 .sv-stripes i:nth-child(3) { bottom: 6%; left: 55%; }
 
 .sv-title { position: absolute; z-index: 4; /* (over the picked file's arm, which reaches up into it) */ left: var(--gutter); top: max(22px, 5vh); margin: 0; font-family: var(--f-head); font-weight: 400;
@@ -30,7 +32,7 @@ body.sv-open { overflow: hidden; }
    covers its lower part (--ov), so only its peek row shows; lower cards are a little bigger and further
    left (the pile's perspective), all on one tilt, running off the right edge. The picked card opens its
    details row, which pushes the cards below it down; they slide back when it closes. */
-.sv-list { --ov: clamp(14px, 2.8vh, 26px); --arm: clamp(80px, 8vw, 140px); position: absolute; z-index: 2; left: calc(max(13vw, 100px) + var(--arm)); right: -42vw; top: clamp(130px, 22vh, 230px); margin: 0; padding: 0; list-style: none;
+.sv-list { --ov: clamp(14px, 2.8vh, 26px); --arm: clamp(36px, 3.4vw, 60px); position: absolute; z-index: 2; left: calc(max(13vw, 100px) + var(--arm)); right: -42vw; top: clamp(130px, 22vh, 230px); margin: 0; padding: 0; list-style: none;
   display: grid; gap: 0; rotate: -6deg; transform-origin: left top;
   /* the squeeze (John: "squeeze the right side like a straw... slightly fans out downward"): the stack turns
      away at its right end, so the cards get thinner there and their edges fan apart going left and down */
@@ -55,20 +57,24 @@ body.sv-open { overflow: hidden; }
   font-family: var(--f-body); transition: grid-template-rows .26s cubic-bezier(.2, 1.1, .3, 1), transform .14s var(--ease-pop), background .08s steps(1); }
 .sv-slot.on { grid-template-rows: minmax(clamp(44px, 8.4vh, 86px), auto) 1fr; }
 .sv-slot:focus-visible { outline: none; }
-.sv-slot.on { background: var(--red); color: var(--white); box-shadow: none; /* (no rule on top: the card and the L are one shape) */ transform: scale(1.04); transform-origin: left center; z-index: 3;
-  margin-left: calc(-1 * var(--arm)); width: calc(100% + var(--arm)); padding-left: calc(var(--arm) * .35); } /* (it reaches out left: the foot of the L) */
+.sv-slot.on { background: var(--red); color: var(--white); box-shadow: none; transform: scale(1.04); transform-origin: left center; z-index: 3;
+  margin-left: calc(-1 * var(--arm)); width: calc(100% + var(--arm)); } /* (it steps out of the stack to the left) */
 .sv-slot { transition: grid-template-rows .26s cubic-bezier(.2, 1.1, .3, 1), transform .14s var(--ease-pop), background .08s steps(1), margin-left .22s cubic-bezier(.2, 1.3, .3, 1), width .22s cubic-bezier(.2, 1.3, .3, 1), padding-left .22s cubic-bezier(.2, 1.3, .3, 1); }
-/* the red L lives in an svg behind the stack (src/scenes/saves.js drawL): one shape, the same red as the
-   picked card, which it meets at that card's left end; the title and the cards above lie on top of it */
-.sv-l { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.sv-l-red { fill: var(--red); }
-.sv-l-dash { stroke: var(--black); stroke-width: 12; stroke-dasharray: 34 26; stroke-linecap: butt; }
-.sv-l-tear { fill: var(--black); }
-.sv-l-glint { fill: var(--white); }
-.sv-l-edge { fill: none; stroke: var(--white); stroke-width: 3; stroke-linejoin: miter; }
-.sv-mk { position: absolute; left: 0; width: 0; height: 0; }
-.sv-mk[data-mk="a"] { top: 0; }
-.sv-mk[data-mk="b"] { bottom: 0; }
+/* the picked file's accents (Nov 19, John: "scrap the extension... find another cool accent that makes it pop...
+   fits the project"): the same language as THE PLAN's picked chapter. A WHITE MISPRINT of the red card
+   snaps out behind it (offset down-left, jagged left end), and the YELLOW STAR cursor pops in at its left
+   end and boils (stepped wiggle), as on THE PLAN */
+.sv-li:has(.sv-slot.on)::before, .sv-li:has(.sv-slot.on)::after { display: block; bottom: auto; width: auto; z-index: -1; transform-origin: right center;
+  animation: sv-blade .22s cubic-bezier(.2, 1.3, .35, 1) both; }
+.sv-li:has(.sv-slot.on)::before { left: calc(-1 * var(--arm) - 24vw); right: 72%; top: 8%; height: 76%; background: var(--white);
+  clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 66%); }
+.sv-li:has(.sv-slot.on)::after { left: calc(-1 * var(--arm) - 15vw); right: 76%; top: 40%; height: 52%; background: var(--red);
+  clip-path: polygon(0 52%, 100% 0, 100% 100%, 0 70%); animation-delay: .05s; }
+@keyframes sv-blade { from { scale: 0 1; } to { scale: 1 1; } }
+.sv-star { --s: clamp(46px, 6.6vh, 74px); filter: drop-shadow(3px 3px 0 var(--black)); position: absolute; z-index: 4; left: calc(-1 * var(--arm) - var(--s) * .9); top: calc(clamp(44px, 8.4vh, 86px) / 2 - var(--s) / 2);
+  width: var(--s); height: var(--s); background: var(--yellow); pointer-events: none; opacity: 0; transform: scale(0) rotate(-90deg);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); transition: transform .2s var(--ease-pop), opacity .1s; }
+.sv-li:has(.sv-slot.on) .sv-star { opacity: 1; transform: scale(1) rotate(0); animation: cmd-boil .9s steps(3) infinite; }
 .sv-li:has(.sv-slot.on) { z-index: 3; filter: drop-shadow(9px 9px 0 var(--black)); }
 
 /* the left end of every card not picked carries a black-and-white film-strip edge (the reference's texture) */
@@ -80,14 +86,7 @@ body.sv-open { overflow: hidden; }
   font-family: var(--f-head); font-size: clamp(30px, 4.6vh, 50px); line-height: 1; clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
   box-shadow: inset 3px 0 0 var(--white), inset 0 -3px 0 var(--white); } /* (a white ink edge, as the reference's tabs) */
 .sv-no small { font-family: var(--f-serif); font-style: italic; font-weight: 900; font-size: .42em; margin-bottom: .3em; }
-/* picked, the number is printed straight on the red (black italic, no tab), as on the reference's L */
-.sv-slot.on .sv-no { background: none; color: var(--black); box-shadow: none; font-style: italic; transform: skewX(-12deg) translateY(.08em); font-size: clamp(38px, 5.8vh, 62px); text-shadow: 2px 2px 0 rgba(255, 255, 255, .35); }
-/* and a thin white glint flares across it when it is picked */
-.sv-slot.on::before { content: ''; position: absolute; z-index: -1; left: calc(var(--arm) * -.1); top: 2%; width: clamp(120px, 15vw, 250px); height: clamp(34px, 5vh, 64px); pointer-events: none;
-  background: var(--white); clip-path: polygon(50% 0, 50.8% 46%, 100% 50%, 50.8% 54%, 50% 100%, 49.2% 54%, 0 50%, 49.2% 46%); rotate: -16deg; opacity: .85;
-  animation: sv-glint .42s cubic-bezier(.2, 1.4, .3, 1) both; }
-.sv-slot.sv-complete.on::before { display: none; } /* (a finished file already has its burst) */
-@keyframes sv-glint { from { transform: scale(0, .2); opacity: 1; } 60% { opacity: 1; } to { transform: scale(1); opacity: .85; } }
+.sv-slot.on .sv-no { background: var(--white); color: var(--black); box-shadow: inset 3px 0 0 var(--black), inset 0 -3px 0 var(--black); }
 
 /* the date: big red month/day, weekday chip, time of day */
 .sv-date { display: flex; align-items: flex-end; gap: 6px; line-height: 1; }
@@ -138,7 +137,7 @@ body.sv-open { overflow: hidden; }
 .sv-ctime small { font: 400 clamp(11px, 1.6vh, 14px)/1 var(--f-menu); letter-spacing: 1px; padding: 2px 4px 1px; background: var(--black); color: var(--white); white-space: nowrap; }
 .sv-ctime b { font-weight: 400; font-size: clamp(24px, 4.4vh, 46px); }
 .sv-complete .sv-no { background: var(--black); color: var(--white); }
-.sv-complete.on .sv-no { background: none; color: var(--black); }
+.sv-complete.on .sv-no { background: var(--white); color: var(--black); }
 .sv-slot.sv-complete:not(.on) { background-image: repeating-linear-gradient(180deg, var(--black) 0 7px, var(--white) 7px 12px); background-size: 7px 100%; background-repeat: no-repeat; }
 .sv-complete .sv-more { justify-content: center; } /* (CONTINUE clear of the COMPLETED burst) */
 .sv-complete.on .sv-time { display: none; } /* (its play time is already on the slab) */
@@ -172,7 +171,9 @@ body.sv-open { overflow: hidden; }
 @media (max-width: 760px) {
   .sv-title { top: max(18px, 3vh); font-size: clamp(34px, 11vw, 52px); }
   .sv-sub { left: var(--gutter); right: var(--gutter); top: 74px; bottom: auto; font-size: 12px; padding: 3px 8px; rotate: -3deg; background: var(--black); border: 2px solid var(--white); text-shadow: none; }
-  .sv-list { --fan: .5deg; --ov: 14px; --arm: 22px; left: calc(4px + var(--arm)); right: -14px; top: 136px; rotate: -5deg; --off: 0px; transform: perspective(900px) rotateY(10deg); }
+  .sv-list { --fan: .5deg; --ov: 14px; --arm: 16px; left: calc(4px + var(--arm)); right: -14px; top: 136px; rotate: -5deg; --off: 0px; transform: perspective(900px) rotateY(10deg); }
+  .sv-star { --s: 30px; left: calc(-1 * var(--arm) + 4px); top: -14px; } /* (on a phone the star sits on the tab's corner, on screen) */
+  .sv-dots { width: 70vw; height: 30vh; }
   .sv-stripes i:nth-child(n+2) { display: none; }
   .sv-li { margin-left: calc(var(--i) * -.6vw); zoom: calc(1 + var(--i) * .02); }
   .sv-slot { grid-template-columns: auto 1fr auto; grid-template-rows: auto auto 0fr; padding-right: 30px; column-gap: 10px; }
@@ -202,7 +203,7 @@ body.sv-open { overflow: hidden; }
 /* short screens (phones on their side, small laptops): a slimmer stack, less tilt, the line hides */
 @media (max-height: 520px) {
   .sv-title { top: 10px; font-size: clamp(30px, 9vh, 44px); rotate: -3deg; }
-  .sv-list { --fan: .4deg; --ov: 9px; --arm: 56px; top: 60px; rotate: -4deg; right: -40vw; --off: 34vw; transform: perspective(1100px) rotateY(15deg); }
+  .sv-list { --fan: .4deg; --ov: 9px; --arm: 30px; top: 60px; rotate: -4deg; right: -40vw; --off: 34vw; transform: perspective(1100px) rotateY(15deg); }
   .sv-li { zoom: calc(1 + var(--i) * .02); }
   .sv-slot { grid-template-rows: minmax(40px, auto) 0fr; }
   .sv-slot.on { grid-template-rows: minmax(40px, auto) 1fr; }
@@ -217,5 +218,5 @@ body.sv-open { overflow: hidden; }
   .sv-pips { display: none; }
   .sv-done { font-size: 34px; }
 }
-@media (prefers-reduced-motion: reduce) { .sv-slot, .sv-li { transition: none; } .sv-slot.on::before { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .sv-slot, .sv-li, .sv-star { transition: none; } .sv-li::before, .sv-li::after, .sv-star { animation: none !important; } }
 body.reduce-motion .sv-slot, body.reduce-motion .sv-li { transition: none; }
