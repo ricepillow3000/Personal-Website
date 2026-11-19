@@ -124,33 +124,32 @@ body.reduce-motion :is(.bb-flicker, .bb-sheen) { animation: none; }
 .st-wrap .st { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .st-dim { mix-blend-mode: multiply; }
 .st-glow { mix-blend-mode: screen; }
-/* the departure board (station.js): sized in art px (--k = CSS px per art px), hung from the ceiling */
-.ss-sign { position: absolute; transform: perspective(40em) rotateY(-12deg); transform-origin: 0 50%; }
-.ss-rod { position: absolute; bottom: 100%; width: .22em; height: 12em; background: linear-gradient(#0B0B0B, #3A3A40); }
-.ss-rod:first-child { left: 14%; }
-.ss-rod:nth-child(2) { right: 14%; }
-.ss-box { background: #121214; border: .3em solid #2C2C31; outline: .1em solid #050505; box-shadow: 0 .6em 1.2em rgba(0, 0, 0, .7), inset 0 .15em 0 rgba(255, 255, 255, .06); padding: .35em .4em; display: grid; gap: .3em; }
-.ss-row { position: relative; overflow: hidden; background: #050506; height: 1.6em; display: flex; align-items: center; }
-.ss-sign[hidden] { display: none; }
-.ss-sign { opacity: 0; transition: opacity .6s ease-out; }
-.ss-sign.in { opacity: 1; } /* (the board lights up once it has picked its spot) */
+/* the departure board (station.js): a box in the station's perspective (.ss-3d, drawn in art px) with
+   its LED screen laid on the front face (.ss-screen, sized in art px: --k = CSS px per art px) */
+.ss { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease-out; }
+.ss[hidden] { display: none; }
+.ss.in { opacity: 1; } /* (the board lights up once it has picked its spot) */
+.ss-3d { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ss-screen { position: absolute; display: grid; grid-template-rows: 1fr 1fr; gap: .2em; padding: .22em .3em; }
+.ss-row { position: relative; overflow: hidden; display: flex; align-items: center; background: #08080A; }
 /* the LED dots: a fixed grid of dark gaps over each row, so the text sliding under it lights the dots */
 .ss-row::after { content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(circle, transparent 0 .055em, rgba(5, 5, 6, .92) .085em) 0 0 / .17em .17em; }
+  background: radial-gradient(circle, transparent 0 .05em, rgba(5, 5, 6, .92) .08em) 0 0 / .16em .16em; }
 .ss-run { display: flex; width: max-content; will-change: transform; animation: ssRun 9s linear infinite; }
 .ss-run span { padding-right: 3em; font-family: var(--f-menu); font-size: 1.32em; letter-spacing: .06em; line-height: 1; white-space: nowrap;
   color: #FFC83A; text-shadow: 0 0 .3em rgba(255, 170, 30, .85); }
 @keyframes ssRun { from { transform: translateX(0); } to { transform: translateX(-50%); } } /* right to left, seamless */
-.ss-bot { justify-content: space-between; padding: 0 .45em; }
+.ss-bot { justify-content: space-between; padding: 0 .4em; }
 .ss-bot b { font-family: var(--f-menu); font-weight: 400; font-size: 1.32em; letter-spacing: .1em; line-height: 1; }
 .ss-time { color: #4BEA74; text-shadow: 0 0 .3em rgba(60, 230, 110, .8); font-variant-numeric: tabular-nums; }
+.ss-ap { font-size: .62em; margin-left: .3em; letter-spacing: .08em; }
 .ss-colon { animation: ssBlink 1s steps(2) infinite; }
 @keyframes ssBlink { 50% { opacity: .15; } }
 .ss-code { color: #FF3B3B; text-shadow: 0 0 .3em rgba(255, 40, 40, .85); }
 @media (prefers-reduced-motion: reduce) { .ss-run, .ss-colon { animation: none; } }
 body.reduce-motion .ss-run, body.reduce-motion .ss-colon { animation: none; }
 /* phones held upright: the CONNECT card owns the top of the screen there (and the phone asks to be turned) */
-@media (max-aspect-ratio: 3/4) { .ss-sign { display: none; } }
+@media (max-aspect-ratio: 3/4) { .ss { display: none !important; } }
 .sl .sl-off { opacity: 0; transition: opacity .04s linear; }
 .sl .sl-on { opacity: 1; transition: opacity .05s linear; }
 .sl[data-st="off"] .sl-off { opacity: 1; transition-duration: .02s; } /* a tube dies at once... */

@@ -1,5 +1,3 @@
-import { fontsReady } from '../core/util.js';
-
 /* The station's own life, laid over the platform art in its pixel space (1600 x 914, placed exactly
    like the <img>): the ceiling's fluorescent lights, the graffiti on the big pillar and the departure board.
 
@@ -59,11 +57,33 @@ function lightsDim() { // multiplied: puts out the glow painted round a tube tha
     return `<g class="sl" data-l="${i}"><g class="sl-off"><ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.8}" fill="url(#slDim)"/></g></g>`;
   }).join('');
 }
-function lightsBody() { // normal: the dull diffuser of a tube that is off
+/* ---- the glossy floor mirrors the tubes (Nov 19, John: "if the light is flickering and the reflection is
+   there, make sure the reflection on the floor expresses that"). The floor's streak under the centre
+   strip is the tubes' reflection: each tube lights the stretch of streak straight below it, mirrored
+   through the horizon (y 540): y = 540 + (540 - tube y) x 1.15, measured on the art (the streak starts
+   at y ~690 under the far tubes and runs off the bottom under the near ones). The small right tube (14)
+   lights the patch at (1101, 860). When a tube goes off (or dims), its stretch of reflection is covered
+   with the floor's own tone, soft-edged, in the same group as the tube, so the two can never disagree. */
+const MIRROR = 1.15;
+const REFLECT = { 14: [1101, 860, 21, 62] }; // the right patch: cx, cy, rx, ry (measured)
+function reflection(p, i) {
+  if (REFLECT[i]) { const [cx, cy, rx, ry] = REFLECT[i]; return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#slFloor)"/>`; }
+  if (!Array.isArray(p[0])) return ''; // (the two near slanted tubes reflect off the bottom of the screen)
+  const top = p[0][1];
+  const bot = p[2][1];
+  const y1 = 540 + (540 - bot) * MIRROR;
+  const y2 = 540 + (540 - top) * MIRROR;
+  if (y1 > 940) return ''; // (the nearest tubes reflect below the screen)
+  const cy = (y1 + y2) / 2;
+  const ry = (y2 - y1) / 2 + 16; // (the gloss blurs each one into its neighbours: they overlap)
+  const rx = 10 + (cy - 540) * 0.06; // the streak narrows toward the tunnel
+  return `<ellipse cx="868" cy="${cy.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="url(#slFloor)"/>`;
+}
+function lightsBody() { // normal: the dull diffuser of a tube that is off, and its reflection gone from the floor
   return PANELS.map((p, i) => {
     const s = shape(p, 0.6);
     const paint = Array.isArray(p[0]) ? 'fill="#5E636B"' : 'stroke="#5E636B"';
-    return `<g class="sl" data-l="${i}"><g class="sl-off">${s} ${paint}/></g></g>`;
+    return `<g class="sl" data-l="${i}"><g class="sl-off">${s} ${paint}/>${reflection(p, i)}</g></g>`;
   }).join('');
 }
 function lightsGlow() { // added: the bloom through the diffuser, and its light on the ceiling around it
@@ -90,28 +110,64 @@ const faceTransform = (f) => { const k = Math.min(f.w / 76, f.h / 230); return `
 const svg = (cls, defs, body) => `<svg class="st ${cls}" viewBox="0 0 1600 914" preserveAspectRatio="none" aria-hidden="true"><defs>${defs}</defs>${body}</svg>`;
 
 /* ---- the departure board (Nov 19, John: "a train sign where it describes a stop... LET US START THE
-   GAME, not static, moving like the billboard, from the right side to the left"). A lit LED board hung
-   from the ceiling beside the light strip (SIGN_SPOTS, measured on the art: clear of the strip, the
-   pillars and the train's path; it picks a spot clear of the title's own text and panels): the top row scrolls the line in
-   amber LED, the bottom row shows the visitor's own time in green (the colon blinks) and our line code
-   JN in red. A fixed grid of dark gaps over the rows makes them read as LED dots while the text slides
-   under it (one composited move, no per-frame script). Original board (no game mascot or logo on it);
-   the line itself is a John-approved homage, like TAKE YOUR TIME. ---- */
-/* where it may hang (art px), in order of preference: just right of the light strip, or (where the screen
-   crops the ceiling or the contact card sits there: phones on their side, small laptops) just left of it,
-   each a size smaller if need be. The first spot that is wholly on screen and clear of the title, the
-   calendar, the contact card and the top bar wins; none fits, no board. */
+   GAME, not static, moving like the billboard, from the right side to the left"; then: "not look like it
+   was pasted on... as if it belongs to the scene, 3D, like in the anime... move it a little bit back so
+   the Ways to Connect can fit... accurate time, 2:30 p.m. if it's 2:30 p.m., updating constantly").
+   A box hung from the ceiling on two rods, built in the station's own perspective: its edges run to the
+   vanishing point (870, 548), so from the platform you see its front, its underside and the side that
+   faces the middle, like a real board overhead. Cel-shaded like the art: flat tones, bold ink lines, a
+   cool rim where the ceiling tubes catch its edges, a thin amber spill from its own LEDs on its lip.
+   The screen: the top row scrolls the line in amber LED, right to left, seamless (one composited move);
+   the bottom row shows the visitor's own time, 12-hour (2:30 PM), checked every second, in green, and
+   our line code JN in red. A fixed grid of dark gaps over the rows reads as LED dots while the text
+   slides under it. Original board (no mascot on top); the line is a John-approved homage, like TAKE
+   YOUR TIME. ---- */
+const VP = [870, 548];
+/* where it may hang (its front face, art px; height = SIGN_H x width), in order of preference: back down
+   the platform just right of the light strip, a size smaller further back, then the same left of the
+   strip (phones on their side crop the ceiling there). The first spot wholly on screen and clear of the
+   title's name, the calendar, the contact card and the top bar wins; none fits, no board. */
 const SIGN_SPOTS = [
-  { x: 872, y: 178, w: 178 }, { x: 872, y: 230, w: 150 },
-  { x: 600, y: 160, w: 172 }, { x: 610, y: 225, w: 150 },
+  { x: 900, y: 214, w: 150 }, { x: 896, y: 262, w: 122 },
+  { x: 686, y: 204, w: 150 }, { x: 716, y: 258, w: 122 },
 ];
-const SIGN_H = 0.54; // its height, as a share of its width
+const SIGN_H = 0.46;
+const DEPTH = 0.9; // the back face, scaled toward the vanishing point (the box's thickness)
+const toVP = ([x, y]) => [VP[0] + (x - VP[0]) * DEPTH, VP[1] + (y - VP[1]) * DEPTH];
+function geom(s) {
+  const h = s.w * SIGN_H;
+  const f = [[s.x, s.y], [s.x + s.w, s.y], [s.x + s.w, s.y + h], [s.x, s.y + h]]; // TL TR BR BL
+  const b = f.map(toVP);
+  const right = s.x + s.w / 2 > VP[0]; // right of the middle: its inner (left) side shows, else its right side
+  const side = right ? [f[0], b[0], b[3], f[3]] : [f[1], b[1], b[2], f[2]];
+  const under = [f[3], f[2], b[2], b[3]];
+  const rods = [0.2, 0.8].map((t) => [s.x + s.w * t, s.y]);
+  const pts = [...f, ...b];
+  const box = { l: Math.min(...pts.map((q) => q[0])), r: Math.max(...pts.map((q) => q[0])), t: s.y - 60, b: Math.max(...pts.map((q) => q[1])) };
+  return { f, side, under, rods, box, right, h };
+}
+const P = (pts) => pts.map((q) => q.map((v) => v.toFixed(1)).join(',')).join(' ');
+function housing(s) {
+  const g = geom(s);
+  const ink = 'stroke="#050506" stroke-width="1.6" stroke-linejoin="round"';
+  const [tl, tr, br, bl] = g.f;
+  const rimSide = g.right ? [tl, bl] : [tr, br]; // the edge toward the light strip catches the tubes' light
+  return `
+    ${g.rods.map(([x, y]) => `<path d="M${x} ${y} V${y - 60}" stroke="#050506" stroke-width="3.4"/><path d="M${x} ${y} V${y - 60}" stroke="#4A4D55" stroke-width="1.4"/><rect x="${x - 5}" y="${y - 3}" width="10" height="4" fill="#1A1B1F" ${ink}/>`).join('')}
+    <polygon points="${P(g.side)}" fill="#2A2C32" ${ink}/>
+    <polygon points="${P(g.under)}" fill="#0C0C0E" ${ink}/>
+    <path d="M${P([g.under[0], g.under[1]]).replace(' ', ' L')}" stroke="#FFB52E" stroke-opacity=".45" stroke-width="2.2" transform="translate(0 2.2)"/>
+    <polygon points="${P(g.f)}" fill="#1B1C20" ${ink}/>
+    <path d="M${P([tl, tr]).replace(' ', ' L')}" stroke="#CFE0F5" stroke-opacity=".75" stroke-width="1.1" transform="translate(0 1.2)"/>
+    <path d="M${P(rimSide).replace(' ', ' L')}" stroke="#CFE0F5" stroke-opacity=".55" stroke-width="1.1" transform="translate(${g.right ? 1.2 : -1.2} 0)"/>
+    <rect x="${tl[0] + s.w * 0.05 - 1}" y="${tl[1] + g.h * 0.1 - 1}" width="${s.w * 0.9 + 2}" height="${g.h * 0.8 + 2}" fill="#050506" stroke="#2E3036" stroke-width="1"/>`;
+}
 const SIGN_LINE = 'LET US START THE GAME';
-const signHTML = () => `<div class="ss-sign">
-  <i class="ss-rod"></i><i class="ss-rod"></i>
-  <div class="ss-box">
+const signHTML = () => `<div class="ss" hidden>
+  <svg class="ss-3d" viewBox="0 0 1600 914" preserveAspectRatio="none"></svg>
+  <div class="ss-screen">
     <div class="ss-row ss-top"><div class="ss-run"><span>${SIGN_LINE}</span><span>${SIGN_LINE}</span></div></div>
-    <div class="ss-row ss-bot"><b class="ss-time"><span class="ss-h">00</span><span class="ss-colon">:</span><span class="ss-m">00</span></b><b class="ss-code">JN</b></div>
+    <div class="ss-row ss-bot"><b class="ss-time"><span class="ss-h">12</span><span class="ss-colon">:</span><span class="ss-m">00</span><small class="ss-ap">PM</small></b><b class="ss-code">JN</b></div>
   </div>
 </div>`;
 /* what the board must keep clear of (their boxes on screen, measured on resize and as the title settles) */
@@ -129,28 +185,32 @@ function pickSpot(wrap) {
   const a = wrap.getBoundingClientRect();
   const k = a.width / 1600;
   return SIGN_SPOTS.find((s) => {
-    const r = { l: a.left + s.x * k, t: a.top + s.y * k, w: s.w * k };
-    r.r = r.l + r.w;
-    r.b = r.t + r.w * SIGN_H;
+    const { box } = geom(s);
+    const r = { l: a.left + box.l * k, r: a.left + box.r * k, t: a.top + (s.y - 4) * k, b: a.top + box.b * k };
     if (r.l < 6 || r.t < 6 || r.r > W - 6 || r.b > H * 0.6) return false;
     return !clearOf.some((o) => r.l < o.right + pad && r.r > o.left - pad && r.t < o.bottom + pad && r.b > o.top - pad);
   }) || null;
 }
-/* the bottom row's clock: the visitor's own time, checked every 10 s (it only writes when the minute turns) */
+/* the bottom row's clock: the visitor's own time, 12-hour, checked every second (it only writes when the
+   minute turns) and at once when the page comes back into view */
 function signClock(wrap) {
   const h = wrap.querySelector('.ss-h');
   const m = wrap.querySelector('.ss-m');
+  const ap = wrap.querySelector('.ss-ap');
   let last = '';
   const tick = () => {
     const d = new Date();
-    const t = `${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+    const hr = d.getHours();
+    const t = `${hr % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')} ${hr < 12 ? 'AM' : 'PM'}`;
     if (t === last) return;
     last = t;
-    h.textContent = t.slice(0, 2);
-    m.textContent = t.slice(2);
+    h.textContent = String(hr % 12 || 12);
+    m.textContent = String(d.getMinutes()).padStart(2, '0');
+    ap.textContent = hr < 12 ? 'AM' : 'PM';
   };
   tick();
-  setInterval(() => { if (document.body.dataset.mode === 'title' && !document.hidden) tick(); }, 10000);
+  setInterval(() => { if (!document.hidden) tick(); }, 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 }
 
 export function mountStation(box, before) {
@@ -158,12 +218,14 @@ export function mountStation(box, before) {
   wrap.className = 'st-wrap';
   wrap.setAttribute('aria-hidden', 'true');
   wrap.innerHTML = svg('st-dim', '<radialGradient id="slDim"><stop offset=".25" stop-color="#3A3C40" stop-opacity=".95"/><stop offset=".7" stop-color="#3A3C40" stop-opacity=".45"/><stop offset="1" stop-color="#3A3C40" stop-opacity="0"/></radialGradient>', lightsDim())
-    + svg('st-body', '', lightsBody() + `<g class="gf-at" transform="${faceTransform(FACES[0])}">${graffiti()}</g>`)
+    + svg('st-body', '<radialGradient id="slFloor"><stop offset=".5" stop-color="#313134" stop-opacity=".97"/><stop offset=".8" stop-color="#313134" stop-opacity=".6"/><stop offset="1" stop-color="#313134" stop-opacity="0"/></radialGradient>', lightsBody() + `<g class="gf-at" transform="${faceTransform(FACES[0])}">${graffiti()}</g>`)
     + svg('st-glow', `<filter id="slBloom" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="5" result="a"/><feGaussianBlur in="SourceGraphic" stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="a"/></feMerge></filter>
       <radialGradient id="slSpill"><stop offset="0" stop-color="#9FB8D8" stop-opacity=".22"/><stop offset="1" stop-color="#9FB8D8" stop-opacity="0"/></radialGradient>`, lightsGlow());
   wrap.insertAdjacentHTML('beforeend', signHTML());
   signClock(wrap);
-  const sign = wrap.querySelector('.ss-sign');
+  const sign = wrap.querySelector('.ss');
+  const shell = sign.querySelector('.ss-3d');
+  const screen = sign.querySelector('.ss-screen');
   let spot;
   let placedOnce = false;
   const hang = () => {
@@ -172,14 +234,19 @@ export function mountStation(box, before) {
     if (s === spot) return;
     spot = s;
     sign.hidden = !s;
-    if (s) Object.assign(sign.style, { left: `${(s.x / 1600) * 100}%`, top: `${(s.y / 914) * 100}%`, width: `${(s.w / 1600) * 100}%`, fontSize: `calc(var(--k) * ${(s.w * 0.084).toFixed(2)}px)` });
+    if (!s) return;
+    shell.innerHTML = housing(s);
+    const h = s.w * SIGN_H;
+    Object.assign(screen.style, { left: `${((s.x + s.w * 0.05) / 1600) * 100}%`, top: `${((s.y + h * 0.1) / 914) * 100}%`, width: `${((s.w * 0.9) / 1600) * 100}%`, height: `${((h * 0.8) / 914) * 100}%`, fontSize: `calc(var(--k) * ${(s.w * 0.072).toFixed(2)}px)` });
   };
   const remeasure = () => { if (!ready || document.body.dataset.mode !== 'title') return; measureClear(); spot = undefined; hang(); }; // (decided on the title only)
   // it decides once the title has settled (its fonts in, the fit guard done), then fades in; after that
   // it only moves when the screen changes size or the fit guard rearranges the title (body classes)
   let ready = false;
   sign.hidden = true;
-  fontsReady(3000).then(() => setTimeout(() => { ready = true; remeasure(); sign.classList.add('in'); }, 600));
+  // (waits for the brand fonts itself: this file is also loaded outside a browser by the tests' pure math)
+  const fontsIn = Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise((r) => setTimeout(r, 3000))]);
+  fontsIn.then(() => setTimeout(() => { ready = true; remeasure(); sign.classList.add('in'); }, 600));
   let rt = 0;
   const later = () => { clearTimeout(rt); rt = setTimeout(remeasure, 200); };
   window.addEventListener('resize', later, { passive: true });
