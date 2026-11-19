@@ -42,18 +42,20 @@ export function maybeRotateHint() {
   const mq = window.matchMedia('(orientation: portrait)');
   const close = () => {
     mq.removeEventListener?.('change', turned);
+    window.removeEventListener('resize', turned);
     window.removeEventListener('keydown', key, true);
     el.classList.remove('in');
     el.classList.add('out');
     setTimeout(() => el.remove(), 320);
     if (prev?.focus) prev.focus({ preventScroll: true });
   };
-  const turned = () => { if (!mq.matches) close(); };
+  const turned = () => { if (!mq.matches || window.innerWidth > window.innerHeight) close(); }; // (some phone browsers only send a resize)
   const key = (e) => {
     if (e.key === 'Escape') { e.stopPropagation(); close(); }
     if (e.key === 'Tab') { e.preventDefault(); btn.focus(); } // the button is the only thing to reach
   };
   mq.addEventListener?.('change', turned);
+  window.addEventListener('resize', turned);
   window.addEventListener('keydown', key, true);
   btn.addEventListener('click', () => { sfx('select'); close(); });
 }
