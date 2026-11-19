@@ -57,12 +57,46 @@ function burst() {
 
 function markup() {
   const files = store.slots();
+  const full = files.every(Boolean);
   return `<div class="sv-band" aria-hidden="true"><i class="sv-notch"></i></div>
     <div class="sv-stripes" aria-hidden="true"><i></i><i></i><i></i></div>
     <h2 class="sv-title" id="svTitle"><span class="sr-only">Save data</span><span aria-hidden="true">${cutType('SAVE DATA', 41, { mixCase: true })}</span></h2>
-    <p class="sv-sub">Pick up where you left off, or start a new case.</p>
-    <ol class="sv-list">${files.map(slip).join('')}</ol>
+    <p class="sv-sub${full ? ' sv-full' : ''}">${full ? `All ${SLOTS} files are in use. ERASE one, or CLEAR DATA, to start a new game.` : 'Pick a file: your progress saves itself to it. An empty file starts a new game.'}</p>
+    <ol class="sv-list">${files.map(slip).join('')}${clearBox(files.some(Boolean))}</ol>
     <div class="sv-keys"><button class="sv-key" type="button" data-sv-back><kbd>Esc</kbd><span>BACK</span></button><span class="sv-key sv-key-ok" aria-hidden="true"><kbd>Enter</kbd><span>CONFIRM</span></span></div>`;
+}
+
+/* CLEAR DATA (Nov 19, John: "put the clear data in the save data section, its own box, Persona themed"):
+   a black slip with a white ink edge under the files, its own warning tab; picked, it turns white with a
+   red CLEAR ALL tag; the first press asks (SURE? PRESS AGAIN), the second erases every file with a
+   breaking-glass crash. With no files, it has nothing to clear. */
+function clearBox(any) {
+  return `<li class="sv-li sv-li-clear" style="--i:${SLOTS}"><button class="sv-slot sv-clear${any ? '' : ' sv-clear-none'}" type="button" data-clear-all aria-label="${any ? 'Clear data: erase every file and start fresh. Press twice.' : 'Clear data: there is nothing to clear.'}">
+    <span class="sv-no sv-no-warn" aria-hidden="true">!</span>
+    <span class="sv-new" aria-hidden="true">${cutType('CLEAR DATA', 93)}</span>
+    <span class="sv-hint" aria-hidden="true">${any ? 'ERASE EVERY FILE' : 'NOTHING TO CLEAR'}</span>
+    <span class="sv-more" aria-hidden="true"><span class="sv-go sv-go-x">${any ? 'CLEAR ALL ▸' : 'EMPTY'}</span></span></button></li>`;
+}
+function clearAll(btn) {
+  if (btn.classList.contains('sv-clear-none')) { sfx('back'); return; }
+  const go = btn.querySelector('.sv-go');
+  if (!btn.classList.contains('armed')) {
+    btn.classList.add('armed');
+    go.textContent = 'SURE? PRESS AGAIN';
+    btn.setAttribute('aria-label', 'Sure? Press again to erase every file.');
+    sfx('toggle');
+    if (!reducedMotion()) gsap.fromTo(btn, { x: -10 }, { keyframes: [{ x: 8 }, { x: -6 }, { x: 0 }], duration: 0.24, ease: 'steps(4)' });
+    return;
+  }
+  store.clearAll();
+  sfx('shatter');
+  sfx('stamp');
+  render(0);
+}
+/** a picked slip does what it says: a file plays, CLEAR DATA clears */
+function activate(btn) {
+  if (btn.classList.contains('sv-clear')) clearAll(btn);
+  else play(btn);
 }
 
 const slots = () => [...root.querySelectorAll('.sv-slot')];
@@ -70,6 +104,8 @@ function pick(btn, quiet) {
   if (!btn || btn.classList.contains('on')) return;
   slots().forEach((b) => b.classList.toggle('on', b === btn));
   root.querySelectorAll('.sv-erase').forEach((e) => { e.classList.remove('armed'); e.textContent = 'ERASE'; });
+  const cl = root.querySelector('.sv-clear.armed');
+  if (cl) { cl.classList.remove('armed'); cl.querySelector('.sv-go').textContent = 'CLEAR ALL ▸'; cl.setAttribute('aria-label', 'Clear data: erase every file and start fresh. Press twice.'); }
   root.querySelector('.sv-list').classList.add('has-on');
   if (!quiet) sfx('hover');
   if (!reducedMotion() && !quiet) gsap.fromTo(btn, { x: -14 }, { x: 0, duration: 0.22, ease: 'back.out(3)', clearProps: 'transform' });
@@ -133,7 +169,7 @@ export function openSaves(o) {
       const btn = e.target.closest('.sv-slot');
       if (!btn) return;
       if (lastPointer !== 'mouse' && e.detail !== 0 && !btn.classList.contains('on')) { pick(btn); return; } // a finger: first tap picks
-      play(btn);
+      activate(btn);
     });
     root.addEventListener('keydown', (e) => { // keep Tab inside
       if (e.key !== 'Tab') return;
@@ -183,7 +219,7 @@ export function savesKey(action, e) {
   if (action === 'back') { close(); return true; }
   if (action === 'confirm') {
     if (e && document.activeElement && root.contains(document.activeElement) && document.activeElement.tagName === 'BUTTON') return false; // (the button's own Enter)
-    play(list[k] || list[0]);
+    activate(list[k] || list[0]);
     return true;
   }
   return true; // nothing else while it is open (no number keys, no Quick View)

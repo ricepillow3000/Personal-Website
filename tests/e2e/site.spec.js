@@ -479,7 +479,7 @@ test('SAVE DATA: five files; a new game starts clean in its own file, the old fi
   await page.locator('#pressStart').click();
   const saves = page.locator('#saves');
   await expect(saves).toBeVisible();
-  await expect(saves.locator('.sv-slot')).toHaveCount(5);
+  await expect(saves.locator('.sv-slot[data-i]')).toHaveCount(5); // (+ the CLEAR DATA box)
   await expect(saves.locator('.sv-empty')).toHaveCount(4);
   await expect(saves.locator('.sv-slot[data-i="0"]')).toHaveClass(/\bon\b/); // the last file played is picked
   await expect(saves.locator('.sv-slot[data-i="0"]')).toBeFocused();
@@ -539,7 +539,7 @@ test('SAVE DATA: a save from before files becomes File 1, and a hostile file can
   await page.evaluate(() => localStorage.setItem('jn-resume-v1', JSON.stringify({ v: 2, active: 7, settings: {}, slots: [{ visited: ['<img src=x onerror=window.__pwned=1>'], meta: { last: '"><b>x</b>', saved: 'soon', playMs: -5 } }, 'junk', null] })));
   await page.reload();
   await page.locator('#pressStart').click();
-  await expect(page.locator('#saves .sv-slot')).toHaveCount(5);
+  await expect(page.locator('#saves .sv-slot[data-i]')).toHaveCount(5);
   expect(await page.evaluate(() => window.__pwned)).toBeUndefined();
   expect(await page.locator('#saves img, #saves b:not(.sv-date b, .sv-lv b, .sv-time b)').count()).toBe(0);
 });
@@ -1178,4 +1178,50 @@ test('the floor mirrors the tubes: a tube going off takes its own stretch of the
   expect(await op(6)).toBe(0); // ...and only its own
   await page.evaluate(() => document.querySelectorAll('.sl[data-l="5"]').forEach((g) => { g.dataset.st = 'on'; }));
   await expect.poll(() => op(5)).toBe(0);
+});
+
+test('SAVE DATA really saves: five new games fill five files (each its own progress) until no file is left; button sounds; CLEAR DATA asks, then erases every file', async ({ page }) => {
+  const errors = errorsOf(page);
+  await page.addInitScript(() => { window.__sfxLog = []; });
+  const chapters = ['stats', 'missions', 'skills', 'side-quests', 'contact'];
+  for (let n = 0; n < 5; n++) {
+    await page.goto('/#/');
+    await page.reload();
+    await page.locator('#pressStart').click();
+    const empty = page.locator(`#saves .sv-slot[data-i="${n}"]`);
+    await expect(empty).toHaveClass(/sv-empty/); // the next file is still free
+    await empty.click(); // a new game in it
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+    await expect(page.locator('#progressChip')).toContainText('0/8'); // a new game starts clean
+    await page.goto(`/#/${chapters[n]}`);
+    await expect(page.locator('body')).toHaveAttribute('data-screen', chapters[n]);
+  }
+  await page.goto('/#/');
+  await page.reload();
+  await page.locator('#pressStart').click();
+  const saves = page.locator('#saves');
+  await expect(saves.locator('.sv-empty')).toHaveCount(0); // every file is in use...
+  for (let n = 0; n < 5; n++) await expect(saves.locator(`.sv-slot[data-i="${n}"]`)).toHaveAccessibleName(new RegExp(`File ${n + 1}: ${['STATS', 'MISSIONS', 'SKILLS', 'SIDE QUESTS', 'CONTACT'][n]}, 1 of 8 cleared`));
+  await expect(saves.locator('.sv-sub')).toContainText('All 5 files are in use'); // ...and it says so
+  // the clicky buttons: the metal chink as the mouse moves across the files, the confirm on a press
+  await page.evaluate(() => { window.__sfxLog = []; });
+  for (const n of [1, 2, 3]) { await saves.locator(`.sv-slot[data-i="${n}"]`).hover(); await page.waitForTimeout(60); }
+  expect((await page.evaluate(() => window.__sfxLog)).filter((s) => s === 'hover').length).toBeGreaterThanOrEqual(3);
+  // CLEAR DATA: its own box; the first press asks, the second erases every file
+  const clear = saves.locator('.sv-clear');
+  await clear.hover();
+  await clear.click();
+  await expect(clear).toHaveClass(/armed/);
+  await expect(clear).toContainText('SURE? PRESS AGAIN');
+  await expect(saves.locator('.sv-empty')).toHaveCount(0); // not yet
+  await clear.click();
+  await expect(saves.locator('.sv-empty')).toHaveCount(5);
+  expect(await page.evaluate(() => window.__sfxLog)).toEqual(expect.arrayContaining(['toggle', 'shatter']));
+  const d = await page.evaluate(() => JSON.parse(localStorage.getItem('jn-resume-v1')));
+  expect(d.slots.every((x) => x === null)).toBe(true);
+  expect(d.active).toBe(null);
+  expect(d.settings).toBeTruthy(); // the settings stay
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#pressStart')).toHaveText('PRESS START'); // nothing saved any more
+  expect(errors).toEqual([]);
 });

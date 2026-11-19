@@ -23,7 +23,7 @@ body.sv-open { overflow: hidden; }
   filter: drop-shadow(.05em 0 0 var(--black)) drop-shadow(-.05em 0 0 var(--black)) drop-shadow(0 .05em 0 var(--black)) drop-shadow(0 -.05em 0 var(--black)) drop-shadow(.07em .07em 0 var(--black)); }
 .sv-title .ct.box { background: var(--black); color: var(--white); }
 .sv-title .ct:first-child { background: var(--white); color: var(--red); padding: 0 .06em; }
-.sv-sub { position: absolute; z-index: 3; right: 4vw; bottom: max(18px, 4vh); margin: 0; padding: 4px 12px; background: var(--black); border: 2px solid var(--white);
+.sv-sub { position: absolute; z-index: 3; right: 4vw; top: max(26px, 6vh); margin: 0; padding: 4px 12px; background: var(--black); border: 2px solid var(--white);
   font-family: var(--f-body); font-weight: 700; font-size: clamp(14px, 1.4vw, 18px); rotate: -4deg; box-shadow: 4px 4px 0 var(--red); }
 
 /* the files: slanted paper slips, fanned (each a little further right and lower) */
@@ -89,6 +89,24 @@ body.sv-open { overflow: hidden; }
 .sv-burst polygon { fill: var(--white); stroke: var(--black); stroke-width: 4; }
 .sv-complete .sv-place { visibility: hidden; } /* (the stamp sits there) */
 
+/* CLEAR DATA: its own box under the files (a black slip with a white ink edge and a red warning tab);
+   picked, it turns white with a red CLEAR ALL tag; armed, it goes red and asks */
+.sv-li-clear { margin-top: clamp(8px, 2.2vh, 24px); filter: drop-shadow(3px 0 0 var(--white)) drop-shadow(-3px 0 0 var(--white)) drop-shadow(0 3px 0 var(--white)) drop-shadow(0 -3px 0 var(--white)) drop-shadow(7px 7px 0 var(--red)); }
+.sv-li-clear:has(.sv-slot.on) { filter: drop-shadow(3px 0 0 var(--black)) drop-shadow(-3px 0 0 var(--black)) drop-shadow(0 3px 0 var(--black)) drop-shadow(0 -3px 0 var(--black)) drop-shadow(8px 8px 0 var(--red)); }
+.sv-clear { background: var(--black); color: var(--white); }
+.sv-clear .sv-new .ct.box { background: var(--red); color: var(--white); }
+.sv-clear .sv-hint { color: #BDBDB6; }
+.sv-no-warn { background: var(--red); color: var(--white); justify-content: center; min-width: 1.4em; }
+.sv-clear.on { background: var(--white); color: var(--black); }
+.sv-clear.on .sv-hint { color: var(--black); }
+.sv-clear.on .sv-go { background: var(--red); color: var(--white); }
+.sv-clear.armed { background: var(--red); color: var(--white); }
+.sv-clear.armed .sv-hint { color: var(--white); }
+.sv-clear.armed .sv-go { background: var(--black); color: var(--yellow); }
+.sv-clear.armed .sv-no-warn { background: var(--yellow); color: var(--black); }
+.sv-clear-none { opacity: .7; }
+.sv-sub.sv-full { background: var(--red); border-color: var(--white); box-shadow: 4px 4px 0 var(--black); }
+
 /* ERASE: on the picked file only; asks once */
 .sv-erase { position: absolute; z-index: 4; right: clamp(54px, 6vw, 92px); bottom: 7px; display: none; border: 0; cursor: pointer;
   font: 400 15px/1 var(--f-menu); letter-spacing: 2px; padding: 5px 10px 3px; background: var(--black); color: var(--white); box-shadow: 3px 3px 0 var(--white); }
@@ -109,11 +127,12 @@ body.sv-open { overflow: hidden; }
 @media (max-width: 760px) {
   .sv-band { width: 26vw; left: -14vw; }
   .sv-title { top: max(18px, 3vh); font-size: clamp(34px, 11vw, 52px); }
-  .sv-sub { left: var(--gutter); right: var(--gutter); top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + 46px); font-size: 14px; rotate: -2deg; }
-  .sv-list { left: 8px; right: 12px; top: 112px; rotate: -4deg; gap: 10px; }
+  .sv-sub { left: var(--gutter); right: var(--gutter); top: 74px; bottom: auto; font-size: 12px; padding: 3px 8px; rotate: -3deg; }
+  .sv-list { left: 8px; right: 12px; top: 136px; rotate: -4deg; gap: 9px; }
   .sv-stripes i:nth-child(n+2) { display: none; }
   .sv-li { margin-left: calc(var(--i) * 1.2vw); }
-  .sv-slot { grid-template-columns: auto 1fr auto; padding-right: 24px; gap: 4px 10px; min-height: clamp(66px, 11vh, 104px); }
+  .sv-slot { grid-template-columns: auto 1fr auto; padding-right: 24px; gap: 4px 10px; min-height: clamp(62px, 9.4vh, 96px); }
+  .sv-clear .sv-hint { grid-column: 2; grid-row: 2; margin-bottom: 8px; }
   .sv-no { grid-row: 1 / span 2; font-size: 30px; }
   .sv-date { grid-column: 2; grid-row: 1; padding-top: 8px; }
   .sv-date b { font-size: clamp(30px, 4.4vh, 40px); }
@@ -133,8 +152,9 @@ body.sv-open { overflow: hidden; }
 /* short screens (phones on their side, small laptops): slimmer slips, less tilt, the line hides */
 @media (max-height: 520px) {
   .sv-title { top: 10px; font-size: clamp(30px, 9vh, 44px); rotate: -3deg; }
-  .sv-list { top: 66px; gap: 4px; rotate: -3deg; right: 4vw; }
-  .sv-slot { min-height: 46px; }
+  .sv-list { top: 62px; gap: 3px; rotate: -3deg; right: 4vw; }
+  .sv-li-clear { margin-top: 6px; }
+  .sv-slot { min-height: 42px; }
   .sv-date b { font-size: 30px; }
   .sv-lv b { font-size: 28px; }
   .sv-no { font-size: 28px; }

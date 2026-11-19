@@ -156,6 +156,14 @@ export const store = {
     write();
     listeners.forEach((fn) => fn(state));
   },
+  /** CLEAR DATA: every file erased (the settings stay: they belong to the visitor) */
+  clearAll() {
+    for (let i = 0; i < SLOTS; i++) doc.slots[i] = null;
+    doc.active = null;
+    GAME.forEach((k) => { state[k] = []; });
+    write();
+    listeners.forEach((fn) => fn(state));
+  },
   /** the place the active file was last at (a chapter or THE PLAN), for its save slip */
   touch(place) {
     if (!/^[a-z0-9-]{1,40}$/.test(place)) return;
