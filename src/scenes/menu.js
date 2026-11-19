@@ -7,9 +7,9 @@ import { scramble } from '../fx/kinetic.js';
 import { cutType } from '../ui/cuttype.js';
 
 /* The menu (opened from the MENU button), Nov 19, from John's command-select reference (an
-   original design: no character, no hand, our own shapes and words): a red field on the left with
-   the items in cut type stepping down a diagonal, a black panel with a black/white zigzag starburst
-   on the right, a big red jagged slash between them, a MAIN MENU tag and the picked item's number
+   original design: no character, no hand, our own shapes and words), its background redrawn the same
+   day from his red themed-poster reference (see art()): the items in cut type stepping down a
+   diagonal on the left, a big red jagged lightning bolt, a MAIN MENU tag and the picked item's number
    in big cut-out digits top-right, and the picked item's name huge at the bottom with its one-line
    teaser under it. Bottom-left: how many chapters you've read. */
 export const MENU_ITEMS = [
@@ -29,17 +29,52 @@ function starPts(cx, cy, r, inner, n, rotDeg) {
   for (let i = 0; i < n * 2; i++) out.push(pt(cx, cy, i % 2 ? r * inner : r, ((rotDeg + (i * 180) / n) * Math.PI) / 180));
   return out.join(' ');
 }
-/* the art behind the menu: the black panel with a zigzag starburst (rings of jagged stars, black and
-   white in turn), and the red jagged slash, in one SVG drawn once */
+/* the art behind the menu (Nov 19, John: "I want the menu to have this design somewhat, obviously no
+   characters or names... implement this background design", a deep-red poster with tonal swirls,
+   halftone, a lightning bolt, outlined stars and torn paper). An original composition, all flat (no
+   soft gradients): a deep crimson field; darker red swirls laid over it like a printed pattern; patches
+   of darker halftone cut with hard edges; a black torn-paper corner with a white ripped rim across the
+   top; the big jagged lightning bolt (bright red, a dark ink edge and a dark offset shadow); white stars
+   with a black outline and a grey offset; one four-point sparkle. Drawn once, on the first open. */
+function spiral(cx, cy, r, turns, rot) {
+  const pts = [];
+  const n = Math.round(turns * 48);
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const a = rot + t * turns * Math.PI * 2;
+    const rr = r * (0.12 + 0.88 * t);
+    pts.push(`${(cx + rr * Math.cos(a)).toFixed(1)},${(cy + rr * Math.sin(a)).toFixed(1)}`);
+  }
+  return `M${pts.join(' L')}`;
+}
 function art() {
-  let burst = '';
-  for (let i = 0; i < 10; i++) burst += `<polygon points="${starPts(0, 0, 640 - i * 62, 0.78, 18, -90 + i * 7)}" fill="${i % 2 ? '#F5F5F0' : '#0B0B0B'}"/>`;
+  const swirl = (cx, cy, r, turns, rot, w) => `<path d="${spiral(cx, cy, r, turns, rot)}" fill="none" stroke="#6E0A0E" stroke-width="${w}" stroke-linecap="round"/>`
+    + `<path d="${spiral(cx, cy, r, turns, rot)}" fill="none" stroke="#9C161B" stroke-width="${(w * 0.18).toFixed(1)}" stroke-linecap="round" transform="translate(${-w * 0.42} ${-w * 0.42})"/>`;
+  const star = (cx, cy, r, rot = -90) => `<polygon points="${starPts(cx + r * 0.14, cy + r * 0.14, r, 0.44, 5, rot)}" fill="#8A8A86"/>`
+    + `<polygon points="${starPts(cx, cy, r, 0.44, 5, rot)}" fill="#F5F5F0" stroke="#0B0B0B" stroke-width="${(r * 0.16).toFixed(1)}" stroke-linejoin="miter"/>`;
+  const sparkle = (cx, cy, r) => `<path d="M${cx} ${cy - r} Q${cx + r * 0.12} ${cy - r * 0.12} ${cx + r} ${cy} Q${cx + r * 0.12} ${cy + r * 0.12} ${cx} ${cy + r} Q${cx - r * 0.12} ${cy + r * 0.12} ${cx - r} ${cy} Q${cx - r * 0.12} ${cy - r * 0.12} ${cx} ${cy - r}Z" fill="#F5F5F0" stroke="#0B0B0B" stroke-width="4"/>`;
+  const bolt = '880,-40 1010,-40 900,300 1010,262 812,620 902,590 700,940 586,940 742,540 646,568 818,250 720,282';
+  const torn = '0,0 900,0 900,0 844,15 788,4 731,33 675,20 619,40 562,31 506,57 450,44 394,71 338,58 281,83 225,75 169,94 112,90 56,108 0,101';
+  const tornRim = '0,0 930,0 911,13 855,33 798,22 742,51 686,38 630,58 573,49 517,75 461,62 405,89 348,76 292,101 236,93 180,112 123,108 67,126 11,119';
   return `<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
-    <polygon points="930,-20 1620,-20 1620,920 760,920 812,640 770,652 860,300 826,310" fill="#0B0B0B"/>
-    <g clip-path="url(#mnPanel)"><g transform="translate(1290 430)"><g class="mn-burst">${burst}</g></g></g>
-    <clipPath id="mnPanel"><polygon points="930,-20 1620,-20 1620,920 760,920 812,640 770,652 860,300 826,310"/></clipPath>
-    <polyline points="930,-20 826,310 860,300 770,652 812,640 760,920" fill="none" stroke="#F5F5F0" stroke-width="8" stroke-linejoin="miter"/>
-    <polygon class="mn-slash" points="850,-40 975,-40 842,318 948,288 742,940 628,940 772,470 668,500" fill="#E5191C" stroke="#0B0B0B" stroke-width="12" stroke-linejoin="miter"/>
+    <defs>
+      <pattern id="mnDots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="3.4" fill="#5A070B"/></pattern>
+      <clipPath id="mnDotA"><polygon points="0,330 330,250 410,520 120,640 0,600"/></clipPath>
+      <clipPath id="mnDotB"><polygon points="1180,900 1300,560 1600,470 1600,900"/></clipPath>
+      <clipPath id="mnDotC"><polygon points="980,-10 1380,-10 1290,190 1050,230"/></clipPath>
+    </defs>
+    <rect width="1600" height="900" fill="#8E1217"/>
+    ${swirl(250, 660, 300, 3.2, 0.4, 30)}${swirl(1330, 700, 330, 3.4, 2.1, 34)}${swirl(1200, 120, 230, 2.8, 4, 26)}
+    ${swirl(470, 170, 180, 2.6, 1.2, 22)}${swirl(760, 470, 150, 2.4, 3.3, 20)}${swirl(1560, 260, 170, 2.6, 5.2, 22)}
+    <rect width="1600" height="900" fill="url(#mnDots)" clip-path="url(#mnDotA)"/>
+    <rect width="1600" height="900" fill="url(#mnDots)" clip-path="url(#mnDotB)"/>
+    <rect width="1600" height="900" fill="url(#mnDots)" clip-path="url(#mnDotC)"/>
+    <polygon points="${tornRim}" fill="#F5F5F0"/>
+    <polygon points="${torn}" fill="#0B0B0B"/>
+    <polygon points="${bolt}" fill="#3A0306" transform="translate(22 16)"/>
+    <polygon class="mn-slash" points="${bolt}" fill="#E5191C" stroke="#2A0204" stroke-width="10" stroke-linejoin="miter"/>
+    ${star(1040, 250, 36, -80)}${star(1470, 470, 30, -100)}${star(700, 130, 24, -94)}${star(560, 770, 32, -84)}${star(1490, 850, 26, -90)}
+    ${sparkle(410, 850, 44)}${sparkle(1110, 610, 22)}
   </svg>`;
 }
 
