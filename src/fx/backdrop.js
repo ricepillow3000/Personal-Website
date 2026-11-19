@@ -193,6 +193,12 @@ const BB_TEXT = {
 const BB_ORDER = Object.keys(BB_TEXT);
 const bbSize = (n) => (BB_GEO[n].b0 - BB_GEO[n].t0) * BB_TEXT[n].fill;
 const RINGS_USED = BB_RINGS.filter(([n]) => BB_TEXT[n]);
+/* the rooftop aviation lights painted in the city art (x, y, radius in the 1600x679 art), found by
+   their red glow on the art (the red reflections on walls and the wet street are left out) */
+const AV_LIGHTS = [[842.3, 49.2, 5], [755.4, 51.9, 5], [1191.3, 71.7, 2], [390.6, 85.8, 3.5], [620.5, 101.8, 4.5], [924.5, 114.5, 4.5],
+  [1190.3, 131.4, 4], [950.2, 144.4, 4.5], [513.4, 174.9, 2.5], [551.8, 187.0, 3.5], [476.8, 204.3, 3], [997.3, 205.2, 3], [534.2, 223.7, 4.5],
+  [374.9, 244.6, 3], [349.6, 247.0, 5], [1014.7, 272.2, 3], [1214.7, 275.0, 3.5], [1053.8, 281.0, 2.5], [1077.7, 308.9, 2.5],
+  [1112.0, 356.4, 2.5], [1105.3, 369.4, 3], [1159.6, 382.0, 2.5], [1206.7, 387.9, 2.5]];
 function billboardLayer() {
   const letters = (n) => {
     const size = bbSize(n);
@@ -204,8 +210,23 @@ function billboardLayer() {
   <defs>
     <pattern id="bbLed" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle cx="1.6" cy="1.6" r="1.4" fill="#fff"/></pattern>
     <mask id="bbDots" maskUnits="userSpaceOnUse" x="560" y="120" width="500" height="460"><rect x="560" y="120" width="500" height="460" fill="url(#bbLed)"/></mask>
-    <filter id="bbGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <!-- real LED light (Nov 19, John: "amplify it, make it actually look like billboard lights"): a
+         tight white glow round every lit dot, a wide red-pink light spilling onto the screen around
+         the letters, and the dots themselves a little warm, like LEDs behind a red face -->
+    <filter id="bbGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 .93 0 0 0  0 0 .9 0 0  0 0 0 1 0" result="led"/>
+      <feGaussianBlur in="led" stdDeviation="2.4" result="b"/>
+      <feGaussianBlur in="led" stdDeviation="9" result="wide"/>
+      <feColorMatrix in="wide" type="matrix" values="0 0 0 0 1  0 0 0 0 .32  0 0 0 0 .4  0 0 0 2.2 0" result="spill"/>
+      <feMerge><feMergeNode in="spill"/><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="led"/></feMerge>
+    </filter>
+    <linearGradient id="bbSheen" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <radialGradient id="avLit" cx=".42" cy=".38" r=".6"><stop offset="0" stop-color="#FFE3E0"/><stop offset=".35" stop-color="#FF3B3B"/><stop offset="1" stop-color="#9E0010"/></radialGradient>
+    <radialGradient id="avHalo"><stop offset="0" stop-color="#FF2A2A" stop-opacity=".75"/><stop offset=".4" stop-color="#FF1A1A" stop-opacity=".28"/><stop offset="1" stop-color="#FF0000" stop-opacity="0"/></radialGradient>
+    <radialGradient id="avShade"><stop offset=".25" stop-color="#050505" stop-opacity=".9"/><stop offset="1" stop-color="#050505" stop-opacity="0"/></radialGradient><!-- hides the glow painted round each light, so a dark bulb is really dark -->
+    <radialGradient id="avOff" cx=".38" cy=".34" r=".7"><stop offset="0" stop-color="#4A4A4E"/><stop offset=".45" stop-color="#17171A"/><stop offset="1" stop-color="#050505"/></radialGradient>
     ${RINGS_USED.map(([n, d]) => `<clipPath id="bbRing-${n}"><path d="${d}"/></clipPath>`).join('')}
+    ${BB_RINGS.map(([n, d]) => `<clipPath id="bbFace-${n}"><path d="${d}"/></clipPath>`).join('')}
     <pattern id="bbGrid" width="2.6" height="2.6" patternUnits="userSpaceOnUse"><path d="M.3 0V2.6" stroke="#4A000C" stroke-width=".6" opacity=".55"/><path d="M0 .3H2.6" stroke="#4A000C" stroke-width=".4" opacity=".25"/></pattern>
     ${BB_RINGS.map(([n]) => { const g = BB_GEO[n]; return `<linearGradient id="bbCurve-${n}" gradientUnits="userSpaceOnUse" x1="${g.cx - g.R}" x2="${g.cx + g.R}" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset=".2" stop-color="#000" stop-opacity=".14"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset=".8" stop-color="#000" stop-opacity=".14"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>`; }).join('')}
   </defs>
@@ -213,7 +234,15 @@ function billboardLayer() {
        "make it all a solid color, following the texture pattern"): the base red (matched to the art
        shown at 72%), the fine LED grid, and a little shade toward the edges so it still reads as a drum -->
   ${BB_RINGS.map(([n, d]) => `<path d="${d}" fill="#A3112A"/><path d="${d}" fill="url(#bbGrid)"/><path d="${d}" fill="url(#bbCurve-${n})"/>`).join('')}
-  ${RINGS_USED.map(([n]) => `<g clip-path="url(#bbRing-${n})"><g filter="url(#bbGlow)"><g mask="url(#bbDots)"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></g></g></g>`).join('')}
+  ${RINGS_USED.map(([n]) => `<g clip-path="url(#bbRing-${n})"><g class="bb-flicker" filter="url(#bbGlow)"><g mask="url(#bbDots)"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></g></g></g>`).join('')}
+  <!-- a faint light sweep gliding across each screen's glass, out of step, now and then -->
+  ${BB_RINGS.map(([n], i) => { const g = BB_GEO[n]; return `<g clip-path="url(#bbFace-${n})"><rect class="bb-sheen" style="--sd:${(i * 2.3).toFixed(1)}s" x="${g.cx - g.R - 60}" y="${g.t0 - g.ta - 10}" width="60" height="${g.b0 - g.t0 + g.ta + 30}" fill="url(#bbSheen)" transform="skewX(-12)"/></g>`; }).join('')}
+  <!-- aviation obstruction lights on the rooftops (Nov 19, John: "have them blink... when it turns off
+       it's a black ball that looks like a bulb"): each one a real bulb over the art's painted dot, a
+       hot red lens with a halo when lit, a black glass bulb with a glint when dark, on its own beat -->
+  <g class="bb-lights">${AV_LIGHTS.map(([x, y, r], i) => `<g class="av" style="--ap:${(1.5 + (i % 4) * 0.22).toFixed(2)}s;--ad:${(-((i * 0.37) % 1.5)).toFixed(2)}s">
+    <circle cx="${x}" cy="${y}" r="${(r * 3.4).toFixed(1)}" fill="url(#avShade)"/><circle cx="${x}" cy="${y}" r="${(r + 1.2).toFixed(1)}" fill="url(#avOff)" stroke="#2A0006" stroke-width=".6"/><circle cx="${(x - r * 0.35).toFixed(1)}" cy="${(y - r * 0.4).toFixed(1)}" r="${(r * 0.28).toFixed(1)}" fill="#fff" opacity=".55"/>
+    <g class="av-on"><circle cx="${x}" cy="${y}" r="${(r * 4.6).toFixed(1)}" fill="url(#avHalo)"/><circle cx="${x}" cy="${y}" r="${(r + 1.2).toFixed(1)}" fill="url(#avLit)"/><circle cx="${(x - r * 0.35).toFixed(1)}" cy="${(y - r * 0.4).toFixed(1)}" r="${(r * 0.3).toFixed(1)}" fill="#fff" opacity=".85"/></g></g>`).join('')}</g>
 </svg>`;
 }
 
@@ -316,22 +345,34 @@ export function mountBackdrop(el) {
 
   // the city art loads only after the page has painted, sized for the screen, so it never
   // competes with the title text on a phone's first load
+  const show = (img, src, tries = 1) => {
+    img.onload = () => {
+      img.classList.add('in'); // fades in once it's ready, never a half-drawn image
+      if (img.parentNode.classList.contains('bd-cam')) mountSubway(img.parentNode, img); // trash on the floor + the PRESS START train
+    };
+    img.onerror = () => { if (tries > 0) setTimeout(() => show(img, `${src}?r=1`, tries - 1), 1500); }; // a dropped connection gets one more try
+    img.src = src;
+  };
+  /* The sharp platform loads when the page has loaded, or 2.5 s after it started, whichever comes
+     first, so a slow load event can never keep it away (Nov 19, John: on his phone the title stayed
+     black until he tapped; the real culprit was the black loading cover, now gone). Its blurred
+     stand-in shows from the very first paint (backdrop.css), so starting the download right away
+     isn't needed and would only compete with the page's own code. The city art (not on the title)
+     waits for the load event. */
+  let subwayLoading = false;
+  const loadSubway = () => {
+    if (subwayLoading) return;
+    subwayLoading = true;
+    show(el.querySelector('.bd-subway img'), artSrc('subway'));
+  };
   const loadCity = () => {
+    loadSubway();
     if (cityLoading) return;
     cityLoading = true;
-    [[el.querySelector('.bd-subway img'), artSrc('subway')], [el.querySelector('.bd-city img'), artSrc('city')]].forEach(([img, src]) => {
-      img.onload = () => {
-        img.classList.add('in'); // fades in once it's ready, never a half-drawn image
-        if (img.parentNode.classList.contains('bd-cam')) mountSubway(img.parentNode, img); // trash on the floor + the PRESS START train
-      };
-      img.src = src;
-    });
-
+    show(el.querySelector('.bd-city img'), artSrc('city'));
   };
   loadSceneNow = loadCity;
-  // the platform as soon as the page has loaded, on every device (Nov 19: phones used to wait 2.5 s
-  // more, and on a slow connection the title sat on a bare background; its blurred stand-in shows
-  // from the first frame, see backdrop.css)
+  setTimeout(loadSubway, 2500);
   const later = () => setTimeout(loadCity, 0);
   if (document.readyState === 'complete') later();
   else window.addEventListener('load', later, { once: true });

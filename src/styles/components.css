@@ -278,13 +278,6 @@ body.reduce-motion .mn-burst { animation: none; }
 
 .bee { position: fixed; left: 0; top: 0; z-index: 60; border: 0; background: none; line-height: 1; padding: 22px; cursor: pointer; touch-action: none; }
 
-.motto-screen {
-  position: fixed; inset: 0; z-index: 150; background: var(--black); display: none; place-items: center; padding: 24px;
-  font-family: var(--f-type); color: var(--white); text-align: center;
-}
-.motto-screen.show { display: grid; animation: fadeIn .5s ease; }
-.motto-screen blockquote { max-width: 720px; margin: 0; font-size: clamp(18px, 2.4vw, 26px); line-height: 1.5; }
-.motto-screen cite { display: block; margin-top: 14px; font-style: normal; color: var(--red); font-family: var(--f-menu); font-size: 24px; letter-spacing: 2px; }
 @keyframes fadeIn { from { opacity: 0; } }
 
 /* ============ KINETIC FEEDBACK ============ */
