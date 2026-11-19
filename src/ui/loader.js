@@ -129,8 +129,12 @@ function door(el) {
       opened();
       back.style.transformOrigin = `${cx}px ${cy}px`;
       back.animate([{ transform: 'scale(1.18)' }, { transform: 'none' }], { duration: 1500, easing: 'cubic-bezier(.2, .7, .3, 1)' });
-      el.animate(frames, { duration: 1000, delay: 140, easing: 'linear', fill: 'forwards' }).finished
-        .then(() => { el.remove(); back.style.transformOrigin = ''; resolve(); });
+      // gone when the doorway has grown past the screen; and by a timer as well, so no browser that
+      // never reports the animation finished can leave an invisible layer over the page
+      let gone = false;
+      const done = () => { if (gone) return; gone = true; el.remove(); back.style.transformOrigin = ''; resolve(); };
+      try { el.animate(frames, { duration: 1000, delay: 140, easing: 'linear', fill: 'forwards' }).finished.then(done, done); } catch { done(); }
+      setTimeout(done, 1400);
     }, 170);
   });
 }
