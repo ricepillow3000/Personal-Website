@@ -221,10 +221,6 @@ function billboardLayer() {
       <feMerge><feMergeNode in="spill"/><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="led"/></feMerge>
     </filter>
     <linearGradient id="bbSheen" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-    <radialGradient id="avLit" cx=".42" cy=".38" r=".6"><stop offset="0" stop-color="#FFE3E0"/><stop offset=".35" stop-color="#FF3B3B"/><stop offset="1" stop-color="#9E0010"/></radialGradient>
-    <radialGradient id="avHalo"><stop offset="0" stop-color="#FF2A2A" stop-opacity=".75"/><stop offset=".4" stop-color="#FF1A1A" stop-opacity=".28"/><stop offset="1" stop-color="#FF0000" stop-opacity="0"/></radialGradient>
-    <radialGradient id="avShade"><stop offset=".25" stop-color="#050505" stop-opacity=".9"/><stop offset="1" stop-color="#050505" stop-opacity="0"/></radialGradient><!-- hides the glow painted round each light, so a dark bulb is really dark -->
-    <radialGradient id="avOff" cx=".38" cy=".34" r=".7"><stop offset="0" stop-color="#4A4A4E"/><stop offset=".45" stop-color="#17171A"/><stop offset="1" stop-color="#050505"/></radialGradient>
     ${RINGS_USED.map(([n, d]) => `<clipPath id="bbRing-${n}"><path d="${d}"/></clipPath>`).join('')}
     ${BB_RINGS.map(([n, d]) => `<clipPath id="bbFace-${n}"><path d="${d}"/></clipPath>`).join('')}
     <pattern id="bbGrid" width="2.6" height="2.6" patternUnits="userSpaceOnUse"><path d="M.3 0V2.6" stroke="#4A000C" stroke-width=".6" opacity=".55"/><path d="M0 .3H2.6" stroke="#4A000C" stroke-width=".4" opacity=".25"/></pattern>
@@ -237,13 +233,33 @@ function billboardLayer() {
   ${RINGS_USED.map(([n]) => `<g clip-path="url(#bbRing-${n})"><g class="bb-flicker" filter="url(#bbGlow)"><g mask="url(#bbDots)"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></g></g></g>`).join('')}
   <!-- a faint light sweep gliding across each screen's glass, out of step, now and then -->
   ${BB_RINGS.map(([n], i) => { const g = BB_GEO[n]; return `<g clip-path="url(#bbFace-${n})"><rect class="bb-sheen" style="--sd:${(i * 2.3).toFixed(1)}s" x="${g.cx - g.R - 60}" y="${g.t0 - g.ta - 10}" width="60" height="${g.b0 - g.t0 + g.ta + 30}" fill="url(#bbSheen)" transform="skewX(-12)"/></g>`; }).join('')}
-  <!-- aviation obstruction lights on the rooftops (Nov 19, John: "have them blink... when it turns off
-       it's a black ball that looks like a bulb"): each one a real bulb over the art's painted dot, a
-       hot red lens with a halo when lit, a black glass bulb with a glint when dark, on its own beat -->
-  <g class="bb-lights">${AV_LIGHTS.map(([x, y, r], i) => `<g class="av" style="--ap:${(1.5 + (i % 4) * 0.22).toFixed(2)}s;--ad:${(-((i * 0.37) % 1.5)).toFixed(2)}s">
-    <circle cx="${x}" cy="${y}" r="${(r * 3.4).toFixed(1)}" fill="url(#avShade)"/><circle cx="${x}" cy="${y}" r="${(r + 1.2).toFixed(1)}" fill="url(#avOff)" stroke="#2A0006" stroke-width=".6"/><circle cx="${(x - r * 0.35).toFixed(1)}" cy="${(y - r * 0.4).toFixed(1)}" r="${(r * 0.28).toFixed(1)}" fill="#fff" opacity=".55"/>
-    <g class="av-on"><circle cx="${x}" cy="${y}" r="${(r * 4.6).toFixed(1)}" fill="url(#avHalo)"/><circle cx="${x}" cy="${y}" r="${(r + 1.2).toFixed(1)}" fill="url(#avLit)"/><circle cx="${(x - r * 0.35).toFixed(1)}" cy="${(y - r * 0.4).toFixed(1)}" r="${(r * 0.3).toFixed(1)}" fill="#fff" opacity=".85"/></g></g>`).join('')}</g>
 </svg>`;
+}
+
+
+/* The aviation obstruction lights on the rooftops (Nov 19, John: "have them blink... when it turns off
+   it's a black ball that looks like a bulb", then: "blink at random times", "look like it's part of
+   the building, not a pin you stick on a board"). Three thin layers over the art, fitted like the
+   billboard: (1) MULTIPLIED over the art, a soft dark spot that puts out the glow painted round each
+   light while the roof's own lines and greys still show through (fading out to nothing at the edge,
+   never toward white: the art is shown at 72%, so white would leak through as a grey ring); (2) the fixture itself ON the roof, a squat housing in the
+   building's grey with an ink edge and a small lens on top (dull red glass when off, a hot lens when
+   lit), no shiny ball, no glint; (3) ADDED onto the scene (screen blend), the light: a halo in the air
+   and a pool of red falling onto the roof under it. (Blend modes only reach the art from separate
+   layers: inside one SVG they only mix with that SVG.) Blink timing: startTicker's lightsStep. */
+function towerLights() {
+  const f = (n) => n.toFixed(1);
+  const size = (r) => Math.max(1.6, r * 0.62); // the fixture: about the painted dot's core
+  const lens = (x, y, s, fill) => `<path d="M${f(x - s * 0.82)} ${f(y + s * 0.5)}A${f(s * 0.82)} ${f(s * 0.95)} 0 0 1 ${f(x + s * 0.82)} ${f(y + s * 0.5)}Z" fill="${fill}"${fill.startsWith('#') ? ' stroke="#0B0B0B" stroke-width=".4"' : ''}/>`;
+  const layer = (cls, defs, body) => `<svg class="bd-billboard bd-av ${cls}" viewBox="0 0 1600 679" preserveAspectRatio="none" aria-hidden="true"><defs>${defs}</defs>${body}</svg>`;
+  return layer('bd-avdim', '<radialGradient id="avDim"><stop offset=".2" stop-color="#2A2426" stop-opacity=".92"/><stop offset=".6" stop-color="#2A2426" stop-opacity=".45"/><stop offset="1" stop-color="#2A2426" stop-opacity="0"/></radialGradient>',
+    AV_LIGHTS.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${f(r * 3.8)}" fill="url(#avDim)"/>`).join(''))
+  + layer('bd-avfix', '<radialGradient id="avLit" cx=".5" cy=".42" r=".6"><stop offset="0" stop-color="#FFF0EC"/><stop offset=".45" stop-color="#FF4A3A"/><stop offset="1" stop-color="#C0101A"/></radialGradient>',
+    AV_LIGHTS.map(([x, y, r], i) => { const s = size(r); return `<g class="av" data-av="${i}">
+    <path d="M${f(x - s * 1.25)} ${f(y + s * 1.55)}L${f(x - s * 0.8)} ${f(y + s * 0.45)}H${f(x + s * 0.8)}L${f(x + s * 1.25)} ${f(y + s * 1.55)}Z" fill="#34343A" stroke="#0B0B0B" stroke-width=".45"/><path d="M${f(x - s * 0.8)} ${f(y + s * 0.45)}H${f(x + s * 0.8)}" stroke="#6E6E76" stroke-width=".35"/>
+    ${lens(x, y, s, '#3A0B10')}<g class="av-on">${lens(x, y, s, 'url(#avLit)')}</g></g>`; }).join(''))
+  + layer('bd-avglow', '<radialGradient id="avHalo"><stop offset="0" stop-color="#FF2A1E" stop-opacity=".95"/><stop offset=".3" stop-color="#E0141A" stop-opacity=".4"/><stop offset="1" stop-color="#A00000" stop-opacity="0"/></radialGradient><radialGradient id="avSpill"><stop offset="0" stop-color="#FF2A1E" stop-opacity=".55"/><stop offset="1" stop-color="#FF2A1E" stop-opacity="0"/></radialGradient>',
+    AV_LIGHTS.map(([x, y, r], i) => `<g class="av" data-av="${i}"><g class="av-on"><ellipse cx="${x}" cy="${f(y + size(r) * 2.4)}" rx="${f(r * 3.2)}" ry="${f(r * 1.5)}" fill="url(#avSpill)"/><circle cx="${x}" cy="${y}" r="${f(r * 4.8)}" fill="url(#avHalo)"/></g></g>`).join(''));
 }
 
 /* The tickers: each ring's line scrolls right to left across its screen, wrapping round the drum
@@ -278,11 +294,33 @@ function startTicker(svg) {
     });
   };
   const reduce = () => document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* The aviation lights blink at random (Nov 19, John: "not all blink and unblink at the same time...
+     blink at random times"): every light rolls a fresh on-time (0.35-1.4 s) and off-time (0.3-2.1 s)
+     each time it switches, so no two ever share a rhythm and no light repeats its own. Now and then
+     (1 in 8) a light stutters off for a beat, like a tired lamp. They start in a random state. With
+     reduced motion they all rest on. */
+  const lights = AV_LIGHTS.map((_, i) => {
+    const els = [...svg.parentNode.querySelectorAll(`.av[data-av="${i}"]`)]; // its lens and its light
+    const on = Math.random() < 0.5;
+    els.forEach((e) => e.classList.toggle('lit', on));
+    return { els, on, next: performance.now() + Math.random() * 1400 };
+  });
+  const roll = (on) => (on ? (Math.random() < 0.125 ? 0.09 : 0.35 + Math.random() * 1.05) : 0.3 + Math.random() * 1.8) * 1000;
+  const lightsStep = (now, still) => {
+    lights.forEach((l) => {
+      if (still) { if (!l.on) { l.on = true; l.els.forEach((e) => e.classList.add('lit')); } return; }
+      if (now < l.next) return;
+      l.on = !l.on;
+      l.els.forEach((e) => e.classList.toggle('lit', l.on));
+      l.next = now + roll(l.on);
+    });
+  };
   const t0 = performance.now();
   const frame = (now) => {
     requestAnimationFrame(frame);
     if (document.body.dataset.mode === 'title') return; // the city isn't shown on the title
     const still = reduce();
+    lightsStep(now, still);
     rings.forEach((r) => {
       if (still) place(r, -r.total / 2);
       else place(r, EDGE - ((((now - t0) / 1000 + r.offset) % r.pass) * SPEED)); // enters at the right, travels left
@@ -292,12 +330,11 @@ function startTicker(svg) {
 }
 /** Fit the billboard layer to where object-fit: cover (position 50% 40%) puts the city art. */
 function fitBillboard(frame) {
-  const svg = frame.querySelector('.bd-billboard');
   const W = frame.offsetWidth;
   const H = frame.offsetHeight;
-  if (!svg || !W || !H) return;
+  if (!W || !H) return;
   const k = Math.max(W / 1600, H / 679);
-  Object.assign(svg.style, { width: `${1600 * k}px`, height: `${679 * k}px`, left: `${(W - 1600 * k) * 0.5}px`, top: `${(H - 679 * k) * 0.4}px` });
+  frame.querySelectorAll('.bd-billboard').forEach((svg) => Object.assign(svg.style, { width: `${1600 * k}px`, height: `${679 * k}px`, left: `${(W - 1600 * k) * 0.5}px`, top: `${(H - 679 * k) * 0.4}px` }));
 }
 
 /** The far city: Nano Banana night-city art (cartoon ink style: black sky, gray towers, white
@@ -321,7 +358,7 @@ export function mountBackdrop(el) {
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `
     <div class="bd-layer bd-subway"><div class="bd-drift"><div class="bd-cam"><img alt="" decoding="async"></div></div></div>
-    <div class="bd-layer bd-city"><div class="bd-drift"><div class="bd-cityframe"><img alt="" decoding="async">${billboardLayer()}</div></div></div>
+    <div class="bd-layer bd-city"><div class="bd-drift"><div class="bd-cityframe"><img alt="" decoding="async">${billboardLayer()}${towerLights()}</div></div></div>
     <div class="bd-layer bd-p5"><div class="bd-drift" data-later="p5"></div></div>
     <div class="bd-layer bd-graffiti"><div class="bd-drift">${graffitiLayer()}</div></div>
     <div class="bd-layer bd-shards"><div class="bd-drift">${shardLayer()}</div></div>

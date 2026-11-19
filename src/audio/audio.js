@@ -13,6 +13,7 @@ let musicBus = null;
 let noiseBuf = null;
 let brownBuf = null; // deep, natural rumble noise (wind roar, traffic)
 let music = null;
+let duck = null;
 
 const enabled = () => store.get().settings.sound;
 
@@ -51,7 +52,8 @@ function ensure() {
   sfxBus.connect(glue).connect(master);
   musicBus = ac.createGain();
   musicBus.gain.value = store.get().settings.music * 0.6;
-  musicBus.connect(master);
+  duck = ac.createGain(); // the music dips under sound effects (sfx)
+  musicBus.connect(duck).connect(master);
   noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
   const d = noiseBuf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -952,6 +954,12 @@ export function sfx(name, arg) {
   // only smears into a stutter, so the second one is dropped
   if (ac.currentTime - (lastAt[name] ?? -1) < (name === 'hover' ? 0.015 : 0.035)) return; // hovers may overlap: rapid moves stay snappy
   lastAt[name] = ac.currentTime;
+  if (music) { // duck the music under the effect: a light dip for hovers, a deeper one for the rest
+    const t = ac.currentTime;
+    duck.gain.cancelScheduledValues(t);
+    duck.gain.setTargetAtTime(name === 'hover' || name === 'hoverBig' ? 0.8 : 0.5, t, 0.012);
+    duck.gain.setTargetAtTime(1, t + (name === 'tunnel' || name === 'train' ? 1.4 : 0.22), 0.25);
+  }
   const g = ac.createGain(); // each sound gets its own fader, so a skipped shot can be hushed
   g.connect(sfxBus);
   live.add(g);
@@ -966,304 +974,20 @@ export function hush() {
   live.clear();
 }
 
-/* ---------- music: "Neon Rain" - original acid-jazz night theme, 92 BPM, swung ----------
-   Electric-piano jazz voicings, a walking/sliding bass, a swung ride groove (still drums:
-   John is a drummer), an airy flute lead, a shimmering pad and bell sparkles, all sent
-   through a long reverb and an echo so it floats. 8-bar form; the melody comes and goes. */
-const BPM = 92;
-const midi = (n) => 440 * 2 ** ((n - 69) / 12);
-const N = (name) => {
-  const m = /^([A-G])(#|b)?(-?\d)$/.exec(name);
-  const base = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
-  return 12 * (Number(m[3]) + 1) + base;
-};
-// [root, rootless voicing] per bar
-const FORM = [
-  ['D2', ['F3', 'A3', 'C4', 'E4']], //   Dm9
-  ['G2', ['F3', 'A3', 'B3', 'E4']], //   G13
-  ['C2', ['E3', 'G3', 'B3', 'D4']], //   Cmaj9
-  ['A2', ['G3', 'Bb3', 'C#4', 'F4']], // A7(b9 b13)
-  ['Bb1', ['A3', 'C4', 'D4', 'F4']], //  Bbmaj9
-  ['G2', ['Bb3', 'D4', 'F4', 'A4']], //  Gm9
-  ['E2', ['D3', 'G3', 'Bb3', 'E4']], //  Em7b5
-  ['A2', ['G3', 'C#4', 'F4', 'Bb4']] //  A7(b9 b13)
-].map(([r, v]) => [N(r), v.map(N)]);
-// lead melody: [step, note, length in 16ths] per bar (original)
-const MELODY = [
-  [[0, 'A4', 3], [4, 'C5', 2], [6, 'D5', 2], [8, 'E5', 6], [14, 'D5', 2]],
-  [[0, 'F5', 4], [6, 'E5', 2], [8, 'D5', 2], [10, 'B4', 5]],
-  [[0, 'E5', 6], [8, 'G5', 4], [12, 'D5', 4]],
-  [[0, 'C#5', 4], [4, 'Bb4', 2], [6, 'A4', 2], [8, 'G4', 7]],
-  [[2, 'D5', 2], [4, 'F5', 2], [6, 'A5', 4], [10, 'G5', 2], [12, 'F5', 4]],
-  [[0, 'D5', 4], [4, 'Bb4', 4], [8, 'A4', 2], [10, 'F4', 6]],
-  [[0, 'G4', 2], [2, 'Bb4', 2], [4, 'D5', 4], [8, 'C5', 2], [10, 'Bb4', 2], [12, 'G4', 4]],
-  [[0, 'A4', 8], [10, 'C#5', 2], [12, 'E5', 4]]
-].map((bar) => bar.map(([st, n, len]) => [st, N(n), len]));
-
-let fx = null; // { dry, verb, echo }
-function musicFx() {
-  if (fx) return fx;
-  // long airy reverb from a generated impulse response
-  const len = ac.sampleRate * 3.2;
-  const ir = ac.createBuffer(2, len, ac.sampleRate);
-  for (let c = 0; c < 2; c++) {
-    const d = ir.getChannelData(c);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 2.6;
-  }
-  const conv = ac.createConvolver();
-  conv.buffer = ir;
-  const verb = ac.createGain();
-  verb.gain.value = 0.55;
-  verb.connect(conv);
-  const wet = ac.createGain();
-  wet.gain.value = 0.42;
-  conv.connect(wet).connect(musicBus);
-  // dotted-eighth echo with a darkening feedback loop
-  const echo = ac.createGain();
-  const dl = ac.createDelay(2);
-  dl.delayTime.value = (60 / BPM) * 0.75;
-  const fb = ac.createGain();
-  fb.gain.value = 0.38;
-  const lp = ac.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.value = 2600;
-  echo.connect(dl);
-  dl.connect(lp).connect(fb).connect(dl);
-  const echoOut = ac.createGain();
-  echoOut.gain.value = 0.3;
-  lp.connect(echoOut).connect(musicBus);
-  echoOut.connect(verb);
-  fx = { dry: musicBus, verb, echo };
-  return fx;
-}
-
-/** routes a voice to dry + reverb (+ echo) */
-function send(node, { dry = 1, verb = 0.4, echo = 0 } = {}) {
-  const f = musicFx();
-  const d = ac.createGain();
-  d.gain.value = dry;
-  node.connect(d).connect(f.dry);
-  if (verb) {
-    const v = ac.createGain();
-    v.gain.value = verb;
-    node.connect(v).connect(f.verb);
-  }
-  if (echo) {
-    const e = ac.createGain();
-    e.gain.value = echo;
-    node.connect(e).connect(f.echo);
-  }
-}
-
-/* electric piano: FM tine with a soft bell attack and a little tremolo */
-function epiano(at, notes, dur, vel = 1) {
-  const out = ac.createGain();
-  out.gain.value = 1;
-  const trem = ac.createOscillator();
-  trem.frequency.value = 4.6;
-  const tg = ac.createGain();
-  tg.gain.value = 0.12;
-  trem.connect(tg).connect(out.gain);
-  trem.start(at);
-  trem.stop(at + dur + 0.2);
-  send(out, { dry: 0.8, verb: 0.55, echo: 0.08 });
-  notes.forEach((n, i) => {
-    const t0 = at + i * 0.012 + Math.random() * 0.008;
-    const f = midi(n);
-    const car = ac.createOscillator();
-    car.frequency.value = f;
-    const mod = ac.createOscillator();
-    mod.frequency.value = f * 1;
-    const mi = ac.createGain();
-    mi.gain.setValueAtTime(f * 1.6, t0);
-    mi.gain.exponentialRampToValueAtTime(f * 0.08, t0 + 0.35);
-    mod.connect(mi).connect(car.frequency);
-    const tine = ac.createOscillator(); // the bright "ding"
-    tine.frequency.value = f * 7;
-    const tgn = ac.createGain();
-    tgn.gain.setValueAtTime(0.012 * vel, t0);
-    tgn.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
-    tine.connect(tgn).connect(out);
-    const g = ac.createGain();
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.linearRampToValueAtTime(0.075 * vel, t0 + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.032 * vel, t0 + 0.4);
-    g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
-    car.connect(g).connect(out);
-    [car, mod, tine].forEach((o) => {
-      o.start(t0);
-      o.stop(t0 + dur + 0.1);
-    });
-  });
-}
-
-/* round sliding bass (sine + filtered saw), with a little glide into each note */
-function jazzBass(at, note, dur, slideFrom) {
-  const f = midi(note);
-  const o = ac.createOscillator();
-  const s = ac.createOscillator();
-  s.type = 'sawtooth';
-  [o, s].forEach((x) => {
-    x.frequency.setValueAtTime(slideFrom ? midi(slideFrom) : f, at);
-    x.frequency.exponentialRampToValueAtTime(f, at + (slideFrom ? 0.06 : 0.001));
-  });
-  const lp = ac.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.setValueAtTime(900, at);
-  lp.frequency.exponentialRampToValueAtTime(260, at + 0.18);
-  const sg = ac.createGain();
-  sg.gain.value = 0.35;
-  s.connect(sg).connect(lp);
-  o.connect(lp);
-  const g = ac.createGain();
-  g.gain.setValueAtTime(0.0001, at);
-  g.gain.exponentialRampToValueAtTime(0.3, at + 0.015);
-  g.gain.exponentialRampToValueAtTime(0.13, at + dur * 0.5);
-  g.gain.exponentialRampToValueAtTime(0.0008, at + dur);
-  lp.connect(g);
-  send(g, { dry: 1, verb: 0.08 });
-  [o, s].forEach((x) => {
-    x.start(at);
-    x.stop(at + dur + 0.05);
-  });
-}
-
-/* airy flute lead: sine + breath noise, delayed vibrato */
-function flute(at, note, dur) {
-  const f = midi(note);
-  const o = ac.createOscillator();
-  o.frequency.value = f;
-  const vib = ac.createOscillator();
-  vib.frequency.value = 5.4;
-  const vg = ac.createGain();
-  vg.gain.setValueAtTime(0, at);
-  vg.gain.linearRampToValueAtTime(f * 0.012, at + Math.min(0.35, dur * 0.6));
-  vib.connect(vg).connect(o.frequency);
-  const breath = ac.createBufferSource();
-  breath.buffer = noiseBuf;
-  const bf = ac.createBiquadFilter();
-  bf.type = 'bandpass';
-  bf.frequency.value = f * 2;
-  bf.Q.value = 6;
-  const bg = ac.createGain();
-  bg.gain.value = 0.05;
-  breath.connect(bf).connect(bg);
-  const g = ac.createGain();
-  g.gain.setValueAtTime(0.0001, at);
-  g.gain.linearRampToValueAtTime(0.07, at + 0.05);
-  g.gain.setValueAtTime(0.07, at + Math.max(0.06, dur - 0.08));
-  g.gain.exponentialRampToValueAtTime(0.0008, at + dur + 0.12);
-  o.connect(g);
-  bg.connect(g);
-  send(g, { dry: 0.75, verb: 0.7, echo: 0.45 });
-  o.start(at);
-  vib.start(at);
-  breath.start(at, Math.random() * 0.5);
-  [o, vib, breath].forEach((x) => x.stop(at + dur + 0.2));
-}
-
-/* shimmering pad: detuned saws, slow filter swell, mostly reverb */
-function pad(at, notes, dur) {
-  const lp = ac.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.Q.value = 2;
-  lp.frequency.setValueAtTime(500, at);
-  lp.frequency.linearRampToValueAtTime(1800, at + dur * 0.5);
-  lp.frequency.linearRampToValueAtTime(600, at + dur);
-  const g = ac.createGain();
-  g.gain.setValueAtTime(0.0001, at);
-  g.gain.linearRampToValueAtTime(0.018, at + dur * 0.35);
-  g.gain.linearRampToValueAtTime(0.0001, at + dur);
-  lp.connect(g);
-  send(g, { dry: 0.4, verb: 1 });
-  notes.forEach((n) => [-7, 7].forEach((det) => {
-    const o = ac.createOscillator();
-    o.type = 'sawtooth';
-    o.frequency.value = midi(n + 12);
-    o.detune.value = det;
-    o.connect(lp);
-    o.start(at);
-    o.stop(at + dur + 0.05);
-  }));
-}
-
-/* tiny bell sparkle (ethereal glints between phrases) */
-function bell(at, note, vel = 1) {
-  const o = ac.createOscillator();
-  o.frequency.value = midi(note);
-  const m = ac.createOscillator();
-  m.frequency.value = midi(note) * 3.5;
-  const mg = ac.createGain();
-  mg.gain.value = midi(note) * 0.8;
-  m.connect(mg).connect(o.frequency);
-  const g = ac.createGain();
-  g.gain.setValueAtTime(0.025 * vel, at);
-  g.gain.exponentialRampToValueAtTime(0.0005, at + 1.4);
-  o.connect(g);
-  send(g, { dry: 0.5, verb: 0.9, echo: 0.6 });
-  [o, m].forEach((x) => {
-    x.start(at);
-    x.stop(at + 1.5);
-  });
-}
-
-/* swung ride cymbal: metallic partials + bright noise */
-function ride(at, v = 1) {
-  noise(musicBus, { at, dur: 0.5, type: 'highpass', freq: 6500, q: 0.5, gain: 0.09 * v });
-  [2900, 4170, 5310].forEach((f) => tone(musicBus, { at, dur: 0.35, from: f, to: f, type: 'square', gain: 0.006 * v }));
-}
-
-function startSynthLoop() {
-  const beat = 60 / BPM;
-  const sixteenth = beat / 4;
-  const swing = beat / 6 * 0.75; // triplet-feel swing on the off-beat eighths
-  let step = 0;
-  let next = ac.currentTime + 0.12;
-  const id = setInterval(() => {
-    while (next < ac.currentTime + 0.3) {
-      const s = step % 16;
-      const barN = Math.floor(step / 16);
-      const bar = barN % 8;
-      const cycle = Math.floor(barN / 8) % 4; // 0 intro, 1-2 melody, 3 melody up high + sparkles
-      const at = next + (s % 4 === 2 ? swing : 0);
-      const [root, voicing] = FORM[bar];
-      const nextRoot = FORM[(bar + 1) % 8][0];
-
-      // drums: light swung ride groove, soft kick, brushy backbeat with ghost notes
-      if ([0, 4, 6, 8, 12, 14].includes(s)) ride(at, s % 4 === 0 ? 1 : 0.6);
-      if (s === 4 || s === 12) VOICES.hat(musicBus, at, 0.22);
-      if (s === 0 || (s === 10 && bar % 2)) VOICES.kick(musicBus, at, 0.3);
-      if (s === 4 || s === 12) VOICES.snare(musicBus, at, 0.16);
-      if (s === 7 || s === 15) VOICES.snare(musicBus, at, 0.05);
-      if (bar === 7 && cycle === 3 && s === 12) VOICES.toms(musicBus, at);
-
-      // keys: chord on 1 (and a syncopated stab on the "and" of 2 every other bar)
-      if (s === 0) epiano(at, voicing, beat * 3.6, 1);
-      if (s === 6 && bar % 2) epiano(at, voicing.slice(1), beat * 1.4, 0.6);
-      if (s === 0 && bar % 2 === 0) pad(at, voicing, beat * 8);
-
-      // walking / sliding bass
-      if (s === 0) jazzBass(at, root, beat * 1.4, root - 5);
-      if (s === 6) jazzBass(at, root + 12, beat * 0.45);
-      if (s === 8) jazzBass(at, root + 7, beat * 0.9);
-      if (s === 14) jazzBass(at, nextRoot - 1, beat * 0.45);
-
-      // melody: rests in the intro cycle, sings in cycles 1-3 (an octave up in cycle 3)
-      if (cycle > 0) MELODY[bar].forEach(([st, n, len]) => st === s && flute(at, n + (cycle === 3 ? 12 : 0), len * sixteenth * 0.95));
-      // bell glints at the end of every other bar
-      if (s === 12 && bar % 2 === 1) [voicing[3] + 24, voicing[1] + 24].forEach((n, i) => bell(at + i * beat * 0.5, n, cycle === 3 ? 1.2 : 0.8));
-
-      next += sixteenth;
-      step += 1;
-    }
-  }, 60);
-  return { stop: () => clearInterval(id) };
-}
-
+/* ---------- music: "Last Train" (src/audio/music.js), an original late-night acid-jazz / lo-fi
+   neo-soul loop. Its code downloads only once sound is turned on. It ducks under the sound effects
+   (sfx() dips the duck fader for a moment) so a click or a film cut always reads clearly. */
+let musicLoading = false;
 function startMusic() {
-  if (!enabled() || !ensure() || music) return;
+  if (!enabled() || !ensure() || music || musicLoading) return;
   if (ac.state === 'suspended') ac.resume();
-  music = startSynthLoop();
+  musicLoading = true;
+  import('./music.js').then(({ createMusic }) => {
+    musicLoading = false;
+    if (!enabled() || music) return; // sound went off while it loaded
+    music = createMusic(ac, musicBus);
+    music.start();
+  }, () => { musicLoading = false; }); // offline: no music, sound effects still work
 }
 
 function stopMusic() {

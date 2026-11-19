@@ -111,6 +111,22 @@ body[data-screen="title"] .hud-tl .hud-meta { display: none; }
 .hud-btn .snd-on { display: none; }
 .hud-btn[aria-pressed="true"] .snd-on { display: inline; }
 .hud-btn[aria-pressed="true"] .snd-off { display: none; }
+/* The sound button calls out until the visitor has turned sound on once (Nov 19, John: "more
+   noticeable, but not too big... grab slightly more attention"): same size, but a red misprint sits
+   under its white shadow, its X turns red, and every few seconds the X snaps into two red sound waves, like it's calling out.
+   Hard steps, no fades. It calms down for good after the first time sound is on (main.js). */
+.snd-ping { opacity: 0; }
+#soundBtn.sound-call { box-shadow: 4px 4px 0 var(--white), 7px 7px 0 var(--red); }
+#soundBtn.sound-call:is(:hover, :focus-visible) { box-shadow: 4px 4px 0 var(--black), 7px 7px 0 var(--red); }
+#soundBtn.sound-call :is(.snd-x, .snd-ping) { color: var(--red); }
+#soundBtn.sound-call .snd-x { animation: sndX 3.4s steps(1) infinite 1.2s; }
+#soundBtn.sound-call .snd-ping1 { animation: sndPing1 3.4s steps(1) infinite 1.2s; }
+#soundBtn.sound-call .snd-ping2 { animation: sndPing2 3.4s steps(1) infinite 1.2s; }
+@keyframes sndX { 0%, 100% { opacity: 1; } 62%, 92% { opacity: 0; } }
+@keyframes sndPing1 { 0%, 100% { opacity: 0; } 62%, 92% { opacity: 1; } }
+@keyframes sndPing2 { 0%, 100% { opacity: 0; } 68%, 76%, 84% { opacity: 1; } 72%, 80%, 92% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #soundBtn.sound-call :is(.snd-x, .snd-ping) { animation: none; } }
+body.reduce-motion #soundBtn.sound-call :is(.snd-x, .snd-ping) { animation: none; }
 .sound-tip {
   position: absolute; top: calc(100% + 10px); right: 0; white-space: nowrap; pointer-events: none;
   background: var(--yellow); color: var(--black); font-size: 16px; padding: 2px 10px; border: 2px solid var(--black);
