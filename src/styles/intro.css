@@ -37,6 +37,8 @@
   transform: skew(-12deg); box-shadow: 4px 4px 0 var(--red); cursor: pointer; }
 .ld-sound b { font-weight: 400; color: var(--yellow); }
 .ld-sound[aria-pressed="true"] { background: var(--red); box-shadow: 4px 4px 0 var(--white); }
+.ld-sound.wait { animation: ldTap 1.2s steps(2) infinite; } /* TAP: a gentle blink until the first tap */
+@keyframes ldTap { 50% { box-shadow: 4px 4px 0 var(--yellow); } }
 .ld-sound:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
 .loader.flash .ld-sound { opacity: 0; transition: opacity .15s; }
 .loader.ld-fade { opacity: 0; transition: opacity .25s ease-out; }

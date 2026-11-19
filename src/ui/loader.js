@@ -16,7 +16,7 @@
    test browsers skip it unless the URL asks for it (?intro), so the other tests see the page at once. */
 import { reducedMotion, fontsReady } from '../core/util.js';
 import { stationReady } from '../fx/backdrop.js';
-import { sfx, setSound } from '../audio/audio.js';
+import { sfx, setSound, audioLive } from '../audio/audio.js';
 import { store } from '../core/store.js';
 
 let opened;
@@ -43,24 +43,28 @@ export function runLoader() {
   const level = el.querySelector('#ldLevel');
   const pins = [...el.querySelectorAll('.ld-pin')];
   let pinsSet = 0;
-  /* sound (Nov 19): off by default like the rest of the site, and browsers stay silent until the
-     visitor taps or presses a key. The SOUND switch on the lock turns it on right here (that tap is
-     the gesture the browser needs) without skipping the lock; with sound already on from a last
-     visit, the clicks play wherever the browser allows. */
+  /* sound (Nov 19): on by default, but browsers stay silent until the visitor taps or presses a key.
+     So while it is on but not yet allowed, the switch reads TAP FOR SOUND, and that tap starts it
+     (without skipping the lock); once it plays, the switch is a plain ON/OFF. */
   const sw = el.querySelector('.ld-sound');
   const showSound = () => {
     const on = store.get().settings.sound;
-    sw.setAttribute('aria-pressed', String(on));
-    sw.querySelector('b').textContent = on ? 'ON' : 'OFF';
+    const waiting = on && !audioLive();
+    sw.setAttribute('aria-pressed', String(on && !waiting));
+    sw.classList.toggle('wait', waiting);
+    sw.querySelector('.ld-sw').innerHTML = waiting ? 'TAP FOR <b>SOUND</b>' : `SOUND <b>${on ? 'ON' : 'OFF'}</b>`;
   };
   if (sw) {
     showSound();
-    sw.addEventListener('pointerdown', (e) => e.stopPropagation()); // (not a skip)
+    let unlocking = false; // decided when the finger lands: the page's own wake-up runs before the click
+    sw.addEventListener('pointerdown', (e) => { e.stopPropagation(); unlocking = sw.classList.contains('wait'); }); // a tap on TAP FOR SOUND means sound (and is not a skip)
     sw.addEventListener('keydown', (e) => e.stopPropagation());
     sw.addEventListener('click', (e) => {
       e.stopPropagation();
-      setSound(!store.get().settings.sound);
-      showSound();
+      const on = store.get().settings.sound;
+      setSound(unlocking || (on && !audioLive()) ? true : !on); // the tap that unlocks keeps it on
+      unlocking = false;
+      setTimeout(showSound, 60);
       window.dispatchEvent(new Event('jn-sound')); // the HUD's sound button follows
       if (store.get().settings.sound) sfx('toggle');
     });
@@ -96,6 +100,7 @@ export function runLoader() {
       bar.setAttribute('aria-valuenow', String(n));
       level.setAttribute('y', (44 - shown * 0.95).toFixed(1)); // the red rises from the keyhole's foot (y 42) past its top (-48)
       pins.forEach((p) => p.classList.toggle('set', n >= Number(p.dataset.at))); // each pin snaps up as its step lands
+      if (sw) showSound(); // (the browser may let sound start on its own: the label follows)
       const now = pins.filter((p) => n >= Number(p.dataset.at)).length;
       for (let k = pinsSet; k < now; k++) setTimeout(() => sfx('lockPin', k), (k - pinsSet) * 80); // a click per pin, never two at once
       pinsSet = Math.max(pinsSet, now);

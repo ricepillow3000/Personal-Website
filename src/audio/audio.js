@@ -21,7 +21,8 @@ function ensure() {
   if (ac) return ac;
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return null;
-  ac = new AC();
+  try { ac = new AC({ latencyHint: 'balanced' }); } catch { ac = new AC(); } // (a little more buffer: no crackle over Bluetooth when the phone is busy)
+  ac.onstatechange = () => { if (ac.state !== 'running' && !document.hidden && enabled()) armUnlock(); }; // (iOS 'interrupted' by a call, Siri...)
   master = ac.createGain();
   master.gain.value = 0.9;
   // safety limiter: fast transients (a whip crack lasts 12 ms) slip past the slower glue
@@ -992,7 +993,9 @@ Object.assign(VOICES, {
 
 const lastAt = {}; // when each sound last started (see sfx)
 export function sfx(name, arg) {
-  if (!enabled() || !ensure()) return;
+  if (!enabled()) return;
+  if (!ac && !activated()) return; // no audio engine (and no sound downloads) before the visitor's first tap or key
+  if (!ensure()) return;
   if (ac.state === 'suspended') ac.resume();
   // the same sound twice within 35 ms is never meant (a fast sweep across a list): stacking it
   // only smears into a stutter, so the second one is dropped
@@ -1000,7 +1003,8 @@ export function sfx(name, arg) {
   lastAt[name] = ac.currentTime;
   if (music) { // duck the music under the effect: a light dip for hovers, a deeper one for the rest
     const t = ac.currentTime;
-    duck.gain.cancelScheduledValues(t);
+    if (duck.gain.cancelAndHoldAtTime) duck.gain.cancelAndHoldAtTime(t); // hold where it is: a jump here was a click in the music
+    else { duck.gain.cancelScheduledValues(t); duck.gain.setValueAtTime(duck.gain.value, t); }
     duck.gain.setTargetAtTime(name === 'hover' || name === 'hoverBig' ? 0.8 : 0.5, t, 0.012);
     duck.gain.setTargetAtTime(1, t + (name === 'tunnel' || name === 'train' ? 1.4 : 0.22), 0.25);
   }
@@ -1047,11 +1051,58 @@ export function setMusicVolume(v) {
 
 export function setSound(on) {
   store.setSetting('sound', on);
+  store.setSetting('soundChosen', true);
   if (on) {
     ensure();
-    ac?.resume();
+    ac?.resume().catch(() => {});
     startMusic();
+    if (ac && ac.state !== 'running') armUnlock();
   } else {
     stopMusic();
   }
+}
+
+/* ---------- waking the sound up (Nov 19, John: "with the audio on, when I leave the site and come back
+   the audio doesn't work, even though it says it's on, and I have to toggle it off and on").
+   Two bugs: (1) the wake-up listened for pointerdown, but on a phone a finger touching down does not
+   count as permission to play (only lifting it, a click or a key does), so it failed once and then
+   stopped listening; (2) leaving the page (another app, another tab, a locked phone) puts the audio
+   engine to sleep and nothing woke it. Now: the first tap, click or key wakes it (and keeps trying
+   until it really runs); leaving the page pauses the sound, coming back resumes it where it left off,
+   and if the phone needs another tap first (iOS after a call or a lock), the next tap does it. */
+const activated = () => !navigator.userActivation || navigator.userActivation.hasBeenActive;
+export const audioLive = () => Boolean(ac && ac.state === 'running');
+const UNLOCK = ['pointerup', 'click', 'touchend', 'keydown'];
+let unlockArmed = false;
+function onUnlock(e) {
+  if (e.type === 'keydown' && e.key === 'Escape') return; // Escape doesn't let a page start audio
+  if (!enabled()) { disarm(); return; }
+  if (!ensure()) return;
+  ac.resume().then(() => { if (ac.state === 'running') disarm(); }, () => {});
+  startMusic();
+}
+function disarm() {
+  unlockArmed = false;
+  UNLOCK.forEach((t) => window.removeEventListener(t, onUnlock, true));
+}
+function armUnlock() {
+  if (unlockArmed) return;
+  unlockArmed = true;
+  UNLOCK.forEach((t) => window.addEventListener(t, onUnlock, true));
+}
+function wake() {
+  if (!ac || !enabled()) return;
+  ac.resume().then(() => { if (ac.state !== 'running') armUnlock(); }, () => armUnlock());
+  setTimeout(() => { if (ac.state !== 'running') armUnlock(); }, 400);
+  startMusic();
+}
+/** Boot: with sound on, the first gesture starts it; leaving pauses it, coming back resumes it. */
+export function initAudio() {
+  if (enabled()) armUnlock();
+  document.addEventListener('visibilitychange', () => {
+    if (!ac) return;
+    if (document.hidden) ac.suspend().catch(() => {});
+    else wake();
+  });
+  window.addEventListener('pageshow', (e) => { if (e.persisted) wake(); }); // back from the browser's page cache
 }

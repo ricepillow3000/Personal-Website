@@ -32,7 +32,7 @@ import { toast } from './ui/toast.js';
 import { createMenu, MENU_ITEMS } from './scenes/menu.js';
 import { SECTION_RENDERERS, SECTION_TITLES, dossierMarkup, animateDossier } from './scenes/sections.js';
 import { renderQuickView } from './scenes/quickview.js';
-import { sfx, setSound, setMusicVolume } from './audio/audio.js';
+import { sfx, setSound, setMusicVolume, initAudio } from './audio/audio.js';
 import { unlock, refreshCounter, listMarkup, count, ACHIEVEMENTS } from './eggs/achievements.js';
 import { armBee } from './eggs/bee.js';
 import { installConsole } from './eggs/console.js';
@@ -791,18 +791,9 @@ function syncSoundButton() {
   }
 }
 
-/* Sound was left ON last visit: browsers only allow audio after a gesture, so the music
-   picks back up on the visitor's first click or key press. */
-if (store.get().settings.sound) {
-  const resumeAudio = (e) => {
-    if (e.key === 'Escape') return; // Escape doesn't count as a gesture that may start audio
-    window.removeEventListener('pointerdown', resumeAudio, true);
-    window.removeEventListener('keydown', resumeAudio, true);
-    if (store.get().settings.sound) setSound(true);
-  };
-  window.addEventListener('pointerdown', resumeAudio, true);
-  window.addEventListener('keydown', resumeAudio, true);
-}
+/* sound is on by default: the visitor's first tap, click or key starts it (browsers allow audio only
+   after one), leaving the page pauses it and coming back resumes it (audio.js initAudio) */
+initAudio();
 
 $('#soundBtn').addEventListener('click', () => toggleSound());
 window.addEventListener('jn-sound', () => syncSoundButton()); // the lock screen's SOUND switch
