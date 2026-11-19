@@ -110,3 +110,25 @@ body[data-mode="title"] .bd-billboard, body[data-mode="title"] .bd-city img.in ~
 .av.lit .av-on { opacity: 1; transition: opacity .07s ease-out; }
 @media (prefers-reduced-motion: reduce) { .bb-flicker, .bb-sheen { animation: none; } .av .av-on { transition: none; } }
 body.reduce-motion :is(.bb-flicker, .bb-sheen) { animation: none; }
+
+/* the station layer (src/fx/station.js): the ceiling's lights and the pillar's graffiti, laid over the
+   platform art exactly where the <img> shows it. Blend modes only reach the art from separate layers. */
+.st-wrap { position: absolute; pointer-events: none; opacity: 0; transition: opacity .3s ease-out; }
+.bd-cam img.in ~ .st-wrap { opacity: 1; }
+.st-wrap .st { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.st-dim { mix-blend-mode: multiply; }
+.st-glow { mix-blend-mode: screen; }
+.sl .sl-off { opacity: 0; transition: opacity .04s linear; }
+.sl .sl-on { opacity: 1; transition: opacity .05s linear; }
+.sl[data-st="off"] .sl-off { opacity: 1; transition-duration: .02s; } /* a tube dies at once... */
+.sl[data-st="off"] .sl-on { opacity: 0; transition-duration: .02s; }
+.sl[data-st="dim"] .sl-off { opacity: .5; }
+.sl[data-st="dim"] .sl-on { opacity: .28; }
+.gf text { font-family: var(--f-head); }
+.gf-red { fill: #CC161C; stroke: #0B0B0B; stroke-width: 3.2; stroke-linejoin: round; paint-order: stroke; }
+.gf-white { fill: none; stroke: #E9E7DF; stroke-width: 4.4; stroke-linejoin: round; }
+.gf-shadow { fill: #0B0B0B; opacity: .45; }
+.gf-cat { fill: #101012; }
+.gf-cat-edge { fill: none; stroke: #E9E7DF; stroke-width: 6; stroke-linejoin: round; stroke-linecap: round; }
+.gf-tail { fill: none; stroke: #101012; stroke-width: 7; stroke-linecap: round; }
+.gf { opacity: .88; } /* paint on a dim pillar, not a sticker */

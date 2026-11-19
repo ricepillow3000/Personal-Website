@@ -263,6 +263,11 @@ function carHorn(bus, at, dur, [f1, f2], gain) {
    little wobble. It can arrive and leave like a real train: `fadeIn` seconds swelling up from far
    away (muffled at first, clearer as it nears), loudest at `peak` seconds, then the pitch drops
    (Doppler) and it fades away behind you */
+/* The Doppler dip as the train passes: the horn's pitch after it has gone by, as a share of its
+   pitch while it comes (a real receding horn drops a little, never rises). Nov 19 bug: this used to
+   be computed from the pass TIME (pass + 0.14 = 1.09 once the train got faster), so the horn bent UP
+   into a whine as the train left the screen. */
+const HORN_DOPPLER = 0.9;
 function trainHorn(bus, at, dur, gain, { fadeIn = 0.07, peak = null, drop = 1 } = {}) {
   const end = at + dur;
   const top = at + (peak ?? fadeIn);
@@ -677,7 +682,7 @@ const VOICES = {
     const d = pass - 0.74; // everything after the first rumble moves with the nose
     rails(bus, at, 1.3 + d, { gapFrom: 0.3, gapTo: 0.07, vFrom: 0.3, vTo: 1, gain: 1.0, rumble: 0.85, punch: true }); // the track: loud and punchy
     // one long horn: faint as the headlights appear, loudest as the nose passes us, then gone
-    trainHorn(bus, at + 0.02, 1.5 + d, 0.15, { fadeIn: 0.3, peak: pass, drop: pass + 0.14 }); // lower so the wheels are heard
+    trainHorn(bus, at + 0.02, 1.5 + d, 0.15, { fadeIn: 0.3, peak: pass, drop: HORN_DOPPLER }); // lower so the wheels are heard
     // the wall of air the train shoves out of the tunnel ahead of itself, then its wake
     airRoar(bus, at + 0.2 + d, 0.6, { from: 160, to: 1600, gain: 1.1 }); // pulled back so the wheels cut through
     airRoar(bus, at + pass + 0.04, 0.6, { from: 1800, to: 300, gain: 1.0, up: false });
@@ -924,7 +929,7 @@ Object.assign(VOICES, {
     const s0 = pass - CLIP_HIT['train-pass']; // the clip's own start, relative to at
     if (!clip(bus, 'train-pass', at + pass, { gain: TRAIN.pass, env: [[0, 1], [cut - s0, 1], [cut + 0.45 - s0, 0]] })) return SYNTH.tunnel(bus, at, v, { pass });
     clip(bus, 'train-brake', at + Math.max(0, pass - 0.9), { gain: TRAIN.brake * 0.55, env: [[0, 0], [0.35, 1], [cut + 0.45 - Math.max(0, pass - 0.9), 0]] }); // squeal peaks just after the nose
-    trainHorn(bus, at + 0.02, 1.5 + (pass - 0.74), TRAIN.horn, { fadeIn: 0.3, peak: pass, drop: pass + 0.14 });
+    trainHorn(bus, at + 0.02, 1.5 + (pass - 0.74), TRAIN.horn, { fadeIn: 0.3, peak: pass, drop: HORN_DOPPLER });
     flutter(bus, at + pass - 0.14, 0.45, 0.14);
   },
   /* NEXT STOP: a real train braking into a station (wheels grinding, the brake squeal swelling as

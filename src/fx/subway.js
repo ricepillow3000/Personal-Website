@@ -9,28 +9,40 @@
 
 import { createSideRenderer } from './sidegl.js';
 import { sharpArt } from './art.js';
+import { mountStation } from './station.js';
 
 const IW = 1600;
 const IH = 914;
-// the shot's geometry, measured on the art: vanishing point on the platform-edge line inside the
-// tunnel, the train's side runs along the platform edge, the tunnel mouth is at depth 1000
-const VP = { x: 863, y: 520 };
-const F = 1000; // depth of the tunnel mouth; at that depth 1 world unit = 1 art pixel
-const SIDE_X = -63; // the train's platform-side wall
+/* The shot's geometry (Nov 19, re-measured on the art: John, "make sure the train actually looks like
+   it's intact with the train tracks"). The floor's own lines (the platform edge, the tactile strip,
+   the back wall's base, the painted rails) all meet at (870, 548): that is the vanishing point. The
+   old one (863, 520) came from the ceiling, so the train sat on the platform edge with the painted
+   rails off to one side. Now the car runs on its own rails, centred under it, with a "mind the gap"
+   opening between its side and the platform edge. World units: about 34 to a metre (the camera's
+   eye is 54 above the platform, ~1.6 m; the car is 100 wide and 116 tall, ~3 m x 3.4 m). */
+const VP = { x: 870, y: 548 };
+const F = 1000; // at depth F, 1 world unit = 1 art pixel
+const EDGE_X = -88.7; // the platform's edge (its coping), at platform level: measured on the art
+const SIDE_X = -97; // the train's platform-side wall: a hand's width off the edge
 const ROOF = -62;
-const SKIRT = 54; // platform level
+const SKIRT = 54; // platform level (the car's floor and the bottom of its body)
 const WIDE = 100; // the train's width
 const LEN = 5200; // the whole train
-const MOUTH = 1000;
-const START = 2700; // where the nose is when the shot opens (deep in the dark tunnel)
+const RAIL_Y = 70; // the rails' heads, half a metre below the platform
+const RAILS = [SIDE_X - 27, SIDE_X - 73]; // near rail, far rail: standard gauge, centred under the car
+const TIE_Y = 73; // the sleepers' top
+const BED_Y = 77; // the track bed
+const WALL_X = -273; // where the bed meets the far wall (measured on the art)
+const MOUTH = 1730; // the tunnel mouth: where the track enters the arch in the art
+const START = 3430; // where the nose is when the shot opens (deep in the dark tunnel)
 /* How it moves (Nov 19, John: "I want it to feel real"). It used to blast through at a constant 3600
    units a second (the car is 116 units, about 3.6 m, tall: that was ~400 km/h, gone in 0.7 s).
    Now it arrives like a real train: out of the tunnel fast, braking hard, so the nose passes the
    camera at about a third of that and the cars roll by heavily. Constant deceleration, never below
    CRAWL. leadAt(t) is where the nose is; timeAt(d) is when it gets to depth d. */
-const V0 = 3800; // world units a second, deep in the tunnel (Nov 19: up from 3400 when the red/white
-// trails went, so the speed comes from the train itself: it bursts out faster and brakes harder)
-const BRAKE = 2100; // units a second, per second
+const V0 = 4800; // world units a second, deep in the tunnel (the mouth is deeper since the geometry
+// was re-measured: same timing, the nose still passes the camera at ~0.95 s, it leaves the arch at ~0.4 s)
+const BRAKE = 2600; // units a second, per second
 const CRAWL = 700; // it keeps rolling past (the cut comes first)
 const T_CRAWL = (V0 - CRAWL) / BRAKE;
 const D_CRAWL = V0 * T_CRAWL - 0.5 * BRAKE * T_CRAWL * T_CRAWL;
@@ -103,6 +115,7 @@ let cvTop = null;
 let glOn = false; // this frame's side went to the GPU layer
 let gpuOK = false; // the GPU path passed its self-test on this device (until then: 2D slices)
 let box = null;
+let station = null; // the lights and the graffiti (src/fx/station.js)
 let art = null;
 let nose = null;
 let side = null;
@@ -179,6 +192,7 @@ export function mountSubway(camBox, img) {
   cv = document.createElement('canvas');
   cv.setAttribute('aria-hidden', 'true');
   box.appendChild(cv);
+  station = mountStation(box, cv); // the ceiling lights and the graffiti, under the train's canvases
   ctx = under = cv.getContext('2d');
   cvTop = document.createElement('canvas'); // the GPU side's layer is slotted in between, when made
   cvTop.setAttribute('aria-hidden', 'true');
@@ -258,6 +272,7 @@ function mapping() {
   const h = box.offsetHeight;
   const k = Math.max(w / IW, h / IH);
   const px = pan ?? 0.6;
+  station?.place(k, (w - IW * k) * px, (h - IH * k) * 0.55); // (follows the camera's pan too)
   return { k: k * dpr, ox: (w - IW * k) * px * dpr, oy: (h - IH * k) * 0.55 * dpr, kk: k };
 }
 
@@ -432,20 +447,203 @@ export function cameraMotion(t, near) {
   return { x: rx * swell + j * 3.5 - push * 10, y: ry * swell + j * 11, s: 1 + 0.018 * push };
 }
 
-/* the dark gap where the car meets the platform edge: grounds it (no daylight under a heavy body) */
-function seam(lead) {
-  const near = Math.max(lead, 18);
-  const far = Math.min(lead + LEN, MOUTH + 420);
-  if (far <= near) return;
+/* ---------------------------------------------------------------- the track and the running gear
+   (Nov 19, John: "make sure the train actually looks like it's intact with the train tracks, and the
+   train tracks look fully generated, not half generated"). The painted rails didn't line up with the
+   car (and had sleepers on one side only), so the whole track bed is drawn here, in the train's own
+   perspective: the bed, concrete sleepers, both rails (a polished head on a dark web) with their
+   clips, the far wall's kerb and the shadow under the platform's lip. Everything below platform level
+   is cut to the wedge the platform doesn't hide (left of its edge, as seen from the camera), so the
+   near rail shows in the "mind the gap" opening beside the car, where its wheels ride and spark. */
+const P = (X, Y, d) => [sx(X, d), sy(Y, d)];
+function pitClip(g) {
+  const [ax, ay] = P(EDGE_X, SKIRT, 25);
+  const [bx, by] = P(WALL_X, BED_Y, 25);
+  g.beginPath();
+  g.moveTo(VP.x, VP.y);
+  g.lineTo(ax, ay);
+  g.lineTo(ax, Math.max(ay, by) + 4000);
+  g.lineTo(bx - 4000, Math.max(ay, by) + 4000);
+  g.lineTo(bx, by);
+  g.closePath();
+  g.clip();
+}
+const quad = (g, pts) => {
+  g.beginPath();
+  g.moveTo(...pts[0]);
+  for (let i = 1; i < pts.length; i++) g.lineTo(...pts[i]);
+  g.closePath();
+};
+const TRACK_FAR = MOUTH + 420; // past here it is lost in the tunnel's dark
+function drawTrack(g, kk) {
+  g.save();
+  pitClip(g);
+  const ink = Math.max(0.6, 0.9 / kk);
+  // the bed, in depth bands so it darkens into the tunnel
+  for (let d = 20, n; d < TRACK_FAR; d = n) {
+    n = d * 1.12 + 6;
+    const v = dark(d);
+    g.fillStyle = `rgb(${Math.round(8 + 22 * v)}, ${Math.round(8 + 22 * v)}, ${Math.round(10 + 25 * v)})`;
+    quad(g, [P(EDGE_X, BED_Y, d), P(WALL_X, BED_Y, d), P(WALL_X, BED_Y, n + 1), P(EDGE_X, BED_Y, n + 1)]);
+    g.fill();
+  }
+  // the far wall's kerb, and the shadow under the platform's lip (on the bed beside the edge)
+  for (let d = 20, n; d < TRACK_FAR; d = n) {
+    n = d * 1.12 + 6;
+    const v = dark(d);
+    g.fillStyle = `rgba(52, 52, 58, ${v})`;
+    quad(g, [P(WALL_X, BED_Y, d), P(WALL_X + 9, BED_Y, d), P(WALL_X + 9, BED_Y, n + 1), P(WALL_X, BED_Y, n + 1)]);
+    g.fill();
+    g.fillStyle = `rgba(0, 0, 0, ${0.55 * v})`;
+    quad(g, [P(EDGE_X, BED_Y, d), P(EDGE_X - 22, BED_Y, d), P(EDGE_X - 22, BED_Y, n + 1), P(EDGE_X, BED_Y, n + 1)]);
+    g.fill();
+  }
+  // sleepers: concrete, every 0.6 m, a lit top and a darker face toward the camera
+  const x0 = RAILS[1] - 20;
+  const x1 = RAILS[0] + 20;
+  for (let d = 18; d < TRACK_FAR; d += 21) {
+    const v = dark(d);
+    if (v <= 0.02) break;
+    const e = d + 8;
+    g.globalAlpha = v;
+    g.fillStyle = '#6A6C74';
+    quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, e), P(x0, TIE_Y, e)]);
+    g.fill();
+    g.fillStyle = '#3E4046'; // its side facing the camera
+    quad(g, [P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x1, BED_Y, e), P(x1, TIE_Y, e)]);
+    g.fill();
+    g.fillStyle = '#383A40'; // and its front edge
+    quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x0, BED_Y, d)]);
+    g.fill();
+    g.strokeStyle = 'rgba(8, 8, 10, 0.8)';
+    g.lineWidth = ink;
+    quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, e), P(x0, TIE_Y, e)]);
+    g.stroke();
+    // the rail clips on both sides of each rail
+    g.fillStyle = '#111114';
+    RAILS.forEach((rx) => [-4.5, 2].forEach((o) => {
+      quad(g, [P(rx + o, TIE_Y - 1.6, d + 2), P(rx + o + 2.5, TIE_Y - 1.6, d + 2), P(rx + o + 2.5, TIE_Y - 1.6, d + 6), P(rx + o, TIE_Y - 1.6, d + 6)]);
+      g.fill();
+    }));
+  }
+  g.globalAlpha = 1;
+  // the rails: a dark web and foot, and a polished head that catches the station's light
+  RAILS.forEach((rx) => {
+    for (let d = 20, n; d < TRACK_FAR; d = n) {
+      n = d * 1.1 + 5;
+      const v = dark(d);
+      g.globalAlpha = v;
+      g.fillStyle = '#1D1E22'; // the web, on the side toward the camera
+      quad(g, [P(rx + 1.2, RAIL_Y, d), P(rx + 1.2, TIE_Y, d), P(rx + 1.2, TIE_Y, n + 1), P(rx + 1.2, RAIL_Y, n + 1)]);
+      g.fill();
+      g.fillStyle = '#AEB3BC'; // the head
+      quad(g, [P(rx - 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y, n + 1), P(rx - 1.3, RAIL_Y, n + 1)]);
+      g.fill();
+      g.strokeStyle = '#E6EAF0'; // its shine
+      g.lineWidth = Math.max(0.5, (F / d) * 0.5);
+      g.beginPath();
+      g.moveTo(...P(rx + 0.3, RAIL_Y, d));
+      g.lineTo(...P(rx + 0.3, RAIL_Y, n));
+      g.stroke();
+    }
+    g.globalAlpha = 1;
+  });
+  g.restore();
+}
+let trackCache = null;
+let trackKey = '';
+/** the track, drawn once per screen size / camera framing, then stamped every frame */
+function stampTrack(kk) {
+  const m = under.getTransform();
+  const key = `${cv.width}x${cv.height}:${m.a.toFixed(4)},${m.e.toFixed(1)},${m.f.toFixed(1)}`;
+  if (key !== trackKey) {
+    trackCache ||= document.createElement('canvas');
+    trackCache.width = cv.width;
+    trackCache.height = cv.height;
+    const g = trackCache.getContext('2d');
+    g.setTransform(m);
+    drawTrack(g, kk);
+    trackKey = key;
+  }
+  under.save();
+  under.setTransform(1, 0, 0, 1, 0, 0);
+  under.drawImage(trackCache, 0, 0);
+  under.restore();
+}
+
+/* The running gear, seen through the gap: the bogie frames and the wheels riding the near rail. The
+   car's side (drawn above this) hides their tops, the platform hides their bottoms, so what shows is
+   what you see from a real platform: a dark gap with steel wheels rolling on the rail. */
+function runningGear(lead) {
   const by = bounce();
-  ctx.fillStyle = 'rgba(4, 5, 8, 0.78)';
-  ctx.beginPath();
-  ctx.moveTo(sx(SIDE_X, near), sy(SKIRT + by * 0.3, near));
-  ctx.lineTo(sx(SIDE_X, far), sy(SKIRT + by * 0.3, far));
-  ctx.lineTo(sx(SIDE_X + 2.4, far), sy(SKIRT, far));
-  ctx.lineTo(sx(SIDE_X + 2.4, near), sy(SKIRT, near));
-  ctx.closePath();
+  ctx.save();
+  pitClip(ctx);
+  // the shadow under the car, over the bed and the near rail
+  const near = Math.max(lead, 22);
+  const far = Math.min(lead + LEN, TRACK_FAR);
+  if (far > near) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    quad(ctx, [P(SIDE_X, SKIRT, near), P(SIDE_X - WIDE, BED_Y, near), P(SIDE_X - WIDE, BED_Y, far), P(SIDE_X, SKIRT, far)]);
+    ctx.fill();
+  }
+  const wx = RAILS[0] + 3; // the near wheels' outer faces
+  AXLES.forEach((s, i) => {
+    const d = lead + s;
+    if (d < 22 || d > TRACK_FAR) return;
+    const v = dark(d);
+    // the bogie's side frame between its two axles (drawn once per bogie, at its first axle)
+    if (i % 2 === 0) {
+      const e = d + 64;
+      ctx.globalAlpha = v;
+      ctx.fillStyle = '#34363C';
+      quad(ctx, [P(SIDE_X - 5, SKIRT + 1 + by * 0.3, d - 12), P(SIDE_X - 5, SKIRT + 1 + by * 0.3, e + 12), P(SIDE_X - 5, SKIRT + 10, e + 8), P(SIDE_X - 5, SKIRT + 10, d - 8)]);
+      ctx.fill();
+      ctx.fillStyle = '#7A7D86'; // its springs catch a little light
+      [d + 14, e - 14].forEach((q) => { quad(ctx, [P(SIDE_X - 5, SKIRT + 2, q - 3), P(SIDE_X - 5, SKIRT + 2, q + 3), P(SIDE_X - 5, SKIRT + 8, q + 3), P(SIDE_X - 5, SKIRT + 8, q - 3)]); ctx.fill(); });
+    }
+    // the wheel: a steel disc standing on the rail, its rim a little brighter
+    ctx.globalAlpha = v;
+    ctx.beginPath();
+    for (let a = 0; a <= 16; a++) {
+      const th = (a / 16) * Math.PI * 2;
+      const [x, y] = P(wx, RAIL_Y - 8 + Math.sin(th) * 8, d + Math.cos(th) * 8);
+      if (a) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+    }
+    ctx.fillStyle = '#2A2C31';
+    ctx.fill();
+    ctx.strokeStyle = '#9DA1AA';
+    ctx.lineWidth = Math.max(0.6, (F / d) * 0.6);
+    ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* the front of the running gear under the nose: the underframe, the coupler, the guard bar over the
+   rails and the first wheels standing on them (the nose art ends at the car's floor) */
+function noseGear(d) {
+  if (d < 22) return;
+  const v = dark(d);
+  const L = SIDE_X - WIDE;
+  ctx.save();
+  pitClip(ctx);
+  ctx.globalAlpha = v;
+  ctx.fillStyle = '#2A2C31';
+  quad(ctx, [P(L + 6, SKIRT + 3, d + 2), P(SIDE_X - 6, SKIRT + 3, d + 2), P(SIDE_X - 10, SKIRT + 9, d + 6), P(L + 10, SKIRT + 9, d + 6)]);
+  ctx.fill(); // the underframe
+  ctx.fillStyle = '#5A5D66';
+  quad(ctx, [P(SIDE_X - 56, SKIRT + 3, d - 4), P(SIDE_X - 44, SKIRT + 3, d - 4), P(SIDE_X - 44, SKIRT + 9, d - 4), P(SIDE_X - 56, SKIRT + 9, d - 4)]);
+  ctx.fill(); // the coupler
+  RAILS.forEach((rx) => {
+    ctx.fillStyle = '#3C3E45'; // the wheel, edge on
+    quad(ctx, [P(rx + 1, RAIL_Y - 16, d + 10), P(rx + 4, RAIL_Y - 16, d + 10), P(rx + 4, RAIL_Y, d + 10), P(rx + 1, RAIL_Y, d + 10)]);
+    ctx.fill();
+  });
+  ctx.fillStyle = '#6E717A'; // the guard bar, just over the rails
+  quad(ctx, [P(L + 14, RAIL_Y - 5, d + 1), P(SIDE_X - 14, RAIL_Y - 5, d + 1), P(SIDE_X - 14, RAIL_Y - 2.5, d + 1), P(L + 14, RAIL_Y - 2.5, d + 1)]);
   ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 /* The same cel-shaded steel as the GPU shader, baked into working copies for the nose (always 2D)
@@ -644,7 +842,7 @@ function sideQuad(lead, alpha, tex, { mat = 0, refl = 0 } = {}) {
   const top = refl ? 2 * SKIRT - (ROOF + by) : ROOF + by;
   const bot = refl ? SKIRT - by : SKIRT + by;
   return sideGL.quad(img, [[...P(top, near), near, near - lead, 0], [...P(bot, near), near, near - lead, 1], [...P(top, far), far, far - lead, 0], [...P(bot, far), far, far - lead, 1]],
-    { period: ((SKIRT - ROOF) * tw) / th, alpha, mouth: MOUTH, mat, refl, blur: state ? speedAt(state.t) * SHUTTER : 0 });
+    { period: ((SKIRT - ROOF) * tw) / th, alpha, mouth: MOUTH, mat, refl, blur: state ? speedAt(state.t) * SHUTTER : 0, car: CAR });
 }
 
 function trainSide(lead, kk, alpha = 1, tex = sideArt(), { mat = 0, refl = 0 } = {}) {
@@ -733,10 +931,10 @@ function cabinLight(lead) {
     const d2 = d + step;
     POOLS.forEach(([w], i) => {
       const path = paths[i][lv];
-      path.moveTo(sx(SIDE_X, d), sy(SKIRT, d));
-      path.lineTo(sx(SIDE_X, d2), sy(SKIRT, d2));
-      path.lineTo(sx(SIDE_X + w, d2), sy(SKIRT, d2));
-      path.lineTo(sx(SIDE_X + w, d), sy(SKIRT, d));
+      path.moveTo(sx(EDGE_X, d), sy(SKIRT, d));
+      path.lineTo(sx(EDGE_X, d2), sy(SKIRT, d2));
+      path.lineTo(sx(EDGE_X + w, d2), sy(SKIRT, d2));
+      path.lineTo(sx(EDGE_X + w, d), sy(SKIRT, d));
       path.closePath();
     });
   }
@@ -812,17 +1010,17 @@ function headlightWash(lead, power) {
     if (a < 0.005) return;
     ctx.fillStyle = `rgba(255, 238, 200, ${a.toFixed(3)})`;
     ctx.beginPath(); // the track bed under the train's path
-    ctx.moveTo(sx(SIDE_X - WIDE * 0.95, far), sy(SKIRT + 26, far));
-    ctx.lineTo(sx(SIDE_X - 4, far), sy(SKIRT + 26, far));
-    ctx.lineTo(sx(SIDE_X - 4, near), sy(SKIRT + 26, near));
-    ctx.lineTo(sx(SIDE_X - WIDE * 0.95, near), sy(SKIRT + 26, near));
+    ctx.moveTo(sx(SIDE_X - WIDE * 0.95, far), sy(TIE_Y, far));
+    ctx.lineTo(sx(EDGE_X, far), sy(TIE_Y, far));
+    ctx.lineTo(sx(EDGE_X, near), sy(TIE_Y, near));
+    ctx.lineTo(sx(SIDE_X - WIDE * 0.95, near), sy(TIE_Y, near));
     ctx.closePath();
     ctx.fill();
     ctx.beginPath(); // and the platform's edge, spilling a little onto the floor
-    ctx.moveTo(sx(SIDE_X, far), sy(SKIRT, far));
-    ctx.lineTo(sx(SIDE_X + 22, far), sy(SKIRT, far));
-    ctx.lineTo(sx(SIDE_X + 22 + reach * 0.12, near), sy(SKIRT, near));
-    ctx.lineTo(sx(SIDE_X, near), sy(SKIRT, near));
+    ctx.moveTo(sx(EDGE_X, far), sy(SKIRT, far));
+    ctx.lineTo(sx(EDGE_X + 22, far), sy(SKIRT, far));
+    ctx.lineTo(sx(EDGE_X + 22 + reach * 0.12, near), sy(SKIRT, near));
+    ctx.lineTo(sx(EDGE_X, near), sy(SKIRT, near));
     ctx.closePath();
     ctx.fill();
   });
@@ -849,8 +1047,8 @@ function brakeSparks(t, lead, power) {
       const up = 70 + hash(seed + born * 9) * 110; // how hard it is thrown up
       const age = u * life;
       const dz = -(v * vx * age) - 6; // thrown forward, toward the camera
-      const y = SKIRT - 1 - up * age + 900 * age * age; // up out of the gap, then falling
-      const x = SIDE_X + 1 + hash(seed + born * 11) * 160 * age; // sprayed out over the platform
+      const y = RAIL_Y - 1 - up * age + 900 * age * age; // up off the rail, out of the gap, then falling
+      const x = RAILS[0] + 3 + hash(seed + born * 11) * 260 * age; // sprayed out over the platform
       const d0 = d + dz;
       const tail = 0.045; // a streak: where it was 45 ms ago (a real spark smears in the eye)
       const d1 = d0 + v * vx * tail;
@@ -882,7 +1080,7 @@ function dust(t, lead) {
     const u = age / 0.9;
     const d = bd - age * (140 + hash(i + 3) * 80); // dragged along toward the camera
     if (d < 20) continue;
-    const X = SIDE_X + 4 + age * (60 + hash(i + 5) * 70); // rolling out over the platform
+    const X = EDGE_X + 4 + age * (60 + hash(i + 5) * 70); // rolling out over the platform
     const Y = SKIRT - 3 - age * (18 + hash(i + 7) * 22);
     const R = (6 + age * (55 + hash(i + 9) * 40)) * F / d; // swelling
     const x = sx(X, d);
@@ -918,6 +1116,7 @@ function draw() {
   });
   ctx = under;
   const t = state?.t ?? 0;
+  stampTrack(kk); // the full track, under everything
   if (!state) drawTrash(t); // at rest; during the shot it is drawn in front of the car, below
   // the GPU layer: drawn only while the train runs (made on first use, cleared at rest)
   const r = state && gpuOK ? gpu() : sideGL;
@@ -932,15 +1131,16 @@ function draw() {
   // the speed cues are strongest while it storms out of the tunnel, and ease off as it brakes
   const fx = Math.max(0, Math.min(1, (MOUTH + 400 - lead) / 600)) * Math.min(1, speedAt(t) / 1800);
   headlightWash(lead, Math.min(1, t / 0.3));
+  runningGear(lead); // wheels on the rail, seen through the gap (the car hides their tops)
   trainSide(lead, kk, 1, sideArt(), { mat: 1, refl: 1 }); // mirrored in the glossy floor
   trainSide(lead, kk, 1, sideArt(), { mat: 1 }); // the car: heavy cel-shaded steel
   if (glOn) ctx = over; // the side is on the GPU layer: everything in front of it goes above
   cabinLight(lead); // its warm window light on the floor, on top of the reflection (light adds up)
-  seam(lead);
   // the trash lies on the platform, between the camera and the car, so it is drawn in front of
   // the car; against the nose it goes by depth (in front of it only once it is nearer)
   drawTrash(t, (d) => d >= lead);
   brakeSparks(t, lead, Math.min(1, speedAt(t) / 2400) * (t < T_CRAWL ? 1 : 0.3));
+  noseGear(lead);
   noseSmear(t, heavyNose() || img, fx);
   trainNose(lead, heavyNose() || img, 1);
   drawTrash(t, (d) => d < lead);

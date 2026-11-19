@@ -853,3 +853,43 @@ test('NEXT STOP always has its train car: the interior is decoded before the sho
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'skills', { timeout: 6000 });
   await ctx.close();
 });
+
+test('station: the ceiling tubes flicker on their own (never two healthy ones at once), steady with reduced motion; the graffiti sits on a pillar on screen', async ({ page, browser }) => {
+  // reduced motion (this context): every tube stays on
+  await page.goto('/');
+  await expect.poll(() => page.locator('.st-body .sl').count(), { timeout: 15000 }).toBe(15);
+  await page.waitForTimeout(3000);
+  expect(await page.locator('.st-body .sl').evaluateAll((els) => els.every((e) => e.dataset.st === 'on'))).toBe(true);
+  // the graffiti: TAKE YOUR NETWORK, and its cat, inside the screen
+  expect(await page.locator('.gf text.gf-red').allTextContents()).toEqual(['TAKE', 'YOUR', 'NETWORK']);
+  const vw = page.viewportSize().width;
+  const gf = await page.locator('.gf-at').boundingBox();
+  expect(gf.x).toBeGreaterThan(0);
+  expect(gf.x + gf.width).toBeLessThan(vw);
+  // with motion: they flicker, at random, one healthy tube at a time
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: page.viewportSize() });
+  const p2 = await ctx.newPage();
+  await p2.goto('/');
+  await expect.poll(() => p2.locator('.st-body .sl').count(), { timeout: 15000 }).toBe(15);
+  const rows = await p2.evaluate(() => new Promise((res) => {
+    const out = [];
+    const t = setInterval(() => out.push([...document.querySelectorAll('.st-body .sl')].map((g) => (g.dataset.st === 'on' ? 0 : 1))), 50);
+    setTimeout(() => { clearInterval(t); res(out); }, 14000);
+  }));
+  const acted = new Set();
+  rows.forEach((r) => r.forEach((v, i) => v && acted.add(i)));
+  expect(acted.size).toBeGreaterThan(1); // more than one tube misbehaved...
+  const TIRED = [3, 13];
+  expect(rows.every((r) => r.filter((v, i) => v && !TIRED.includes(i)).length <= 1)).toBe(true); // ...never two healthy ones together
+  await ctx.close();
+});
+
+test('train horn: it dips in pitch as the train passes (a Doppler drop), never bends up into a whine', () => {
+  const src = readFileSync('src/audio/audio.js', 'utf8');
+  const doppler = Number(/const HORN_DOPPLER = ([\d.]+);/.exec(src)[1]);
+  expect(doppler).toBeLessThan(1);
+  expect(doppler).toBeGreaterThan(0.8);
+  const calls = src.match(/trainHorn\(bus[^\n]*\);/g);
+  expect(calls.length).toBeGreaterThan(1);
+  for (const c of calls) expect(c, c).toContain('drop: HORN_DOPPLER');
+});
