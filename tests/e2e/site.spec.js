@@ -508,6 +508,16 @@ test('SAVE DATA is a stack: every card peeks out, and picking one opens it and s
   await expect(slot(0).locator('.sv-go')).toBeVisible();
   expect(await slot(3).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeLessThan(2); // closed cards keep their details row shut
   expect(await slot(0).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeGreaterThan(20);
+  // all black behind the files (no red band); the picked file's red arm runs up into SAVE DATA (an L), the others' stay down
+  await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); // file 3 picked
+  await settle();
+  const arm = await page.evaluate(() => {
+    const t = document.querySelector('#saves .sv-title').getBoundingClientRect();
+    const arms = [...document.querySelectorAll('#saves .sv-arm')].map((a) => a.getBoundingClientRect());
+    return { bg: getComputedStyle(document.querySelector('#saves')).backgroundColor, band: document.querySelectorAll('#saves .sv-band').length,
+      up: arms[2].top <= t.bottom, tall: arms[2].height > 200, others: arms.filter((a, k) => k !== 2).every((a) => a.height < 40), /* (a folded arm is a flat line, tilted) */ red: getComputedStyle(document.querySelectorAll('#saves .sv-arm')[2]).backgroundColor };
+  });
+  expect(arm).toEqual({ bg: 'rgb(11, 11, 11)', band: 0, up: true, tall: true, others: true, red: 'rgb(229, 25, 28)' });
   expect(errors).toEqual([]);
 });
 

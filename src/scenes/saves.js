@@ -34,7 +34,7 @@ const pile = (i) => `--i:${i}`; // (the stack's shape lives in saves.css: overla
 function slip(s, i) {
   const no = `<span class="sv-no" aria-hidden="true"><small>No.</small>${i + 1}</span>`;
   if (!s) {
-    return `<li class="sv-li" style="${pile(i)}"><button class="sv-slot sv-empty" type="button" data-i="${i}" aria-label="File ${i + 1}: empty. Start a new game.">
+    return `<li class="sv-li" style="${pile(i)}"><i class="sv-arm" aria-hidden="true"></i><button class="sv-slot sv-empty" type="button" data-i="${i}" aria-label="File ${i + 1}: empty. Start a new game.">
       ${no}<span class="sv-new" aria-hidden="true">${cutType('NEW GAME', 60 + i)}</span><span class="sv-hint" aria-hidden="true">EMPTY FILE</span>
       <span class="sv-more" aria-hidden="true"><span class="sv-go">START NEW GAME ▸</span></span></button></li>`;
   }
@@ -45,14 +45,14 @@ function slip(s, i) {
   const label = `File ${i + 1}: ${where}, ${p.done} of ${p.total} cleared${p.all ? ', completed' : ''}. Saved ${MONTHS[d.getMonth()]} ${d.getDate()}, ${tod}. Play time ${playTime(s.meta.playMs)}. Continue.`;
   const time = playTime(s.meta.playMs);
   if (p.all) { // a finished file: the whole slip is COMPLETED (Nov 19, John: "the whole saved data will say completed")
-    return `<li class="sv-li" style="${pile(i)}"><button class="sv-slot sv-complete" type="button" data-i="${i}" aria-label="${esc(label)}">
+    return `<li class="sv-li" style="${pile(i)}"><i class="sv-arm" aria-hidden="true"></i><button class="sv-slot sv-complete" type="button" data-i="${i}" aria-label="${esc(label)}">
     ${no}
     <span class="sv-done" aria-hidden="true"><svg class="sv-burst" viewBox="-50 -50 100 100"><polygon points="${burst()}"/></svg>${cutType('COMPLETED', 77)}</span>
     <span class="sv-ctime" aria-hidden="true"><small>PLAY TIME</small><b>${time}</b></span>
     <span class="sv-more" aria-hidden="true"><span class="sv-go">CONTINUE ▸</span></span>
   </button>${chip(i)}</li>`;
   }
-  return `<li class="sv-li" style="${pile(i)}"><button class="sv-slot" type="button" data-i="${i}" aria-label="${esc(label)}">
+  return `<li class="sv-li" style="${pile(i)}"><i class="sv-arm" aria-hidden="true"></i><button class="sv-slot" type="button" data-i="${i}" aria-label="${esc(label)}">
     ${no}
     <span class="sv-date" aria-hidden="true"><b>${d.getMonth() + 1}/${String(d.getDate()).padStart(2, '0')}</b><i>${WD[d.getDay()]}</i><em>${esc(tod)}</em></span>
     <span class="sv-place" aria-hidden="true"><span>${esc(where)}</span><span class="sv-pips">${p.items.map((it) => `<i${it.done ? ' class="on"' : ''}></i>`).join('')}</span></span>
@@ -73,8 +73,7 @@ function burst() {
 function markup() {
   const files = store.slots();
   const full = files.every(Boolean);
-  return `<div class="sv-band" aria-hidden="true"><i class="sv-notch"></i></div>
-    <div class="sv-stripes" aria-hidden="true"><i></i><i></i><i></i></div>
+  return `<div class="sv-stripes" aria-hidden="true"><i></i><i></i><i></i></div>
     <h2 class="sv-title" id="svTitle"><span class="sr-only">Save data</span><span aria-hidden="true">${cutType('SAVE DATA', 41, { mixCase: true })}</span></h2>
     <p class="sv-sub${full ? ' sv-full' : ''}">${full ? `All ${SLOTS} files are in use. CLEAR DATA on one to start a new game.` : 'Pick a file: your progress saves itself to it. An empty file starts a new game.'}</p>
     <ol class="sv-list">${files.map(slip).join('')}</ol>
@@ -102,8 +101,10 @@ function play(btn) {
   if (fresh) sfx('stamp');
   const done = () => { close(true); opts.onPick(i, fresh); };
   if (reducedMotion()) { done(); return; }
+  const arm = btn.parentElement.querySelector('.sv-arm');
   gsap.timeline({ onComplete: done })
-    .fromTo(btn, { scale: 1.12 }, { scale: 1, duration: 0.2, ease: 'back.out(3)' })
+    .fromTo(arm, { backgroundColor: '#F5F5F0' }, { backgroundColor: '#E5191C', duration: 0.18, ease: 'steps(3)', clearProps: 'backgroundColor' }, 0)
+    .fromTo(btn, { scale: 1.12 }, { scale: 1, duration: 0.2, ease: 'back.out(3)' }, 0)
     .to(root, { xPercent: -110, skewX: 12, duration: 0.32, ease: 'power3.in' }, 0.24);
 }
 
@@ -177,7 +178,6 @@ export function openSaves(o) {
   if (reducedMotion()) return;
   gsap.timeline()
     .fromTo(root, { clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }, { clipPath: 'polygon(0 0, 130% 0, 100% 100%, 0 100%)', duration: 0.32, ease: 'power3.out', clearProps: 'clipPath' }, 0)
-    .fromTo(root.querySelector('.sv-band'), { yPercent: -100 }, { yPercent: 0, duration: 0.3, ease: 'power4.out', clearProps: 'transform' }, 0.04)
     .fromTo(root.querySelectorAll('.sv-title .ct'), { y: -60, rotation: () => gsap.utils.random(-40, 40), opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.3, ease: 'back.out(2.2)', stagger: 0.03, clearProps: 'all' }, 0.1)
     .fromTo(root.querySelectorAll('.sv-li'), { x: () => window.innerWidth, rotation: 8, opacity: 0 }, { x: 0, rotation: 0, opacity: 1, duration: 0.34, ease: 'back.out(1.8)', stagger: 0.06, clearProps: 'transform,opacity' }, 0.12)
     .fromTo(root.querySelector('.sv-keys'), { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25, ease: 'back.out(2)', clearProps: 'transform,opacity' }, 0.3);

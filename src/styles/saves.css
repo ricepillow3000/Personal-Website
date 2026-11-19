@@ -6,19 +6,15 @@
 .sv[hidden] { display: none; }
 body.sv-open { overflow: hidden; }
 
-/* the red band, its notched edge, and thin white stripes behind the slips */
-.sv-band { position: absolute; top: -10%; bottom: -10%; left: -6vw; width: max(30vw, 210px); background: var(--red); transform: skewX(-8deg);
-  background-image: radial-gradient(circle, rgba(11, 11, 11, .28) 0 2px, transparent 2.3px); background-size: 12px 12px; }
-.sv-band::after { content: ''; position: absolute; top: 0; bottom: 0; right: -18px; width: 18px; background: var(--black); }
-.sv-notch { position: absolute; top: 0; bottom: 0; right: 8px; width: 22px;
-  background: repeating-linear-gradient(180deg, var(--black) 0 26px, transparent 26px 44px); }
+/* all black (Nov 19, John: "make the whole background, the red part too, all black"); thin white stripes only.
+   The red now belongs to the picked file: its arm (below) */
 .sv-stripes { position: absolute; inset: 0; pointer-events: none; }
 .sv-stripes i { position: absolute; left: 20%; right: -20%; height: 3px; background: var(--white); rotate: -9deg; opacity: .9; }
 .sv-stripes i:nth-child(1) { top: 9%; }
 .sv-stripes i:nth-child(2) { top: 13%; height: 10px; left: 40%; }
 .sv-stripes i:nth-child(3) { bottom: 6%; left: 55%; }
 
-.sv-title { position: absolute; z-index: 2; left: var(--gutter); top: max(22px, 5vh); margin: 0; font-family: var(--f-head); font-weight: 400;
+.sv-title { position: absolute; z-index: 4; /* (over the picked file's arm, which reaches up into it) */ left: var(--gutter); top: max(22px, 5vh); margin: 0; font-family: var(--f-head); font-weight: 400;
   font-size: clamp(38px, min(5.6vw, 10vh), 88px); line-height: 1; rotate: -5deg; transform-origin: left bottom; color: var(--white); white-space: nowrap;
   filter: drop-shadow(.05em 0 0 var(--black)) drop-shadow(-.05em 0 0 var(--black)) drop-shadow(0 .05em 0 var(--black)) drop-shadow(0 -.05em 0 var(--black)) drop-shadow(.07em .07em 0 var(--black)); }
 .sv-title .ct.box { background: var(--black); color: var(--white); }
@@ -32,9 +28,12 @@ body.sv-open { overflow: hidden; }
    covers its lower part (--ov), so only its peek row shows; lower cards are a little bigger and further
    left (the pile's perspective), all on one tilt, running off the right edge. The picked card opens its
    details row, which pushes the cards below it down; they slide back when it closes. */
-.sv-list { --ov: clamp(14px, 2.8vh, 26px); position: absolute; z-index: 2; left: max(15vw, 110px); right: -10vw; top: clamp(130px, 22vh, 230px); margin: 0; padding: 0; list-style: none;
+.sv-list { --ov: clamp(14px, 2.8vh, 26px); --arm: clamp(80px, 8vw, 140px); position: absolute; z-index: 2; left: calc(max(13vw, 100px) + var(--arm)); right: -42vw; top: clamp(130px, 22vh, 230px); margin: 0; padding: 0; list-style: none;
   display: grid; gap: 0; rotate: -6deg; transform-origin: left top;
-  --off: 10vw; --er: calc(var(--off) + 34px); --erw: 110px; } /* (CLEAR DATA's spot from the card's right end, and the room kept for it) */
+  /* the squeeze (John: "squeeze the right side like a straw... slightly fans out downward"): the stack turns
+     away at its right end, so the cards get thinner there and their edges fan apart going left and down */
+  transform: perspective(1500px) rotateY(17deg);
+  --off: 36vw; --er: calc(var(--off) + 34px); --erw: 130px; } /* (CLEAR DATA's spot from the card's right end, and the room kept for it) */
 .sv-li { position: relative; margin-left: calc(var(--i) * -.8vw); zoom: calc(1 + var(--i) * .035); filter: drop-shadow(6px 6px 0 var(--black)); }
 /* the paper (after John's reference texture, drawn in CSS): the edges of the sheets under each card fan out
    at the right, a white sliver over a black one above the card's top edge */
@@ -53,7 +52,19 @@ body.sv-open { overflow: hidden; }
   font-family: var(--f-body); transition: grid-template-rows .26s cubic-bezier(.2, 1.1, .3, 1), transform .14s var(--ease-pop), background .08s steps(1); }
 .sv-slot.on { grid-template-rows: minmax(clamp(44px, 7.2vh, 74px), auto) 1fr; }
 .sv-slot:focus-visible { outline: none; }
-.sv-slot.on { background: var(--red); color: var(--white); box-shadow: inset 0 4px 0 var(--red), inset 0 7px 0 var(--black); transform: scale(1.04); transform-origin: left center; z-index: 3; }
+.sv-slot.on { background: var(--red); color: var(--white); box-shadow: inset 0 4px 0 var(--red), inset 0 7px 0 var(--black); transform: scale(1.04); transform-origin: left center; z-index: 3;
+  margin-left: calc(-1 * var(--arm)); width: calc(100% + var(--arm)); padding-left: calc(var(--arm) * .35); } /* (it reaches out left, under its arm) */
+.sv-slot { transition: grid-template-rows .26s cubic-bezier(.2, 1.1, .3, 1), transform .14s var(--ease-pop), background .08s steps(1), margin-left .22s cubic-bezier(.2, 1.3, .3, 1), width .22s cubic-bezier(.2, 1.3, .3, 1), padding-left .22s cubic-bezier(.2, 1.3, .3, 1); }
+/* the arm (John: "when clicking it, the box extends upwards to SAVE DATA... like an L laying right side up"):
+   the picked file's red runs up from its left end, past the files above it, into the title; it shoots up
+   when the file is picked and drops away when another is. A black film-strip edge runs down its left side */
+.sv-arm { position: absolute; z-index: 0; left: calc(-1 * var(--arm)); width: var(--arm); bottom: 30%; height: 160vh; pointer-events: none;
+  background: var(--red); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  transform: scaleY(0); transform-origin: 50% 100%; transition: transform .16s cubic-bezier(.5, 0, .9, .5); }
+.sv-arm::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 16px;
+  background: repeating-linear-gradient(180deg, var(--black) 0 24px, transparent 24px 40px); }
+.sv-arm::after { content: ''; position: absolute; right: 12px; top: 0; bottom: 0; width: 3px; background: var(--white); opacity: .85; }
+.sv-li:has(.sv-slot.on) .sv-arm { transform: scaleY(1); transition: transform .3s cubic-bezier(.2, 1.25, .35, 1); }
 .sv-li:has(.sv-slot.on) { z-index: 3; filter: drop-shadow(9px 9px 0 var(--black)); }
 
 /* the file number on a black tab */
@@ -122,7 +133,7 @@ body.sv-open { overflow: hidden; }
    (Nov 19, John: "every box has a clear data box inside... bottom right side, pretty small"); the first
    press asks (yellow SURE?), the second clears that one file */
 .sv-erase { position: absolute; z-index: 4; right: var(--er); bottom: calc(var(--ov) + 9px); border: 0; cursor: pointer; white-space: nowrap;
-  font: 400 12px/1 var(--f-menu); letter-spacing: 1.5px; padding: 4px 7px 2px; background: var(--black); color: var(--white); box-shadow: 2px 2px 0 var(--red);
+  font: 400 14px/1 var(--f-menu); letter-spacing: 1.5px; padding: 5px 8px 3px; background: var(--black); color: var(--white); box-shadow: 2px 2px 0 var(--red);
   transform: skewX(-10deg); transition: background .08s steps(1); }
 .sv-li:has(.sv-erase) .sv-slot { padding-right: calc(var(--er) + var(--erw) + 10px); } /* (a file's words end left of its tag) */
 .sv-erase:hover { background: var(--red); box-shadow: 2px 2px 0 var(--black); }
@@ -142,10 +153,10 @@ body.sv-open { overflow: hidden; }
 
 /* phones held upright: the stack goes full width, less tilt; each peek row holds the date over the place */
 @media (max-width: 760px) {
-  .sv-band { width: 26vw; left: -14vw; }
   .sv-title { top: max(18px, 3vh); font-size: clamp(34px, 11vw, 52px); }
   .sv-sub { left: var(--gutter); right: var(--gutter); top: 74px; bottom: auto; font-size: 12px; padding: 3px 8px; rotate: -3deg; }
-  .sv-list { --ov: 14px; left: 6px; right: -14px; top: 136px; rotate: -5deg; --off: 0px; }
+  .sv-list { --ov: 14px; --arm: 22px; left: calc(4px + var(--arm)); right: -14px; top: 136px; rotate: -5deg; --off: 0px; transform: perspective(900px) rotateY(10deg); }
+  .sv-arm::before { left: 4px; width: 8px; } .sv-arm::after { display: none; }
   .sv-stripes i:nth-child(n+2) { display: none; }
   .sv-li { margin-left: calc(var(--i) * -.6vw); zoom: calc(1 + var(--i) * .02); }
   .sv-slot { grid-template-columns: auto 1fr auto; grid-template-rows: auto auto 0fr; padding-right: 30px; column-gap: 10px; }
@@ -175,7 +186,7 @@ body.sv-open { overflow: hidden; }
 /* short screens (phones on their side, small laptops): a slimmer stack, less tilt, the line hides */
 @media (max-height: 520px) {
   .sv-title { top: 10px; font-size: clamp(30px, 9vh, 44px); rotate: -3deg; }
-  .sv-list { --ov: 9px; top: 60px; rotate: -4deg; right: -6vw; --off: 6vw; }
+  .sv-list { --ov: 9px; --arm: 56px; top: 60px; rotate: -4deg; right: -40vw; --off: 34vw; transform: perspective(1100px) rotateY(15deg); }
   .sv-li { zoom: calc(1 + var(--i) * .02); }
   .sv-slot { grid-template-rows: minmax(40px, auto) 0fr; }
   .sv-slot.on { grid-template-rows: minmax(40px, auto) 1fr; }
@@ -184,7 +195,7 @@ body.sv-open { overflow: hidden; }
   .sv-no { font-size: 26px; }
   .sv-sub { display: none; }
   .sv-list { --er: calc(var(--off) + 30px); --erw: 90px; }
-  .sv-erase { bottom: calc(var(--ov) + 4px); font-size: 10px; padding: 3px 5px 1px; }
+  .sv-erase { bottom: calc(var(--ov) + 4px); font-size: 11px; padding: 3px 6px 1px; }
   .sv-lv { padding-top: 4px; }
   .sv-li::before { height: 8px; } .sv-li::after { height: 4px; }
   .sv-pips { display: none; }
