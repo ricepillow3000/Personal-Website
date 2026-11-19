@@ -155,6 +155,21 @@ export function hurrySubway() {
   heavyNose(true);
 }
 
+/* Get the train ready once the visitor shows signs of life (moves, touches, scrolls, presses a key),
+   or after 5 quiet seconds: the platform picture shows from the first moment, but its heavy set-up
+   (decoding, the GPU upload) stays out of the page's first seconds (Nov 19). Pressing START
+   prepares it at once anyway (hurrySubway). */
+const ALIVE = ['pointermove', 'pointerdown', 'touchstart', 'keydown', 'wheel', 'scroll'];
+function warmWhenAlive() {
+  const go = () => {
+    ALIVE.forEach((e) => window.removeEventListener(e, go, true));
+    clearTimeout(timer);
+    (window.requestIdleCallback || setTimeout)(kick, { timeout: 1500 });
+  };
+  const timer = setTimeout(go, 5000);
+  ALIVE.forEach((e) => window.addEventListener(e, go, { capture: true, passive: true }));
+}
+
 /** Mount on the title's camera box (holds the platform <img>). Called once the art has loaded. */
 export function mountSubway(camBox, img) {
   if (cv) return;
@@ -181,7 +196,7 @@ export function mountSubway(camBox, img) {
   // the platform is on screen: fetch the train while the visitor reads the title (idle time,
   // after the scene has faded in), or right now if they already pressed START
   if (urgent) kick();
-  else (window.requestIdleCallback || setTimeout)(kick, { timeout: 2500 });
+  else warmWhenAlive();
 }
 
 /** Load the train art (on the first tap/key, with the other film art). Resolves once it is decoded

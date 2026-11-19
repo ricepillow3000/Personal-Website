@@ -206,7 +206,13 @@ function billboardLayer() {
     <mask id="bbDots" maskUnits="userSpaceOnUse" x="560" y="120" width="500" height="460"><rect x="560" y="120" width="500" height="460" fill="url(#bbLed)"/></mask>
     <filter id="bbGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     ${RINGS_USED.map(([n, d]) => `<clipPath id="bbRing-${n}"><path d="${d}"/></clipPath>`).join('')}
+    <pattern id="bbGrid" width="2.6" height="2.6" patternUnits="userSpaceOnUse"><path d="M.3 0V2.6" stroke="#4A000C" stroke-width=".6" opacity=".55"/><path d="M0 .3H2.6" stroke="#4A000C" stroke-width=".4" opacity=".25"/></pattern>
+    ${BB_RINGS.map(([n]) => { const g = BB_GEO[n]; return `<linearGradient id="bbCurve-${n}" gradientUnits="userSpaceOnUse" x1="${g.cx - g.R}" x2="${g.cx + g.R}" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset=".2" stop-color="#000" stop-opacity=".14"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset=".8" stop-color="#000" stop-opacity=".14"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>`; }).join('')}
   </defs>
+  <!-- each screen's face, one solid LED red (Nov 19, John: the art's screens had light red blotches,
+       "make it all a solid color, following the texture pattern"): the base red (matched to the art
+       shown at 72%), the fine LED grid, and a little shade toward the edges so it still reads as a drum -->
+  ${BB_RINGS.map(([n, d]) => `<path d="${d}" fill="#A3112A"/><path d="${d}" fill="url(#bbGrid)"/><path d="${d}" fill="url(#bbCurve-${n})"/>`).join('')}
   ${RINGS_USED.map(([n]) => `<g clip-path="url(#bbRing-${n})"><g filter="url(#bbGlow)"><g mask="url(#bbDots)"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></g></g></g>`).join('')}
 </svg>`;
 }
@@ -310,7 +316,6 @@ export function mountBackdrop(el) {
 
   // the city art loads only after the page has painted, sized for the screen, so it never
   // competes with the title text on a phone's first load
-  const small = () => window.innerWidth <= 900;
   const loadCity = () => {
     if (cityLoading) return;
     cityLoading = true;
@@ -324,8 +329,10 @@ export function mountBackdrop(el) {
 
   };
   loadSceneNow = loadCity;
-  // phones wait until the title has finished building in, then the scene fades in like an opening shot
-  const later = () => setTimeout(loadCity, small() || !window.matchMedia('(pointer: fine)').matches ? 2500 : 300);
+  // the platform as soon as the page has loaded, on every device (Nov 19: phones used to wait 2.5 s
+  // more, and on a slow connection the title sat on a bare background; its blurred stand-in shows
+  // from the first frame, see backdrop.css)
+  const later = () => setTimeout(loadCity, 0);
   if (document.readyState === 'complete') later();
   else window.addEventListener('load', later, { once: true });
 

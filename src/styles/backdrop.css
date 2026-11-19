@@ -57,6 +57,11 @@ body.reduce-motion .bd-layer { transform: none !important; }
 .bd-cam { transform: rotate(-3deg) scale(1.06); animation: camPush 26s ease-in-out infinite alternate; }
 @keyframes camPush { to { transform: rotate(-2deg) scale(1.14) translate(-1.5%, 1%); } }
 body[data-mode="title"] .bd-subway img.in { opacity: 1; }
+/* the subway from the very first frame (Nov 19, John: "the subway is one of the first things the user
+   sees... they don't have to click the red background"): a tiny blurred copy of the art (64px, inline,
+   ~0.3 KB, nothing to download) sits under the sharp picture, which fades in over it once loaded */
+body:not([data-mode]) .bd-cam::before, body[data-mode="title"] .bd-cam::before { content: ""; position: absolute; inset: 0;
+  background: #0B0B0B url("data:image/webp;base64,UklGRg4BAABXRUJQVlA4IAIBAAAwBwCdASpAACUAPs1So0unpKshtVYKAWAZiWMA1DUgIK5IA/dpFo5DWSE9yJPu6Wz/k8JsXa038Qdzxv4umc6UNgAA/vgtrlRuH6KVLkaflUG//FCflWjxmYDZP5BnYgpYLt10I7Po5Yl3IWE4+352wqYtPL+Af7Xph08o5H3BImoR2NDuhjmRrI2UPfUWp2AkUX/5MEKOTdNIqfdmQ+ZyXADdmpl3ACA4ipaUHAAbFQFHySNi0lpBnXPI/UHrDfZitBS3TrshbnbwtWwTIpjez4LCSysGF6286JQi/jNcN5rycywazc3wDtdlbnz/ZkfZGRL8xOYh2CCl8vJ/2SwAAAA=") 60% 55% / cover no-repeat; filter: blur(6px); }
 body[data-mode="title"] .bd-city img { opacity: 0; }
 .bd-tech { --amp: 26; transition: opacity .3s steps(3); }
 body[data-mode="title"] .bd-tech { opacity: 0; } /* the title has its own composition */
@@ -81,6 +86,6 @@ body:not([data-mode="title"]) .bd-graffiti { opacity: 0; }
 /* the tower's LED screens as one moving billboard: JOHN NGUYEN ★ travels from ring to ring (Nov 19) */
 .bd-billboard { position: absolute; opacity: 0; transition: opacity .5s ease-out; pointer-events: none; }
 .bd-city img.in ~ .bd-billboard { opacity: 1; }
-body[data-mode="title"] .bd-billboard { opacity: 0; }
+body[data-mode="title"] .bd-billboard, body[data-mode="title"] .bd-city img.in ~ .bd-billboard { opacity: 0; } /* (the second outranks the rule above: the screens' solid faces must not show on the title) */
 .bb-ch text { font-family: var(--f-head); fill: #FFFFFF; letter-spacing: 0; }
 .bb-ch { visibility: hidden; }
