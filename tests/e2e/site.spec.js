@@ -469,6 +469,48 @@ test('every story page ends with a NEXT EPISODE card that rolls the next chapter
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
 });
 
+test('SAVE DATA is a stack: every card peeks out, and picking one opens it and slides the cards below it down', async ({ page }) => {
+  const errors = errorsOf(page);
+  await page.goto('/#/stats');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'stats');
+  await page.goto('/#/');
+  await page.reload();
+  await page.locator('#pressStart').click();
+  const saves = page.locator('#saves');
+  await expect(saves).toBeVisible();
+  const slot = (i) => saves.locator(`.sv-slot[data-i="${i}"]`);
+  const settle = () => page.waitForTimeout(450);
+  // every card's file number is on screen and on top (its peek row is not covered by the next card)
+  const peeksOut = () => page.evaluate(() => [...document.querySelectorAll('#saves .sv-slot[data-i]')].map((s) => {
+    const r = s.querySelector('.sv-no').getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && !!hit && s.contains(hit);
+  }));
+  // the cards overlap (a stack, not a list)
+  const overlap = await page.evaluate(() => {
+    const a = document.querySelector('#saves .sv-slot[data-i="2"]').getBoundingClientRect();
+    const b = document.querySelector('#saves .sv-slot[data-i="3"]').getBoundingClientRect();
+    return a.bottom - b.top;
+  });
+  expect(overlap).toBeGreaterThan(4);
+  const y = async (i) => (await slot(i).boundingBox()).y;
+  await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown'); // file 5 picked: nothing below it but CLEAR DATA
+  await expect(slot(4)).toHaveClass(/\bon\b/);
+  await settle();
+  expect(await peeksOut()).toEqual([true, true, true, true, true]);
+  const restY = await y(3);
+  for (const k of [0, 0, 0, 0]) await page.keyboard.press('ArrowUp'); // back to file 1
+  await expect(slot(0)).toHaveClass(/\bon\b/);
+  await settle();
+  expect(await peeksOut()).toEqual([true, true, true, true, true]);
+  expect(await y(3)).toBeGreaterThan(restY + 10); // file 1 opened: the cards below slid down to make room
+  await expect(slot(0).locator('.sv-go')).toBeVisible();
+  expect(await slot(3).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeLessThan(2); // closed cards keep their details row shut
+  expect(await slot(0).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeGreaterThan(20);
+  expect(errors).toEqual([]);
+});
+
 test('SAVE DATA: five files; a new game starts clean in its own file, the old file keeps its progress, ERASE asks twice; keys work', async ({ page }) => {
   const errors = errorsOf(page);
   // file 1 has played STATS (a deep link saves to the visitor's first file)
