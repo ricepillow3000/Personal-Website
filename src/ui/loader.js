@@ -1,13 +1,18 @@
-/* The loading screen (Nov 19, John: "instead of a lock, TAKE YOUR NETWORK in the middle, and TAKE YOUR
-   NETWORK acts as the loading bar. Bottom right, a star or banner with the philosophy of our resume,
-   spinning. When the bar fully loads, a button underneath; click it and a transition opens to the
+/* The loading screen (Nov 19, John: "instead of a lock, TAKE YOUR NETWORK in the middle... acts as the
+   loading bar. Bottom right, a star or banner with the philosophy of our resume, spinning. When the bar fully loads, a button underneath; click it and a transition opens to the
    subway station, seamless, situational: zooming into a word, into the holes of letters, and that
    gateway opens into the station").
 
-   The words are the bar: fifteen cut-out letters, each an empty grey slot that fills with ink from the
+   The words (Nov 19, John: "TAKE YOUR NETWORK sounds a bit corny... more in tune with our philosophy"):
+   TAKE YOUR NOTES. The site is a heist told as a case (case files, CLEARED stamps, a calling card), and
+   the visitor is the investigator reviewing it; the thief's line to them is a cheeky "take your notes",
+   which is also what a recruiter really does, and an invitation to slow down and read the evidence.
+   Over the words, CASE FILE · JOHN NGUYEN in typewriter.
+
+   The words are the bar: thirteen cut-out letters, each an empty grey slot that fills with ink from the
    left as the page really loads (the code running, the brand fonts, the platform's sharp picture, the
    load event); a letter pops when it is full, a word clicks when it is complete. At 100% ENTER THE
-   STATION slams in under the words. The click dives into the O of NETWORK: the camera pushes in, the
+   STATION slams in under the words (after a red marker underlines NOTES). The click dives into the O of NOTES: the camera pushes in, the
    O's hole flashes white, then it is a hole, the station showing through, and the dive carries on
    through it until the hole is bigger than the screen. The spinning seal (bottom right) carries the
    site's philosophy: resumes don't have to be boring; built by directing a crew of AI agents.
@@ -94,10 +99,13 @@ export function runLoader() {
 
   // 100%: ENTER THE STATION slams in under the words; its click (or Enter) dives into the O
   function ready() {
-    el.classList.add('ready');
-    go.hidden = false;
-    sfx('hoverBig');
-    requestAnimationFrame(() => go.focus({ preventScroll: true }));
+    el.classList.add('ready', 'inked'); // NOTES gets its red underline...
+    sfx('underline');
+    setTimeout(() => { // ...then ENTER THE STATION slams in under it
+      go.hidden = false;
+      sfx('hoverBig');
+      requestAnimationFrame(() => go.focus({ preventScroll: true }));
+    }, reducedMotion() ? 0 : 330);
     go.addEventListener('click', () => {
       if (el.classList.contains('going')) return;
       el.classList.add('going');
@@ -108,7 +116,7 @@ export function runLoader() {
   return finished;
 }
 
-/* The dive: the whole screen pushes in toward the O of NETWORK (a browser animation on the loader, so
+/* The dive: the whole screen pushes in toward the O of NOTES (a browser animation on the loader, so
    no per-frame script), the O's hole flashes white, then the loader is cut by a hole of exactly the
    O's inner shape (clip-path, even-odd) and the push carries on through it, accelerating, until the
    hole is bigger than the screen; the station behind settles from a push-in. */

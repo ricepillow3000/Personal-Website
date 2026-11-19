@@ -770,11 +770,11 @@ test('tower lights: every aviation light blinks on its own random beat (never al
   await ctx.close();
 });
 
-test('city billboard: TAKE YOUR NETWORK crawls across the ring above JOHN NGUYEN ★, both looping (both rest centered with reduced motion)', async ({ page, browser }) => {
+test('city billboard: TAKE YOUR NOTES crawls across the ring above JOHN NGUYEN ★, both looping (both rest centered with reduced motion)', async ({ page, browser }) => {
   await openBoard(page);
   await expect(page.locator('.bd-billboard .bb-ring')).toHaveCount(2);
   const word = (ring) => page.locator(`.bb-${ring} .bb-ch text`).evaluateAll((els) => els.map((e) => e.textContent || ' ').join(''));
-  expect((await word('top')).replace(/\s+/g, ' ').trim()).toBe('TAKE YOUR NETWORK');
+  expect((await word('top')).replace(/\s+/g, ' ').trim()).toBe('TAKE YOUR NOTES');
   expect((await word('middle')).replace(/\s+/g, ' ').trim()).toBe('JOHN NGUYEN');
   await expect(page.locator('.bb-middle .bb-ch')).toHaveCount(12); // J O H N _ N G U Y E N ★
   const visible = (ring) => page.locator(`.bb-${ring} .bb-ch`).evaluateAll((els) => els.filter((e) => e.style.visibility === 'visible').length);
@@ -869,7 +869,7 @@ test('station: the ceiling tubes flicker on their own (never two healthy ones at
   await expect.poll(() => page.locator('.st-body .sl').count(), { timeout: 15000 }).toBe(15);
   await page.waitForTimeout(3000);
   expect(await page.locator('.st-body .sl').evaluateAll((els) => els.every((e) => e.dataset.st === 'on'))).toBe(true);
-  // the graffiti (TAKE YOUR NETWORK and its cat, sprayed by tools/draw-graffiti.mjs): the painting loads, inside the screen
+  // the graffiti (TAKE YOUR NOTES and its cat, sprayed by tools/draw-graffiti.mjs): the painting loads, inside the screen
   const href = await page.locator('image.gf').getAttribute('href');
   expect(href).toContain('graffiti.webp');
   expect((await page.request.get(href)).status()).toBe(200);
@@ -905,11 +905,12 @@ test('train horn: it dips in pitch as the train passes (a Doppler drop), never b
   for (const c of calls) expect(c, c).toContain('drop: HORN_DOPPLER');
 });
 
-test('loading screen: TAKE YOUR NETWORK is the progress bar (its letters fill as the page loads), ENTER THE STATION appears at 100, and its click dives through the O into the station', async ({ browser }) => {
+test('loading screen: TAKE YOUR NOTES is the progress bar (its letters fill as the page loads), ENTER THE STATION appears at 100, and its click dives through the O into the station', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
   const page = await ctx.newPage();
   await page.goto('/?intro');
-  await expect(page.locator('#loader .ld-l')).toHaveCount(15); // T A K E  Y O U R  N E T W O R K
+  await expect(page.locator('#loader .ld-l')).toHaveCount(13); // T A K E  Y O U R  N O T E S
+  await expect(page.locator('#loader .ld-case')).toHaveText('CASE FILE · JOHN NGUYEN');
   await expect(page.locator('#loader .ld-o .ld-ring')).toHaveCount(2); // the O whose hole is the doorway (empty slot + ink)
   await expect(page.locator('#loader .ld-seal textPath')).toContainText("RESUMES DON'T HAVE TO BE BORING");
   await expect(page.locator('#loader .ld-go')).toBeHidden(); // no button until the bar is full
@@ -922,7 +923,8 @@ test('loading screen: TAKE YOUR NETWORK is the progress bar (its letters fill as
     await page.waitForTimeout(30);
   }
   expect([...seen].filter((v) => v > 0 && v < 100).length).toBeGreaterThan(3); // a steady fill, not a jump
-  await expect(page.locator('#loader .ld-l.in')).toHaveCount(15); // every letter inked
+  await expect(page.locator('#loader .ld-l.in')).toHaveCount(13); // every letter inked
+  await expect(page.locator('#loader')).toHaveClass(/inked/); // NOTES underlined before the button
   await expect(page.locator('#loader .ld-go')).toBeVisible();
   await expect(page.locator('#loader .ld-go')).toContainText('ENTER THE STATION');
   await expect(page.locator('#loader .ld-go')).toBeFocused();
