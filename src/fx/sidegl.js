@@ -38,8 +38,13 @@ uniform float uMat;     // 1 = the heavy steel material (the car itself), 0 = fl
 uniform float uRefl;    // 1 = its reflection in the glossy platform floor
 uniform vec2 uTexel;    // one texel of the art, for the ink outlines
 uniform float uBlur;    // motion blur: how far (world units) the car moves while the shutter is open
+uniform float uCar;     // one car's length (world units): a recessed gangway between cars
 out vec4 outColor;
 float luma(vec2 uv) { return dot(texture(uTex, uv).rgb, vec3(0.299, 0.587, 0.114)); }
+float glassAt(vec2 uv) { // the warm lit windows in the art
+  vec3 k = texture(uTex, uv).rgb;
+  return clamp((min(k.r, k.g) - k.b) * 5.0, 0.0, 1.0) * step(0.45, dot(k, vec3(0.299, 0.587, 0.114)));
+}
 // the art smeared along the car by the motion blur (5 taps across the shutter; one tap at rest)
 vec4 smear(vec2 sv) {
   if (uBlur < 0.5) return texture(uTex, vec2(sv.x / uPeriod, sv.y));
@@ -82,8 +87,30 @@ void main() {
     float f = fract((vD + v * 60.0) / 310.0);
     float streak = step(0.45, f) * step(f, 0.5) + 0.6 * step(0.535, f) * step(f, 0.555);
     float sheen = streak * (v > 0.06 && v < 0.88 ? 1.0 : 0.0) * (vD < 60.0 ? 0.55 : 1.0); // right at the lens a streak is huge: a glint, not a wash
-    steel += sheen * vec3(0.44, 0.46, 0.5) * (1.0 - v * 0.55);
+    steel += sheen * vec3(0.24, 0.25, 0.28) * (1.0 - v * 0.55); // (softer since Nov 19: strong glare read as a thin, hollow box)
     col = mix(col, steel, metal) * (1.0 - 0.35 * ink * glass) + glass * sheen * 0.12;
+    /* THICKNESS (Nov 19, John: "not a thin box where the walls look super thin... the metal walls
+       not as thin as the windows... layering"). The windows sit deep in a thick wall: the wall's
+       thickness shades the top of each pane and shows as a lit steel reveal on its far side, and a
+       lit sill lip runs under it; the roof's rounded edge and a ledge along the body catch the
+       light; between cars a deep gangway (ribbed bellows) with each car's end rim. All of it fades
+       with the motion blur, like the ink (a hard edge on a smeared car would read as a sticker). */
+    float sharp = 1.0 - clamp(uBlur / 40.0, 0.0, 1.0);
+    if (glass > 0.5) {
+      if (glassAt(uv - vec2(0.0, 0.05)) < 0.5) col *= mix(1.0, 0.42, sharp); // the top reveal's shadow
+      else if (glassAt(uv + vec2(6.0 / uPeriod, 0.0)) < 0.5) col = mix(col, vec3(0.36, 0.37, 0.41) * band, 0.85 * sharp); // the far reveal
+    } else if (glassAt(uv - vec2(0.0, 0.025)) > 0.5) {
+      col = mix(col, col * 1.6 + 0.06, sharp); // the sill
+    }
+    if (v > 0.06 && v < 0.08) col = col * 1.5 + 0.05; // the cant rail
+    if (v > 0.855 && v < 0.866) col = col * 1.4 + 0.04; // the solebar ledge
+    float e = mod(vSV.x, uCar);
+    if (uCar > 0.0 && e > uCar - 22.0) {
+      float r = uCar - e; // 0..22 from the next car's front
+      vec3 bel = vec3(0.04, 0.04, 0.05) * (0.6 + 0.4 * step(0.5, fract(r / 2.8)));
+      if (r > 19.0 || r < 3.0) bel = vec3(0.2, 0.21, 0.24) * band; // the two car ends' rims, in shadow
+      col = mix(col, bel, 0.1 + 0.9 * sharp);
+    }
     if (uRefl > 0.5) {
       // in the floor: a little cooler and fainter, strongest where the car meets the platform (hard
       // steps). It mirrors light (the lit windows become warm streaks), it doesn't dim the floor.
@@ -121,7 +148,7 @@ export function createSideRenderer() {
     pos: gl.getAttribLocation(prog, 'aPos'), d: gl.getAttribLocation(prog, 'aD'), sv: gl.getAttribLocation(prog, 'aSV'),
     size: gl.getUniformLocation(prog, 'uSize'), tex: gl.getUniformLocation(prog, 'uTex'), period: gl.getUniformLocation(prog, 'uPeriod'),
     alpha: gl.getUniformLocation(prog, 'uAlpha'), mouth: gl.getUniformLocation(prog, 'uMouth'),
-    mat: gl.getUniformLocation(prog, 'uMat'), refl: gl.getUniformLocation(prog, 'uRefl'), texel: gl.getUniformLocation(prog, 'uTexel'), blur: gl.getUniformLocation(prog, 'uBlur'),
+    car: gl.getUniformLocation(prog, 'uCar'), mat: gl.getUniformLocation(prog, 'uMat'), refl: gl.getUniformLocation(prog, 'uRefl'), texel: gl.getUniformLocation(prog, 'uTexel'), blur: gl.getUniformLocation(prog, 'uBlur'),
   };
   const buf = gl.createBuffer();
   const vao = gl.createVertexArray();
@@ -223,7 +250,7 @@ export function createSideRenderer() {
     /** Draw one side quad on top of what this frame already has. corners: four [x, y, d, s, v] in
         canvas pixels (near roof, near skirt, far roof, far skirt). mat: the steel material; refl: as
         its reflection in the floor. False if it couldn't. */
-    quad(img, corners, { period, alpha, mouth, mat = 0, refl = 0, blur = 0 }) {
+    quad(img, corners, { period, alpha, mouth, mat = 0, refl = 0, blur = 0, car = 0 }) {
       if (lost || gl.isContextLost()) return false;
       const t = texture(img);
       if (!t) return false;
@@ -243,6 +270,7 @@ export function createSideRenderer() {
       gl.uniform1f(loc.mat, mat);
       gl.uniform1f(loc.refl, refl);
       gl.uniform1f(loc.blur, blur);
+      gl.uniform1f(loc.car, car);
       gl.uniform2f(loc.texel, 1 / (img.naturalWidth || img.width), 1 / (img.naturalHeight || img.height));
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       return true;
