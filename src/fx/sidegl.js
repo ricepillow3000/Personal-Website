@@ -37,11 +37,19 @@ uniform float uMouth;   // the tunnel mouth: deeper than this the train fades in
 uniform float uMat;     // 1 = the heavy steel material (the car itself), 0 = flat (the afterimage echoes)
 uniform float uRefl;    // 1 = its reflection in the glossy platform floor
 uniform vec2 uTexel;    // one texel of the art, for the ink outlines
+uniform float uBlur;    // motion blur: how far (world units) the car moves while the shutter is open
 out vec4 outColor;
 float luma(vec2 uv) { return dot(texture(uTex, uv).rgb, vec3(0.299, 0.587, 0.114)); }
+// the art smeared along the car by the motion blur (5 taps across the shutter; one tap at rest)
+vec4 smear(vec2 sv) {
+  if (uBlur < 0.5) return texture(uTex, vec2(sv.x / uPeriod, sv.y));
+  vec4 a = vec4(0.0);
+  for (int i = 0; i < 5; i++) a += texture(uTex, vec2((sv.x + (float(i) * 0.25 - 0.5) * uBlur) / uPeriod, sv.y));
+  return a * 0.2;
+}
 void main() {
   float dark = clamp(1.0 - (vD - uMouth) / 420.0, 0.0, 1.0);
-  vec4 c = texture(uTex, vec2(vSV.x / uPeriod, vSV.y)); // REPEAT wraps the car; mipmaps keep the far end calm
+  vec4 c = smear(vSV); // REPEAT wraps the car; mipmaps keep the far end calm
   if (uMat > 0.5 && c.a > 0.0) {
     /* Weight (Nov 19, John: "it looks like a cutout, make it feel heavy, like an actual subway train").
        Cel-shaded steel: hard value bands, never soft gradients. The lit windows keep their glow. */
@@ -61,10 +69,13 @@ void main() {
     band *= v > 0.94 ? 0.7 : 1.0;
     steel *= band;
     // bold ink: the art's own panel lines, door seams and frames, thickened into heavy cel outlines
-    vec2 o = uTexel * 1.6;
-    float gx = luma(uv + vec2(o.x, 0.0)) - luma(uv - vec2(o.x, 0.0));
-    float gy = luma(uv + vec2(0.0, o.y)) - luma(uv - vec2(0.0, o.y));
-    float ink = smoothstep(0.07, 0.2, length(vec2(gx, gy)));
+    float ink = 0.0; // the outlines smear with the paint: at full speed they are gone (and not worth 4 taps)
+    if (uBlur < 30.0) {
+      vec2 o = uTexel * 1.6;
+      float gx = luma(uv + vec2(o.x, 0.0)) - luma(uv - vec2(o.x, 0.0));
+      float gy = luma(uv + vec2(0.0, o.y)) - luma(uv - vec2(0.0, o.y));
+      ink = smoothstep(0.07, 0.2, length(vec2(gx, gy))) * (1.0 - 0.8 * clamp(uBlur / 30.0, 0.0, 1.0));
+    }
     steel *= 1.0 - 0.7 * ink;
     // the station's ceiling lights mirrored on the steel: fixed in the station (world depth), so the
     // car slides UNDER them, the way real metal looks when it moves. Crisp anime streaks, slanted.
@@ -110,7 +121,7 @@ export function createSideRenderer() {
     pos: gl.getAttribLocation(prog, 'aPos'), d: gl.getAttribLocation(prog, 'aD'), sv: gl.getAttribLocation(prog, 'aSV'),
     size: gl.getUniformLocation(prog, 'uSize'), tex: gl.getUniformLocation(prog, 'uTex'), period: gl.getUniformLocation(prog, 'uPeriod'),
     alpha: gl.getUniformLocation(prog, 'uAlpha'), mouth: gl.getUniformLocation(prog, 'uMouth'),
-    mat: gl.getUniformLocation(prog, 'uMat'), refl: gl.getUniformLocation(prog, 'uRefl'), texel: gl.getUniformLocation(prog, 'uTexel'),
+    mat: gl.getUniformLocation(prog, 'uMat'), refl: gl.getUniformLocation(prog, 'uRefl'), texel: gl.getUniformLocation(prog, 'uTexel'), blur: gl.getUniformLocation(prog, 'uBlur'),
   };
   const buf = gl.createBuffer();
   const vao = gl.createVertexArray();
@@ -212,7 +223,7 @@ export function createSideRenderer() {
     /** Draw one side quad on top of what this frame already has. corners: four [x, y, d, s, v] in
         canvas pixels (near roof, near skirt, far roof, far skirt). mat: the steel material; refl: as
         its reflection in the floor. False if it couldn't. */
-    quad(img, corners, { period, alpha, mouth, mat = 0, refl = 0 }) {
+    quad(img, corners, { period, alpha, mouth, mat = 0, refl = 0, blur = 0 }) {
       if (lost || gl.isContextLost()) return false;
       const t = texture(img);
       if (!t) return false;
@@ -231,6 +242,7 @@ export function createSideRenderer() {
       gl.uniform1f(loc.mouth, mouth);
       gl.uniform1f(loc.mat, mat);
       gl.uniform1f(loc.refl, refl);
+      gl.uniform1f(loc.blur, blur);
       gl.uniform2f(loc.texel, 1 / (img.naturalWidth || img.width), 1 / (img.naturalHeight || img.height));
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       return true;

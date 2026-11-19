@@ -1,6 +1,7 @@
 import { $, esc, timeOfDay } from '../core/util.js';
 import { resume } from '../data/resume.js';
 import { loadWeather } from './weather.js';
+import { cutType } from './cuttype.js';
 
 /* Weather and sky icons, drawn for the site: black ink, white and yellow fills (no emoji). */
 const ICONS = {
@@ -18,9 +19,11 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
 let weather = null; // Atlanta's weather once it has loaded: { kind, word, temp }
 
-/* The title's calendar (Nov 19, John's game-calendar references, an original design): the date
-   in big slanted numbers on a black sticker, a sky box (sun or moon on the visitor's clock), the
-   time of day as a word, the weekday on a white tag, and a red badge with Atlanta's live weather. */
+/* The title's calendar (Nov 19, John's game-calendar references "5/02 Morning FRIDAY", an original
+   take): one die-cut sticker. Black letters on a thick white cut edge with a thin black outer line:
+   the month small in a heavy serif, the day huge, the sky (sun or moon on the visitor's clock) in
+   black on its own jagged white burst, the time of day in heavy type, the weekday in mixed
+   magazine letters on a tilted white strip, and Atlanta's live weather on a small red tag. */
 export function renderDate() {
   const now = new Date();
   const tod = timeOfDay(now);
@@ -33,7 +36,7 @@ export function renderDate() {
       <span class="cal-date hud-date" aria-hidden="true"><span class="cal-m">${now.getMonth() + 1}</span><span class="cal-sl">/</span><span class="cal-d">${String(now.getDate()).padStart(2, '0')}</span></span>
       <span class="cal-sky" aria-hidden="true">${icon(tod.icon)}</span>
       <span class="cal-tod" aria-hidden="true">${tod.label}</span>
-      <span class="cal-week" aria-hidden="true">${day}</span>
+      <span class="cal-week" aria-hidden="true">${cutType(day.toUpperCase(), now.getDay() + 3, { mixCase: true })}</span>
       ${wx ? wx.replace('<span class="cal-wx">', '<span class="cal-wx" aria-hidden="true">') : ''}
     </div>
     <div class="hud-meta"><span>${esc(resume.status)}</span><span>${esc(resume.school)}</span></div>`;

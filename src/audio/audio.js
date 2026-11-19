@@ -606,16 +606,18 @@ const VOICES = {
   },
   // PRESS START: a rumble deep in the tunnel, the horn, wheels hammering the rail joints faster and
   // louder, the horn's pitch dropping as it passes, the blast of air and the paper flying
-  tunnel: (bus, at) => {
-    rails(bus, at, 1.3, { gapFrom: 0.3, gapTo: 0.07, vFrom: 0.3, vTo: 1, gain: 1.0, rumble: 0.85, punch: true }); // the track: loud and punchy
-    // one long horn: faint as the headlights appear, loudest as the nose passes us (~0.74s), then gone
-    trainHorn(bus, at + 0.02, 1.5, 0.15, { fadeIn: 0.3, peak: 0.74, drop: 0.88 }); // lower so the wheels are heard
+  // (pass: when the nose passes the camera; the train brakes in, so this is ~1.2 s, see subway.js)
+  tunnel: (bus, at, v, { pass = 0.74 } = {}) => {
+    const d = pass - 0.74; // everything after the first rumble moves with the nose
+    rails(bus, at, 1.3 + d, { gapFrom: 0.3, gapTo: 0.07, vFrom: 0.3, vTo: 1, gain: 1.0, rumble: 0.85, punch: true }); // the track: loud and punchy
+    // one long horn: faint as the headlights appear, loudest as the nose passes us, then gone
+    trainHorn(bus, at + 0.02, 1.5 + d, 0.15, { fadeIn: 0.3, peak: pass, drop: pass + 0.14 }); // lower so the wheels are heard
     // the wall of air the train shoves out of the tunnel ahead of itself, then its wake
-    airRoar(bus, at + 0.2, 0.6, { from: 160, to: 1600, gain: 1.1 }); // pulled back so the wheels cut through
-    airRoar(bus, at + 0.78, 0.6, { from: 1800, to: 300, gain: 1.0, up: false });
-    rattle(bus, at + 0.3, 1.0, { gain: 0.16, from: 0.4, to: 1.6 }); // the cars shaking as they storm past
-    screech(bus, at + 0.55, 0.5, 0.03);
-    flutter(bus, at + 0.6, 0.45, 0.14);
+    airRoar(bus, at + 0.2 + d, 0.6, { from: 160, to: 1600, gain: 1.1 }); // pulled back so the wheels cut through
+    airRoar(bus, at + pass + 0.04, 0.6, { from: 1800, to: 300, gain: 1.0, up: false });
+    rattle(bus, at + 0.3, 1.0 + d, { gain: 0.16, from: 0.4, to: 1.6 }); // the cars shaking as they storm past
+    screech(bus, at + 0.4, 0.5 + d, 0.05); // the brakes biting as it comes out of the tunnel
+    flutter(bus, at + pass - 0.14, 0.45, 0.14);
   },
   // THE DROP: the wind roars louder as you fall, and the busy street below rushes up at you
   fall: (bus, at) => {
@@ -848,12 +850,16 @@ Object.assign(VOICES, {
     tone(bus, { at: at + 0.29, dur: 0.46, from: 1568, to: 1568, type: 'triangle', gain: 0.2 });
   },
   /* PRESS START: a real tram storming past the mic (steel wheels slamming the rail joints, motor,
-     air), its loudest crash on the frame the nose passes the camera (0.74s). The horn and the paper
-     flying stay synthesized (no recorded horn passed). Faded out under the cut to the board. */
-  tunnel: (bus, at) => {
-    if (!clip(bus, 'train-pass', at + 0.74, { gain: TRAIN.pass, env: [[0, 1], [1.25, 1], [1.7, 0]] })) return SYNTH.tunnel(bus, at);
-    trainHorn(bus, at + 0.02, 1.5, TRAIN.horn, { fadeIn: 0.3, peak: 0.74, drop: 0.88 });
-    flutter(bus, at + 0.6, 0.45, 0.14);
+     air), its loudest crash on the frame the nose passes the camera; under it, the recorded brakes
+     squealing as the train brakes in (Nov 19, "feel real"). The horn and the paper flying stay
+     synthesized (no recorded horn passed). Faded out under the cut to the board.
+     { pass, cut }: when the nose passes and when the cut comes (seconds after the start). */
+  tunnel: (bus, at, v, { pass = 0.74, cut = 1.25 } = {}) => {
+    const s0 = pass - CLIP_HIT['train-pass']; // the clip's own start, relative to at
+    if (!clip(bus, 'train-pass', at + pass, { gain: TRAIN.pass, env: [[0, 1], [cut - s0, 1], [cut + 0.45 - s0, 0]] })) return SYNTH.tunnel(bus, at, v, { pass });
+    clip(bus, 'train-brake', at + Math.max(0, pass - 0.9), { gain: TRAIN.brake * 0.55, env: [[0, 0], [0.35, 1], [cut + 0.45 - Math.max(0, pass - 0.9), 0]] }); // squeal peaks just after the nose
+    trainHorn(bus, at + 0.02, 1.5 + (pass - 0.74), TRAIN.horn, { fadeIn: 0.3, peak: pass, drop: pass + 0.14 });
+    flutter(bus, at + pass - 0.14, 0.45, 0.14);
   },
   /* NEXT STOP: a real train braking into a station (wheels grinding, the brake squeal swelling as
      the station stops in the windows), then the two-note station chime (a PA tone, synthesized) */

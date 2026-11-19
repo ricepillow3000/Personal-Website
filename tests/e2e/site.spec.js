@@ -190,7 +190,7 @@ test('works with motion enabled too (start sequence + board reveal finish)', asy
   const errors = errorsOf(page);
   await page.goto('/');
   await page.locator('#pressStart').click();
-  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 5000 });
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 15000 }); // the train brakes in (~1.8 s), plus up to 4 s waiting for the scene, on a busy shared test machine
   await expect(page.locator('#board .plan-continue')).toBeVisible();
   expect(errors).toEqual([]);
   await ctx.close();
@@ -339,7 +339,7 @@ test.describe('with motion on', () => {
     await expect(page.locator('.bd-cam canvas').first()).toBeAttached({ timeout: 6000 }); // the platform layers (trash below, the train's GPU side between, its nose on top) mount once the art loads
     await page.locator('#pressStart').click({ force: true });
     await expect(page.locator('.fall.tunnel')).toHaveCount(1);
-    await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 4000 });
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 15000 });
     await expect(page.locator('.fall.tunnel')).toHaveCount(0, { timeout: 4000 }); // the shot cleans up after itself
     expect(await page.locator('#backdrop').evaluate((b) => b.style.translate)).toBe(''); // the camera shake is reset
     expect(await page.locator('.title-block').evaluate((t) => t.style.transform)).toBe(''); // the title is back in place for next time
@@ -667,7 +667,7 @@ test('title calendar: date, weekday and time of day from the visitor\'s clock, p
     const now = new Date();
     await expect(page.locator('.cal-d')).toHaveText(String(now.getDate()).padStart(2, '0'));
     await expect(page.locator('.cal-m')).toHaveText(String(now.getMonth() + 1));
-    await expect(page.locator('.cal-week')).toHaveText(DAYS[now.getDay()]);
+    await expect(page.locator('.cal-week')).toHaveText(new RegExp(`^${DAYS[now.getDay()]}$`, 'i')); // magazine letters: some are lowercase on purpose
     await expect(page.locator('.cal-tod')).toHaveText(/^(Early Morning|Morning|Lunchtime|Afternoon|After School|Evening|Late Night)$/);
     if (ok) {
       await expect(page.locator('.cal-wx')).toHaveText('ATL · RAIN · 58°', { timeout: 8000 });
@@ -799,7 +799,7 @@ test('a returning visitor who taps CONTINUE right away still gets the train (it 
   await page.evaluate(() => { window.__tunnel = false; new MutationObserver(() => { if (document.querySelector('.fall.tunnel')) window.__tunnel = true; }).observe(document.body, { childList: true }); });
   await page.locator('#pressStart').tap(); // before the phone has loaded the scene on its own (2.5s)
   await expect.poll(() => page.evaluate(() => window.__tunnel), { timeout: 6000 }).toBe(true);
-  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 6000 });
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 15000 });
   await ctx.close();
 });
 
