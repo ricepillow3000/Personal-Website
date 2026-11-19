@@ -130,43 +130,53 @@ function shardLayer() {
    Mount + motion: shared drift (nearer layers move further) + pointer parallax.
    ========================================================================= */
 /* =========================================================================
-   LAYER 4 — FOREGROUND TECH CUTOUTS: solid black vector silhouettes (server racks with
-   vents and status LEDs, a circuit board with traces and a chip, a cable run) with thin
-   white cut edges, like shapes sliced out of black card. They sit at the edges, in front
-   of everything in the backdrop, and move the most (parallax), never over the content.
+   LAYER 4 — FOREGROUND CUT-PAPER (Nov 19, John: the server racks "don't fit, replace them with
+   something that matches the Persona 5 vibe"; they and the circuit board are retired). Jagged
+   black card with a white ink edge, a big white star over a red offset star, a black-and-white
+   zigzag tape strip, small stars: the same bold flat vocabulary as the rest of the backdrop
+   (original shapes). They sit at the edges, in front of the scene, move the most (parallax),
+   and never go over the content.
    ========================================================================= */
 function techLayer() {
   const K = C.black;
-  const rack = (x, y, w, h, depth, leds) => {
-    let g = '';
-    g += poly([[x + w, y + 10], [x + w + depth, y - 8], [x + w + depth, y + h], [x + w, y + h]], '#151515'); // side face
-    g += poly([[x, y + 10], [x + w, y + 10], [x + w + depth, y - 8], [x + depth, y - 8]], '#262626'); // top
-    g += `<rect x="${x}" y="${y + 10}" width="${w}" height="${h - 10}" fill="${K}"/>`;
-    g += `<path d="M${x} ${y + 10}H${x + w}V${y + h}" fill="none" stroke="${C.white}" stroke-width="2" opacity=".55"/>`; // cut edge catching light
-    for (let i = 0, yy = y + 30; yy < y + h - 16; i++, yy += 26) {
-      g += `<rect x="${x + 10}" y="${yy}" width="${w - 20}" height="18" fill="none" stroke="#2C2C2C" stroke-width="2"/>`;
-      for (let v = x + 18; v < x + w - 40; v += 7) g += `<rect x="${v}" y="${yy + 5}" width="3" height="8" fill="#202020"/>`; // vents
-      if (leds) g += `<rect x="${x + w - 30}" y="${yy + 7}" width="5" height="4" fill="${i % 3 ? C.white : C.red2}"/><rect x="${x + w - 21}" y="${yy + 7}" width="5" height="4" fill="${i % 4 ? '#3A3A3A' : C.white}"/>`;
+  /* a strip of tape: alternating black and white triangles between two parallel edges */
+  const zigTape = (x0, y0, x1, y1, w, n) => {
+    const dx = (x1 - x0) / n;
+    const dy = (y1 - y0) / n;
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    const nx = (-(y1 - y0) / len) * w;
+    const ny = ((x1 - x0) / len) * w;
+    let g = poly([[x0, y0], [x1, y1], [x1 + nx, y1 + ny], [x0 + nx, y0 + ny]], C.white, `stroke="${K}" stroke-width="5"`);
+    for (let i = 0; i < n; i++) {
+      const ax = x0 + dx * i;
+      const ay = y0 + dy * i;
+      g += poly([[ax, ay], [ax + dx, ay + dy], [ax + dx / 2 + nx, ay + dy / 2 + ny]], K);
     }
     return g;
   };
-  const trace = (d) => `<path d="${d}" fill="none" stroke="${K}" stroke-width="7" stroke-linejoin="miter"/><path d="${d}" fill="none" stroke="${C.white}" stroke-width="1" opacity=".35"/>`;
-  const pad = (x, y) => `<circle cx="${x}" cy="${y}" r="9" fill="${K}"/><circle cx="${x}" cy="${y}" r="3.5" fill="${C.red2}"/>`;
+  const bigStar = (cx, cy, r, rot) => poly(star(cx + r * 0.16, cy + r * 0.12, r, 0.42, 5, rot), C.red2)
+    + poly(star(cx, cy, r, 0.42, 5, rot), C.white, `stroke="${K}" stroke-width="7" stroke-linejoin="miter"`);
+  const card = [[-40, 700], [250, 652], [270, 708], [352, 688], [410, 940], [-40, 940]];
+  const shardR = [[1430, 940], [1640, 940], [1640, 630], [1574, 690], [1528, 650], [1496, 760]];
+  const shardT = [[1290, -20], [1640, -20], [1640, 230], [1560, 190], [1500, 250], [1452, 120]];
   return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <g class="tech-racks">
-    ${rack(-30, 610, 150, 330, 34, true)}
-    ${rack(130, 690, 120, 250, 26, true)}
-    ${rack(1460, 660, 130, 280, 28, true)}
-    <path d="M250 900 C 300 820, 380 860, 430 780 S 520 760, 560 700" fill="none" stroke="${K}" stroke-width="12"/>
-    <path d="M250 900 C 300 820, 380 860, 430 780 S 520 760, 560 700" fill="none" stroke="${C.white}" stroke-width="1.4" opacity=".4"/>
+  <g class="cut-left">
+    ${poly(card, K)}
+    <path d="M-40 700 L250 652 L270 708 L352 688 L410 940" fill="none" stroke="${C.white}" stroke-width="5" stroke-linejoin="miter"/>
+    ${zigTape(-30, 900, 400, 790, 30, 16)}
+    ${bigStar(232, 812, 84, -98)}
+    ${poly(star(360, 660, 22, 0.42, 5, -80), C.white, `stroke="${K}" stroke-width="5"`)}
+    ${poly(star(96, 716, 13, 0.42, 5, -100), C.red2)}
   </g>
-  <g class="tech-board">
-    ${poly([[1240, -10], [1610, -10], [1610, 250], [1490, 300], [1300, 120]], K)}
-    <path d="M1300 120 L1490 300 L1610 250" fill="none" stroke="${C.white}" stroke-width="2" opacity=".55"/>
-    <rect x="1440" y="40" width="90" height="90" fill="#1C1C1C" stroke="${C.white}" stroke-width="1.5" opacity=".9"/>
-    ${Array.from({ length: 6 }, (_, i) => `<rect x="${1448 + i * 14}" y="30" width="6" height="12" fill="#2E2E2E"/><rect x="${1448 + i * 14}" y="128" width="6" height="12" fill="#2E2E2E"/>`).join('')}
-    ${trace('M1440 70 H1360 L1320 30 V-10')}${trace('M1530 100 H1580 L1610 70')}${trace('M1480 130 V190 L1520 230')}
-    ${pad(1360, 70)}${pad(1580, 100)}${pad(1520, 230)}
+  <g class="cut-right">
+    ${poly(shardR, K)}
+    <path d="M1430 940 L1496 760 L1528 650 L1574 690 L1640 630" fill="none" stroke="${C.white}" stroke-width="5" stroke-linejoin="miter"/>
+    ${bigStar(1568, 820, 56, -84)}
+  </g>
+  <g class="cut-top">
+    ${poly(shardT, K)}
+    <path d="M1290 -20 L1452 120 L1500 250 L1560 190 L1640 230" fill="none" stroke="${C.white}" stroke-width="5" stroke-linejoin="miter"/>
+    ${poly(star(1556, 92, 34, 0.42, 5, -110), C.white, `stroke="${K}" stroke-width="5"`)}
   </g>
 </svg>`;
 }
