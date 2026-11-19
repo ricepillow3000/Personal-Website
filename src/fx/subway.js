@@ -23,7 +23,24 @@ const WIDE = 100; // the train's width
 const LEN = 5200; // the whole train
 const MOUTH = 1000;
 const START = 2700; // where the nose is when the shot opens (deep in the dark tunnel)
-const SPEED = 3600; // world units a second
+/* How it moves (Nov 19, John: "I want it to feel real"). It used to blast through at a constant 3600
+   units a second (the car is 116 units, about 3.6 m, tall: that was ~400 km/h, gone in 0.7 s).
+   Now it arrives like a real train: out of the tunnel fast, braking hard, so the nose passes the
+   camera at about a third of that and the cars roll by heavily. Constant deceleration, never below
+   CRAWL. leadAt(t) is where the nose is; timeAt(d) is when it gets to depth d. */
+const V0 = 3400; // world units a second, deep in the tunnel
+const BRAKE = 1950; // units a second, per second
+const CRAWL = 700; // it keeps rolling past (the cut comes first)
+const T_CRAWL = (V0 - CRAWL) / BRAKE;
+const D_CRAWL = V0 * T_CRAWL - 0.5 * BRAKE * T_CRAWL * T_CRAWL;
+export const speedAt = (t) => (t < T_CRAWL ? V0 - BRAKE * t : CRAWL);
+const leadAt = (t) => START - (t < T_CRAWL ? V0 * t - 0.5 * BRAKE * t * t : D_CRAWL + CRAWL * (t - T_CRAWL));
+function timeAt(d) {
+  const x = START - d; // distance travelled
+  if (x <= 0) return 0;
+  if (x < D_CRAWL) return (V0 - Math.sqrt(V0 * V0 - 2 * BRAKE * x)) / BRAKE;
+  return T_CRAWL + (x - D_CRAWL) / CRAWL;
+}
 
 const NOSE = 'assets/film/trainnose.webp';
 const SIDE = 'assets/film/train.webp';
@@ -65,10 +82,11 @@ const bmps = new Map();
 const pic = (img) => bmps.get(img) || img;
 async function bitmapOf(img) {
   if (bmps.has(img)) return bmps.get(img);
-  if (!window.createImageBitmap || !img?.currentSrc) return null;
+  if (urgent || !window.createImageBitmap || !img?.currentSrc) return null; // the visitor is waiting: no background work
   try {
     const blob = await (await fetch(img.currentSrc, { cache: 'force-cache' })).blob();
     const b = await createImageBitmap(blob, { premultiplyAlpha: 'premultiply' }); // premultiplied: right for the canvas and the GPU upload alike
+    if (urgent) { b.close(); return null; } // START was pressed meanwhile: the <img> is already in use
     bmps.set(img, b);
     return b;
   } catch {
@@ -103,7 +121,20 @@ let urgent = false;
 const idle = (fn, timeout = 800) => new Promise((res, rej) => (window.requestIdleCallback || setTimeout)(() => { try { res(fn()); } catch (e) { rej(e); } }, { timeout })); // resolves with fn's result; a throw rejects (never hangs)
 /* one piece of the train's set-up per idle moment (never one long freeze), or right away once the
    visitor has pressed START and is waiting */
-const slice = (fn) => (urgent ? Promise.resolve().then(fn) : idle(fn));
+const waiting = []; // slices still waiting for an idle moment (run at once when START is pressed)
+let hurried; // resolves the moment START is pressed: nothing waits on background decoding after that
+const hurry = new Promise((r) => { hurried = r; });
+const slice = (fn) => new Promise((res, rej) => {
+  let ran = false;
+  const run = () => {
+    if (ran) return;
+    ran = true;
+    try { res(fn()); } catch (e) { rej(e); }
+  };
+  if (urgent) return run();
+  waiting.push(run);
+  (window.requestIdleCallback || setTimeout)(run, { timeout: 400 });
+});
 function kick() {
   if (kicked || !cv) return;
   kicked = true;
@@ -118,6 +149,8 @@ function kick() {
     nose if its idle slices haven't yet, so the train never runs with the plain art). */
 export function hurrySubway() {
   urgent = true;
+  hurried();
+  waiting.splice(0).forEach((run) => run()); // whatever was waiting for idle time runs now
   kick();
   heavyNose(true);
 }
@@ -160,7 +193,7 @@ export function preloadSubway() {
   const dec = (img) => (img.decode ? img.decode().catch(() => new Promise((r) => { if (img.complete) r(); else img.onload = img.onerror = r; })) : new Promise((r) => { img.onload = img.onerror = r; }));
   // build the working copies ahead of time (idle), so the shot's first frame doesn't pay for them
   artReady = Promise.all([dec(nose), dec(side)])
-    .then(() => Promise.all([bitmapOf(nose), bitmapOf(side)]))
+    .then(() => Promise.race([Promise.all([bitmapOf(nose), bitmapOf(side)]), hurry])) // (START pressed: draw the <img> as it is)
     .then(() => slice(sideArt))
     .then(() => slice(windowProfile))
     .then(() => slice(() => tinted(sideArt())))
@@ -360,12 +393,12 @@ const CAR = 620; // one car, in world units (about 3.5 door bays of the art)
 const PASS_D = 40; // a wheel set "passes the camera" at this depth
 const AXLES = [];
 for (let c = 0; c < 5; c++) for (const b of [90, CAR - 90]) for (const a of [-32, 32]) AXLES.push(c * CAR + b + a);
-export const NOSE_PASS = (START - PASS_D) / SPEED; // when the nose passes the camera (~0.74s)
+export const NOSE_PASS = timeAt(PASS_D); // when the nose passes the camera (~1.2 s, braking)
 /** the hard thumps of the wheel sets near the camera: a damped jolt per axle */
 function jolts(t) {
   let j = 0;
   for (const s of AXLES) {
-    const u = t - (START + s - PASS_D) / SPEED;
+    const u = t - timeAt(PASS_D - s); // axle s passes the camera when the nose is s beyond it
     if (u >= 0 && u < 0.25) j += Math.exp(-u * 20) * Math.cos(u * 48);
   }
   return j;
@@ -576,6 +609,9 @@ function dropGPU() {
   gpuOK = false;
   if (box) box.dataset.trainGpu = 'off';
 }
+/* motion blur: how far the car slides while a real camera's shutter is open (1/60 s), so at speed
+   the windows and doors smear along the car instead of sliding past razor-sharp like a poster */
+const SHUTTER = 1 / 60;
 /* the GPU gets the full-resolution car art (1828px tall), except on low-memory phones */
 const sideTexFor = (tex) => (tex === sideCopy && side?.naturalWidth && sharpArt() ? side : tex);
 function sideQuad(lead, alpha, tex, { mat = 0, refl = 0 } = {}) {
@@ -595,7 +631,7 @@ function sideQuad(lead, alpha, tex, { mat = 0, refl = 0 } = {}) {
   const top = refl ? 2 * SKIRT - (ROOF + by) : ROOF + by;
   const bot = refl ? SKIRT - by : SKIRT + by;
   return sideGL.quad(img, [[...P(top, near), near, near - lead, 0], [...P(bot, near), near, near - lead, 1], [...P(top, far), far, far - lead, 0], [...P(bot, far), far, far - lead, 1]],
-    { period: ((SKIRT - ROOF) * tw) / th, alpha, mouth: MOUTH, mat, refl });
+    { period: ((SKIRT - ROOF) * tw) / th, alpha, mouth: MOUTH, mat, refl, blur: state ? speedAt(state.t) * SHUTTER : 0 });
 }
 
 function trainSide(lead, kk, alpha = 1, tex = sideArt(), { mat = 0, refl = 0 } = {}) {
@@ -808,7 +844,7 @@ function draw() {
     dropGPU();
   }
   if (!state) return;
-  const lead = START - SPEED * t;
+  const lead = leadAt(t);
   const img = nose?.complete && nose.naturalWidth ? nose : null;
   afterimages(lead, kk, img, Math.max(0, Math.min(1, (MOUTH + 200 - lead) / 500)));
   trainSide(lead, kk, 1, sideArt(), { mat: 1, refl: 1 }); // mirrored in the glossy floor
@@ -831,14 +867,13 @@ function draw() {
     tick(t) to draw time t (seconds), end() to reset to the quiet platform. */
 export function trainShot({ panTo = null } = {}) {
   if (!ctx || reduce()) return null;
-  const lead0 = START;
   state = {
     t: 0,
     rumble: 0,
     lines: 0,
     trash: TRASH.map(([, y], i) => ({
       at: null,
-      when: (lead0 - (depthOf(y) + 140)) / SPEED, // the nose reaches it (a bit early: the air pushes first)
+      when: timeAt(depthOf(y) + 140), // the nose reaches it (a bit early: the air pushes first)
       push: 260 + ((i * 53) % 220),
       lift: 300 + ((i * 71) % 380),
       spin: (i % 2 ? 1 : -1) * (5 + (i % 4) * 2.5),
@@ -863,7 +898,7 @@ export function trainShot({ panTo = null } = {}) {
     },
     /** where the nose is (screen px), for the camera shake strength */
     closeness(t) {
-      const lead = START - SPEED * t;
+      const lead = leadAt(t);
       return lead > MOUTH ? 0 : Math.min(1, 1 - (lead - 40) / (MOUTH - 40));
     },
     end() {
