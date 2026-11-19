@@ -192,7 +192,9 @@ export function mountSubway(camBox, img) {
   cv = document.createElement('canvas');
   cv.setAttribute('aria-hidden', 'true');
   box.appendChild(cv);
-  station = mountStation(box, cv); // the ceiling lights and the graffiti, under the train's canvases
+  // the ceiling lights and the graffiti (under the train's canvases), and the track: each in its own
+  // idle moment, never in the task that shows the platform (they cost the mobile Lighthouse score)
+  idle(() => { station = mountStation(box, cv); size(); }, 2000);
   ctx = under = cv.getContext('2d');
   cvTop = document.createElement('canvas'); // the GPU side's layer is slotted in between, when made
   cvTop.setAttribute('aria-hidden', 'true');
@@ -553,17 +555,27 @@ function drawTrack(g, kk) {
 let trackCache = null;
 let trackKey = '';
 /** the track, drawn once per screen size / camera framing, then stamped every frame */
+let trackIdle = 0; // 0: nothing pending, 1: waiting for an idle moment, 2: that moment has come
 function stampTrack(kk) {
   const m = under.getTransform();
   const key = `${cv.width}x${cv.height}:${m.a.toFixed(4)},${m.e.toFixed(1)},${m.f.toFixed(1)}`;
   if (key !== trackKey) {
-    trackCache ||= document.createElement('canvas');
-    trackCache.width = cv.width;
-    trackCache.height = cv.height;
-    const g = trackCache.getContext('2d');
-    g.setTransform(m);
-    drawTrack(g, kk);
-    trackKey = key;
+    if (!state && trackIdle !== 2) { // at rest: draw it in an idle moment (never in the platform's first task)
+      if (trackIdle === 0) {
+        trackIdle = 1;
+        idle(() => { trackIdle = 2; draw(); }, 2000).catch(() => { trackIdle = 0; });
+      }
+      if (!trackCache) return;
+    } else { // the shot needs it now
+      trackCache ||= document.createElement('canvas');
+      trackCache.width = cv.width;
+      trackCache.height = cv.height;
+      const g = trackCache.getContext('2d');
+      g.setTransform(m);
+      drawTrack(g, kk);
+      trackKey = key;
+      trackIdle = 0;
+    }
   }
   under.save();
   under.setTransform(1, 0, 0, 1, 0, 0);
