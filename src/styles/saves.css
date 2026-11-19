@@ -28,8 +28,10 @@ body.sv-open { overflow: hidden; }
 
 /* the files: slanted paper slips, fanned (each a little further right and lower) */
 .sv-list { position: absolute; z-index: 2; left: max(16vw, 120px); right: 5vw; top: clamp(130px, 21vh, 220px); margin: 0; padding: 0; list-style: none;
-  display: grid; gap: clamp(6px, 1.3vh, 14px); rotate: -6deg; transform-origin: left top; }
-.sv-li { position: relative; margin-left: calc(var(--i) * 2.2vw); filter: drop-shadow(7px 7px 0 var(--black)); }
+  display: grid; gap: 0; rotate: -6deg; transform-origin: left top; }
+.sv-li { position: relative; margin-left: var(--dx, 0); rotate: var(--tilt, 0deg); filter: drop-shadow(7px 7px 0 var(--black)); }
+/* a pile, not a list: each slip overlaps the bottom of the one above it (later ones lie on top) */
+.sv-li + .sv-li { margin-top: calc(-1 * clamp(4px, 1.3vh, 13px)); }
 .sv-slot { position: relative; width: 100%; display: grid; grid-template-columns: auto auto 1fr auto auto; align-items: center; gap: clamp(10px, 1.8vw, 26px);
   min-height: clamp(52px, 12vh, 108px); padding: 0 clamp(30px, 4vw, 64px) 0 0; border: 0; text-align: left; cursor: pointer;
   background: var(--white); color: var(--black); clip-path: polygon(0 0, 100% 0, calc(100% - 26px) 100%, 0 100%);
@@ -81,17 +83,26 @@ body.sv-open { overflow: hidden; }
 .sv-slot.on .sv-hint { color: var(--white); }
 
 /* a finished file: COMPLETED, cut type on a white burst */
-.sv-done { position: absolute; left: 39%; top: 50%; translate: 0 -50%; rotate: -7deg; display: flex; align-items: center; pointer-events: none;
-  font-family: var(--f-head); font-size: clamp(24px, 4.2vh, 44px); line-height: 1; color: var(--white);
-  filter: drop-shadow(.05em 0 0 var(--black)) drop-shadow(-.05em 0 0 var(--black)) drop-shadow(0 .05em 0 var(--black)) drop-shadow(0 -.05em 0 var(--black)) drop-shadow(.06em .06em 0 var(--red)); }
-.sv-done .ct.box { background: var(--red); color: var(--white); }
-.sv-burst { position: absolute; left: -.9em; top: 50%; width: 1.7em; height: 1.7em; translate: 0 -50%; overflow: visible; }
-.sv-burst polygon { fill: var(--white); stroke: var(--black); stroke-width: 4; }
-.sv-complete .sv-place { visibility: hidden; } /* (the stamp sits there) */
+/* a finished file: the whole slip is COMPLETED (a red slab, the word huge across it on a white burst,
+   its play time beside it); its date and details step aside */
+.sv-slot.sv-complete { grid-template-columns: auto 1fr auto auto; background: var(--red); color: var(--white); }
+.sv-done { position: relative; display: flex; align-items: center; justify-self: start; padding-left: 1.05em; rotate: -4deg; pointer-events: none;
+  font-family: var(--f-head); font-size: clamp(34px, 7.2vh, 78px); line-height: 1; color: var(--white);
+  filter: drop-shadow(.05em 0 0 var(--black)) drop-shadow(-.05em 0 0 var(--black)) drop-shadow(0 .05em 0 var(--black)) drop-shadow(0 -.05em 0 var(--black)) drop-shadow(.07em .07em 0 var(--black)); }
+.sv-done .ct.box { background: var(--white); color: var(--red); }
+.sv-burst { position: absolute; left: -.15em; top: 50%; width: 1.3em; height: 1.3em; translate: 0 -50%; overflow: visible; }
+.sv-burst polygon { fill: var(--white); stroke: var(--black); stroke-width: 5; }
+.sv-ctime { display: flex; align-items: baseline; gap: 6px; line-height: 1; font-family: var(--f-head); }
+.sv-ctime small { font: 400 clamp(11px, 1.6vh, 14px)/1 var(--f-menu); letter-spacing: 1px; padding: 2px 4px 1px; background: var(--black); color: var(--white); white-space: nowrap; }
+.sv-ctime b { font-weight: 400; font-size: clamp(24px, 4.4vh, 46px); }
+.sv-complete .sv-no { background: var(--black); color: var(--white); }
+.sv-complete.on .sv-no { background: var(--white); color: var(--black); }
+.sv-complete.on .sv-time { display: none; } /* (its play time is already on the slab) */
+.sv-li:has(.sv-complete.on) { filter: drop-shadow(5px 5px 0 var(--white)) drop-shadow(8px 8px 0 var(--black)); }
 
 /* CLEAR DATA: its own box under the files (a black slip with a white ink edge and a red warning tab);
    picked, it turns white with a red CLEAR ALL tag; armed, it goes red and asks */
-.sv-li-clear { margin-top: clamp(8px, 2.2vh, 24px); filter: drop-shadow(3px 0 0 var(--white)) drop-shadow(-3px 0 0 var(--white)) drop-shadow(0 3px 0 var(--white)) drop-shadow(0 -3px 0 var(--white)) drop-shadow(7px 7px 0 var(--red)); }
+.sv-li.sv-li-clear { margin-top: clamp(10px, 2.6vh, 26px); filter: drop-shadow(3px 0 0 var(--white)) drop-shadow(-3px 0 0 var(--white)) drop-shadow(0 3px 0 var(--white)) drop-shadow(0 -3px 0 var(--white)) drop-shadow(7px 7px 0 var(--red)); }
 .sv-li-clear:has(.sv-slot.on) { filter: drop-shadow(3px 0 0 var(--black)) drop-shadow(-3px 0 0 var(--black)) drop-shadow(0 3px 0 var(--black)) drop-shadow(0 -3px 0 var(--black)) drop-shadow(8px 8px 0 var(--red)); }
 .sv-clear { background: var(--black); color: var(--white); }
 .sv-clear .sv-new .ct.box { background: var(--red); color: var(--white); }
@@ -128,9 +139,10 @@ body.sv-open { overflow: hidden; }
   .sv-band { width: 26vw; left: -14vw; }
   .sv-title { top: max(18px, 3vh); font-size: clamp(34px, 11vw, 52px); }
   .sv-sub { left: var(--gutter); right: var(--gutter); top: 74px; bottom: auto; font-size: 12px; padding: 3px 8px; rotate: -3deg; }
-  .sv-list { left: 8px; right: 12px; top: 136px; rotate: -4deg; gap: 9px; }
+  .sv-list { left: 8px; right: 12px; top: 136px; rotate: -4deg; }
   .sv-stripes i:nth-child(n+2) { display: none; }
-  .sv-li { margin-left: calc(var(--i) * 1.2vw); }
+  .sv-li { margin-left: calc(var(--dx, 0) * .4); }
+  .sv-li + .sv-li { margin-top: -5px; }
   .sv-slot { grid-template-columns: auto 1fr auto; padding-right: 24px; gap: 4px 10px; min-height: clamp(62px, 9.4vh, 96px); }
   .sv-clear .sv-hint { grid-column: 2; grid-row: 2; margin-bottom: 8px; }
   .sv-no { grid-row: 1 / span 2; font-size: 30px; }
@@ -142,8 +154,10 @@ body.sv-open { overflow: hidden; }
   .sv-new { grid-column: 2; font-size: 26px; }
   .sv-hint { grid-column: 3; }
   .sv-slot.on .sv-more { grid-column: 2 / span 2; grid-row: 3; margin: 0 0 10px; gap: 10px; }
-  .sv-done { left: 28%; font-size: 28px; }
-  .sv-complete:not(.on) :is(.sv-date, .sv-place) { visibility: hidden; } /* (the stamp takes their place) */
+  .sv-slot.sv-complete { grid-template-columns: auto 1fr auto; }
+  .sv-done { grid-column: 2; grid-row: 1 / span 2; font-size: clamp(28px, 8.6vw, 40px); }
+  .sv-ctime { grid-column: 3; grid-row: 1 / span 2; flex-direction: column; align-items: flex-end; }
+  .sv-ctime b { font-size: 24px; }
   .sv-erase { right: 34px; bottom: 6px; min-height: 34px; padding: 8px 14px 6px; }
   .sv-li:has(.sv-erase) .sv-slot.on { padding-bottom: 40px; }
   .sv-place { justify-items: start; gap: 4px; }
@@ -152,8 +166,10 @@ body.sv-open { overflow: hidden; }
 /* short screens (phones on their side, small laptops): slimmer slips, less tilt, the line hides */
 @media (max-height: 520px) {
   .sv-title { top: 10px; font-size: clamp(30px, 9vh, 44px); rotate: -3deg; }
-  .sv-list { top: 62px; gap: 3px; rotate: -3deg; right: 4vw; }
-  .sv-li-clear { margin-top: 6px; }
+  .sv-list { top: 62px; rotate: -3deg; right: 4vw; }
+  .sv-li + .sv-li { margin-top: -1px; }
+  .sv-li { rotate: calc(var(--tilt, 0deg) * .45); }
+  .sv-li.sv-li-clear { margin-top: 8px; }
   .sv-slot { min-height: 42px; }
   .sv-date b { font-size: 30px; }
   .sv-lv b { font-size: 28px; }
@@ -162,6 +178,6 @@ body.sv-open { overflow: hidden; }
   .sv-erase { bottom: auto; top: 50%; translate: 0 -40%; right: 40px; font-size: 12px; padding: 3px 7px 2px; }
   .sv-slot.on .sv-more { padding-right: 96px; }
   .sv-pips { display: none; }
-  .sv-done { left: 46%; }
+  .sv-done { font-size: 36px; }
 }
 @media (prefers-reduced-motion: reduce) { .sv-slot { transition: none; } }

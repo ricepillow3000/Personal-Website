@@ -28,10 +28,14 @@ let root = null;
 let opts = null;
 let lastPointer = 'mouse';
 
+/* the pile (Nov 19, John: "not in order... stacking onto each other, like the reference"): each slip has
+   its own tilt and sideways offset, and each overlaps the bottom of the one above it */
+const PILE = [[-1.2, 0], [1.1, 3.4], [-1.9, 1.2], [0.7, 4.8], [-1.4, 2.2], [1.2, 5.6]];
+const pile = (i) => `--i:${i};--tilt:${PILE[i % PILE.length][0]}deg;--dx:${PILE[i % PILE.length][1]}vw`;
 function slip(s, i) {
   const no = `<span class="sv-no" aria-hidden="true"><small>No.</small>${i + 1}</span>`;
   if (!s) {
-    return `<li class="sv-li" style="--i:${i}"><button class="sv-slot sv-empty" type="button" data-i="${i}" aria-label="File ${i + 1}: empty. Start a new game.">
+    return `<li class="sv-li" style="${pile(i)}"><button class="sv-slot sv-empty" type="button" data-i="${i}" aria-label="File ${i + 1}: empty. Start a new game.">
       ${no}<span class="sv-new" aria-hidden="true">${cutType('NEW GAME', 60 + i)}</span><span class="sv-hint" aria-hidden="true">EMPTY FILE</span>
       <span class="sv-more" aria-hidden="true"><span class="sv-go">START NEW GAME ▸</span></span></button></li>`;
   }
@@ -40,13 +44,21 @@ function slip(s, i) {
   const tod = timeOfDay(d).label;
   const where = place(s.meta.last);
   const label = `File ${i + 1}: ${where}, ${p.done} of ${p.total} cleared${p.all ? ', completed' : ''}. Saved ${MONTHS[d.getMonth()]} ${d.getDate()}, ${tod}. Play time ${playTime(s.meta.playMs)}. Continue.`;
-  return `<li class="sv-li" style="--i:${i}"><button class="sv-slot${p.all ? ' sv-complete' : ''}" type="button" data-i="${i}" aria-label="${esc(label)}">
+  const time = playTime(s.meta.playMs);
+  if (p.all) { // a finished file: the whole slip is COMPLETED (Nov 19, John: "the whole saved data will say completed")
+    return `<li class="sv-li" style="${pile(i)}"><button class="sv-slot sv-complete" type="button" data-i="${i}" aria-label="${esc(label)}">
+    ${no}
+    <span class="sv-done" aria-hidden="true"><svg class="sv-burst" viewBox="-50 -50 100 100"><polygon points="${burst()}"/></svg>${cutType('COMPLETED', 77)}</span>
+    <span class="sv-ctime" aria-hidden="true"><small>PLAY TIME</small><b>${time}</b></span>
+    <span class="sv-more" aria-hidden="true"><span class="sv-go">CONTINUE ▸</span></span>
+  </button><button class="sv-erase" type="button" data-erase="${i}" aria-label="Erase file ${i + 1}">ERASE</button></li>`;
+  }
+  return `<li class="sv-li" style="${pile(i)}"><button class="sv-slot" type="button" data-i="${i}" aria-label="${esc(label)}">
     ${no}
     <span class="sv-date" aria-hidden="true"><b>${d.getMonth() + 1}/${String(d.getDate()).padStart(2, '0')}</b><i>${WD[d.getDay()]}</i><em>${esc(tod)}</em></span>
     <span class="sv-place" aria-hidden="true"><span>${esc(where)}</span><span class="sv-pips">${p.items.map((it) => `<i${it.done ? ' class="on"' : ''}></i>`).join('')}</span></span>
     <span class="sv-lv" aria-hidden="true"><small>CLEARED</small><b>${p.done}</b><i>/${p.total}</i></span>
-    <span class="sv-more" aria-hidden="true"><span class="sv-time"><small>PLAY TIME</small><b>${playTime(s.meta.playMs)}</b></span><span class="sv-go">CONTINUE ▸</span></span>
-    ${p.all ? `<span class="sv-done" aria-hidden="true"><svg class="sv-burst" viewBox="-50 -50 100 100"><polygon points="${burst()}"/></svg>${cutType('COMPLETED', 77)}</span>` : ''}
+    <span class="sv-more" aria-hidden="true"><span class="sv-time"><small>PLAY TIME</small><b>${time}</b></span><span class="sv-go">CONTINUE ▸</span></span>
   </button><button class="sv-erase" type="button" data-erase="${i}" aria-label="Erase file ${i + 1}">ERASE</button></li>`;
 }
 function burst() {
@@ -71,7 +83,7 @@ function markup() {
    red CLEAR ALL tag; the first press asks (SURE? PRESS AGAIN), the second erases every file with a
    breaking-glass crash. With no files, it has nothing to clear. */
 function clearBox(any) {
-  return `<li class="sv-li sv-li-clear" style="--i:${SLOTS}"><button class="sv-slot sv-clear${any ? '' : ' sv-clear-none'}" type="button" data-clear-all aria-label="${any ? 'Clear data: erase every file and start fresh. Press twice.' : 'Clear data: there is nothing to clear.'}">
+  return `<li class="sv-li sv-li-clear" style="${pile(SLOTS)}"><button class="sv-slot sv-clear${any ? '' : ' sv-clear-none'}" type="button" data-clear-all aria-label="${any ? 'Clear data: erase every file and start fresh. Press twice.' : 'Clear data: there is nothing to clear.'}">
     <span class="sv-no sv-no-warn" aria-hidden="true">!</span>
     <span class="sv-new" aria-hidden="true">${cutType('CLEAR DATA', 93)}</span>
     <span class="sv-hint" aria-hidden="true">${any ? 'ERASE EVERY FILE' : 'NOTHING TO CLEAR'}</span>
