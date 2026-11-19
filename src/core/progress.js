@@ -12,8 +12,8 @@ const SECTIONS = [
   ['contact', 'Contact']
 ];
 
-export function progress() {
-  const st = store.get();
+/** progress of the active file, or of any file's game (the save screen's slips) */
+export function progress(st = store.get()) {
   const items = [
     ...resume.missions.map((m) => ({ label: `Visit ${m.target}'s Live or Code`, done: (st.cleared || []).includes(m.id) })),
     ...SECTIONS.map(([id, label]) => ({ label: `Open ${label}`, done: (st.visited || []).includes(id) }))
