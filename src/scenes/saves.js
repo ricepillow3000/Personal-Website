@@ -78,7 +78,7 @@ function markup() {
   return `<div class="sv-stripes" aria-hidden="true"><i></i><i></i><i></i></div>
     <h2 class="sv-title" id="svTitle"><span class="sr-only">Save data</span><span aria-hidden="true">${cutType('SAVE DATA', 41, { mixCase: true })}</span></h2>
     <p class="sv-sub${full ? ' sv-full' : ''}">${full ? `All ${SLOTS} files are in use. CLEAR DATA on one to start a new game.` : 'Pick a file: your progress saves itself to it. An empty file starts a new game.'}</p>
-    <svg class="sv-l" aria-hidden="true"><polygon class="sv-l-red"/><line class="sv-l-dash"/><polyline class="sv-l-edge"/></svg>
+    <svg class="sv-l" aria-hidden="true"><polygon class="sv-l-red"/><polygon class="sv-l-tear"/><line class="sv-l-dash"/><polygon class="sv-l-glint"/><polyline class="sv-l-edge"/></svg>
     <ol class="sv-list">${files.map(slip).join('')}</ol>
     <div class="sv-keys"><button class="sv-key" type="button" data-sv-back><kbd>Esc</kbd><span>BACK</span></button><span class="sv-key sv-key-ok" aria-hidden="true"><kbd>Enter</kbd><span>CONFIRM</span></span></div>`;
 }
@@ -112,19 +112,36 @@ function drawL() {
   const cy = (ay + by) / 2;
   const f = (n) => n.toFixed(1);
   svg.querySelector('.sv-l-red').setAttribute('points', `${f(tl)},${top} ${f(tr)},${top} ${f(cx)},${f(cy)} ${f(cx)},${f(by - 2)} ${f(bx)},${f(by)}`);
-  // the dashes: a line parallel to the slanted edge, a little inside it
-  const len = Math.hypot(bx - tl, by - top); const nx = (by - top) / len; const ny = -(bx - tl) / len; const d = Math.max(14, Math.min(30, box.width * 0.02));
+  // the film strip: big black blocks hugging the slanted edge, just inside it
+  const len = Math.hypot(bx - tl, by - top); const nx = (by - top) / len; const ny = -(bx - tl) / len; // (the edge's normal, pointing into the red)
+  const sw = Math.max(9, Math.min(24, box.width * 0.016)); const d = sw * 0.5 + Math.max(5, sw * 0.45);
   const dash = svg.querySelector('.sv-l-dash');
   dash.setAttribute('x1', f(tl + nx * d)); dash.setAttribute('y1', f(top + ny * d));
-  dash.setAttribute('x2', f(bx + nx * d - (bx - tl) * 0.12)); dash.setAttribute('y2', f(by + ny * d - (by - top) * 0.12));
-  dash.style.strokeWidth = String(Math.max(6, Math.min(14, box.width * 0.009)));
+  dash.setAttribute('x2', f(bx + nx * d - (bx - tl) * 0.1)); dash.setAttribute('y2', f(by + ny * d - (by - top) * 0.1));
+  dash.style.strokeWidth = f(sw);
+  dash.style.strokeDasharray = `${f(sw * 3.4)} ${f(sw * 2.2)}`;
+  const at = (k, out) => [tl + (bx - tl) * k - nx * out, top + (by - top) * k - ny * out];
+  // a thin white sliver along the upper part of the edge (outside), tapering to nothing
+  const g0 = at(0.16, 0); const g1 = at(0.44, 0); const g2 = at(0.44, Math.max(5, sw * 0.42));
+  const glint = svg.querySelector('.sv-l-glint');
+  glint.style.display = g2[0] < 3 ? 'none' : '';
+  glint.setAttribute('points', `${f(g0[0])},${f(g0[1])} ${f(g1[0])},${f(g1[1])} ${f(g2[0])},${f(g2[1])}`);
   // the white double line outside the lower part of the edge
-  const o = Math.max(10, d * 0.9); const k0 = 0.55; const k1 = 0.98;
-  const p0 = [tl + (bx - tl) * k0 - nx * o, top + (by - top) * k0 - ny * o]; const p1 = [tl + (bx - tl) * k1 - nx * o, top + (by - top) * k1 - ny * o];
-  const w = o * 0.55;
+  const o = Math.max(10, sw * 1.1); const p0 = at(0.58, o); const p1 = at(0.97, o);
+  const w = o * 0.5;
   const edge = svg.querySelector('.sv-l-edge');
   edge.style.display = Math.min(p0[0], p1[0]) - nx * w < 4 ? 'none' : ''; // (only where it fits on screen)
   edge.setAttribute('points', `${f(p0[0])},${f(p0[1])} ${f(p1[0])},${f(p1[1])} ${f(p1[0] - nx * w)},${f(p1[1] - ny * w)} ${f(p0[0] - nx * w)},${f(p0[1] - ny * w)} ${f(p0[0])},${f(p0[1])}`);
+  // a torn black strip right under the title, across the red (tilted as the title is)
+  const tb = t.bottom - box.top - 2; const tan = Math.tan((5 * Math.PI) / 180);
+  const xL = tl + (bx - tl) * ((tb - top) / (by - top)) - 2; const xR = tr + 4;
+  const ty = (x) => tb - (x - (t.left - box.left)) * tan;
+  const th = Math.max(8, Math.min(18, t.height * 0.16)); const n = 14; const up = []; const dn = [];
+  for (let k = 0; k <= n; k++) {
+    const x = xL + ((xR - xL) * k) / n; const j = (k % 2 ? 1 : -1) * th * 0.28 * ((k * 7) % 3 / 2 + 0.4);
+    up.push(`${f(x)},${f(ty(x) - th * 0.35 + (k % 3 === 1 ? -th * 0.2 : 0))}`); dn.push(`${f(x)},${f(ty(x) + th * 0.65 + j)}`);
+  }
+  svg.querySelector('.sv-l-tear').setAttribute('points', `${up.join(' ')} ${dn.reverse().join(' ')}`);
   svg.dataset.foot = f(by);
 }
 /** keep the L on its card for a while (the stack slides when a card opens) */
