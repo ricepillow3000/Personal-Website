@@ -166,6 +166,7 @@ export function tunnelWipe(swap) {
   const cam = $('#backdrop');
   const screen = $('#screen-title');
   const title = screen.querySelector('.title-block');
+  const card = screen.querySelector('.cc'); // the CONNECT card goes with the wind too
   const clock = { t: 0 };
   const SWAP = 1.25;
   const posters = [...document.querySelectorAll('#backdrop .bd-graffiti, #backdrop .bd-shards')].map((l) => l.firstElementChild);
@@ -177,7 +178,7 @@ export function tunnelWipe(swap) {
       cam.style.translate = '';
       cam.style.scale = '';
       screen.style.translate = '';
-      gsap.set(title, { clearProps: 'transform,opacity,visibility' });
+      gsap.set([title, card].filter(Boolean), { clearProps: 'transform,opacity,visibility' });
       el.remove();
     },
   });
@@ -202,6 +203,7 @@ export function tunnelWipe(swap) {
     }, 0)
     // its wind takes the title with it, and rips the posters off the wall
     .to(title, { x: -W * 0.75, y: H * 0.15, rotation: -26, skewX: 16, autoAlpha: 0, duration: 0.42, ease: 'power3.in' }, 0.6)
+    .to(card, { x: -W * 0.9, y: -H * 0.05, rotation: -40, skewX: 12, autoAlpha: 0, duration: 0.45, ease: 'power3.in' }, 0.64)
     .add(() => posters.forEach((p, i) => blown.push(p.animate(
       [{ translate: '0 0', rotate: '0deg', opacity: 1 }, { translate: `${-W * (0.9 + i * 0.3)}px ${H * (0.1 - i * 0.12)}px`, rotate: `${-34 + i * 50}deg`, opacity: 0 }],
       { duration: 480, delay: i * 60, easing: 'cubic-bezier(.55,0,.9,.5)', fill: 'forwards' }

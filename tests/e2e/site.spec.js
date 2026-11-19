@@ -601,7 +601,7 @@ test('THE PLAN: a mouse resting where a chapter slides in does not steal the pic
 });
 
 test('contact plate: LinkedIn, GitHub and email sit at the very top of every screen, readable and tappable', async ({ page, isMobile }) => {
-  for (const r of ['/', '/#/board', '/#/missions', '/#/contact', '/#/quick']) {
+  for (const r of ['/#/board', '/#/missions', '/#/contact', '/#/quick']) {
     await page.goto(r);
     const li = page.locator('#hudLinkedIn');
     const gh = page.locator('#hudGitHub');
@@ -625,6 +625,61 @@ test('contact plate: LinkedIn, GitHub and email sit at the very top of every scr
   await page.locator('#hudEmail').evaluate((a) => a.addEventListener('click', (e) => e.preventDefault()));
   await page.locator('#hudEmail').click();
   await expect(page.locator('.toast').filter({ hasText: 'EMAIL COPIED' })).toBeVisible();
+});
+
+test('title: the CONNECT card holds LinkedIn, GitHub and email (or, where it would touch the title, the plate does), and nothing touches the title', async ({ page, isMobile }) => {
+  await page.goto('/');
+  await page.waitForTimeout(1500);
+  const onCard = await page.locator('#contactCard').isVisible();
+  const ids = onCard ? ['#ccLinkedIn', '#ccGitHub', '#ccEmail'] : ['#hudLinkedIn', '#hudGitHub', '#hudEmail'];
+  for (const id of ids) {
+    await expect(page.locator(id)).toBeVisible();
+    if (isMobile) expect((await page.locator(id).boundingBox()).height, id).toBeGreaterThanOrEqual(onCard ? 44 : 26);
+  }
+  await expect(page.locator(ids[0])).toHaveAttribute('href', /linkedin\.com\/in\//);
+  await expect(page.locator(ids[1])).toHaveAttribute('href', 'https://github.com/ricepillow3000');
+  await expect(page.locator(ids[2])).toHaveAttribute('href', /^mailto:/);
+  if (onCard) await expect(page.locator('.cc-goal')).toHaveText('Status: open to opportunities');
+  // the card and the calendar never touch the title's text (the fit guard)
+  const overlaps = await page.evaluate(() => {
+    const R = (el) => el.getBoundingClientRect();
+    const vis = (el) => el && getComputedStyle(el).display !== 'none' && R(el).width > 0;
+    const title = [...document.querySelectorAll('#titleName, .title-codename, .title-role, .title-hook, #pressStart, .quick-link')].map(R);
+    const mine = [document.querySelector('#contactCard'), ...document.querySelectorAll('.hud-cal > *')].filter(vis).map(R);
+    return mine.filter((a) => title.some((c) => a.left < c.right && c.left < a.right && a.top < c.bottom && c.top < a.bottom)).length;
+  });
+  expect(overlaps).toBe(0);
+});
+
+test('title calendar: date, weekday and time of day from the visitor\'s clock, plus Atlanta\'s live weather (and quietly none when it can\'t load)', async ({ browser }) => {
+  const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  for (const ok of [true, false]) {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    let asked = '';
+    await ctx.route('**/api.open-meteo.com/**', (r) => {
+      asked = r.request().url();
+      return ok ? r.fulfill({ contentType: 'application/json', body: JSON.stringify({ current: { temperature_2m: 57.6, weather_code: 63, is_day: 0 } }) }) : r.abort();
+    });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.goto('/');
+    const now = new Date();
+    await expect(page.locator('.cal-d')).toHaveText(String(now.getDate()).padStart(2, '0'));
+    await expect(page.locator('.cal-m')).toHaveText(String(now.getMonth() + 1));
+    await expect(page.locator('.cal-week')).toHaveText(DAYS[now.getDay()]);
+    await expect(page.locator('.cal-tod')).toHaveText(/^(Early Morning|Morning|Lunchtime|Afternoon|After School|Evening|Late Night)$/);
+    if (ok) {
+      await expect(page.locator('.cal-wx')).toHaveText('ATL · RAIN · 58°', { timeout: 8000 });
+      expect(asked).toContain('latitude=33.749'); // Atlanta's fixed spot: nothing about the visitor is sent
+      await expect(page.locator('.hud-cal')).toHaveAttribute('aria-label', /Atlanta weather: rain, 58 degrees/);
+    } else {
+      await page.waitForTimeout(4500);
+      await expect(page.locator('.cal-wx')).toHaveCount(0); // no badge, no error
+    }
+    expect(errors).toEqual([]);
+    await ctx.close();
+  }
 });
 
 test('sound: SETTINGS credits every real recording, and every clip the engine asks for exists', async ({ page, request }) => {

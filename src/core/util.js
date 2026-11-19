@@ -21,11 +21,14 @@ export const isPhone = () => window.matchMedia('(max-width: 760px)').matches;
 
 export function timeOfDay(date = new Date()) {
   const h = date.getHours();
-  if (h >= 5 && h < 12) return { key: 'morning', label: 'DAYTIME', word: 'morning', icon: 'sun' };
-  if (h >= 12 && h < 16) return { key: 'daytime', label: 'DAYTIME', word: 'afternoon', icon: 'sun' };
-  if (h >= 16 && h < 18) return { key: 'after', label: 'AFTER SCHOOL', word: 'afternoon', icon: 'sun' };
-  if (h >= 18 && h < 22) return { key: 'evening', label: 'EVENING', word: 'evening', icon: 'moon' };
-  return { key: 'late', label: 'LATE NIGHT', word: 'late at night', icon: 'moon' };
+  // the visitor's own clock, in the words a game calendar uses (Nov 19, John's calendar references)
+  if (h >= 4 && h < 7) return { key: 'early', label: 'Early Morning', word: 'early in the morning', icon: 'sun' };
+  if (h >= 7 && h < 11) return { key: 'morning', label: 'Morning', word: 'morning', icon: 'sun' };
+  if (h >= 11 && h < 13) return { key: 'lunch', label: 'Lunchtime', word: 'lunchtime', icon: 'sun' };
+  if (h >= 13 && h < 16) return { key: 'daytime', label: 'Afternoon', word: 'afternoon', icon: 'sun' };
+  if (h >= 16 && h < 18) return { key: 'after', label: 'After School', word: 'afternoon', icon: 'sun' };
+  if (h >= 18 && h < 21) return { key: 'evening', label: 'Evening', word: 'evening', icon: 'moon' };
+  return { key: 'late', label: 'Late Night', word: 'late at night', icon: 'moon' };
 }
 
 /** Seeded random so ransom letters look the same on every visit. */

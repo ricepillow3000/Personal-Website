@@ -22,7 +22,8 @@ import { progress } from './core/progress.js';
 import { caseWipe, panelsWipe, glassWipe, cityWipe, crtWipe } from './fx/menuwipes.js';
 import { fallWipe, riseWipe, trainWipe, cardWipe, preloadFilm, slashWipe, paperWipe, titlePunch, tunnelWipe, cutIn, enter, skipCurrent, isAnimating, shake } from './fx/transitions.js';
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
-import { renderDate } from './ui/hud.js';
+import { startCalendar } from './ui/hud.js';
+import { watchTitleFit } from './ui/titlefit.js';
 import { createBoard, CHAPTERS } from './scenes/board.js';
 import { toast } from './ui/toast.js';
 import { createMenu, MENU_ITEMS } from './scenes/menu.js';
@@ -52,7 +53,8 @@ document.addEventListener('click', (e) => {
   if (e.target.closest?.('.gpa-burst')) flipGpa();
 });
 const menu = createMenu((id) => navigate(id));
-renderDate();
+startCalendar();
+watchTitleFit();
 
 let screen = null; // title | board | page | quick
 const SLAM_PAGE = '.sq, .sys, .stop-card, .crew-row, .wanted-slot, .idcard, .comic'; // page blocks that punch in on scroll
@@ -68,17 +70,22 @@ $('#titleHook').textContent = resume.titleHook || resume.hook;
 $('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">GSU '29 · 2 live apps · 727/728 checks</span>`;
 /* the contact plate at the top of every screen (Nov 19, career advisor at GSU's Codex meetup:
    "make LinkedIn, GitHub and email easy to see, at the very top") */
-$('#hudLinkedIn').href = resume.links.linkedin;
-$('#hudGitHub').href = resume.links.github;
+// and on the title, the same three in the red CONNECT card (the plate steps aside there)
+const EMAIL = resume.links.email.toLowerCase();
+['#hudLinkedIn', '#ccLinkedIn'].forEach((s) => { $(s).href = resume.links.linkedin; });
+['#hudGitHub', '#ccGitHub'].forEach((s) => { $(s).href = resume.links.github; });
 const hudEmail = $('#hudEmail');
-hudEmail.href = `mailto:${resume.links.email}`;
-hudEmail.dataset.tip = resume.links.email.toLowerCase();
-hudEmail.setAttribute('aria-label', `Email ${resume.links.email.toLowerCase()} (the address is also copied)`);
-// many visitors have no mail app set up, so the address is copied too (mailto still opens)
-hudEmail.addEventListener('click', () => {
-  try {
-    navigator.clipboard?.writeText(resume.links.email.toLowerCase()).then(() => toast(resume.links.email.toLowerCase(), 'EMAIL COPIED'), () => {});
-  } catch { /* no clipboard: the mail app still opens */ }
+hudEmail.dataset.tip = EMAIL;
+hudEmail.setAttribute('aria-label', `Email ${EMAIL} (the address is also copied)`);
+$('#ccEmail').dataset.tip = EMAIL;
+[hudEmail, $('#ccEmail')].forEach((a) => {
+  a.href = `mailto:${resume.links.email}`;
+  // many visitors have no mail app set up, so the address is copied too (mailto still opens)
+  a.addEventListener('click', () => {
+    try {
+      navigator.clipboard?.writeText(EMAIL).then(() => toast(EMAIL, 'EMAIL COPIED'), () => {});
+    } catch { /* no clipboard: the mail app still opens */ }
+  });
 });
 $('#quickPdf').href = resume.links.pdf;
 renderQuickView($('#paper'));
