@@ -1,5 +1,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
+/* behind everything (a phone's rubber-band scroll, a notch's corners): the station's black, never a red band */
+html { background: var(--black); }
 body {
   background: var(--red);
   color: var(--white);
