@@ -6,6 +6,7 @@ import { store } from '../core/store.js';
 import { esc, reducedMotion } from '../core/util.js';
 import { listMarkup, allFound } from '../eggs/achievements.js';
 import { clearStampMarkup, isCleared } from '../ui/clear.js';
+import { sfx } from '../audio/audio.js';
 
 /* Each section returns { title, html, after(root) }. Content comes from resume.js only. */
 
@@ -92,6 +93,7 @@ export function animateDossier(root, onLand) {
   return tl;
 }
 
+let skillSoundAt = 0;
 function skills(ctx) {
   const list = reorder(resume.skills, ctx.company?.order?.skills);
   const lv = (r) => (r === 'MAX' ? 10 : Number(r) || 0);
@@ -156,6 +158,13 @@ function skills(ctx) {
         say.querySelector('.cd-lv').textContent = lvTxt;
         say.querySelectorAll('.cd-stars i').forEach((st, k) => st.classList.toggle('on', k < Math.round(lvNum / 2)));
         say.querySelector('.cd-proof').textContent = row.dataset.proof;
+        // heard on every pick, mouse, finger or keyboard: the meter's level-up climbs as high as the skill
+        // ranks (a fast sweep down the list gets the short tick instead, so it never smears)
+        if (!instant) {
+          const now = performance.now();
+          sfx(now - skillSoundAt > 140 ? 'skillUp' : 'hvRow', lvNum);
+          skillSoundAt = now;
+        }
         const to = { y: row.offsetTop, height: row.offsetHeight };
         if (instant || reducedMotion()) {
           gsap.set(cursor, to);
@@ -175,6 +184,13 @@ function skills(ctx) {
       rows.forEach((r) => {
         r.addEventListener('pointerenter', () => select(r));
         r.addEventListener('focus', () => select(r));
+        // tapping the skill that is already picked still answers (the first one starts picked)
+        r.addEventListener('click', () => {
+          if (r !== current || performance.now() - skillSoundAt < 300) return;
+          const t = r.querySelector('.crew-lv').lastChild.textContent;
+          sfx('skillUp', t === 'MAX' ? 10 : Number(t));
+          skillSoundAt = performance.now();
+        });
       });
       requestAnimationFrame(() => { fitLeft(); select(rows[0], true); });
       // one shared listener for every visit (the old page is gone, so only the live cursor is moved)
@@ -286,6 +302,8 @@ function sideQuests() {
       root.querySelectorAll('.stop').forEach((st, i) => {
         const at = 0.1 + i * 0.22;
         gsap.from(st.querySelector('.stop-pin'), { scale: 0, rotation: -120, duration: 0.3, ease: 'back.out(3)', delay: at, clearProps: 'transform' });
+        // each stop on screen is heard as its pin lands (the ones further down sound when scrolled to)
+        if (st.getBoundingClientRect().top < window.innerHeight) gsap.delayedCall(at + 0.12, () => root.isConnected && sfx('questPin', i));
         gsap.from(st.querySelector('.stop-card'), { x: st.classList.contains('right') ? 160 : -160, skewX: st.classList.contains('right') ? -14 : 14, autoAlpha: 0, duration: 0.32, ease: 'back.out(2)', delay: at + 0.05, clearProps: 'transform,opacity,visibility' });
         gsap.from(st.querySelector('.stop-clear'), { scale: 3, rotation: -40, autoAlpha: 0, duration: 0.2, ease: 'power4.in', delay: at + 0.35, clearProps: 'transform,opacity,visibility' });
       });

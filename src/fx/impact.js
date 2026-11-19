@@ -80,8 +80,8 @@ export function initClickFx() {
   // Hovering a section: each kind of card has its own voice (mouse only, once per entry, gently throttled)
   const HOVER = [
     ['.case', 'hvCase'], ['.poster', 'hvPoster'], ['.note-about', 'hvPerson'], ['.note-quests .quest, .stop', 'hvQuest'],
-    ['.panel', 'hvFact'], ['.calling', 'hvCard'], ['.crew-row', 'hvRow']
-  ];
+    ['.panel', 'hvFact'], ['.calling', 'hvCard']
+  ]; // (a skill row plays its own level-up when it is picked: sections.js)
   let hovered = null;
   let lastAt = 0;
   let pressed = null; // the button/link the mouse is on (each one chinks once as you reach it)
@@ -121,7 +121,7 @@ export function initClickFx() {
     const el = e.target;
     if (reducedMotion() || !el.matches?.(':focus-visible') || !el.animate) return;
     el.animate([{ scale: '1' }, { scale: '1.09' }, { scale: '0.98' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1)' });
-    if (!el.matches('.skill, .stair-item')) sfx('hover'); // those two already play their own focus sound
+    if (!el.matches('.skill, .stair-item, .crew-row')) sfx('hover'); // those already play their own focus sound
   });
 
   // Confirm: every button and link lands with the heavy thump-and-slash (capture phase, so a handler
@@ -132,6 +132,18 @@ export function initClickFx() {
     const el = e.target.closest?.(`${PRESSABLE}, .cc-row, .hc-link`);
     if (el && !el.disabled && !el.matches(OWN_SOUND)) sfx('select');
   }, true);
+
+  // A finger or pen has no hover, so a tap on a card plays the card's own voice (the cards that are
+  // not buttons: a quest stop, a fact panel...; buttons already land with the confirm above).
+  // Nov 19, John on his phone: "I don't hear the sound effects for each box".
+  let lastPointer = 'mouse';
+  document.addEventListener('pointerdown', (e) => { lastPointer = e.pointerType; }, { passive: true, capture: true });
+  const TAP = { '.stop': 'hvQuest', '.panel': 'panelSlap', '.note-about': 'hvPerson', '.calling': 'hvCard', '.idcard': 'cardSnap' };
+  document.addEventListener('click', (e) => {
+    if (lastPointer === 'mouse' || e.detail === 0 || e.target.closest?.(`${PRESSABLE}, .crew-row`)) return;
+    const sel = Object.keys(TAP).find((k) => e.target.closest?.(k));
+    if (sel) sfx(TAP[sel], 0);
+  });
 
   // Keyboard presses (Enter/Space) fire click with detail 0: burst from the element's center.
   document.addEventListener('click', (e) => {
