@@ -1027,3 +1027,34 @@ test('sideways phones: the whole ATL poster stays on screen, a tap asks for full
   expect((await m.json()).display).toBe('fullscreen');
   for (const f of ['/apple-touch-icon.png', '/icon-512.png']) expect((await request.get(f)).ok()).toBeTruthy();
 });
+
+test('sound for every box: side quests are heard as they land and as you scroll to them, a tapped skill levels up, a tapped fact panel slaps (on a phone, with no hover)', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 412, height: 839 }, isMobile: true, hasTouch: true, reducedMotion: 'no-preference' });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => { window.__sfxLog = []; });
+  const heard = () => page.evaluate(() => window.__sfxLog.splice(0));
+  await page.goto('/');
+  await page.touchscreen.tap(5, 300); // the first tap wakes the sound
+  await page.waitForTimeout(300);
+  const go = async (id) => { await heard(); await page.evaluate((h) => { location.hash = h; }, `#/${id}`); await page.waitForTimeout(3500); };
+  const scrollDown = async () => { for (let k = 0; k < 8; k++) { await page.evaluate(() => document.querySelector('.screen.active').scrollBy(0, 300)); await page.waitForTimeout(350); } };
+
+  await go('side-quests');
+  await scrollDown();
+  const stops = await page.locator('.stop').count();
+  expect((await heard()).filter((n) => n === 'questPin').length).toBe(stops); // every stop, on screen or scrolled to
+  await page.locator('.stop').first().tap();
+  expect(await heard()).toContain('hvQuest');
+
+  await go('skills');
+  for (const i of [0, 2, 5]) { await page.locator('.crew-row').nth(i).tap(); await page.waitForTimeout(400); }
+  expect((await heard()).filter((n) => n === 'skillUp').length).toBe(3); // the first row (picked already) answers too
+
+  await go('different');
+  await scrollDown();
+  await page.evaluate(() => document.querySelector('.screen.active').scrollTo(0, 0));
+  await page.waitForTimeout(300);
+  await page.locator('.panel').first().tap();
+  expect((await heard()).filter((n) => n === 'panelSlap').length).toBeGreaterThanOrEqual(2); // scrolled to + tapped
+  await ctx.close();
+});

@@ -128,7 +128,7 @@ export function initScrollMeter() {
     It only moves the separate translate/rotate/scale properties through one CSS variable,
     so it can't clash with GSAP entrances or hover lifts. Nothing is ever hidden. */
 let animeLib;
-export function slamOnScroll(root, selector) {
+export function slamOnScroll(root, selector, onSlam) {
   if (!root) return;
   root._slamIO?.disconnect();
   root.querySelectorAll('.slam-wait').forEach((el) => el.classList.remove('slam-wait'));
@@ -141,6 +141,8 @@ export function slamOnScroll(root, selector) {
       const hit = entries.filter((en) => en.isIntersecting).map((en) => en.target);
       if (!hit.length) return;
       hit.forEach((el) => io.unobserve(el));
+      // each box is heard as it lands (a page's own voice, see main.js), on the same 70 ms stagger
+      if (onSlam) hit.slice(0, 5).forEach((el, k) => setTimeout(() => onSlam(el), k * 70));
       animate(hit, {
         '--slam': [0, 1], duration: 560, ease: 'outBack(1.9)', delay: stagger(70),
         onComplete: () => hit.forEach((el) => { el.classList.remove('slam-wait'); el.style.removeProperty('--slam'); })

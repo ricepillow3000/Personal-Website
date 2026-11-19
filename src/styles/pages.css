@@ -62,6 +62,7 @@
 }
 .panel { position: relative; padding: 34px 28px 28px; overflow: hidden; outline: none; min-height: 220px; transition: scale .16s var(--ease-pop), rotate .16s var(--ease-pop); }
 .panel:hover, .panel:focus-visible { scale: 1.025; rotate: -.6deg; z-index: 2; }
+.panel.slam-wait { transition: none; } /* (the slam drives scale/rotate every frame: no easing lag) */
 .panel h3 { position: relative; display: inline-block; margin: 0 0 12px; font-family: var(--f-head); font-weight: 400; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.05; text-transform: uppercase; padding: 2px 12px; transform: skew(var(--skew)); }
 .panel p { position: relative; margin: 0; font-size: 16px; line-height: 1.5; font-weight: 600; max-width: 42ch; }
 .panel-num {

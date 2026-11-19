@@ -61,7 +61,16 @@ startCalendar();
 watchTitleFit();
 
 let screen = null; // title | board | page | quick
-const SLAM_PAGE = '.sq, .sys, .stop-card, .crew-row, .wanted-slot, .idcard, .comic'; // page blocks that punch in on scroll
+const SLAM_PAGE = '.sq, .sys, .stop-card, .crew-row, .wanted-slot, .idcard, .panel'; // page blocks that punch in on scroll
+/* ...and each kind is heard as it lands (Nov 19, John: "scrolling down, I don't hear the sound effects
+   for each box"; "don't make all the sound effects sound the same") */
+const SLAM_VOICE = [['.stop-card', 'questPin'], ['.panel', 'panelSlap'], ['.idcard', 'cardSnap'], ['.wanted-slot', 'staple'], ['.sys, .sq', 'panelOn'], ['.crew-row', 'rowSlide']];
+function slamSound(el) {
+  const hit = SLAM_VOICE.find(([sel]) => el.matches(sel));
+  if (!hit) return;
+  const all = [...$$(`#page ${hit[0]}`)];
+  sfx(hit[1], Math.max(0, all.indexOf(el)));
+}
 const MENU_KEY = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘\u00A0K' : 'CTRL\u00A0K'; // shown in the key hints
 let pageId = null;
 let pendingStart = false;
@@ -169,7 +178,7 @@ function pageEnter(id, punch) {
   $$('#page [data-ransom]').forEach((h, i) => dropIn(h, i * 0.05));
   enter($('#page')); // back button, subtitle and other [data-in] items
   pageIntro?.($('#page')); // each page's own entrance
-  slamOnScroll($('#page'), SLAM_PAGE); // blocks further down punch in when you reach them
+  slamOnScroll($('#page'), SLAM_PAGE, slamSound); // blocks further down punch in (and are heard) when you reach them
 }
 
 let navSeq = 0; // a newer navigation cancels whatever an older one still had left to do

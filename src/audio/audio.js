@@ -853,6 +853,68 @@ const VOICES = {
   },
   hvPoster: (bus, at) => sweep(bus, at, 1800, 600, 0.07, 0.14, 2), // posters: tape "thwip"
   hvRow: (bus, at) => tone(bus, { at, dur: 0.04, from: 1200, to: 1500, type: 'square', gain: 0.03 }), // list rows: tiny tick-up
+  /* ---- boxes that punch in as you scroll, and taps on cards (Nov 19, John: "scrolling down, I don't
+     hear the sound effects for each box... don't make all the sound effects sound the same").
+     Each page's boxes have their own voice, all in the house style (short metal snaps, blades,
+     cut paper), and `i` (the box's place on the page) nudges each one so a run of boxes climbs. */
+  // SIDE QUESTS: a map pin stabbed into the route (a dull thock + a bright tip), then a two-note glint
+  // that climbs a step for every stop further down the route
+  questPin: (bus, at, v = 1, i = 0) => {
+    const k = 2 ** ([0, 2, 4, 7, 9, 12][i % 6] / 12);
+    snap(bus, at, 300, 95, 0.06, 0.24);
+    noise(bus, { at, dur: 0.012, type: 'highpass', freq: 5200, gain: 0.26 });
+    metalRing(bus, at + 0.004, [[2100 * k, 'triangle', 0], [3300 * k, 'square', 6]], { hp: 1600, peak: 0.05, decay: 0.05 });
+    tone(bus, { at: at + 0.05, dur: 0.07, from: 1175 * k, to: 1175 * k, type: 'triangle', gain: 0.07 });
+    tone(bus, { at: at + 0.09, dur: 0.12, from: 1568 * k, to: 1568 * k, type: 'triangle', gain: 0.06 });
+  },
+  // MY EDGE: a comic panel slapped down (a paper slap, a low thud, a crisp edge)
+  panelSlap: (bus, at, v = 1, i = 0) => {
+    const p = 1 + (i % 4) * 0.06;
+    noise(bus, { at, dur: 0.07, type: 'bandpass', freq: 1100 * p, q: 1.2, gain: 0.42 });
+    snap(bus, at, 180 * p, 60, 0.08, 0.34);
+    noise(bus, { at: at + 0.003, dur: 0.01, type: 'highpass', freq: 4600, gain: 0.3 });
+  },
+  // STATS: an ID card snapped onto the board (a hard plastic click and a short glint)
+  cardSnap: (bus, at) => {
+    noise(bus, { at, dur: 0.006, type: 'highpass', freq: 3800, gain: 0.32 });
+    snap(bus, at, 2600, 900, 0.02, 0.1, 'triangle');
+    metalRing(bus, at + 0.012, [[2480, 'triangle', 0], [3720, 'sine', 5]], { hp: 2000, peak: 0.045, decay: 0.07 });
+  },
+  // MISSIONS: a wanted poster stapled up (two quick staple bites and a low knock)
+  staple: (bus, at, v = 1, i = 0) => {
+    const p = 1 + (i % 3) * 0.05;
+    [0, 0.045].forEach((d, j) => {
+      noise(bus, { at: at + d, dur: 0.014, type: 'bandpass', freq: (j ? 3600 : 3000) * p, q: 2, gain: 0.4 });
+      snap(bus, at + d, 900 * p, 400 * p, 0.018, 0.08, 'square');
+    });
+    snap(bus, at, 140, 60, 0.07, 0.22);
+  },
+  // SETTINGS and behind the scenes: a terminal panel switching on (a short square blip up, a tick)
+  panelOn: (bus, at, v = 1, i = 0) => {
+    const p = 1 + (i % 4) * 0.08;
+    tone(bus, { at, dur: 0.035, from: 660 * p, to: 660 * p, type: 'square', gain: 0.065 });
+    tone(bus, { at: at + 0.04, dur: 0.05, from: 990 * p, to: 1320 * p, type: 'square', gain: 0.065 });
+    noise(bus, { at, dur: 0.008, type: 'highpass', freq: 6000, gain: 0.18 });
+  },
+  // SKILLS: a row slid in on a blade (a short rising air cut and a tick)
+  rowSlide: (bus, at, v = 1, i = 0) => {
+    sweep(bus, at, 1800, 5600, 0.045, 0.5, 2.2);
+    tone(bus, { at: at + 0.035, dur: 0.035, from: 1500 + (i % 5) * 120, to: 1800 + (i % 5) * 120, type: 'square', gain: 0.07 });
+  },
+  /* SKILLS, picking a skill on the chart: a blade locks onto the row, then the meter levels up, one
+     rising tick per block the skill has filled (a level 6 climbs six steps), and a MAX skill ends on
+     a bright ring. So every skill sounds as high as it ranks. */
+  skillUp: (bus, at, v = 1, n = 5) => {
+    const p = 1 + (Math.random() * 2 - 1) * 0.02;
+    snap(bus, at, 3400 * p, 1200 * p, 0.02, 0.1);
+    metalRing(bus, at, [[1660 * p, 'square', 0], [2490 * p, 'triangle', 6]], { hp: 1300, peak: 0.05, decay: 0.035 });
+    const scale = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
+    for (let k = 0; k < n; k++) {
+      const f = 880 * 2 ** (scale[k] / 12) * p;
+      tone(bus, { at: at + 0.03 + k * 0.03, dur: 0.035, from: f, to: f, type: 'square', gain: 0.03 + k * 0.003 });
+    }
+    if (n >= 10) metalRing(bus, at + 0.33, [[3520, 'triangle', 0], [5274, 'sine', 4]], { hp: 2400, peak: 0.07, decay: 0.22 });
+  },
   /* LEVEL CLEAR (Full Story): a whip crack, then an original bright 8-bit victory jingle:
      quick climbing arpeggio, a two-note "ta-da", and a held sparkling top note. */
   fanfare: (bus, at) => {
@@ -1018,6 +1080,7 @@ export function sfx(name, arg) {
   live.add(g);
   setTimeout(() => live.delete(g), 2500);
   VOICES[name]?.(g, ac.currentTime, 1, arg);
+  window.__sfxLog?.push(name); // (tests set this array to hear what played)
 }
 
 /** Fade out every sound that is still playing (a film cut was skipped). */
