@@ -2,7 +2,7 @@
 
    Nov 19, John: "make the graffiti feel like actual graffiti, not a font pasted onto the pillar...
    like someone shook a spray can and wrote TAKE YOUR NETWORK, with a cat"; the words became TAKE YOUR
-   NOTES the same day, the site's catchphrase). So nothing here is a font:
+   TIME the same day, the site's motto). So nothing here is a font:
    every letter is a hand-drawn stroke (a few points per letter, nudged by an unsteady hand), and
    every stroke is sprayed: thousands of paint droplets scattered round a moving nozzle (a dense wet
    core, a soft mist of overspray), more paint where the hand slows at a corner or stops at a stroke's
@@ -46,6 +46,8 @@ const paint = () => {
     R: [[[1, 14], [1, 0], [6.2, 0], [9, 1.8], [9.2, 4.8], [6.4, 7], [1.2, 7]], [[5, 7], [9.8, 14]]],
     N: [[[1, 14], [1, 0], [9, 14], [9, 0]]],
     W: [[[0, 0], [2.4, 14], [5, 4.6], [7.6, 14], [10, 0]]],
+    I: [[[1.5, 0.2], [8.5, 0]], [[5, 0.2], [5.1, 13.8]], [[1.4, 14], [8.6, 13.8]]],
+    M: [[[0.6, 14], [1, 0], [5, 8.4], [9, 0], [9.4, 14]]],
     S: [[[9, 1.6], [6.6, 0], [3, 0.2], [1, 2.6], [1.6, 5.4], [5, 7], [8.4, 8.6], [9.2, 11.4], [7.2, 13.8], [3.4, 14], [0.6, 12.2]]],
   };
 
@@ -124,7 +126,7 @@ const paint = () => {
   const lines = [
     ...word('TAKE', 18, 70, 5.6, 2.2, 0.18, 15),
     ...word('YOUR', 24, 192, 5.0, 2.2, 0.18, 14),
-    ...word('NOTES', 14, 318, 4.15, 2.4, 0.2, 11),
+    ...word('TIME', 22, 316, 5.2, 2.2, 0.18, 14),
   ];
 
   // 1. the shadow pass: sprayed dark, a few px down-right, a little wider
