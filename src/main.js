@@ -6,11 +6,14 @@ import './styles/print.css';
 import './styles/backdrop.css';
 import './styles/board.css';
 import './styles/pages.css';
+import './styles/intro.css';
 
 import { gsap } from 'gsap';
 import { resume } from './data/resume.js';
 import { readCompany } from './data/companies.js';
 import { store } from './core/store.js';
+import { runLoader, introOpen } from './ui/loader.js';
+import { maybeRotateHint } from './ui/rotate.js';
 import { $, $$, esc, reducedMotion, fontsReady } from './core/util.js';
 import { menuTeasers } from './data/script.js';
 import { mountBackdrop, sceneReady } from './fx/backdrop.js';
@@ -244,7 +247,10 @@ function introTitle() {
     // so phones paint it right away (it used to wait ~0.6s at opacity 0, which slowed the load score)
     gsap.from('#screen-title .title-hook', { x: -40, duration: 0.4, ease: 'power3.out', clearProps: 'all' });
   }
-  setTimeout(() => $('#pressStart').focus({ preventScroll: true }), 50);
+  setTimeout(() => { if (!document.querySelector('.rot')) $('#pressStart').focus({ preventScroll: true }); }, 50); // (not while the turn-your-phone reminder holds focus)
+  // the loading star's doorway opens onto it: the title lands with a punch (motion only: it was
+  // already drawn under the star, so its first paint, and the load score, never wait on the intro)
+  if (!reducedMotion()) introOpen.then(() => gsap.fromTo('#screen-title .title-block', { scale: 1.1, rotation: -2 }, { scale: 1, rotation: 0, duration: 0.5, delay: 0.25, ease: 'back.out(2.2)', clearProps: 'transform' }));
 }
 
 /* ---------------------------------------------------------------- saved progress */
@@ -977,3 +983,5 @@ if (resume.analytics.goatcounter) {
 
 /* ---------------------------------------------------------------- boot */
 show(route());
+// the loading star opens into the station, then (phones held upright, once a visit) the turn-your-phone reminder
+runLoader().then(() => maybeRotateHint());
