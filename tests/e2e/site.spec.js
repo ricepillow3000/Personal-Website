@@ -599,3 +599,28 @@ test('THE PLAN: a mouse resting where a chapter slides in does not steal the pic
   await page.mouse.move(box.x + box.width / 2 + 6, box.y + box.height / 2 + 2); // a real move picks what's under it
   await expect(page.locator('#board .pl-item.on')).toHaveAttribute('data-ch', 'contact');
 });
+
+test('sound: SETTINGS credits every real recording, and every clip the engine asks for exists', async ({ page, request }) => {
+  await page.goto('/#/system');
+  const credits = page.locator('.sys-credits');
+  await expect(credits).toContainText('Gregor Quendel');
+  await expect(credits).toContainText('CC BY-SA 4.0');
+  await expect(credits.locator('li')).toHaveCount(4);
+  const src = readFileSync(join(process.cwd(), 'src/audio/audio.js'), 'utf8');
+  const names = [...src.slice(src.indexOf('const CLIP_HIT = {'), src.indexOf('};', src.indexOf('const CLIP_HIT = {'))).matchAll(/'([a-z-]+)':/g)].map((m) => m[1]);
+  expect(names.length).toBeGreaterThan(0);
+  for (const n of names) {
+    const r = await request.get(`/assets/sfx/${n}.mp3`);
+    expect(r.status(), n).toBe(200);
+  }
+});
+
+test('sound: the recordings download only after sound is turned on (never on page load)', async ({ page }) => {
+  const fetched = [];
+  page.on('request', (r) => r.url().includes('/assets/sfx/') && fetched.push(r.url()));
+  await page.goto('/');
+  await page.waitForTimeout(2500);
+  expect(fetched).toEqual([]); // sound is off by default: nothing extra on first load
+  await page.locator('#soundBtn').click();
+  await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(5);
+});

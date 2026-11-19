@@ -1,0 +1,25 @@
+Sound credits for the real recordings in this folder
+(everything else on the site is synthesized live in the browser)
+
+car-pass.mp3
+  From "city ambience - traffic - street - cars drive by on a rainy street",
+  part of "Free General Ambience Sounds" by Gregor Quendel (www.gregorquendel.com)
+  Source: https://opengameart.org/content/free-general-ambience-sounds
+  License: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/
+  Changes: trimmed to one pass-by, faded in/out, level adjusted, mono MP3.
+  This modified clip is shared under CC BY-SA 4.0.
+
+whoosh-b.mp3
+  "swish-4" from "Swishes Sound Pack" by artisticdude
+  Source: https://opengameart.org/content/swishes-sound-pack
+  License: CC0 1.0 https://creativecommons.org/publicdomain/zero/1.0/
+
+paper-slide.mp3
+  "paper_02" from "100 CC0 SFX" by rubberduck
+  Source: https://opengameart.org/content/100-cc0-sfx
+  License: CC0 1.0 https://creativecommons.org/publicdomain/zero/1.0/
+
+hit-slap.mp3, metal-clang.mp3
+  "bfh1_hit_07" and "bfh1_metal_hit_04" from "75 CC0 breaking / falling / hit sfx" by rubberduck
+  Source: https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx
+  License: CC0 1.0 https://creativecommons.org/publicdomain/zero/1.0/

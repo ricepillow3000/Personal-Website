@@ -46,7 +46,7 @@ export function caseWipe(swap, label = 'MISSIONS') {
     .add(() => sfx('stamp'), 0.42)
     // the folder opens: the cover swings away on its spine
     .to(cover, { rotationY: -100, transformPerspective: 1400, duration: 0.34, ease: 'power3.in' }, 0.55)
-    .add(() => sfx('paper'), 0.56);
+    .add(() => sfx('flip'), 0.56);
   return track(tl);
 }
 
