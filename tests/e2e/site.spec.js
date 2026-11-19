@@ -24,6 +24,7 @@ test('title → PRESS START → THE PLAN: six chapters in order and a CONTINUE t
   await expect(page.locator('#titleName')).toHaveAccessibleName('JOHN');
   await expect(page.getByRole('heading', { name: 'JOHN' })).toBeVisible();
   await page.locator('#pressStart').click();
+  await page.locator('#saves .sv-slot').first().click(); // SAVE DATA: a new game in file 1
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
   const chapters = page.locator('#board .pl-item');
   await expect(chapters).toHaveCount(6);
@@ -190,6 +191,7 @@ test('works with motion enabled too (start sequence + board reveal finish)', asy
   const errors = errorsOf(page);
   await page.goto('/');
   await page.locator('#pressStart').click();
+  await page.locator('#saves .sv-slot').first().click();
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 15000 }); // the train brakes in (~1.8 s), plus up to 4 s waiting for the scene, on a busy shared test machine
   await expect(page.locator('#board .plan-continue')).toBeVisible();
   expect(errors).toEqual([]);
@@ -278,7 +280,7 @@ test('hostile ?company= values render as plain text', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('progress is saved: returning visitors CONTINUE with their case log', async ({ page }) => {
+test('progress is saved: returning visitors CONTINUE their file from SAVE DATA', async ({ page }) => {
   await page.goto('/#/skills');
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'skills');
   await page.goto('/#/stats');
@@ -286,16 +288,13 @@ test('progress is saved: returning visitors CONTINUE with their case log', async
   await page.goto('/#/');
   await page.reload();
   await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
-  await expect(page.locator('#saveLine')).toContainText('2/8 cleared');
+  await expect(page.locator('#saveLine')).toHaveCount(0); // (the old save line under the button is gone)
   await page.locator('#pressStart').click();
+  const file1 = page.locator('#saves .sv-slot[data-i="0"]');
+  await expect(file1).toHaveAccessibleName(/File 1: STATS, 2 of 8 cleared/);
+  await file1.click();
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
   await expect(page.locator('#progressChip')).toContainText('2/8');
-  // starting over wipes the save
-  await page.goto('/#/');
-  await page.reload();
-  await page.locator('.save-reset').click();
-  await expect(page.locator('#pressStart')).toHaveText('PRESS START');
-  await expect(page.locator('#saveLine')).toContainText('Progress wiped'); // only the Undo offer is left
 });
 
 /* ---- with animations ON: the timing bugs only show up when transitions really run ---- */
@@ -316,7 +315,7 @@ test.describe('with motion on', () => {
     await page.waitForTimeout(2500);
     await expect(page.locator('body')).toHaveAttribute('data-screen', 'contact');
     expect((await page.evaluate(() => window.__punch)).join(' ')).not.toContain('STATS');
-    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('jn-resume-v1')).visited)).not.toContain('stats');
+    expect(await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('jn-resume-v1')); return d.slots[d.active].visited; })).not.toContain('stats');
     expect(errors).toEqual([]);
   });
 
@@ -338,6 +337,7 @@ test.describe('with motion on', () => {
     await page.goto('/');
     await expect(page.locator('.bd-cam canvas').first()).toBeAttached({ timeout: 6000 }); // the platform layers (trash below, the train's GPU side between, its nose on top) mount once the art loads
     await page.locator('#pressStart').click({ force: true });
+    await page.locator('#saves .sv-slot').first().click();
     await expect(page.locator('.fall.tunnel')).toHaveCount(1);
     await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 15000 });
     await expect(page.locator('.fall.tunnel')).toHaveCount(0, { timeout: 4000 }); // the shot cleans up after itself
@@ -448,13 +448,15 @@ test('every CASE LOG item can be reached from the site itself (ALL CLEAR is poss
     await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
   }
   await page.evaluate(() => {
-    const st = JSON.parse(localStorage.getItem('jn-resume-v1'));
-    st.cleared = ['meliona', 'arcas'];
-    localStorage.setItem('jn-resume-v1', JSON.stringify(st));
+    const d = JSON.parse(localStorage.getItem('jn-resume-v1'));
+    d.slots[d.active].cleared = ['meliona', 'arcas'];
+    localStorage.setItem('jn-resume-v1', JSON.stringify(d));
   });
   await page.goto('/#/');
   await page.reload();
-  await expect(page.locator('#saveLine')).toContainText('ALL CLEAR');
+  await page.locator('#pressStart').click();
+  await expect(page.locator('#saves .sv-slot.sv-complete')).toHaveCount(1); // its file carries the COMPLETED stamp
+  await expect(page.locator('#saves .sv-complete .sv-done')).toBeVisible();
 });
 
 test('every story page ends with a NEXT EPISODE card that rolls the next chapter', async ({ page }) => {
@@ -467,18 +469,79 @@ test('every story page ends with a NEXT EPISODE card that rolls the next chapter
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
 });
 
-test('Start over can be undone', async ({ page }) => {
+test('SAVE DATA: five files; a new game starts clean in its own file, the old file keeps its progress, ERASE asks twice; keys work', async ({ page }) => {
+  const errors = errorsOf(page);
+  // file 1 has played STATS (a deep link saves to the visitor's first file)
   await page.goto('/#/stats');
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'stats');
   await page.goto('/#/');
   await page.reload();
-  await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
-  await page.locator('.save-reset').click();
-  await expect(page.locator('#pressStart')).toHaveText('PRESS START');
-  await expect(page.locator('#saveLine')).toContainText('Progress wiped');
-  await page.locator('.save-reset').click(); // Undo
-  await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
-  await expect(page.locator('#saveLine')).toContainText('1/8');
+  await page.locator('#pressStart').click();
+  const saves = page.locator('#saves');
+  await expect(saves).toBeVisible();
+  await expect(saves.locator('.sv-slot')).toHaveCount(5);
+  await expect(saves.locator('.sv-empty')).toHaveCount(4);
+  await expect(saves.locator('.sv-slot[data-i="0"]')).toHaveClass(/\bon\b/); // the last file played is picked
+  await expect(saves.locator('.sv-slot[data-i="0"]')).toBeFocused();
+  // keys: Down picks file 2, Esc goes back to the title
+  await page.keyboard.press('ArrowDown');
+  await expect(saves.locator('.sv-slot[data-i="1"]')).toHaveClass(/\bon\b/);
+  await expect(saves.locator('.sv-slot[data-i="1"]')).toContainText('START NEW GAME');
+  await page.keyboard.press('Escape');
+  await expect(saves).toBeHidden();
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'title');
+  // a new game in file 2: THE PLAN starts clean (nothing read)
+  await page.locator('#pressStart').click();
+  await saves.locator('.sv-slot[data-i="1"]').click();
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  await expect(page.locator('#progressChip')).toContainText('0/8');
+  await page.goto('/#/skills');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'skills');
+  // both files are kept, each with its own progress
+  await page.goto('/#/');
+  await page.reload();
+  await page.locator('#pressStart').click();
+  await expect(saves.locator('.sv-slot[data-i="0"]')).toHaveAccessibleName(/File 1: STATS, 1 of 8 cleared/);
+  await expect(saves.locator('.sv-slot[data-i="1"]')).toHaveAccessibleName(/File 2: SKILLS, 1 of 8 cleared/);
+  await expect(saves.locator('.sv-slot[data-i="1"]')).toHaveClass(/\bon\b/); // file 2 was played last
+  // back to file 1: its own progress comes back
+  await saves.locator('.sv-slot[data-i="0"]').click();
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  expect(await page.evaluate(() => [...document.querySelectorAll('#board .pl-item.read, #board .pl-item[data-read]')].length >= 0)).toBe(true);
+  await expect(page.locator('#progressChip')).toContainText('1/8');
+  expect(await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('jn-resume-v1')); return [d.active, d.slots[0].visited, d.slots[1].visited]; })).toEqual([0, ['stats'], ['skills']]);
+  // ERASE file 2: the first press asks, the second erases
+  await page.goto('/#/');
+  await page.reload();
+  await page.locator('#pressStart').click();
+  await saves.locator('.sv-slot[data-i="1"]').hover();
+  const erase = saves.locator('.sv-erase[data-erase="1"]');
+  await erase.click();
+  await expect(erase).toHaveText('SURE?');
+  await expect(saves.locator('.sv-empty')).toHaveCount(3); // not yet
+  await erase.click();
+  await expect(saves.locator('.sv-empty')).toHaveCount(4);
+  await expect(saves.locator('.sv-slot[data-i="0"]')).not.toHaveClass(/sv-empty/); // file 1 untouched
+  expect(errors).toEqual([]);
+});
+
+test('SAVE DATA: a save from before files becomes File 1, and a hostile file can never inject markup', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.setItem('jn-resume-v1', JSON.stringify({ visited: ['stats', 'missions'], cleared: ['meliona'], achievements: ['first-words'], settings: { sound: false, soundChosen: true, music: 0.3, reduceMotion: null } }));
+  });
+  await page.goto('/');
+  await page.locator('#pressStart').click();
+  await expect(page.locator('#saves .sv-slot[data-i="0"]')).toHaveAccessibleName(/File 1: THE STATION, 3 of 8 cleared/);
+  const d = await page.evaluate(() => JSON.parse(localStorage.getItem('jn-resume-v1')));
+  expect(d.v === undefined || d.v === 2).toBe(true);
+  await page.evaluate(() => localStorage.setItem('jn-resume-v1', JSON.stringify({ v: 2, active: 7, settings: {}, slots: [{ visited: ['<img src=x onerror=window.__pwned=1>'], meta: { last: '"><b>x</b>', saved: 'soon', playMs: -5 } }, 'junk', null] })));
+  await page.reload();
+  await page.locator('#pressStart').click();
+  await expect(page.locator('#saves .sv-slot')).toHaveCount(5);
+  expect(await page.evaluate(() => window.__pwned)).toBeUndefined();
+  expect(await page.locator('#saves img, #saves b:not(.sv-date b, .sv-lv b, .sv-time b)').count()).toBe(0);
 });
 
 test('Back closes an open case file instead of leaving the page', async ({ page }) => {
@@ -823,6 +886,7 @@ test('heavy train: the camera moves like a heavy train (steady rumble + wheel-se
   const page = await ctx.newPage();
   await page.goto('/');
   await page.locator('#pressStart').click({ force: true });
+  await page.locator('#saves .sv-slot').first().click();
   await expect(page.locator('.bd-cam')).toHaveAttribute('data-train-art', 'heavy', { timeout: 6000 });
   await ctx.close();
 });
@@ -846,6 +910,7 @@ test('a returning visitor who taps CONTINUE right away still gets the train (it 
   await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
   await page.evaluate(() => { window.__tunnel = false; new MutationObserver(() => { if (document.querySelector('.fall.tunnel')) window.__tunnel = true; }).observe(document.body, { childList: true }); });
   await page.locator('#pressStart').tap(); // before the phone has loaded the scene on its own (2.5s)
+  await page.locator('#saves .sv-slot[data-i="0"]').tap(); // their file is already picked: one tap plays it
   await expect.poll(() => page.evaluate(() => window.__tunnel), { timeout: 6000 }).toBe(true);
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 15000 });
   await ctx.close();

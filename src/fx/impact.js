@@ -103,7 +103,7 @@ export function initClickFx() {
       const b = e.target.closest?.(`${PRESSABLE}, .cc-row, .hc-link`);
       if (b !== pressed) {
         pressed = b;
-        if (b && !b.disabled && !b.matches('.stair-item, [data-ch]')) sfx(b.matches(BIG) ? 'hoverBig' : 'hover');
+        if (b && !b.disabled && !b.matches('.stair-item, [data-ch], .sv-slot')) sfx(b.matches(BIG) ? 'hoverBig' : 'hover');
       }
     } else {
       pressed = null;
@@ -121,13 +121,13 @@ export function initClickFx() {
     const el = e.target;
     if (reducedMotion() || !el.matches?.(':focus-visible') || !el.animate) return;
     el.animate([{ scale: '1' }, { scale: '1.09' }, { scale: '0.98' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1)' });
-    if (!el.matches('.skill, .stair-item, .crew-row')) sfx('hover'); // those already play their own focus sound
+    if (!el.matches('.skill, .stair-item, .crew-row, .sv-slot')) sfx('hover'); // those already play their own focus sound
   });
 
   // Confirm: every button and link lands with the heavy thump-and-slash (capture phase, so a handler
   // that plays its own 'select' right after is merged into this one). Buttons with their own sound
   // (back, close, toggles, the sound and menu buttons, start over) keep it.
-  const OWN_SOUND = '[data-back], .back-btn, [data-close], [data-close-menu], [data-toggle], #soundBtn, #menuBtn, .save-reset';
+  const OWN_SOUND = '[data-back], .back-btn, [data-close], [data-close-menu], [data-toggle], #soundBtn, #menuBtn, .sv-slot, .sv-erase, [data-sv-back]';
   document.addEventListener('click', (e) => {
     const el = e.target.closest?.(`${PRESSABLE}, .cc-row, .hc-link`);
     if (el && !el.disabled && !el.matches(OWN_SOUND)) sfx('select');

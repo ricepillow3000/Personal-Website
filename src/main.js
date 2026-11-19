@@ -7,6 +7,7 @@ import './styles/backdrop.css';
 import './styles/board.css';
 import './styles/pages.css';
 import './styles/intro.css';
+import './styles/saves.css';
 
 import { gsap } from 'gsap';
 import { resume } from './data/resume.js';
@@ -29,6 +30,7 @@ import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { startCalendar } from './ui/hud.js';
 import { watchTitleFit } from './ui/titlefit.js';
 import { createBoard, CHAPTERS } from './scenes/board.js';
+import { openSaves, savesOpen, savesKey } from './scenes/saves.js';
 import { toast } from './ui/toast.js';
 import { createMenu, MENU_ITEMS } from './scenes/menu.js';
 import { SECTION_RENDERERS, SECTION_TITLES, dossierMarkup, animateDossier } from './scenes/sections.js';
@@ -144,6 +146,7 @@ function activate(id) {
   const mode = modeOf(id);
   document.body.dataset.screen = id;
   document.body.dataset.mode = mode;
+  if (mode !== 'title') store.touch(mode === 'page' ? id : mode); // (where this file was left: its save slip shows it)
   $$('.screen').forEach((s) => s.classList.remove('active'));
   const el = mode === 'page' ? $('#screen-page') : $(`#screen-${mode}`);
   el.classList.add('active');
@@ -242,7 +245,7 @@ async function show(id) {
 
 /* ---------------------------------------------------------------- title */
 function introTitle() {
-  renderSaveLine();
+  renderStartLabel();
   // the cut-out name and the title's labels wait for their fonts (max ~1.2s) so they never flash
   // in a backup font; the hook below shows right away
   const scr = $('#screen-title');
@@ -284,8 +287,10 @@ function renderProgress(celebrate) {
   lastDone = p.done;
 }
 let wasAll = progress().all;
+let switchingFile = false; // (loading a finished file from SAVE DATA is not a new ALL CLEAR)
 store.onChange(() => {
   const p = progress();
+  if (switchingFile) { wasAll = p.all; renderProgress(false); return; }
   renderProgress(p.all && !wasAll);
   if (p.all && !wasAll) {
     setTimeout(() => {
@@ -296,86 +301,36 @@ store.onChange(() => {
   wasAll = p.all;
 });
 
-/* returning visitors: CONTINUE instead of starting from scratch (everything is saved) */
-function renderSaveLine() {
-  const p = progress();
-  const btn = $('#pressStart');
-  let line = $('#saveLine');
-  if (!p.any) {
-    btn.textContent = 'PRESS START';
-    line?.remove();
-    renderUndoLine();
-    return;
-  }
-  btn.textContent = 'CONTINUE';
-  if (!line) {
-    line = document.createElement('p');
-    line.id = 'saveLine';
-    line.className = 'save-line';
-    btn.after(line);
-  }
-  line.innerHTML = `<span class="save-dot" aria-hidden="true"></span>Save found · ${p.all ? 'ALL CLEAR' : `${p.done}/${p.total} cleared`} · <button type="button" class="save-reset">Start over</button>`;
-  line.querySelector('.save-reset').addEventListener('click', () => {
-    const backup = store.snapshot();
-    store.reset();
-    try {
-      window.sessionStorage.clear();
-      window.sessionStorage.setItem(UNDO_KEY, backup); // one chance to take it back
-    } catch {
-      /* ignore */
-    }
-    sfx('back');
-    renderSaveLine();
-    renderProgress();
-    $('#board').innerHTML = '';
-    window.location.reload();
-  });
+/* The title's button: PRESS START for a first visit, CONTINUE once any file is saved; either way it opens
+   SAVE DATA (src/scenes/saves.js), where the visitor continues a file or starts a new one. The old save
+   line under the button ("Save found · Start over") is gone (Nov 19, John): files are erased there. */
+function renderStartLabel() {
+  $('#pressStart').textContent = store.slots().some(Boolean) ? 'CONTINUE' : 'PRESS START';
+  $('#saveLine')?.remove();
 }
-/* Undo toast for Start over: right after wiping, the title offers the save back until you press start. */
-const UNDO_KEY = 'jn-undo';
-function readUndo() {
-  try {
-    return window.sessionStorage.getItem(UNDO_KEY);
-  } catch {
-    return null;
-  }
-}
-function dropUndo() {
-  try {
-    window.sessionStorage.removeItem(UNDO_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-function renderUndoLine() {
-  const backup = readUndo();
-  if (!backup) return;
-  const line = document.createElement('p');
-  line.id = 'saveLine';
-  line.className = 'save-line';
-  line.innerHTML = 'Progress wiped · <button type="button" class="save-reset">Undo</button>';
-  $('#pressStart').after(line);
-  line.querySelector('.save-reset').addEventListener('click', () => {
-    store.restore(backup);
-    dropUndo();
-    sfx('select');
-    window.location.reload();
-  });
-}
-
-renderSaveLine();
+renderStartLabel();
 
 /* PRESS START / CONTINUE always opens with the train (Nov 19, John: "the train is going to be the
    main title every single time"). If the platform or the train art isn't ready yet (a returning
    visitor taps CONTINUE before the phone has loaded the scene), the button "boards" for a moment
    while they load, at most 4s, then the shot plays. */
 let starting = false;
-$('#pressStart').addEventListener('click', async () => {
+$('#pressStart').addEventListener('click', () => {
+  if (starting || savesOpen()) return;
+  sfx('select');
+  openSaves({ onPick: startFile, onClose: () => { renderStartLabel(); $('#pressStart').focus({ preventScroll: true }); } });
+});
+/* a file was picked: load it (or start it new), then the train, as PRESS START always did */
+async function startFile(i) {
   if (starting) return;
   starting = true;
+  switchingFile = true;
+  store.useSlot(i);
+  switchingFile = false;
+  // (THE PLAN refreshes from the active file every time it is shown)
+  refreshCounter();
+  renderStartLabel();
   const btn = $('#pressStart');
-  dropUndo();
-  sfx('select');
   unlock('first-words');
   if (!reducedMotion()) {
     let late = false;
@@ -388,7 +343,18 @@ $('#pressStart').addEventListener('click', async () => {
   starting = false;
   pendingStart = true;
   navigate('board');
-});
+}
+
+/* play time on the active file: counted while the page is in view and past the title */
+{
+  let at = performance.now();
+  setInterval(() => {
+    const now = performance.now();
+    if (!document.hidden && screen && screen !== 'title') store.addPlay(now - at);
+    at = now;
+  }, 15000);
+  document.addEventListener('visibilitychange', () => { at = performance.now(); });
+}
 
 /* ---------------------------------------------------------------- heist board */
 const syncMeter = initScrollMeter();
@@ -904,6 +870,7 @@ function moveFocus(dir) {
 }
 
 function handle(action, e) {
+  if (savesOpen()) return savesKey(action, e); // SAVE DATA takes the keys while it is open
   if (isAnimating() && (action === 'confirm' || action === 'back')) return skipCurrent();
   switch (action) {
     case 'up':
