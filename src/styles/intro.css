@@ -1,9 +1,9 @@
 /* ---------------------------------------------------------------- the loading screen (src/ui/loader.js)
    Nov 19, John: "instead of a lock... TAKE YOUR NETWORK in the middle... acts as the loading bar" (then:
-   "TAKE YOUR NETWORK sounds a bit corny... in tune with our philosophy": now TAKE YOUR NOTES); bottom right a spinning star or banner with the philosophy of our resume; when the bar
+   "TAKE YOUR NETWORK sounds a bit corny", then TAKE YOUR NOTES, now TAKE YOUR TIME by John's choice); bottom right a spinning star or banner with the philosophy of our resume; when the bar
    fully loads, a button underneath; click it and the transition opens to the subway... zooming into
    the holes of letters, like a gateway". Black with a red slash and halftone; the words in cut-out
-   letters, each an empty grey slot until the ink fills it from the left (the bar); the O in NOTES is
+   letters, each an empty grey slot until the ink fills it from the left (the bar); the O in YOUR is
    a drawn ring whose hole is the doorway. The CSS fallback hides it after 20 s if the script never ran. */
 .loader {
   position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; overflow: hidden;
@@ -20,7 +20,7 @@
 @keyframes ldFailsafe { to { visibility: hidden; pointer-events: none; } }
 .ld-core { position: relative; display: grid; justify-items: center; gap: 4px; }
 
-/* TAKE YOUR / NOTES: two lines of cut-out letters; every chip has a fixed size, so the brand fonts
+/* TAKE YOUR / TIME: two lines of cut-out letters; every chip has a fixed size, so the brand fonts
    arriving never move anything */
 .ld-word { margin: 0; display: grid; justify-items: center; gap: .14em; font-size: clamp(30px, min(13.2vw, 15vh), 124px); line-height: 1; transform: rotate(-3deg); }
 .ld-line { display: flex; gap: .34em; }
@@ -31,7 +31,7 @@
   background: var(--black); padding: 3px 10px; box-shadow: 3px 3px 0 var(--red); transform: rotate(-3deg) translateX(-.8em); }
 .ld-case::after { content: ''; display: inline-block; width: .55em; height: 1em; margin-left: .3em; vertical-align: -.15em; background: var(--red); animation: ldCaret 1s steps(2) infinite; }
 @keyframes ldCaret { 50% { opacity: 0; } }
-/* when every letter is inked, a red marker underlines NOTES (then the button comes) */
+/* when every letter is inked, a red marker underlines TIME (then the button comes) */
 .ld-under { position: absolute; z-index: 3; left: -.12em; right: -.12em; bottom: -.38em; width: calc(100% + .24em); height: .26em; overflow: visible; pointer-events: none; }
 .ld-under path { fill: none; stroke: var(--red); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
 .loader.inked .ld-under path { stroke-dashoffset: 0; transition: stroke-dashoffset .3s cubic-bezier(.5, 0, .2, 1); }

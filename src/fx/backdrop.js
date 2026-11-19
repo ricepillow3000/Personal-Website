@@ -170,7 +170,7 @@ function p5Layer() {
 
 /* The round tower's red LED screens are moving billboards: JOHN NGUYEN ★ crawls across the middle
    ring (Nov 19, John: "my name or star moving from screen to screen"), and the ring above it reads
-   TAKE YOUR NOTES, the site's catchphrase (Nov 19, John: "traverses from one side of the red screen to
+   TAKE YOUR TIME, the site's motto (Nov 19, John: "traverses from one side of the red screen to
    the other and loops"). LED dots, narrowing toward the edges as the screen curves away. The outlines and paths
    were measured on the art (1600x679 space; every art size has the same shape), and the layer is
    fitted with the art's own object-fit math so it stays glued to the screen. The bottom ring stays
@@ -189,7 +189,7 @@ const BB_GEO = {
 /* what each ring says (the star is drawn as a shape, the rest is LED type), and how much of the
    ring's height the type fills: the longer line is a little smaller so it fits the screen's face */
 const BB_TEXT = {
-  top: { text: [...'TAKE YOUR NOTES'], fill: 0.45, offset: 0.45 }, // offset: its loop runs out of step with the name's
+  top: { text: [...'TAKE YOUR TIME'], fill: 0.45, offset: 0.45 }, // offset: its loop runs out of step with the name's
   middle: { text: [...'JOHN NGUYEN', '★'], fill: 0.66, offset: 0 },
 };
 const BB_ORDER = Object.keys(BB_TEXT);
