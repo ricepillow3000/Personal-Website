@@ -14,6 +14,7 @@ import { readCompany } from './data/companies.js';
 import { store } from './core/store.js';
 import { runLoader, introOpen } from './ui/loader.js';
 import { maybeRotateHint } from './ui/rotate.js';
+import { initFullscreen } from './ui/fullscreen.js';
 import { $, $$, esc, reducedMotion, fontsReady } from './core/util.js';
 import { menuTeasers } from './data/script.js';
 import { mountBackdrop, sceneReady } from './fx/backdrop.js';
@@ -794,6 +795,7 @@ function syncSoundButton() {
 /* sound is on by default: the visitor's first tap, click or key starts it (browsers allow audio only
    after one), leaving the page pauses it and coming back resumes it (audio.js initAudio) */
 initAudio();
+initFullscreen();
 
 $('#soundBtn').addEventListener('click', () => toggleSound());
 window.addEventListener('jn-sound', () => syncSoundButton()); // the lock screen's SOUND switch

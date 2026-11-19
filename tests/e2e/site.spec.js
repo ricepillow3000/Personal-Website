@@ -991,3 +991,39 @@ test('the lock: the tap that picks it turns the sound on, and the music waits un
   expect(music[0]).toBeGreaterThanOrEqual(doorAt - 400); // the music came after the doorway, not over the lock
   await ctx.close();
 });
+
+test('sideways phones: the whole ATL poster stays on screen, a tap asks for full screen (never upright, never desktop), and the home-screen app files exist', async ({ browser, request }) => {
+  const ctx = await browser.newContext({ viewport: { width: 829, height: 361 }, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    window.__fs = 0;
+    Element.prototype.requestFullscreen = function (o) { window.__fs++; window.__fsOpt = o; return Promise.resolve(); };
+  });
+  await page.goto('/');
+  await expect(page.locator('#pressStart')).toBeVisible();
+  const r = await page.locator('.bd-poster').boundingBox();
+  expect(r.y).toBeGreaterThanOrEqual(0);
+  expect(r.y + r.height).toBeLessThanOrEqual(361); // (it ran off the bottom before)
+  await page.touchscreen.tap(700, 120);
+  await expect.poll(() => page.evaluate(() => window.__fs)).toBe(1);
+  expect(await page.evaluate(() => window.__fsOpt)).toEqual({ navigationUI: 'hide' });
+  await page.touchscreen.tap(700, 140);
+  expect(await page.evaluate(() => window.__fs)).toBe(1); // asked once, not on every tap
+  await page.setViewportSize({ width: 390, height: 844 }); // upright: never asks
+  await page.evaluate(() => { window.__fs = 0; });
+  await page.touchscreen.tap(200, 120);
+  expect(await page.evaluate(() => window.__fs)).toBe(0);
+  await ctx.close();
+
+  const desk = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await desk.addInitScript(() => { window.__fs = 0; Element.prototype.requestFullscreen = function () { window.__fs++; return Promise.resolve(); }; });
+  await desk.goto('/');
+  await desk.mouse.click(900, 300);
+  expect(await desk.evaluate(() => window.__fs)).toBe(0);
+  await desk.close();
+
+  const m = await request.get('/manifest.webmanifest');
+  expect(m.ok()).toBeTruthy();
+  expect((await m.json()).display).toBe('fullscreen');
+  for (const f of ['/apple-touch-icon.png', '/icon-512.png']) expect((await request.get(f)).ok()).toBeTruthy();
+});

@@ -62,12 +62,14 @@ function graffitiLayer() {
 
 
   <!-- torn poster A: halftone + bold mark, taped -->
+  <g class="bd-poster"><!-- (on phones held sideways, CSS lifts and shrinks it so the whole poster stays on screen) -->
   <g transform="translate(0 46) rotate(5 1260 635)"><!-- (moved down 46 on Nov 19 so the CONNECT banner above it has room to breathe) -->
     ${poly(posterA, C.white)}
     ${poly(posterA, 'url(#dotsR)')}
     ${poly(star(1260, 610, 88), C.black)}
     <text x="1260" y="770" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="64" fill="${C.black}" letter-spacing="4">ATL</text>
     ${tape(1104, 456, -18)}<g class="atl-tape">${tape(1340, 452, 14)}</g>
+  </g>
   </g>
   <!-- (the GO! poster that hung top-left was retired on Nov 19: the title's calendar sticker sits there now) -->
 
