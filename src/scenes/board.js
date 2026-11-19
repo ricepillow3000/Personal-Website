@@ -2,8 +2,9 @@ import { gsap } from 'gsap';
 import { MENU_ITEMS } from './menu.js';
 import { resume } from '../data/resume.js';
 import { menuTeasers, chapterLoot } from '../data/script.js';
-import { esc, reducedMotion, seeded } from '../core/util.js';
+import { esc, reducedMotion } from '../core/util.js';
 import { ransom, NAME_SEED } from '../ui/ransom.js';
+import { cutType } from '../ui/cuttype.js';
 import { sfx } from '../audio/audio.js';
 import { store } from '../core/store.js';
 
@@ -30,21 +31,6 @@ export function nextChapter() {
   return CHAPTERS.find((id) => !seen.includes(id)) || null;
 }
 
-/* Cut type for the chapter stack: each letter picks one of the five site fonts, a size and a small
-   tilt, and some sit in a box (like letters cut from different magazines). Seeded, so a chapter
-   always looks the same. Plain text for screen readers lives on the link's label. */
-function cutType(text, seed) {
-  const rnd = seeded(seed * 7919 + 13);
-  return [...text].map((ch) => {
-    if (ch === ' ') return '<span class="ct-gap"> </span>'; // a real space, so the name a screen reader hears matches the words on screen
-    const f = [0, 1, 4][Math.floor(rnd() * 3)]; // Anton, Bebas, the heavy serif: still cut-out, quick to read
-    const box = rnd() < 0.28 ? ' box' : '';
-    const sz = (0.84 + rnd() * 0.3).toFixed(2);
-    const r = (rnd() * 12 - 6).toFixed(1);
-    const y = (rnd() * 0.12 - 0.06).toFixed(2);
-    return `<span class="ct f${f}${box}" style="--s:${sz};--r:${r}deg;--y:${y}em">${esc(ch)}</span>`;
-  }).join('');
-}
 const ZIG = [0.35, 1.6, 0.6, 2.2, 1.1, 2.7]; // the stack zigzags down (em of indent), never a straight column
 
 function planMarkup(ctx) {

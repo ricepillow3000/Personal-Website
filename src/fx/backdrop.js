@@ -114,15 +114,13 @@ function graffitiLayer() {
    ========================================================================= */
 function shardLayer() {
   const shardTL = [[-20, -20], [380, -20], [120, 130], [-20, 260]];
-  const shardBR = [[1620, 920], [1180, 920], [1420, 700], [1620, 580]];
   const shardBL = [[-20, 920], [-20, 700], [220, 920]];
   return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   <defs><pattern id="dotsB" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="4.6" fill="${C.black}"/></pattern></defs>
   ${poly(shardTL, C.black)}
   <path d="M-20 260 L 120 130 L 380 -20 M 120 130 L 60 -20 M 120 130 L 250 40" fill="none" stroke="${C.white}" stroke-width="3"/>
-  ${poly(shardBR, C.black)}
-  <path d="M1180 920 L 1420 700 L 1620 580 M1420 700 L 1520 920 M1420 700 L 1600 760" fill="none" stroke="${C.white}" stroke-width="3"/>
   ${poly(shardBL, 'url(#dotsB)')}
+  <!-- (the bottom-right glass shard and its connected crack triangles were removed Nov 19, John: keep the star, lose the triangles) -->
 </svg>`;
 }
 

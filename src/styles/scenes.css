@@ -187,9 +187,6 @@
   .dossier-head .dossier-title { font-size: clamp(26px, 7.4vw, 40px); } /* long cut-out titles (ACHIEVEMENTS) fit a phone */
     .paper header { padding: 22px 20px 28px; }
   .paper-body { gap: 0; padding: 8px 20px 26px; }
-  .stair { top: 90px; }
-  .stair li { margin-left: calc(var(--i) * 3vw); }
-  .menu-teaser { left: var(--gutter); right: var(--gutter); bottom: 28px; font-size: 16px; }
   .ccard { aspect-ratio: auto; min-height: 300px; }
   .ccard-role, .ccard-line { max-width: 100%; }
   .ccard-back { background-image: none; }
