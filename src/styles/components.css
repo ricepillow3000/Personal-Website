@@ -124,53 +124,79 @@ body.scrolled .keyhints { translate: 0 80px; opacity: 0; }
 .keyhints b { background: var(--white); color: var(--black); padding: 0 6px; margin-right: 4px; text-shadow: none; }
 body[data-screen="title"] .keyhints, body[data-mode="quick"] .keyhints { display: none; }
 
-/* ============ MENU OVERLAY (diagonal staircase) ============ */
+/* ============ MENU OVERLAY (Nov 19, from John's command-select reference; an original design) ============
+   red field + halftone on the left with the items in cut type stepping down a diagonal; a black panel
+   with a turning black/white zigzag starburst on the right; a big red jagged slash between them; a
+   MAIN MENU tag and the picked item's number in big cut-out digits top-right; its name huge at the
+   bottom with the one-line teaser under it; chapters read, bottom-left. No character, no hand. */
 .menu-overlay {
   position: fixed; inset: 0; z-index: 70; overflow: hidden;
-  background:
-    radial-gradient(circle at 18% 78%, rgba(11, 11, 11, .55) 0 1.6px, transparent 2.4px) 0 0 / 14px 14px,
-    repeating-linear-gradient(115deg, transparent 0 46px, rgba(245, 245, 240, .07) 46px 50px),
-    linear-gradient(115deg, var(--red) 0 58%, var(--black) 58%);
+  background: radial-gradient(circle, rgba(11, 11, 11, .4) 0 1.7px, transparent 2.4px) 0 0 / 13px 13px, var(--red);
 }
-/* comic layers: a big outlined star on the red side, speed lines on the black side */
-.menu-overlay::before {
-  content: ""; position: absolute; left: -12vw; bottom: -22vh; width: 70vh; height: 70vh; pointer-events: none;
-  z-index: -1; background: var(--black); opacity: .18; transform: rotate(-12deg);
-  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-  animation: menuStar 14s steps(28) infinite;
-}
-.menu-overlay::after {
-  content: ""; position: absolute; right: -10vw; top: 0; bottom: 0; width: 55vw; pointer-events: none; opacity: .5; z-index: -1;
-  background: repeating-linear-gradient(115deg, transparent 0 22px, rgba(245, 245, 240, .14) 22px 25px, transparent 25px 70px);
-  -webkit-mask: linear-gradient(90deg, transparent, #000 40%); mask: linear-gradient(90deg, transparent, #000 40%);
-}
-@keyframes menuStar { to { transform: rotate(348deg); } }
-@media (prefers-reduced-motion: reduce) { .menu-overlay::before { animation: none; } }
-.stair { list-style: none; margin: 0; padding: 0; position: absolute; left: var(--gutter); top: 15vh; }
-.stair li { margin: 0 0 4px calc(var(--i) * 4.2vw); }
+.mn-art { position: absolute; inset: 0; pointer-events: none; }
+.mn-art svg { display: block; width: 100%; height: 100%; }
+.mn-burst { transform-origin: 0 0; animation: spin 120s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .mn-burst { animation: none; } }
+body.reduce-motion .mn-burst { animation: none; }
+.stair { list-style: none; margin: 0; padding: 0; position: absolute; z-index: 2; left: var(--gutter); top: 13vh; }
+.stair li { margin: 0 0 .6vh calc(var(--i) * 1.8vw); }
 .stair-item {
-  position: relative; display: inline-flex; align-items: center; gap: 14px; border: 0; background: none; padding: 0 22px 0 0;
-  /* sized by width AND height: 7 items must fit short laptop screens and phones held sideways */
-  font-family: var(--f-head); font-size: clamp(30px, min(max(7.5vw, 42px), 10vh), 104px); line-height: 1.04; color: var(--black);
-  transform: rotate(-6deg) scale(var(--sc, 1)); opacity: var(--op, 1); transition: transform .16s var(--ease-pop), opacity .16s, color .1s;
+  position: relative; display: inline-flex; align-items: center; gap: 12px; border: 0; background: none; padding: 2px 18px 2px 0;
+  /* sized by width AND height: all 7 must fit short laptop screens and phones held sideways */
+  font-family: var(--f-head); font-size: clamp(22px, min(4vw, 6.2vh), 64px); line-height: 1.05; color: var(--black); white-space: nowrap;
+  transform: rotate(-6deg) scale(var(--sc, 1)); transition: transform .16s var(--ease-pop);
 }
-.stair-item .si-text { position: relative; z-index: 1; padding: 0 12px; }
-.stair-item::before {
-  content: ""; position: absolute; left: 34px; right: 0; top: 10%; bottom: 8%; z-index: 0; background: var(--black);
-  transform: scaleX(0) skew(var(--skew)); transform-origin: left; transition: transform .14s var(--ease-pop);
-  clip-path: polygon(0 12%, 100% 0, 96% 100%, 2% 88%);
+.stair-item .si-text { position: relative; z-index: 1; padding: 0 10px; }
+/* the words (Nov 19, John's menu reference: "that same texture and word design"): white letters in mixed
+   cut shapes and sizes, a few lowercase, sealed in ONE thick black outline so the word reads as a single
+   cut-out sticker; boxed letters are inverted (white on black) */
+.stair-item .si-text, .mn-big {
+  color: var(--white);
+  filter: drop-shadow(.05em 0 0 var(--black)) drop-shadow(-.05em 0 0 var(--black)) drop-shadow(0 .05em 0 var(--black)) drop-shadow(0 -.05em 0 var(--black)) drop-shadow(.06em .07em 0 var(--black));
 }
-.stair-item.on { color: var(--white); --sc: 1.08; transform: rotate(-9deg) scale(var(--sc)); }
-.stair-item.on::before { transform: scaleX(1) skew(var(--skew)); }
-.stair-item.on .si-text { text-shadow: 5px 5px 0 var(--red); animation: jolt .22s ease-out; }
-.stair.has-on .stair-item:not(.on) { --sc: .9; --op: 1; color: var(--black); text-shadow: 3px 3px 0 rgba(245, 245, 240, .22); }
+.stair-item .si-text .ct.box, .mn-big .ct.box { background: var(--black); color: var(--white); box-shadow: none; }
+/* the picked word: every letter on its own paper tile, the first one red, a small teal flag after it */
+.stair-item.on { --sc: 1.14; transform: rotate(-9deg) scale(var(--sc)); }
+.stair-item.on .si-text { animation: jolt .22s ease-out; }
+.stair-item.on .si-text .ct { padding: 0 .07em; margin-right: .03em; background: var(--white); color: var(--black); box-shadow: .05em .05em 0 var(--black); }
+.stair-item.on .si-text .ct:first-child { background: var(--red); color: var(--white); }
+.stair-item.on::after { content: ""; flex: none; width: .5em; height: .42em; margin-left: -6px; background: var(--teal); clip-path: polygon(0 0, 100% 30%, 20% 100%); filter: drop-shadow(2px 2px 0 var(--black)); }
+.stair.has-on .stair-item:not(.on) { --sc: .92; }
 @keyframes jolt { 0% { transform: translateX(-12px) scale(1.08); } 60% { transform: translateX(4px); } 100% { transform: none; } }
 .cursor-star { width: .42em; height: .42em; flex: none; opacity: 0; position: relative; z-index: 2; background: var(--yellow);
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
 .stair-item.on .cursor-star { opacity: 1; animation: spin 1.2s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.menu-teaser { position: absolute; right: var(--gutter); bottom: 16vh; max-width: 380px; font-size: 19px; }
-.menu-close { position: absolute; top: 14px; left: var(--gutter); }
+.si-seen { width: .34em; height: .34em; flex: none; position: relative; z-index: 2; background: var(--yellow);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); filter: drop-shadow(2px 2px 0 var(--black)); }
+.mn-tag { position: absolute; z-index: 2; top: 9vh; right: 7vw; display: grid; justify-items: end; rotate: -7deg; }
+.mn-tag b { padding: 4px 18px; font: 400 clamp(26px, 3vw, 44px)/1 var(--f-head); letter-spacing: 2px; background: var(--white); color: var(--black); border: 4px solid var(--black); box-shadow: 6px 6px 0 var(--red); }
+.mn-tag span { margin-top: 8px; padding: 3px 12px; font: 400 clamp(14px, 1.3vw, 19px)/1 var(--f-menu); letter-spacing: 3px; text-transform: uppercase; background: var(--black); color: var(--white); border: 2px solid var(--white); }
+.mn-num { position: absolute; z-index: 2; top: calc(9vh + 150px); right: 9vw; display: flex; gap: .04em; rotate: -8deg; font-family: var(--f-head); font-size: clamp(80px, min(13vw, 21vh), 220px); line-height: .92; }
+.mn-d { display: inline-block; padding: 0 .08em; border: .03em solid var(--black); box-shadow: .05em .05em 0 var(--black); }
+.mn-d0 { background: var(--white); color: var(--black); rotate: -5deg; }
+.mn-d1 { background: var(--black); color: var(--white); border-color: var(--white); rotate: 6deg; translate: 0 .08em; box-shadow: .05em .05em 0 var(--red); }
+.mn-big { position: absolute; z-index: 2; left: 47vw; bottom: 11vh; font-size: clamp(54px, min(8vw, 15vh), 140px); line-height: 1; white-space: nowrap; rotate: -4deg; transform-origin: left bottom; pointer-events: none; }
+.menu-teaser { position: absolute; z-index: 2; left: 48vw; bottom: 4vh; max-width: min(560px, 48vw); padding: 6px 14px; background: var(--black); color: var(--white); font-family: var(--f-type); font-size: 18px; rotate: -2deg; box-shadow: 4px 4px 0 var(--white); }
+.mn-count { position: absolute; z-index: 2; left: var(--gutter); bottom: 5vh; display: flex; align-items: baseline; gap: 6px; rotate: -6deg; font-family: var(--f-head); color: var(--white); -webkit-text-stroke: 5px var(--black); paint-order: stroke fill; }
+.mn-count span { align-self: center; padding: 2px 8px; font: 400 20px var(--f-menu); letter-spacing: 3px; background: var(--black); color: var(--white); -webkit-text-stroke: 0; }
+.mn-count b { font-size: clamp(40px, 5vw, 72px); font-weight: 400; }
+.mn-count i { font-style: normal; font-size: clamp(28px, 3vw, 44px); }
+.menu-close { position: absolute; z-index: 3; top: 14px; left: var(--gutter); }
+@media (max-width: 760px) {
+  .stair { top: 72px; }
+  .stair li { margin: 0 0 6px calc(var(--i) * 2.4vw); }
+  .stair-item { font-size: clamp(20px, min(7.6vw, 5.2vh), 40px); transform: rotate(-4deg) scale(var(--sc, 1)); }
+  .stair-item.on { --sc: 1.05; transform: rotate(-6deg) scale(var(--sc)); } /* its paper tiles already make it bigger */
+  .mn-tag, .mn-count { display: none; }
+  .mn-num { top: 64px; right: var(--gutter); font-size: clamp(54px, 18vw, 84px); }
+  .mn-big { left: var(--gutter); bottom: calc(4vh + 92px); font-size: clamp(40px, 13vw, 72px); }
+  .menu-teaser { left: var(--gutter); right: var(--gutter); bottom: 4vh; max-width: none; font-size: 15px; }
+}
+/* short screens (laptops at 720px, phones on their side): the list comes first */
+@media (max-height: 620px) { .mn-count { display: none; } .mn-big { font-size: clamp(40px, 12vh, 72px); bottom: calc(5vh + 52px); } }
+@media (max-width: 760px) and (max-height: 700px) { .mn-big { display: none; } .stair { top: 132px; } } /* small phones: the number says which one is picked, and the list starts under it */
+@media (max-height: 460px) { .mn-tag, .mn-big, .menu-teaser { display: none; } .mn-num { top: 18vh; font-size: 22vh; } .stair { top: 74px; } .stair li { margin-bottom: 0; } .stair-item { font-size: clamp(20px, 6.6vh, 40px); } }
 
 /* ============ MODAL ============ */
 .modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, .74); animation: modalBg .18s ease-out; }
@@ -674,16 +700,7 @@ body.reduce-motion .hud-btn.menu-hot, body.reduce-motion .hud-btn.menu-hot::afte
 /* key hints: only for keyboard users (they meant nothing to mouse/touch, and sat on top of content) */
 .keyhints { display: none; }
 body.kbd:not([data-screen="title"]):not([data-mode="quick"]):not([data-mode="board"]) .keyhints { display: flex; }
-/* menu: black words with a white ink outline read on the red AND the black diagonal; seen chapters get THE PLAN's star */
-.stair-item:not(.on) { -webkit-text-stroke: 2px var(--white); paint-order: stroke fill; }
-.stair.has-on .stair-item:not(.on) { text-shadow: none; }
-.stair-item { white-space: nowrap; }
-.si-seen { width: .34em; height: .34em; flex: none; position: relative; z-index: 2; background: var(--yellow); -webkit-text-stroke: 0;
-  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); filter: drop-shadow(2px 2px 0 var(--black)); }
 @media (max-width: 760px) {
-  .stair li { margin: 0 0 8px calc(var(--i) * 10px); }
-  .stair-item { transform: rotate(-3deg) scale(var(--sc, 1)); }
-  .stair-item.on { transform: rotate(-4deg) scale(var(--sc)); }
   .ach-word { display: none; }
 }
 /* page subtitles sit on an ink strip so they read over the busy city */
