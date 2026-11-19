@@ -67,7 +67,7 @@ function ensure() {
 }
 
 /* ---------- real recordings ----------
-   Fetched only once sound is on (5 clips, ~64 KB, mono MP3). Each entry is where its moment (the pass, the
+   Fetched only once sound is on (8 clips, ~130 KB, mono MP3). Each entry is where its moment (the pass, the
    crack, the hit) sits inside the clip, in seconds, so it can land on the exact frame. Until a clip
    has loaded (or if it fails), its voice plays the synthesized version instead. */
 const CLIP_HIT = {
@@ -76,6 +76,9 @@ const CLIP_HIT = {
   'hit-slap': 0.1,
   'metal-clang': 0.01,
   'car-pass': 1.77,
+  'train-pass': 0.82, // the loudest wheel crash as the tram passes the mic
+  'train-brake': 0, // starts on the cut: the squeal peaks ~1.2s in, as the station stops in the windows
+  'glass-break': 0.11, // the pane giving way
 };
 const clips = {};
 let clipsReady = null;
@@ -821,10 +824,13 @@ const live = new Set();
 /* Real recordings only where one passed BOTH ears checks (DESIGN.md "Sound"): alone (3 listens,
    averaged) and against the synthesized voice in a blind A/B (5 rounds, majority): the whoosh, the
    whip wind-up, Quick View's paper slide, the sticker slap, the CLEARED stamp's clang + slap, the car
-   on the city billboard. Everything else (train, wind, glass, paper tear, folder slap, whip crack,
-   neon buzz, CRT, UI, fanfares) stays synthesized: the recordings lost or none was reachable. The code-made versions stay as
-   SYNTH fallbacks until a clip has loaded. Levels were matched to them by offline renders. */
+   on the city billboard, the train passing (PRESS START), the train braking (NEXT STOP), the glass
+   shattering. Everything else (wind, paper tear, folder slap, whip crack, horn, chime, neon buzz,
+   CRT, UI, fanfares) stays synthesized: the recordings lost or none was reachable. The code-made
+   versions stay as SYNTH fallbacks until a clip has loaded. Levels were matched to them by offline renders. */
 const SYNTH = { ...VOICES };
+/* clip levels, matched to the synthesized versions by offline renders (peaks kept under 1.0) */
+const TRAIN = { pass: 0.66, horn: 0.1, brake: 0.32, glass: 0.5 };
 Object.assign(VOICES, {
   whoosh: (bus, at, v = 1) => clip(bus, 'whoosh-b', at + 0.06, { gain: 0.6 * v, align: false }) || SYNTH.whoosh(bus, at, v),
   whipWind: (bus, at) => (clip(bus, 'whoosh-b', at, { gain: 0.35, align: false, rate: 0.85 }) && clip(bus, 'whoosh-b', at + 0.13, { gain: 0.45, align: false, rate: 1.1 })) || SYNTH.whipWind(bus, at),
@@ -840,6 +846,26 @@ Object.assign(VOICES, {
     tone(bus, { at, dur: 0.7, from: 95, to: 28, type: 'sine', gain: 0.8 });
     [784, 1047, 1319].forEach((f, i) => tone(bus, { at: at + 0.14 + i * 0.05, dur: 0.1, from: f, to: f, type: 'triangle', gain: 0.22 }));
     tone(bus, { at: at + 0.29, dur: 0.46, from: 1568, to: 1568, type: 'triangle', gain: 0.2 });
+  },
+  /* PRESS START: a real tram storming past the mic (steel wheels slamming the rail joints, motor,
+     air), its loudest crash on the frame the nose passes the camera (0.74s). The horn and the paper
+     flying stay synthesized (no recorded horn passed). Faded out under the cut to the board. */
+  tunnel: (bus, at) => {
+    if (!clip(bus, 'train-pass', at + 0.74, { gain: TRAIN.pass, env: [[0, 1], [1.25, 1], [1.7, 0]] })) return SYNTH.tunnel(bus, at);
+    trainHorn(bus, at + 0.02, 1.5, TRAIN.horn, { fadeIn: 0.3, peak: 0.74, drop: 0.88 });
+    flutter(bus, at + 0.6, 0.45, 0.14);
+  },
+  /* NEXT STOP: a real train braking into a station (wheels grinding, the brake squeal swelling as
+     the station stops in the windows), then the two-note station chime (a PA tone, synthesized) */
+  train: (bus, at) => {
+    if (!clip(bus, 'train-brake', at, { gain: TRAIN.brake, env: [[0, 1], [1.3, 1], [1.75, 0]] })) return SYNTH.train(bus, at);
+    tone(bus, { at: at + 0.98, dur: 0.24, from: 1319, to: 1319, type: 'sine', gain: 0.1 }); // ding
+    tone(bus, { at: at + 1.16, dur: 0.36, from: 1047, to: 1047, type: 'sine', gain: 0.1 }); // dong
+  },
+  /* the pane giving way: a real window smashing, a low thump under it for weight */
+  shatter: (bus, at) => {
+    if (!clip(bus, 'glass-break', at, { gain: TRAIN.glass })) return SYNTH.shatter(bus, at);
+    tone(bus, { at, dur: 0.18, from: 160, to: 70, gain: 0.3 });
   },
   /* the city billboard: a real car rushes past under the light trails, a horn far off */
   city: (bus, at) => {

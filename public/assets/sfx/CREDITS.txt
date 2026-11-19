@@ -9,6 +9,28 @@ car-pass.mp3
   Changes: trimmed to one pass-by, faded in/out, level adjusted, mono MP3.
   This modified clip is shared under CC BY-SA 4.0.
 
+train-pass.mp3
+  From "Ratelend voetgangerslicht en voorbij rijdende tram - SoundCloud - Campos.ogg"
+  (a tram passing on Museumplein, Amsterdam) by Campos
+  Source: https://commons.wikimedia.org/wiki/File:Ratelend_voetgangerslicht_en_voorbij_rijdende_tram_-_SoundCloud_-_Campos.ogg
+  Found via https://github.com/CorbetQ/tramsim (samples/sources.json)
+  License: CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/
+  Changes: trimmed to 2 s around the pass (21.8-23.8 s), faded in/out, level adjusted, mono MP3.
+  This modified clip is shared under CC BY-SA 3.0.
+
+train-brake.mp3
+  From "Arrivée d'une rame Citadis 402 à la station Porte d'Ivry.ogg" by Litlok
+  Source: https://commons.wikimedia.org/wiki/File:Arriv%C3%A9e_d%27une_rame_Citadis_402_%C3%A0_la_station_Porte_d%27Ivry.ogg
+  Found via https://github.com/CorbetQ/tramsim (samples/sources.json)
+  License: CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/
+  Changes: trimmed to 2 s of braking (16.9-18.9 s), faded in/out, level adjusted, mono MP3.
+  This modified clip is shared under CC BY-SA 4.0.
+
+glass-break.mp3
+  "glass-breaking-2" (western-fps-2d) from the Superpowers Asset Packs by Pixel-boy (Sparklin Labs)
+  Source: https://github.com/sparklinlabs/superpowers-asset-packs (mirrored in https://github.com/EternityForest/Free-SFX)
+  License: CC0 1.0 https://creativecommons.org/publicdomain/zero/1.0/
+
 whoosh-b.mp3
   "swish-4" from "Swishes Sound Pack" by artisticdude
   Source: https://opengameart.org/content/swishes-sound-pack
