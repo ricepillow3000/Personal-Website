@@ -969,7 +969,8 @@ const SYNTH = { ...VOICES };
 const TRAIN = { pass: 0.66, horn: 0.1, brake: 0.32, glass: 0.5 };
 /* ---------- the loading screen (src/ui/loader.js; first the lock, Nov 19, John: "the lock actually makes
    lock noises... hear the pins click up, then a sound easing into the first screen"; now TAKE YOUR
-   NETWORK: lockTick for each letter that fills, lockPin for each word that completes).
+   NOTES: lockTick for each letter that fills, wordDone for each word that completes, underline when NOTES
+   is underlined).
    All synthesized. A pin: a tiny dry click, a short bright ring from the pin and a low tick as its
    spring seats; each pin a step higher. The key: a short metal scrape, then a solid clunk with a
    ring as the bolt gives. The doorway: air rushing through the keyhole, swelling and settling, a low
@@ -980,10 +981,14 @@ VOICES.lockPin = (bus, at, v = 1, i = 0) => {
   metalRing(bus, at, [[2650 * p, 'triangle', 0], [4100 * p, 'sine', 6]], { hp: 1800, peak: 0.11, decay: 0.05 });
   tone(bus, { at: at + 0.012, dur: 0.03, from: 420 * p, to: 300 * p, type: 'square', gain: 0.05 });
 };
-VOICES.wordDone = (bus, at, v = 1, i = 0) => { // a word of TAKE YOUR NETWORK is complete: the pin click plus a knock under it
+VOICES.wordDone = (bus, at, v = 1, i = 0) => { // a word of TAKE YOUR NOTES is complete: the pin click plus a knock under it
   VOICES.lockPin(bus, at, v, i);
   snap(bus, at, 240 * (1 + i * 0.1), 80, 0.07, 0.3);
   noise(bus, { at, dur: 0.03, type: 'bandpass', freq: 1200, q: 1.2, gain: 0.25 });
+};
+VOICES.underline = (bus, at) => { // a felt marker swiped under NOTES: a short squeaky drag, rising
+  sweep(bus, at, 1600, 3800, 0.22, 0.16, 3.2);
+  noise(bus, { at: at + 0.2, dur: 0.02, type: 'bandpass', freq: 2400, q: 2, gain: 0.18 }); // the marker lifts
 };
 VOICES.lockTick = (bus, at, v = 1, n = 0) => { // the tension wrench as the keyhole fills: soft, rising
   const p = 1 + n / 160;

@@ -1,7 +1,8 @@
 /* Paints the platform's graffiti the way a spray can does, and saves it as public/assets/film/graffiti.webp.
 
    Nov 19, John: "make the graffiti feel like actual graffiti, not a font pasted onto the pillar...
-   like someone shook a spray can and wrote TAKE YOUR NETWORK, with a cat". So nothing here is a font:
+   like someone shook a spray can and wrote TAKE YOUR NETWORK, with a cat"; the words became TAKE YOUR
+   NOTES the same day, the site's catchphrase). So nothing here is a font:
    every letter is a hand-drawn stroke (a few points per letter, nudged by an unsteady hand), and
    every stroke is sprayed: thousands of paint droplets scattered round a moving nozzle (a dense wet
    core, a soft mist of overspray), more paint where the hand slows at a corner or stops at a stroke's
@@ -45,6 +46,7 @@ const paint = () => {
     R: [[[1, 14], [1, 0], [6.2, 0], [9, 1.8], [9.2, 4.8], [6.4, 7], [1.2, 7]], [[5, 7], [9.8, 14]]],
     N: [[[1, 14], [1, 0], [9, 14], [9, 0]]],
     W: [[[0, 0], [2.4, 14], [5, 4.6], [7.6, 14], [10, 0]]],
+    S: [[[9, 1.6], [6.6, 0], [3, 0.2], [1, 2.6], [1.6, 5.4], [5, 7], [8.4, 8.6], [9.2, 11.4], [7.2, 13.8], [3.4, 14], [0.6, 12.2]]],
   };
 
   // smooth a polyline (Catmull-Rom) and resample it every ~1 px, with the hand's speed at each point
@@ -122,7 +124,7 @@ const paint = () => {
   const lines = [
     ...word('TAKE', 18, 70, 5.6, 2.2, 0.18, 15),
     ...word('YOUR', 24, 192, 5.0, 2.2, 0.18, 14),
-    ...word('NETWORK', 10, 324, 3.05, 2.4, 0.2, 9),
+    ...word('NOTES', 14, 318, 4.15, 2.4, 0.2, 11),
   ];
 
   // 1. the shadow pass: sprayed dark, a few px down-right, a little wider

@@ -12,7 +12,7 @@
    when the platform isn't on screen; steady with reduced motion.
 
    GRAFFITI (Nov 19, John: "on the right side, the wall that's pretty empty, a Persona-style graffiti
-   that says TAKE YOUR NETWORK, with a cat at the end"). An original piece sprayed on a pillar's front
+   that says TAKE YOUR NETWORK, with a cat at the end"; now TAKE YOUR NOTES, the site's catchphrase). An original piece sprayed on a pillar's front
    face on the right (a flat face square to the camera, so it needs no perspective): chunky slanted red
    letters sprayed by hand (Nov 19, John: "not a font pasted onto the pillar... like someone shook a
    spray can and wrote it"), see tools/draw-graffiti.mjs. Its own design (no game's logo, mascot or lettering). */
