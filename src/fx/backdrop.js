@@ -75,12 +75,10 @@ function wallLayer() {
    ========================================================================= */
 function graffitiLayer() {
   const posterA = torn(1120, 470, 280, 330, 11);
-  const posterB = torn(150, 120, 230, 170, 29);
   const tape = (x, y, r) => `<rect x="${x}" y="${y}" width="74" height="22" fill="${C.white}" opacity=".55" transform="rotate(${r} ${x + 37} ${y + 11})"/>`;
   return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   <defs>
     <pattern id="dotsR" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="2.6" fill="${C.red2}"/></pattern>
-    <pattern id="dotsW" width="11" height="11" patternUnits="userSpaceOnUse"><circle cx="5.5" cy="5.5" r="1.8" fill="${C.white}"/></pattern>
   </defs>
 
   <!-- giant stencil star with an offset red echo -->
@@ -99,13 +97,7 @@ function graffitiLayer() {
     <text x="1260" y="770" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="64" fill="${C.black}" letter-spacing="4">ATL</text>
     ${tape(1104, 456, -18)}<g class="atl-tape">${tape(1340, 452, 14)}</g>
   </g>
-  <!-- torn poster B: black paper, white halftone corner -->
-  <g transform="rotate(-7 265 205)">
-    ${poly(posterB, C.black)}
-    <rect x="160" y="130" width="120" height="150" fill="url(#dotsW)"/>
-    <text x="265" y="228" text-anchor="middle" font-family="'Permanent Marker', cursive" font-size="54" fill="${C.red2}">GO!</text>
-    ${tape(140, 104, -10)}
-  </g>
+  <!-- (the GO! poster that hung top-left was retired on Nov 19: the title's calendar sticker sits there now) -->
 
   <!-- swoosh arrow (wildstyle-ish), white with black outline -->
   <path class="bd-arrow" d="M520 420 C 700 330, 900 330, 1040 400 L 1060 360 L 1130 460 L 1010 488 L 1028 446 C 900 392, 720 400, 560 470 Z"
@@ -364,7 +356,7 @@ export function mountBackdrop(el) {
   fitBillboard(frame);
   startTicker(frame.querySelector('.bd-billboard'));
 
-  // tall screens only see a narrow slice of the wall: show its left side (GO! poster + star)
+  // tall screens only see a narrow slice of the wall: show its left side (the star)
   // instead of the empty middle
   const tall = window.matchMedia('(max-aspect-ratio: 1/1)');
   const graffiti = el.querySelector('.bd-graffiti svg');

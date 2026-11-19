@@ -161,9 +161,6 @@
 /* ===================== PHONES ===================== */
 @media (max-width: 760px) {
   .hud-tl { top: 8px; }
-  .hud-date { font-size: 40px; }
-  .hud-week { font-size: 20px; }
-  .hud-tod { font-size: 16px; }
   .hud-meta span { font-size: 11px; }
   .hud-tr { top: 8px; gap: 6px; }
   .hud-btn { font-size: 16px; padding: 4px 9px; }
@@ -196,6 +193,18 @@
   .ccard { aspect-ratio: auto; min-height: 300px; }
   .ccard-role, .ccard-line { max-width: 100%; }
   .ccard-back { background-image: none; }
+}
+/* short screens (landscape phones, Nov 19): the title used to run off the top (JOHN is sized by the
+   screen's width), so here it is sized by its height and the gaps tighten; the calendar is fitted by
+   the title fit guard (src/ui/titlefit.js) */
+@media (max-height: 520px) and (min-width: 560px) {
+  #screen-title.active { padding-bottom: 5vh; }
+  #screen-title .ransom-xl { font-size: clamp(40px, 14vh, 72px); }
+  .title-codename { margin: 6px 0 6px; font-size: 20px; }
+  .title-role { margin-bottom: 6px; font-size: 15px; }
+  .title-hook { margin-bottom: 12px; font-size: 14px; }
+  .press-start { font-size: 26px; padding: 3px 24px; }
+  .quick-link { margin-top: 8px; font-size: 15px; }
 }
 /* very narrow phones: the Quick View buttons keep to one row */
 /* short labels where the bar would touch the top row (phones, and laptops under 1100px since the contact plate) */
