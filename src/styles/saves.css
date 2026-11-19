@@ -20,7 +20,7 @@ body.sv-open { overflow: hidden; }
 .sv-title .ct.box { background: var(--black); color: var(--white); }
 .sv-title .ct:first-child { background: var(--white); color: var(--red); padding: 0 .06em; }
 /* the line sits at the top, beside the title, as plain bold white text (as the reference's question does) */
-.sv-sub { position: absolute; z-index: 3; left: max(29vw, 330px); right: 3vw; top: max(30px, 6vh); margin: 0; padding: 0;
+.sv-sub { position: absolute; z-index: 3; left: max(31vw, 360px); right: 3vw; top: max(30px, 6vh); margin: 0; padding: 0;
   font-family: var(--f-body); font-weight: 800; font-size: clamp(14px, 1.3vw, 18px); rotate: -5deg; transform-origin: left center; color: var(--white);
   text-shadow: 2px 2px 0 var(--black), -1px -1px 0 var(--black); }
 
@@ -55,19 +55,18 @@ body.sv-open { overflow: hidden; }
   font-family: var(--f-body); transition: grid-template-rows .26s cubic-bezier(.2, 1.1, .3, 1), transform .14s var(--ease-pop), background .08s steps(1); }
 .sv-slot.on { grid-template-rows: minmax(clamp(44px, 8.4vh, 86px), auto) 1fr; }
 .sv-slot:focus-visible { outline: none; }
-.sv-slot.on { background: var(--red); color: var(--white); box-shadow: inset 0 4px 0 var(--red), inset 0 7px 0 var(--black); transform: scale(1.04); transform-origin: left center; z-index: 3;
-  margin-left: calc(-1 * var(--arm)); width: calc(100% + var(--arm)); padding-left: calc(var(--arm) * .35); } /* (it reaches out left, under its arm) */
+.sv-slot.on { background: var(--red); color: var(--white); box-shadow: none; /* (no rule on top: the card and the L are one shape) */ transform: scale(1.04); transform-origin: left center; z-index: 3;
+  margin-left: calc(-1 * var(--arm)); width: calc(100% + var(--arm)); padding-left: calc(var(--arm) * .35); } /* (it reaches out left: the foot of the L) */
 .sv-slot { transition: grid-template-rows .26s cubic-bezier(.2, 1.1, .3, 1), transform .14s var(--ease-pop), background .08s steps(1), margin-left .22s cubic-bezier(.2, 1.3, .3, 1), width .22s cubic-bezier(.2, 1.3, .3, 1), padding-left .22s cubic-bezier(.2, 1.3, .3, 1); }
-/* the arm (John: "when clicking it, the box extends upwards to SAVE DATA... like an L laying right side up"):
-   the picked file's red runs up from its left end, past the files above it, into the title; it shoots up
-   when the file is picked and drops away when another is. A black film-strip edge runs down its left side */
-.sv-arm { position: absolute; z-index: 0; left: calc(-1 * var(--arm)); width: var(--arm); bottom: 30%; height: 160vh; pointer-events: none;
-  background: var(--red); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-  transform: scaleY(0); transform-origin: 50% 100%; transition: transform .16s cubic-bezier(.5, 0, .9, .5); }
-.sv-arm::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 16px;
-  background: repeating-linear-gradient(180deg, var(--black) 0 24px, transparent 24px 40px); }
-.sv-arm::after { content: ''; position: absolute; right: 12px; top: 0; bottom: 0; width: 3px; background: var(--white); opacity: .85; }
-.sv-li:has(.sv-slot.on) .sv-arm { transform: scaleY(1); transition: transform .3s cubic-bezier(.2, 1.25, .35, 1); }
+/* the red L lives in an svg behind the stack (src/scenes/saves.js drawL): one shape, the same red as the
+   picked card, which it meets at that card's left end; the title and the cards above lie on top of it */
+.sv-l { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.sv-l-red { fill: var(--red); }
+.sv-l-dash { stroke: var(--black); stroke-width: 12; stroke-dasharray: 34 26; }
+.sv-l-edge { fill: none; stroke: var(--white); stroke-width: 3; stroke-linejoin: miter; }
+.sv-mk { position: absolute; left: 0; width: 0; height: 0; }
+.sv-mk[data-mk="a"] { top: 0; }
+.sv-mk[data-mk="b"] { bottom: 0; }
 .sv-li:has(.sv-slot.on) { z-index: 3; filter: drop-shadow(9px 9px 0 var(--black)); }
 
 /* the left end of every card not picked carries a black-and-white film-strip edge (the reference's texture) */
@@ -165,7 +164,6 @@ body.sv-open { overflow: hidden; }
   .sv-title { top: max(18px, 3vh); font-size: clamp(34px, 11vw, 52px); }
   .sv-sub { left: var(--gutter); right: var(--gutter); top: 74px; bottom: auto; font-size: 12px; padding: 3px 8px; rotate: -3deg; background: var(--black); border: 2px solid var(--white); text-shadow: none; }
   .sv-list { --fan: .5deg; --ov: 14px; --arm: 22px; left: calc(4px + var(--arm)); right: -14px; top: 136px; rotate: -5deg; --off: 0px; transform: perspective(900px) rotateY(10deg); }
-  .sv-arm::before { left: 4px; width: 8px; } .sv-arm::after { display: none; }
   .sv-stripes i:nth-child(n+2) { display: none; }
   .sv-li { margin-left: calc(var(--i) * -.6vw); zoom: calc(1 + var(--i) * .02); }
   .sv-slot { grid-template-columns: auto 1fr auto; grid-template-rows: auto auto 0fr; padding-right: 30px; column-gap: 10px; }

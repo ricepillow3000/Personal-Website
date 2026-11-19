@@ -508,16 +508,22 @@ test('SAVE DATA is a stack: every card peeks out, and picking one opens it and s
   await expect(slot(0).locator('.sv-go')).toBeVisible();
   expect(await slot(3).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeLessThan(2); // closed cards keep their details row shut
   expect(await slot(0).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeGreaterThan(20);
-  // all black behind the files (no red band); the picked file's red arm runs up into SAVE DATA (an L), the others' stay down
+  // all black behind the files (no red band); the picked file and a red column are ONE L: the red runs from the
+  // picked card's left end up behind the whole SAVE DATA title, and meets the card exactly
   await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); // file 3 picked
   await settle();
-  const arm = await page.evaluate(() => {
+  const L = await page.evaluate(() => {
     const t = document.querySelector('#saves .sv-title').getBoundingClientRect();
-    const arms = [...document.querySelectorAll('#saves .sv-arm')].map((a) => a.getBoundingClientRect());
-    return { bg: getComputedStyle(document.querySelector('#saves')).backgroundColor, band: document.querySelectorAll('#saves .sv-band').length,
-      up: arms[2].top <= t.bottom, tall: arms[2].height > 200, others: [...document.querySelectorAll('#saves .sv-arm')].filter((a, k) => k !== 2).every((a) => /^matrix\(1, 0, 0, 0,/.test(getComputedStyle(a).transform)), /* (the others are folded flat: scaleY 0) */ red: getComputedStyle(document.querySelectorAll('#saves .sv-arm')[2]).backgroundColor };
+    const pts = document.querySelector('#saves .sv-l-red').getAttribute('points').split(' ').map((q) => q.split(',').map(Number));
+    const b = document.querySelector('#saves .sv-slot.on [data-mk="b"]').getBoundingClientRect();
+    const xs = pts.map((q) => q[0]); const ys = pts.map((q) => q[1]);
+    const red = getComputedStyle(document.querySelector('#saves .sv-l-red')).fill;
+    const slab = getComputedStyle(document.querySelector('#saves .sv-slot.on')).backgroundColor;
+    return { bg: getComputedStyle(document.querySelector('#saves')).backgroundColor, band: document.querySelectorAll('#saves .sv-band, #saves .sv-arm').length,
+      coversTitle: Math.min(...xs) <= t.left && Math.max(...xs) >= t.right && Math.min(...ys) <= t.top,
+      meetsCard: Math.abs(pts[4][0] - b.left) < 2 && Math.abs(pts[4][1] - b.top) < 2, sameRed: red === slab, red };
   });
-  expect(arm).toEqual({ bg: 'rgb(11, 11, 11)', band: 0, up: true, tall: true, others: true, red: 'rgb(229, 25, 28)' });
+  expect(L).toEqual({ bg: 'rgb(11, 11, 11)', band: 0, coversTitle: true, meetsCard: true, sameRed: true, red: 'rgb(229, 25, 28)' });
   expect(errors).toEqual([]);
 });
 
