@@ -134,7 +134,7 @@ From John's research notes (kept verbatim in spirit):
 - Contrast: body text ≥ 4.5:1. Numbers on stars: **black on yellow** (red stars with outlined white numbers failed contrast).
 - **Yellow text on red fails** (3.6:1). Put yellow text on a black slab, or use white/black on red.
 - Dimmed states (other skills while one is lit) stay readable: dim to about 60%, not 45%.
-- `color-scheme: dark`; theme-color red.
+- `color-scheme: dark`; **theme-color black** (`#0B0B0B`, Nov 19: browsers and the Claude app tint their bars and frames with it, and red read as a thick red border round the station on a phone held sideways).
 
 ## 5. Typography
 
