@@ -917,6 +917,11 @@ VOICES.lockPin = (bus, at, v = 1, i = 0) => {
   metalRing(bus, at, [[2650 * p, 'triangle', 0], [4100 * p, 'sine', 6]], { hp: 1800, peak: 0.11, decay: 0.05 });
   tone(bus, { at: at + 0.012, dur: 0.03, from: 420 * p, to: 300 * p, type: 'square', gain: 0.05 });
 };
+VOICES.lockTick = (bus, at, v = 1, n = 0) => { // the tension wrench as the keyhole fills: soft, rising
+  const p = 1 + n / 160;
+  noise(bus, { at, dur: 0.004, type: 'highpass', freq: 6000, gain: 0.16 });
+  metalRing(bus, at, [[3200 * p, 'triangle', 0]], { hp: 2400, peak: 0.035, decay: 0.018 });
+};
 VOICES.lockTurn = (bus, at) => {
   sweep(bus, at, 900, 2800, 0.2, 0.1, 2.5); // the key scraping round
   noise(bus, { at: at + 0.22, dur: 0.04, type: 'lowpass', freq: 1400, q: 0.7, gain: 0.45 }); // the bolt
@@ -1026,7 +1031,14 @@ export function hush() {
    neo-soul loop. Its code downloads only once sound is turned on. It ducks under the sound effects
    (sfx() dips the duck fader for a moment) so a click or a film cut always reads clearly. */
 let musicLoading = false;
+/* the lock picks with its own sounds: the music waits until its doorway has opened */
+let musicHeld = false;
+export function holdMusic(until) {
+  musicHeld = true;
+  until.then(() => { musicHeld = false; if (enabled() && ac && ac.state === 'running') startMusic(); });
+}
 function startMusic() {
+  if (musicHeld) return;
   if (!enabled() || !ensure() || music || musicLoading) return;
   if (ac.state === 'suspended') ac.resume();
   musicLoading = true;

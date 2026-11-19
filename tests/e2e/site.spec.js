@@ -905,33 +905,39 @@ test('train horn: it dips in pitch as the train passes (a Doppler drop), never b
   for (const c of calls) expect(c, c).toContain('drop: HORN_DOPPLER');
 });
 
-test('the lock: its keyhole fills and its pins set as the page loads, the key turns into a doorway to the station, and a tap skips it', async ({ browser }) => {
+test('the lock: it waits for TAP TO PICK THE LOCK; the tap picks it (keyhole fills, all 4 pins set) and the key turns into a doorway to the station', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
   const page = await ctx.newPage();
-  await page.route('**/assets/film/subway*', async (r) => { await new Promise((s) => setTimeout(s, 1200)); await r.continue(); });
-  await page.goto('/?intro', { waitUntil: 'commit' });
-  await expect(page.locator('#loader')).toBeVisible();
+  await page.goto('/?intro');
+  await expect(page.locator('#loader .ld-go')).toContainText('TAP TO PICK THE LOCK');
+  await page.waitForTimeout(800);
+  await expect(page.locator('#loader [role=progressbar]')).toHaveAttribute('aria-valuenow', '0'); // it waits for the visitor
   await expect(page.locator('#loader .ld-pin')).toHaveCount(4);
+  await page.mouse.click(300, 300); // the tap
+  await expect(page.locator('#loader')).toHaveClass(/picking/);
   let pinsSet = 0;
   const seen = new Set();
   for (let i = 0; i < 200 && (await page.locator('#loader').count()); i++) {
     const v = await page.locator('#loader [role=progressbar]').getAttribute('aria-valuenow', { timeout: 500 }).catch(() => null);
     if (v !== null) seen.add(Number(v));
     pinsSet = Math.max(pinsSet, await page.locator('#loader .ld-pin.set').count().catch(() => 0));
-    await page.waitForTimeout(60);
+    await page.waitForTimeout(40);
   }
   const values = [...seen];
-  expect(Math.max(...values)).toBe(100); // it reached 100%...
-  expect(values.some((v) => v > 0 && v < 100)).toBe(true); // ...through the steps in between
-  expect(pinsSet).toBe(4); // every pin snapped into place
-  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 8000 }); // the doorway opened and it is gone
+  expect(Math.max(...values)).toBe(100);
+  expect(values.filter((v) => v > 0 && v < 100).length).toBeGreaterThan(3); // a steady climb, not a jump
+  expect(pinsSet).toBe(4);
+  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 8000 });
   await expect(page.locator('#pressStart')).toBeVisible();
-  // a tap skips straight to the doorway
-  const p2 = await ctx.newPage();
-  await p2.goto('/?intro', { waitUntil: 'commit' });
-  await p2.locator('#loader').waitFor();
-  await p2.mouse.click(200, 200);
-  await expect(p2.locator('#loader')).toHaveCount(0, { timeout: 3000 });
+  await ctx.close();
+});
+
+test('the lock: nobody taps, it opens by itself a few seconds after the page has loaded (never a trap)', async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
+  const page = await ctx.newPage();
+  await page.goto('/?intro');
+  await expect(page.locator('#loader')).toHaveCount(1);
+  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 15000 });
   await ctx.close();
 });
 
@@ -959,7 +965,7 @@ test('turn your phone: a red reminder on phones held upright, once a visit; turn
   await ctx.close();
 });
 
-test('the lock: with sound on by default its switch reads TAP FOR SOUND, that tap starts the sound without skipping the lock, a second tap mutes, the HUD follows', async ({ browser }) => {
+test('the lock: the tap that picks it turns the sound on, and the music waits until the doorway has opened', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
   const page = await ctx.newPage();
   // the test browser lets audio start without a tap (an automation flag); real browsers don't: emulate them
@@ -972,16 +978,16 @@ test('the lock: with sound on by default its switch reads TAP FOR SOUND, that ta
       resume() { return allowed ? super.resume() : Promise.resolve(); }
     };
   });
-  await page.route('**/assets/film/subway*', async (r) => { await new Promise((s) => setTimeout(s, 3000)); await r.continue(); });
-  await page.goto('/?intro', { waitUntil: 'commit' });
-  const sw = page.locator('#loader .ld-sound');
-  await expect(sw).toContainText('TAP FOR SOUND');
-  await sw.click();
-  await expect(sw).toContainText('SOUND ON');
-  await expect(page.locator('#loader')).toHaveCount(1); // still picking the lock (not a skip)
-  await sw.click();
-  await expect(sw).toContainText('SOUND OFF');
-  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 9000 });
-  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'false');
+  const music = [];
+  page.on('request', (r) => /\/music[-.]/.test(r.url()) && music.push(Date.now()));
+  await page.goto('/?intro');
+  await page.waitForTimeout(800);
+  expect(music).toEqual([]);
+  await page.mouse.click(300, 300);
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 8000 });
+  const doorAt = Date.now();
+  await expect.poll(() => music.length, { timeout: 5000 }).toBe(1);
+  expect(music[0]).toBeGreaterThanOrEqual(doorAt - 400); // the music came after the doorway, not over the lock
   await ctx.close();
 });

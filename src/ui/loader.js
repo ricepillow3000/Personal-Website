@@ -11,13 +11,16 @@
    screen). Progress is real: the code running, the brand fonts, the platform's sharp picture, the
    page's load event; the number eases toward it (never backward, never faster than it can be read).
 
-   Never a trap: a tap or a key skips straight to the doorway, it never waits more than CAP ms,
+   Heard (Nov 19, John: "sound on by default so users can hear the loading bar until 100, the clicks
+   of the 4 pins, the lock unlocking and the zoom into the subway"): browsers play no sound before
+   the visitor's first tap, so the lock waits for one, TAP TO PICK THE LOCK (any tap, click or key),
+   while the page loads quietly behind it; that tap turns the sound on and the pick plays with it.
+   Never a trap: nobody tapping, it opens by itself GRACE ms after the page has loaded (silently);
    if the script fails a CSS fallback hides it, and with reduced motion it simply fades. Automated
    test browsers skip it unless the URL asks for it (?intro), so the other tests see the page at once. */
 import { reducedMotion, fontsReady } from '../core/util.js';
 import { stationReady } from '../fx/backdrop.js';
-import { sfx, setSound, audioLive } from '../audio/audio.js';
-import { store } from '../core/store.js';
+import { sfx, holdMusic } from '../audio/audio.js';
 
 let opened;
 /** resolves the moment the doorway opens (at once when there is no lock screen): the title's own
@@ -26,8 +29,9 @@ export const introOpen = new Promise((r) => { opened = r; });
 // the keyhole's outline in units of its round top's radius (y down): an arc over the top, a neck that
 // widens to the foot (the same shape as the lock in app.html, there at radius 28)
 const KEYHOLE = [[0.527, 0.85], [0.697, 0.718], [0.834, 0.552], [0.933, 0.361], [0.988, 0.153], [0.998, -0.062], [0.962, -0.274], [0.881, -0.473], [0.759, -0.651], [0.603, -0.798], [0.418, -0.909], [0.214, -0.977], [0, -1], [-0.214, -0.977], [-0.418, -0.909], [-0.603, -0.798], [-0.759, -0.651], [-0.881, -0.473], [-0.962, -0.274], [-0.998, -0.062], [-0.988, 0.153], [-0.933, 0.361], [-0.834, 0.552], [-0.697, 0.718], [-0.527, 0.85], [-0.8, 2.2], [0.8, 2.2]];
-const CAP = 6000; // ms: the doorway opens by then whatever is still loading
-const MIN = 900; // ms: a cached visit still sees the lock picked (it is the intro, not a wait)
+const CAP = 6000; // ms: counted as loaded by then whatever is still coming
+const GRACE = 5000; // ms after loading: nobody tapped, so the lock opens by itself (silently)
+const PICK = 1400; // ms: the shortest pick, 0 to 100 (so every tick and pin is heard)
 
 export function runLoader() {
   const el = document.getElementById('loader');
@@ -37,84 +41,77 @@ export function runLoader() {
     opened();
     return Promise.resolve();
   }
-  const t0 = performance.now();
   const bar = el.querySelector('[role="progressbar"]');
   const num = el.querySelector('#ldNum');
   const level = el.querySelector('#ldLevel');
   const pins = [...el.querySelectorAll('.ld-pin')];
-  let pinsSet = 0;
-  /* sound (Nov 19): on by default, but browsers stay silent until the visitor taps or presses a key.
-     So while it is on but not yet allowed, the switch reads TAP FOR SOUND, and that tap starts it
-     (without skipping the lock); once it plays, the switch is a plain ON/OFF. */
-  const sw = el.querySelector('.ld-sound');
-  const showSound = () => {
-    const on = store.get().settings.sound;
-    const waiting = on && !audioLive();
-    sw.setAttribute('aria-pressed', String(on && !waiting));
-    sw.classList.toggle('wait', waiting);
-    sw.querySelector('.ld-sw').innerHTML = waiting ? 'TAP FOR <b>SOUND</b>' : `SOUND <b>${on ? 'ON' : 'OFF'}</b>`;
-  };
-  if (sw) {
-    showSound();
-    let unlocking = false; // decided when the finger lands: the page's own wake-up runs before the click
-    sw.addEventListener('pointerdown', (e) => { e.stopPropagation(); unlocking = sw.classList.contains('wait'); }); // a tap on TAP FOR SOUND means sound (and is not a skip)
-    sw.addEventListener('keydown', (e) => e.stopPropagation());
-    sw.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const on = store.get().settings.sound;
-      setSound(unlocking || (on && !audioLive()) ? true : !on); // the tap that unlocks keeps it on
-      unlocking = false;
-      setTimeout(showSound, 60);
-      window.dispatchEvent(new Event('jn-sound')); // the HUD's sound button follows
-      if (store.get().settings.sound) sfx('toggle');
-    });
-  }
-  let target = 12; // the page's own code is running
+  const go = el.querySelector('.ld-go');
+  let target = 12; // the page's own code is running (loading goes on quietly while the lock waits)
   let shown = 0;
   let last = -1;
+  let lastTick = 0;
+  let pinsSet = 0;
+  let picking = false;
   let done = false;
   let finish;
   const finished = new Promise((r) => { finish = r; });
-  const bump = (v) => { target = Math.max(target, v); };
+  let auto = 0;
+  const bump = (v) => {
+    target = Math.max(target, v);
+    // nobody tapped: the lock opens by itself (silently) a few seconds after the page has loaded
+    if (target >= 100 && !picking && !auto) auto = setTimeout(start, GRACE);
+  };
   fontsReady(3500).then(() => bump(40));
   stationReady().then(() => bump(88));
   const loaded = () => bump(100);
   if (document.readyState === 'complete') loaded();
   else window.addEventListener('load', loaded, { once: true });
-  const cap = setTimeout(() => bump(100), CAP);
-  let skipped = false;
-  const skip = () => { skipped = true; bump(100); shown = 100; }; // straight to the doorway
-  el.addEventListener('pointerdown', skip);
-  window.addEventListener('keydown', skip, { once: true });
+  setTimeout(() => bump(100), CAP);
 
-  // the fill: eases toward the real progress; 100% only once MIN has passed
-  const tick = () => {
+  /* The visitor's tap (or click, or key) picks the lock. Browsers allow a page no sound before one, so
+     this tap is what lets the lock be heard: audio.js's own wake-up turns the sound on in the same
+     tap, the music waits until the doorway has opened, and every tick, pin and the bolt play. */
+  const START = ['pointerup', 'keydown'];
+  function start(e) {
+    if (picking || (e && e.type === 'keydown' && e.key === 'Escape')) return;
+    picking = true;
+    clearTimeout(auto);
+    START.forEach((t) => window.removeEventListener(t, start));
+    el.classList.add('picking');
+    if (go) go.disabled = true;
+    requestAnimationFrame(tick);
+  }
+  holdMusic(finished); // (from the start: the page's wake-up runs before this, in the same tap)
+  START.forEach((t) => window.addEventListener(t, start));
+  if (go) requestAnimationFrame(() => go.focus({ preventScroll: true }));
+
+  // the pick: the fill climbs toward the real progress, never faster than PICK ms from 0 to 100, so
+  // every tick and every pin is heard: soft rising ticks as the keyhole fills, a click per pin
+  let prev = 0;
+  const tick = (now) => {
     if (done) return;
-    const goal = !skipped && performance.now() - t0 < MIN ? Math.min(target, 96) : target;
-    shown += Math.max(0.4, (goal - shown) * 0.12);
-    shown = Math.min(shown, goal);
+    const dt = Math.min(64, now - (prev || now));
+    prev = now;
+    shown = Math.min(target, shown + dt * (100 / PICK)); // a steady climb (slower if the page is still loading)
     const n = Math.round(shown);
     if (n !== last) { // (only when the number changes: no work on the frames in between)
       last = n;
       num.textContent = String(n);
       bar.setAttribute('aria-valuenow', String(n));
       level.setAttribute('y', (44 - shown * 0.95).toFixed(1)); // the red rises from the keyhole's foot (y 42) past its top (-48)
+      if (n >= lastTick + 5) { lastTick = n - (n % 5); sfx('lockTick', n); } // the tension wrench, rising as it goes
       pins.forEach((p) => p.classList.toggle('set', n >= Number(p.dataset.at))); // each pin snaps up as its step lands
-      if (sw) showSound(); // (the browser may let sound start on its own: the label follows)
-      const now = pins.filter((p) => n >= Number(p.dataset.at)).length;
-      for (let k = pinsSet; k < now; k++) setTimeout(() => sfx('lockPin', k), (k - pinsSet) * 80); // a click per pin, never two at once
-      pinsSet = Math.max(pinsSet, now);
+      const now2 = pins.filter((p) => n >= Number(p.dataset.at)).length;
+      for (let k = pinsSet; k < now2; k++) setTimeout(() => sfx('lockPin', k), (k - pinsSet) * 90); // a click per pin, never two at once
+      pinsSet = Math.max(pinsSet, now2);
     }
     if (shown >= 100) {
       done = true;
-      clearTimeout(cap);
-      window.removeEventListener('keydown', skip);
-      door(el).then(finish);
+      setTimeout(() => door(el).then(finish), 120);
       return;
     }
     requestAnimationFrame(tick);
   };
-  requestAnimationFrame(tick);
   return finished;
 }
 
