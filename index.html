@@ -18,10 +18,26 @@
   <!-- fonts load without blocking the first paint (they already use display=swap) -->
   <link id="gfonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800&family=Barlow+Semi+Condensed:wght@500;600;700&family=Permanent+Marker&family=Special+Elite&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800&family=Barlow+Semi+Condensed:wght@500;600;700&family=Permanent+Marker&family=Special+Elite&display=swap"></noscript>
-  <script type="module" crossorigin src="/assets/main-B2Jrf-6_.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/main-CZd1_hnc.css">
+  <style>.loader{position:fixed;inset:0;z-index:9999;background:#0B0B0B;display:grid;place-items:center}.ld-star{width:min(46vmin,290px);height:auto}</style>
+  <script type="module" crossorigin src="/assets/main-DrU3H_VD.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/main-DKnPIpw1.css">
 </head>
 <body data-screen="boot">
+  <!-- the loading star (src/ui/loader.js): on screen from the first paint, fills as the page loads,
+       then becomes the doorway into the station -->
+  <div class="loader" id="loader" role="progressbar" aria-label="Loading the station" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <div class="ld-core">
+      <svg class="ld-star" viewBox="-115 -115 230 230" aria-hidden="true">
+        <defs><clipPath id="ldClip"><rect id="ldLevel" x="-120" y="100" width="240" height="240" /></clipPath></defs>
+        <path class="ld-mis" transform="translate(9 8)" d="M0.0 -100.0L26.5 -36.4L95.1 -30.9L42.8 13.9L58.8 80.9L0.0 45.0L-58.8 80.9L-42.8 13.9L-95.1 -30.9L-26.5 -36.4Z" />
+        <path class="ld-shell" d="M0.0 -100.0L26.5 -36.4L95.1 -30.9L42.8 13.9L58.8 80.9L0.0 45.0L-58.8 80.9L-42.8 13.9L-95.1 -30.9L-26.5 -36.4Z" />
+        <path class="ld-fill" clip-path="url(#ldClip)" d="M0.0 -100.0L26.5 -36.4L95.1 -30.9L42.8 13.9L58.8 80.9L0.0 45.0L-58.8 80.9L-42.8 13.9L-95.1 -30.9L-26.5 -36.4Z" />
+        <path class="ld-edge" d="M0.0 -100.0L26.5 -36.4L95.1 -30.9L42.8 13.9L58.8 80.9L0.0 45.0L-58.8 80.9L-42.8 13.9L-95.1 -30.9L-26.5 -36.4Z" />
+      </svg>
+      <p class="ld-pct" aria-hidden="true"><b id="ldNum">0</b><i>%</i></p>
+      <p class="ld-word" aria-hidden="true">NOW LOADING</p>
+    </div>
+  </div>
   <a class="skip-link" href="#/quick">Skip to the one-page resume</a>
 
   <div id="backdrop"></div>

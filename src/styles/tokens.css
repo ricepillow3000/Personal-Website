@@ -1,3 +1,13 @@
+/* Width-matched stand-ins for the brand fonts while they download (Nov 19): the title's role line
+   (Bebas Neue) and hook (Special Elite) used to wrap onto an extra line in the backup fonts, and the
+   swap shifted the whole title (a 0.1 layout shift in the load score). Each stand-in is a common
+   system font scaled so a line of text is the same width (measured: Bebas 2351 vs Arial 3926 per
+   the role line at 100px; Special Elite 4027 vs any 0.6em monospace 4741), so nothing re-wraps. */
+@font-face { font-family: "Bebas Fallback"; src: local("Arial"), local("Liberation Sans"), local("Arimo"), local("Helvetica"); size-adjust: 59.9%; }
+@font-face { font-family: "Bebas Fallback R"; src: local("Roboto"); size-adjust: 62.6%; }
+@font-face { font-family: "Bebas Fallback D"; src: local("DejaVu Sans"); size-adjust: 58.2%; }
+@font-face { font-family: "Elite Fallback"; src: local("Courier New"), local("Liberation Mono"), local("Cousine"), local("DejaVu Sans Mono"), local("Droid Sans Mono"), local("Menlo"), local("Courier"); size-adjust: 84.9%; }
+
 :root {
   --red: #E5191C;
   --red-dark: #9E0F12;
@@ -11,9 +21,9 @@
   --grey-dark: #3B3B3B;
 
   --f-head: "Anton", Impact, "Arial Narrow Bold", sans-serif;
-  --f-menu: "Bebas Neue", "Anton", Impact, sans-serif;
+  --f-menu: "Bebas Neue", "Bebas Fallback", "Bebas Fallback R", "Bebas Fallback D", "Anton", Impact, sans-serif;
   --f-mark: "Permanent Marker", "Comic Sans MS", cursive;
-  --f-type: "Special Elite", "Courier New", monospace;
+  --f-type: "Special Elite", "Elite Fallback", "Courier New", monospace;
   --f-serif: Georgia, "Times New Roman", serif;
   --f-body: "Barlow Semi Condensed", "Arial Narrow", system-ui, -apple-system, sans-serif;
   --f-ui: "Barlow Condensed", "Bebas Neue", "Arial Narrow", sans-serif; /* bold italic labels */

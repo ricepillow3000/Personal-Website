@@ -345,6 +345,15 @@ function fitBillboard(frame) {
 
 let cityLoading = false;
 let loadSceneNow = () => {};
+let loadStationNow = () => {};
+let stationIn;
+const stationShown = new Promise((r) => { stationIn = r; });
+/** The loading star (src/ui/loader.js): start the platform's sharp picture now, and resolve once it
+    is on screen (or has failed: the blurred stand-in stays, nothing waits forever). */
+export function stationReady() {
+  loadStationNow();
+  return stationShown;
+}
 /** PRESS START / CONTINUE: load the platform and the train right now (if they aren't yet) and
     resolve once the train can play. */
 export function sceneReady() {
@@ -385,9 +394,13 @@ export function mountBackdrop(el) {
   const show = (img, src, tries = 1) => {
     img.onload = () => {
       img.classList.add('in'); // fades in once it's ready, never a half-drawn image
+      if (img.parentNode.classList.contains('bd-cam')) stationIn();
       if (img.parentNode.classList.contains('bd-cam')) mountSubway(img.parentNode, img); // trash on the floor + the PRESS START train
     };
-    img.onerror = () => { if (tries > 0) setTimeout(() => show(img, `${src}?r=1`, tries - 1), 1500); }; // a dropped connection gets one more try
+    img.onerror = () => { // a dropped connection gets one more try
+      if (tries > 0) setTimeout(() => show(img, `${src}?r=1`, tries - 1), 1500);
+      else if (img.parentNode.classList.contains('bd-cam')) stationIn();
+    };
     img.src = src;
   };
   /* The sharp platform loads when the page has loaded, or 2.5 s after it started, whichever comes
@@ -409,6 +422,7 @@ export function mountBackdrop(el) {
     show(el.querySelector('.bd-city img'), artSrc('city'));
   };
   loadSceneNow = loadCity;
+  loadStationNow = loadSubway;
   setTimeout(loadSubway, 2500);
   const later = () => setTimeout(loadCity, 0);
   if (document.readyState === 'complete') later();

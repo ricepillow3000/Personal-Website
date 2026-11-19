@@ -895,3 +895,53 @@ test('train horn: it dips in pitch as the train passes (a Doppler drop), never b
   expect(calls.length).toBeGreaterThan(1);
   for (const c of calls) expect(c, c).toContain('drop: HORN_DOPPLER');
 });
+
+test('loading star: it fills as the page loads, opens like a doorway into the station, and a tap skips it', async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
+  const page = await ctx.newPage();
+  await page.route('**/assets/film/subway*', async (r) => { await new Promise((s) => setTimeout(s, 1200)); await r.continue(); });
+  await page.goto('/?intro', { waitUntil: 'commit' });
+  await expect(page.locator('#loader')).toBeVisible();
+  const seen = new Set();
+  for (let i = 0; i < 200 && (await page.locator('#loader').count()); i++) {
+    const v = await page.locator('#loader').getAttribute('aria-valuenow').catch(() => null);
+    if (v !== null) seen.add(Number(v));
+    await page.waitForTimeout(60);
+  }
+  const values = [...seen];
+  expect(Math.max(...values)).toBe(100); // it reached 100%...
+  expect(values.some((v) => v > 0 && v < 100)).toBe(true); // ...through the steps in between
+  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 8000 }); // the doorway opened and it is gone
+  await expect(page.locator('#pressStart')).toBeVisible();
+  // a tap skips straight to the doorway
+  const p2 = await ctx.newPage();
+  await p2.goto('/?intro', { waitUntil: 'commit' });
+  await p2.locator('#loader').waitFor();
+  await p2.mouse.click(200, 200);
+  await expect(p2.locator('#loader')).toHaveCount(0, { timeout: 3000 });
+  await ctx.close();
+});
+
+test('turn your phone: a red reminder on phones held upright, once a visit; turning the phone or GOT IT closes it', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.goto('/?rotate');
+  const rot = page.locator('.rot');
+  await expect(rot).toBeVisible();
+  await expect(rot).toHaveAttribute('role', 'dialog');
+  await expect(page.locator('#rotTitle')).toHaveAttribute('aria-label', 'Turn your phone');
+  expect(await rot.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe('rgb(229, 25, 28)'); // our red
+  await expect(page.locator('.rot-ok')).toBeFocused();
+  await page.locator('.rot-ok').click();
+  await expect(rot).toHaveCount(0);
+  await page.reload(); // once a visit
+  await page.waitForTimeout(800);
+  await expect(page.locator('.rot')).toHaveCount(0);
+  // a new visit: turning the phone sideways closes it by itself
+  const p2 = await (await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
+  await p2.goto('/?rotate');
+  await expect(p2.locator('.rot')).toBeVisible();
+  await p2.setViewportSize({ width: 844, height: 390 });
+  await expect(p2.locator('.rot')).toHaveCount(0);
+  await ctx.close();
+});
