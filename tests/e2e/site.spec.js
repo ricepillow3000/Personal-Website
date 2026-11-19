@@ -1058,3 +1058,43 @@ test('sound for every box: side quests are heard as they land and as you scroll 
   expect((await heard()).filter((n) => n === 'panelSlap').length).toBeGreaterThanOrEqual(2); // scrolled to + tapped
   await ctx.close();
 });
+
+test('departure board: LET US START THE GAME scrolls right to left, the clock shows the visitor\'s time, it never covers the title, the calendar, the contact card or the top bar; none on a phone held upright', async ({ browser }) => {
+  for (const [w, h, mob] of [[1440, 900, false], [852, 393, true]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mob, hasTouch: mob, reducedMotion: 'no-preference' });
+    const page = await ctx.newPage();
+    await page.goto('/');
+    const sign = page.locator('.ss-sign');
+    await expect(sign).toHaveClass(/\bin\b/, { timeout: 15000 });
+    await expect(sign.locator('.ss-run span').first()).toHaveText('LET US START THE GAME');
+    await expect(sign.locator('.ss-code')).toHaveText('JN');
+    const shown = await sign.locator('.ss-time').innerText();
+    const now = await page.evaluate(() => { const d = new Date(); return [d.getHours(), d.getMinutes()]; });
+    const [hh, mm] = shown.split(':').map(Number);
+    expect(Math.abs(hh * 60 + mm - (now[0] * 60 + now[1])) % 1440).toBeLessThanOrEqual(1);
+    // it moves right to left
+    const x = () => sign.locator('.ss-run').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).m41);
+    const a = await x();
+    await page.waitForTimeout(500);
+    expect(await x()).toBeLessThan(a);
+    // clear of the title's text and panels
+    const hits = await page.evaluate(() => {
+      const b = document.querySelector('.ss-box').getBoundingClientRect();
+      return [...document.querySelectorAll('#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr, #pressStart, #titleHook')]
+        .filter((e) => getComputedStyle(e).visibility !== 'hidden')
+        .filter((e) => { const o = e.getBoundingClientRect(); return o.width && b.left < o.right && b.right > o.left && b.top < o.bottom && b.bottom > o.top; })
+        .map((e) => e.id || e.className);
+    });
+    expect(hits).toEqual([]);
+    const box = await sign.locator('.ss-box').boundingBox();
+    expect(box.y).toBeGreaterThanOrEqual(0); // wholly on screen
+    expect(box.x + box.width).toBeLessThanOrEqual(w);
+    await ctx.close();
+  }
+  const up = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const p = await up.newPage();
+  await p.goto('/');
+  await p.waitForTimeout(3000);
+  expect(await p.locator('.ss-sign').evaluate((e) => e.hidden || getComputedStyle(e).display === 'none')).toBe(true);
+  await up.close();
+});
