@@ -66,7 +66,20 @@ ransom($('#titleName'), resume.first, NAME_SEED);
 $('#titleHook').textContent = resume.titleHook || resume.hook;
 // who + proof in the first 10 seconds (two clean lines on phones)
 $('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">GSU '29 · 2 live apps · 727/728 checks</span>`;
+/* the contact plate at the top of every screen (Nov 19, career advisor at GSU's Codex meetup:
+   "make LinkedIn, GitHub and email easy to see, at the very top") */
 $('#hudLinkedIn').href = resume.links.linkedin;
+$('#hudGitHub').href = resume.links.github;
+const hudEmail = $('#hudEmail');
+hudEmail.href = `mailto:${resume.links.email}`;
+hudEmail.dataset.tip = resume.links.email.toLowerCase();
+hudEmail.setAttribute('aria-label', `Email ${resume.links.email.toLowerCase()} (the address is also copied)`);
+// many visitors have no mail app set up, so the address is copied too (mailto still opens)
+hudEmail.addEventListener('click', () => {
+  try {
+    navigator.clipboard?.writeText(resume.links.email.toLowerCase()).then(() => toast(resume.links.email.toLowerCase(), 'EMAIL COPIED'), () => {});
+  } catch { /* no clipboard: the mail app still opens */ }
+});
 $('#quickPdf').href = resume.links.pdf;
 renderQuickView($('#paper'));
 refreshCounter();

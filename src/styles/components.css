@@ -411,7 +411,44 @@ b, strong { font-weight: 700; }
 body[data-mode="board"] .hud-tl .hud-date, body[data-mode="board"] .hud-tl .hud-day,
 body[data-mode="page"] .hud-tl .hud-date, body[data-mode="page"] .hud-tl .hud-day { display: none; }
 body[data-mode="board"] .hud-tl .hud-meta { display: grid; }
-.hud-in { text-decoration: none; display: inline-flex; align-items: center; }
+/* ---- the contact plate (Nov 19): LinkedIn, GitHub and email at the very top of every screen ----
+   One slanted black plate, same height and shadow as the HUD buttons, red slashes between the links.
+   LinkedIn is the #1 action, so it sits on red. Words show on wide screens; icons carry it on phones. */
+.hud-contact { display: flex; align-items: stretch; background: var(--black); transform: skew(var(--skew)); box-shadow: 4px 4px 0 var(--white); }
+.hc-link {
+  --hc-bg: var(--black);
+  position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 6px 13px;
+  font-family: var(--f-menu); font-size: 20px; letter-spacing: 1px; line-height: 1.2;
+  color: var(--white); background: var(--hc-bg); text-decoration: none; transition: background .12s, color .12s;
+}
+.hc-in { --hc-bg: var(--red-ink); }
+.hc-link + .hc-link::before { content: ""; position: absolute; left: -1px; top: 20%; bottom: 20%; width: 2px; background: var(--red); transform: skew(-14deg); }
+.hc-link:hover, .hc-link:focus-visible { --hc-bg: var(--white); color: var(--black); }
+.hc-link:hover::before, .hc-link:focus-visible::before, .hc-link:hover + .hc-link::before, .hc-link:focus-visible + .hc-link::before { opacity: 0; }
+.hc-link:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; z-index: 1; }
+.hc-link svg { flex: none; width: 18px; height: 18px; transform: skew(calc(var(--skew) * -1)); } /* icons stand up straight inside the slant */
+.hc-ink { fill: var(--hc-bg); }
+.hc-ink-stroke { stroke: var(--hc-bg); }
+/* mid-width screens: LinkedIn keeps its word, GitHub and email go to icons (their names stay in aria-label and the tooltip) */
+@media (max-width: 1199px) { .hc-link:not(.hc-in) .hc-word { display: none; } }
+@media (max-width: 760px) {
+  .hc-word { display: none; }
+  .hc-link { padding: 4px 13px; } /* 44px wide: a full tap target each, without changing the plate's height */
+  .hud-contact { box-shadow: 3px 3px 0 var(--white); }
+}
+@media (pointer: coarse) { .hc-link::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 46px; translate: 0 -50%; } }
+/* the narrowest phones (320-400px): the top row tightens so it never meets the title's date block or the screen edge */
+@media (max-width: 400px) {
+  body[data-screen="title"] .hud-tl { grid-template-columns: auto; } /* weekday + time drop under the date, below the button row */
+  body[data-screen="title"] .hud-day { display: flex; align-items: center; gap: 8px; }
+  body[data-screen="title"] .hud-tod { margin-top: 0; }
+}
+@media (max-width: 380px) {
+  .hud-tr { gap: 4px; right: 10px; }
+  .hc-link { padding: 4px 11px; } /* 40px, plus 2px of invisible slop each side = 44px taps */
+}
+@media (max-width: 380px) and (pointer: coarse) { .hc-link::after { left: -2px; right: -2px; } }
+@media (max-width: 350px) { body[data-screen="title"] .hud-tl { transform: rotate(-4deg) scale(.8); } } /* iPhone SE 1st gen: the date shrinks a little to clear the row */
 
 /* phones: the top-left HUD collides with the top-right buttons, so the status moves into the header */
 .board-status { display: none; }

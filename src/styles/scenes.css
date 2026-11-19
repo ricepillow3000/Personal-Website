@@ -198,7 +198,8 @@
   .ccard-back { background-image: none; }
 }
 /* very narrow phones: the Quick View buttons keep to one row */
-@media (max-width: 440px) { .qb-long { display: none; } }
+/* short labels where the bar would touch the top row (phones, and laptops under 1100px since the contact plate) */
+@media (max-width: 440px), (min-width: 761px) and (max-width: 1099px) { .qb-long { display: none; } }
 /* the title's cut-out name and labels wait for their web fonts (see fontsReady in core/util.js) */
 #screen-title.title-wait :is(#titleName, .title-codename, .title-role, #pressStart, .quick-link) { opacity: 0; }
 /* highlighted numbers breathe: a little padding inside, a normal space after (no "2,000+automated") */
