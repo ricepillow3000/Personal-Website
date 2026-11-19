@@ -28,8 +28,9 @@ const START = 2700; // where the nose is when the shot opens (deep in the dark t
    Now it arrives like a real train: out of the tunnel fast, braking hard, so the nose passes the
    camera at about a third of that and the cars roll by heavily. Constant deceleration, never below
    CRAWL. leadAt(t) is where the nose is; timeAt(d) is when it gets to depth d. */
-const V0 = 3400; // world units a second, deep in the tunnel
-const BRAKE = 1950; // units a second, per second
+const V0 = 3800; // world units a second, deep in the tunnel (Nov 19: up from 3400 when the red/white
+// trails went, so the speed comes from the train itself: it bursts out faster and brakes harder)
+const BRAKE = 2100; // units a second, per second
 const CRAWL = 700; // it keeps rolling past (the cut comes first)
 const T_CRAWL = (V0 - CRAWL) / BRAKE;
 const D_CRAWL = V0 * T_CRAWL - 0.5 * BRAKE * T_CRAWL * T_CRAWL;
@@ -96,8 +97,8 @@ async function bitmapOf(img) {
 
 let cv = null;
 let ctx = null; // the 2D layer being drawn on right now
-let under = null; // 2D: floor, trash, light pools, afterimage noses
-let over = null; // 2D on top of the GPU side: the nose, headlights, speed lines
+let under = null; // 2D: floor, trash, light pools, the headlight wash
+let over = null; // 2D on top of the GPU side: the nose, sparks, dust, headlights
 let cvTop = null;
 let glOn = false; // this frame's side went to the GPU layer
 let gpuOK = false; // the GPU path passed its self-test on this device (until then: 2D slices)
@@ -210,10 +211,7 @@ export function preloadSubway() {
   artReady = Promise.all([dec(nose), dec(side)])
     .then(() => Promise.race([Promise.all([bitmapOf(nose), bitmapOf(side)]), hurry])) // (START pressed: draw the <img> as it is)
     .then(() => slice(sideArt))
-    .then(() => slice(windowProfile))
-    .then(() => slice(() => tinted(sideArt())))
-    .then(() => slice(() => tinted(nose)))
-    .then(() => slice(() => { tinted(sideArt(), ECHO_WHITE); tinted(nose, ECHO_WHITE); })); // the speed echoes' white copies
+    .then(() => slice(windowProfile));
   artReady.then(() => idle(heavyNose)); // its own idle turn (the train doesn't wait for it)
   return artReady;
 }
@@ -228,9 +226,6 @@ async function gpuPrep() {
     await slice(() => r.upload(src, bmps.get(src))); // the decoded copy when it's the <img> (a plain copy, no decode)
     if (!(await slice(() => r.selfTest(src, pic(src))))) throw new Error('GPU side failed its self-test');
     await slice(() => r.prepare(src, cv.width, cv.height));
-    await slice(() => r.upload(tinted(sideArt())));
-    await slice(() => r.prepare(tinted(sideArt()), cv.width, cv.height));
-    await slice(() => r.prepare(tinted(sideArt(), ECHO_WHITE), cv.width, cv.height)); // the white speed echo
     gpuOK = true;
     box.dataset.trainGpu = 'on'; // visible in devtools, and to tests
   } catch {
@@ -410,7 +405,7 @@ const CAR = 620; // one car, in world units (about 3.5 door bays of the art)
 const PASS_D = 40; // a wheel set "passes the camera" at this depth
 const AXLES = [];
 for (let c = 0; c < 5; c++) for (const b of [90, CAR - 90]) for (const a of [-32, 32]) AXLES.push(c * CAR + b + a);
-export const NOSE_PASS = timeAt(PASS_D); // when the nose passes the camera (~1.2 s, braking)
+export const NOSE_PASS = timeAt(PASS_D); // when the nose passes the camera (~0.95 s, braking)
 /** the hard thumps of the wheel sets near the camera: a damped jolt per axle */
 function jolts(t) {
   let j = 0;
@@ -626,9 +621,10 @@ function dropGPU() {
   gpuOK = false;
   if (box) box.dataset.trainGpu = 'off';
 }
-/* motion blur: how far the car slides while a real camera's shutter is open (1/60 s), so at speed
-   the windows and doors smear along the car instead of sliding past razor-sharp like a poster */
-const SHUTTER = 1 / 60;
+/* motion blur: how far the car slides while a real camera's shutter is open (1/40 s), so at speed
+   the windows and doors smear along the car instead of sliding past razor-sharp like a poster
+   (opened up from 1/60 when the red/white echoes were removed: the blur now carries the speed) */
+const SHUTTER = 1 / 40;
 /* the GPU gets the full-resolution car art (1828px tall), except on low-memory phones */
 const sideTexFor = (tex) => (tex === sideCopy && side?.naturalWidth && sharpArt() ? side : tex);
 function sideQuad(lead, alpha, tex, { mat = 0, refl = 0 } = {}) {
@@ -638,7 +634,7 @@ function sideQuad(lead, alpha, tex, { mat = 0, refl = 0 } = {}) {
   const near = Math.max(lead, 18);
   const far = Math.min(lead + LEN, MOUTH + 430); // past MOUTH + 420 it has faded into the tunnel's dark
   if (far <= near) return true;
-  const m = ctx.getTransform(); // art space -> canvas pixels (includes the afterimages' zoom)
+  const m = ctx.getTransform(); // art space -> canvas pixels
   const P = (Y, d) => {
     const p = m.transformPoint(new DOMPoint(sx(SIDE_X, d), sy(Y, d)));
     return [p.x, p.y];
@@ -789,111 +785,127 @@ function headlights(d, glow, alpha = 1) {
   ctx.globalCompositeOperation = 'source-over';
 }
 
-function speedLines(t, power) {
-  if (power <= 0) return;
-  ctx.strokeStyle = '#F5F5F0';
-  for (let i = 0; i < 22; i++) {
-    const a = 2.0 + ((i * 0.37 + t * 9.1) % 1.25); // fanning out over the train and the floor
-    const r0 = 90 + ((i * 97 + t * 4100) % 760);
-    const r1 = r0 + 180 + (i % 4) * 120;
-    ctx.globalAlpha = 0.7 * power;
-    ctx.lineWidth = 2 + (i % 3) * 2.2;
-    ctx.beginPath();
-    ctx.moveTo(VP.x + Math.cos(a) * r0, VP.y + Math.sin(a) * r0 * 0.7);
-    ctx.lineTo(VP.x + Math.cos(a) * r1, VP.y + Math.sin(a) * r1 * 0.7);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-}
-
-/* a solid copy of an image in one colour (keeps its shape), for the afterimages and speed echoes */
-const reds = new Map();
-function tinted(img, color = '#E5191C') {
-  const w = img?.naturalWidth || img?.width; // an <img> or a canvas
-  if (!w) return null;
-  const cache = color === '#E5191C' ? reds : (tints[color] ||= new Map());
-  if (cache.has(img)) return cache.get(img);
-  const c = document.createElement('canvas');
-  c.width = w;
-  c.height = img.naturalHeight || img.height;
-  const g = c.getContext('2d');
-  g.drawImage(pic(img), 0, 0);
-  g.globalCompositeOperation = 'source-in';
-  g.fillStyle = color;
-  g.fillRect(0, 0, c.width, c.height);
-  cache.set(img, c);
-  return c;
-}
-const tints = {}; // colour -> (image -> its solid copy)
-const ECHO_WHITE = '#F5F5F0';
-
-/* SPEED ECHOES (Nov 19, John: "afterimages... duplicate, faded, silhouetted copies trailing behind"):
-   where the train was 70, 140 and 210 ms ago, as solid silhouettes trailing back up the track, red,
-   white, red, each fainter. The side's echoes ride the GPU layer (one quad each); without it only the
-   noses echo (hundreds of 2D slices per echo would be too slow). */
-function speedEchoes(t, kk, img, power) {
-  if (power <= 0.02) return;
-  // each echo also steps back toward where the train came from on screen (right and up, toward the
-  // tunnel), so it peeks out beside the real train instead of hiding straight behind it
-  [[3, 0.21, '#E5191C', 0.32], [2, 0.14, ECHO_WHITE, 0.42], [1, 0.07, '#E5191C', 0.55]].forEach(([j, dt, color, a]) => {
-    const d = leadAt(Math.max(0, t - dt));
-    ctx.save();
-    ctx.translate(j * 34, -j * 11);
-    if (glOn) trainSide(d, kk, a * power, tinted(sideArt(), color));
-    trainNose(d, tinted(img, color), a * power);
-    ctx.restore();
-  });
-}
-
-/* MOTION SMEAR (ghosting): four faint copies of the nose where it was over the last few frames,
-   bridging its jump from frame to frame (the side already smears on the GPU, see SHUTTER) */
-function noseSmear(t, img, power) {
-  if (power <= 0.02 || !img) return;
-  for (let j = 4; j >= 1; j--) trainNose(leadAt(Math.max(0, t - j * 0.012)), img, 0.16 * power);
-}
-
-/* WIND TRAILS: streaks of air hugging the train (over the roof, along its flank on the platform side,
-   low along the floor) rushing toward the camera faster than the train, and dust kicked off the
-   platform. Thicker as they come near (perspective), each fading in and out on its own beat. */
-function windTrails(t, lead, power) {
-  if (power <= 0.02) return;
+/* Speed and weight, the natural way (Nov 19, John: the red and white trails "I don't really like
+   how it looks... make it look natural, moving fast, with weight, heavy"). No drawn trails or
+   silhouettes: only what a real heavy train does to the station around it.
+   (1) HEADLIGHT WASH: its headlights light the track and the platform edge ahead of it, a warm pool
+       that races toward the camera in front of the nose (in the dark tunnel this is what tells you
+       it's coming, and how fast). Cel-shaded: three hard bands, like the cabin light.
+   (2) BRAKE SPARKS: a braking train grinds steel on steel. Short orange-white sparks spray up out of
+       the gap between the car and the platform edge at every wheel set, thrown forward the way the
+       train moves, falling back, gone in a blink. Strongest at speed, fewer as it slows.
+   (3) DUST: its air wall lifts the platform's dust: soft grey puffs roll out of the gap where the
+       nose has just been, swell, drift onto the platform and toward the camera, and fade.
+   (4) More motion blur on the car (SHUTTER) and the camera's heavy rumble and wheel-set thumps
+       (cameraMotion) carry the rest. */
+const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }; // steady pseudo-random
+function headlightWash(lead, power) {
+  if (power <= 0.02 || lead < 30) return;
+  const BANDS = [[40, 0.2], [120, 0.12], [240, 0.06]]; // reach ahead of the nose (world units), strength
   ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  BANDS.forEach(([reach, k]) => {
+    const near = Math.max(18, lead - reach);
+    const far = lead;
+    if (far <= near) return;
+    const a = k * power * dark(lead);
+    if (a < 0.005) return;
+    ctx.fillStyle = `rgba(255, 238, 200, ${a.toFixed(3)})`;
+    ctx.beginPath(); // the track bed under the train's path
+    ctx.moveTo(sx(SIDE_X - WIDE * 0.95, far), sy(SKIRT + 26, far));
+    ctx.lineTo(sx(SIDE_X - 4, far), sy(SKIRT + 26, far));
+    ctx.lineTo(sx(SIDE_X - 4, near), sy(SKIRT + 26, near));
+    ctx.lineTo(sx(SIDE_X - WIDE * 0.95, near), sy(SKIRT + 26, near));
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath(); // and the platform's edge, spilling a little onto the floor
+    ctx.moveTo(sx(SIDE_X, far), sy(SKIRT, far));
+    ctx.lineTo(sx(SIDE_X + 22, far), sy(SKIRT, far));
+    ctx.lineTo(sx(SIDE_X + 22 + reach * 0.12, near), sy(SKIRT, near));
+    ctx.lineTo(sx(SIDE_X, near), sy(SKIRT, near));
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.restore();
+}
+function brakeSparks(t, lead, power) {
+  if (power <= 0.02) return;
+  const v = speedAt(t);
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
   ctx.lineCap = 'round';
-  for (let i = 0; i < 26; i++) {
-    const lane = i % 4; // 0 over the roof, 1 along the flank, 2 low by the floor, 3 platform dust
-    const u = (i * 0.379 + t * (lane === 3 ? 3.4 : 2.4)) % 1;
-    const head = lead + 30 + (1 - u) * (lane === 3 ? 420 : 820);
-    if (head < 26) continue;
-    const tail = head + (lane === 3 ? 40 : 150 + (i % 3) * 90);
-    const X = lane === 0 ? SIDE_X - 20 - (i % 5) * 14 : lane === 3 ? SIDE_X + 14 + ((i * 29) % 60) : SIDE_X + 6 + (i % 4) * 7;
-    const Y = lane === 0 ? ROOF - 6 - (i % 5) * 6 : lane === 1 ? ROOF + 24 + ((i * 37) % 60) : SKIRT - 4 - (i % 3) * 6;
-    ctx.globalAlpha = power * Math.sin(Math.PI * u) * (lane === 3 ? 0.5 : 0.62);
-    ctx.strokeStyle = lane === 3 ? '#B9B4A8' : '#F5F5F0';
-    ctx.lineWidth = Math.max(1, Math.min(10, (lane === 3 ? 2.6 : 1.8) * (F / head) * 0.5));
+  AXLES.forEach((s, ai) => {
+    const d = lead + s; // this wheel set's depth
+    if (d < 22 || d > MOUTH + 380) return;
+    const vis = dark(d);
+    for (let j = 0; j < 6; j++) {
+      const seed = ai * 13 + j * 7;
+      const life = 0.09 + hash(seed) * 0.08; // each spark lives ~0.1 s, then a new one is thrown
+      const born = Math.floor((t + hash(seed + 1) * life) / life);
+      const r = hash(seed * 3 + born);
+      if (r > 0.35 + 0.6 * power) continue; // fewer sparks as it slows
+      const u = (t + hash(seed + 1) * life) / life - born; // 0..1 through its life
+      const vx = 0.25 + hash(seed + born * 5) * 0.5; // forward speed, as a share of the train's
+      const up = 70 + hash(seed + born * 9) * 110; // how hard it is thrown up
+      const age = u * life;
+      const dz = -(v * vx * age) - 6; // thrown forward, toward the camera
+      const y = SKIRT - 1 - up * age + 900 * age * age; // up out of the gap, then falling
+      const x = SIDE_X + 1 + hash(seed + born * 11) * 160 * age; // sprayed out over the platform
+      const d0 = d + dz;
+      const tail = 0.045; // a streak: where it was 45 ms ago (a real spark smears in the eye)
+      const d1 = d0 + v * vx * tail;
+      const y1 = y + (up - 1800 * age) * tail;
+      if (d0 < 16) continue;
+      const fade = (1 - u * u) * vis * Math.min(1, power * 1.6);
+      const w = Math.max(1, Math.min(3.2, (F / d0) * 0.8));
+      const x0 = sx(x, d1); const y0 = sy(y1, d1); const xe = sx(x, d0); const ye = sy(y, d0);
+      // a hot glow, then the white-hot core (it cools to orange as it flies)
+      ctx.strokeStyle = `rgba(255, 120, 30, ${(0.45 * fade).toFixed(3)})`;
+      ctx.lineWidth = w * 2.2;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(xe, ye);
+      ctx.stroke();
+      ctx.strokeStyle = u < 0.45 ? `rgba(255, 250, 225, ${fade.toFixed(3)})` : `rgba(255, 190, 90, ${fade.toFixed(3)})`;
+      ctx.lineWidth = w;
+      ctx.stroke();
+    }
+  });
+  ctx.restore();
+}
+function dust(t, lead) {
+  ctx.save();
+  for (let i = 0; i < 18; i++) {
+    const bd = 170 + i * 50 + hash(i) * 30; // where along the platform this puff is lifted
+    const age = t - timeAt(bd); // seconds since the nose passed that spot
+    if (age <= 0 || age > 0.9 || bd > MOUTH + 200) continue;
+    const u = age / 0.9;
+    const d = bd - age * (140 + hash(i + 3) * 80); // dragged along toward the camera
+    if (d < 20) continue;
+    const X = SIDE_X + 4 + age * (60 + hash(i + 5) * 70); // rolling out over the platform
+    const Y = SKIRT - 3 - age * (18 + hash(i + 7) * 22);
+    const R = (6 + age * (55 + hash(i + 9) * 40)) * F / d; // swelling
+    const x = sx(X, d);
+    const y = sy(Y, d);
+    const a = 0.42 * Math.sin(Math.PI * Math.min(1, u * 1.6 + 0.05)) * (1 - u) * dark(d);
+    if (a < 0.01) continue;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, R);
+    g.addColorStop(0, `rgba(158, 152, 140, ${a.toFixed(3)})`); // dust caught in the station's light
+    g.addColorStop(0.55, `rgba(140, 134, 124, ${(a * 0.55).toFixed(3)})`);
+    g.addColorStop(1, 'rgba(120, 116, 108, 0)');
+    ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.moveTo(sx(X, tail), sy(Y, tail));
-    ctx.lineTo(sx(X, head), sy(Y, head));
-    ctx.stroke();
+    ctx.ellipse(x, y, R, R * 0.62, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
   ctx.restore();
 }
 
-/* anime afterimages: shaken-loose copies of the train, red then white, a little bigger and
-   behind it, so they streak out past its roof and nose like an echo of its speed (the train
-   itself stays gray/white with its red stripe: never a red wash) */
-function afterimages(lead, kk, img, power) {
-  if (power <= 0) return;
-  const redSide = tinted(sideArt());
-  const redNose = tinted(img);
-  [[1.12, sideArt(), img, 0.22], [1.06, redSide, redNose, 0.75]].forEach(([z, tex, im, a]) => {
-    ctx.save();
-    ctx.translate(VP.x, VP.y);
-    ctx.scale(z, z);
-    ctx.translate(-VP.x, -VP.y);
-    if (tex) trainSide(lead, kk * z, a * power, tex);
-    if (im) trainNose(lead, im, a * power);
-    ctx.restore();
-  });
+/* MOTION SMEAR: four faint copies of the nose where it was over the last few frames, bridging its
+   jump from frame to frame (the nose's own motion blur; the side blurs on the GPU, see SHUTTER) */
+function noseSmear(t, img, power) {
+  if (power <= 0.02 || !img) return;
+  for (let j = 4; j >= 1; j--) trainNose(leadAt(Math.max(0, t - j * 0.012)), img, 0.16 * power);
 }
 
 function draw() {
@@ -917,10 +929,9 @@ function draw() {
   if (!state) return;
   const lead = leadAt(t);
   const img = nose?.complete && nose.naturalWidth ? nose : null;
-  afterimages(lead, kk, img, Math.max(0, Math.min(1, (MOUTH + 200 - lead) / 500)));
-  // the speed effects are strongest while it storms out of the tunnel, and ease off as it brakes
+  // the speed cues are strongest while it storms out of the tunnel, and ease off as it brakes
   const fx = Math.max(0, Math.min(1, (MOUTH + 400 - lead) / 600)) * Math.min(1, speedAt(t) / 1800);
-  speedEchoes(t, kk, img, fx);
+  headlightWash(lead, Math.min(1, t / 0.3));
   trainSide(lead, kk, 1, sideArt(), { mat: 1, refl: 1 }); // mirrored in the glossy floor
   trainSide(lead, kk, 1, sideArt(), { mat: 1 }); // the car: heavy cel-shaded steel
   if (glOn) ctx = over; // the side is on the GPU layer: everything in front of it goes above
@@ -929,12 +940,12 @@ function draw() {
   // the trash lies on the platform, between the camera and the car, so it is drawn in front of
   // the car; against the nose it goes by depth (in front of it only once it is nearer)
   drawTrash(t, (d) => d >= lead);
+  brakeSparks(t, lead, Math.min(1, speedAt(t) / 2400) * (t < T_CRAWL ? 1 : 0.3));
   noseSmear(t, heavyNose() || img, fx);
   trainNose(lead, heavyNose() || img, 1);
   drawTrash(t, (d) => d < lead);
-  windTrails(t, lead, Math.max(fx, 0.35 * Math.max(0, Math.min(1, (MOUTH - lead) / MOUTH))));
+  dust(t, lead);
   headlights(lead, 1 + Math.max(0, 1 - lead / MOUTH) * 1.6, Math.min(1, t / 0.3)); // the lights fade up with the horn
-  speedLines(t, state.lines);
   ctx = under;
 }
 
@@ -946,7 +957,6 @@ export function trainShot({ panTo = null } = {}) {
   state = {
     t: 0,
     rumble: 0,
-    lines: 0,
     trash: TRASH.map(([, y], i) => ({
       at: null,
       when: timeAt(depthOf(y) + 140), // the nose reaches it (a bit early: the air pushes first)
@@ -959,10 +969,9 @@ export function trainShot({ panTo = null } = {}) {
   const startPan = 0.6;
   return {
     /** time in seconds since the shot started; pan 0..1 eases the camera toward the track */
-    tick(t, { rumble = 0, lines = 0, panP = 0 } = {}) {
+    tick(t, { rumble = 0, panP = 0 } = {}) {
       state.t = t;
       state.rumble = rumble;
-      state.lines = lines;
       state.trash.forEach((s) => { if (s.at === null && t >= s.when) s.at = s.when; });
       pan = panTo === null ? null : startPan + (panTo - startPan) * panP;
       if (art && pan !== null) art.style.objectPosition = `${(pan * 100).toFixed(2)}% 55%`;

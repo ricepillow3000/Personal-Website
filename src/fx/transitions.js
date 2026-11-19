@@ -144,9 +144,9 @@ export function cutIn(text = '') {
 }
 
 /** PRESS START: the opening shot comes alive. Headlights in the dark tunnel and a rumble, the
-    horn, then the train bursts out and roars past along the platform: the camera shakes, red and
-    white afterimages trail its nose, the trash on the floor and the title itself are blown away
-    by its wind, and a white star-flash cuts to the board. (~1.5s) */
+    horn, then the train bursts out and roars past along the platform, braking: the camera rumbles
+    and thumps, its headlights wash the track, brake sparks spray from the wheels, its wind lifts
+    the dust, blows the trash and the title away, and a white star-flash cuts to the board. */
 export function tunnelWipe(swap) {
   const W = window.innerWidth;
   const H = window.innerHeight;
@@ -200,8 +200,7 @@ export function tunnelWipe(swap) {
       ease: 'none',
       onUpdate: () => {
         const t = clock.t;
-        const near = shot.closeness(t); // 0 while it's in the tunnel, 1 as it passes the camera
-        shot.tick(t, { rumble: Math.min(1, t / 0.5), lines: Math.min(1, near * 1.6), panP: gsap.parseEase('power2.inOut')(Math.min(1, t / 0.45)) });
+        shot.tick(t, { rumble: Math.min(1, t / 0.5), panP: gsap.parseEase('power2.inOut')(Math.min(1, t / 0.45)) });
         // a heavy train: a deep rumble that swells as it comes, a thump per wheel set, the air
         // wall's shove as the nose passes (never a random buzz: that read as weightless)
         const m = shot.motion(t);
