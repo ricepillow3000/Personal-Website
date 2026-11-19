@@ -64,6 +64,8 @@ function squash(el) {
 }
 
 const PRESSABLE = 'button, a[href], [role="button"], [role="menuitem"], .skill, .case-open';
+/* the big buttons get their own, heavier hover (THE PLAN's chapter button, PRESS START, NEXT) */
+const BIG = '.plan-continue, #pressStart, .ne-go';
 
 /** Every click on something pressable gets the hit + squash. */
 export function initClickFx() {
@@ -101,7 +103,7 @@ export function initClickFx() {
       const b = e.target.closest?.(`${PRESSABLE}, .cc-row, .hc-link`);
       if (b !== pressed) {
         pressed = b;
-        if (b && !b.disabled && !b.matches('.stair-item, [data-ch]')) sfx('hover');
+        if (b && !b.disabled && !b.matches('.stair-item, [data-ch]')) sfx(b.matches(BIG) ? 'hoverBig' : 'hover');
       }
     } else {
       pressed = null;

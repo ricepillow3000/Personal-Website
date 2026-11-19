@@ -132,6 +132,42 @@ function clip(bus, name, at, { gain = 1, rate = 1, lowpass = 0, highpass = 0, al
 
 
 /* ---------- synth voices ---------- */
+/* a short metallic ring: a few detuned oscillators (freq, wave, cents) through one filter, instant
+   attack, exponential decay (used by the hover sounds) */
+function metalRing(bus, at, oscs, { hp = 0, bp = 0, q = 0.7, peak = 0.08, decay = 0.045 }) {
+  const f = ac.createBiquadFilter();
+  f.type = bp ? 'bandpass' : 'highpass';
+  f.frequency.value = bp || hp;
+  f.Q.value = q;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.linearRampToValueAtTime(peak, at + 0.001);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+  f.connect(g).connect(bus);
+  oscs.forEach(([freq, type, cents]) => {
+    const o = ac.createOscillator();
+    o.type = type;
+    o.frequency.value = freq;
+    o.detune.value = cents;
+    o.connect(f);
+    o.start(at);
+    o.stop(at + decay + 0.005);
+  });
+}
+/* a pitch-swept transient (a blade snap, a card hitting home, a thud) */
+function snap(bus, at, from, to, dur, peak, type = 'sine') {
+  const o = ac.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(from, at);
+  o.frequency.exponentialRampToValueAtTime(to, at + dur);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.linearRampToValueAtTime(peak, at + 0.001);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  o.connect(g).connect(bus);
+  o.start(at);
+  o.stop(at + dur + 0.005);
+}
 function noise(bus, { at, dur, type = 'highpass', freq = 7000, q = 0.8, gain = 0.4 }) {
   const src = ac.createBufferSource();
   src.buffer = noiseBuf;
@@ -572,15 +608,30 @@ const VOICES = {
   },
   /* ---------- UI + transition sounds: deliberately NOT drum sounds, so they never
      blend into the drum music. Cartoon pops, blips, paper and metal. ---------- */
-  /* Hover (Nov 19, John: "a sharp, metallic chink... a crisp mechanical snap", on every button):
-     a switch's click (12 ms of bright noise), a metal body (three inharmonic partials ringing under
-     45 ms), and a card snapping into place. Instant attack, no tail, so a fast sweep down a list
-     stays clean, like a hi-hat over the music. A hair of random pitch: never two exactly alike. */
+  /* Hover: the menu's sharp metallic "shing/snap" (Nov 19, John's 3-layer spec; no noise burst, all
+     synthesized, nothing copied from any game). Under 60 ms, +/-3% pitch per hover so a fast scroll
+     sounds organic; every layer is its own little node chain, so hovers overlap freely (the master
+     limiter and soft clipper keep a pile-up from clipping).
+     1 metallic ring: a 1420 Hz square and a 3180 Hz triangle, detuned a few cents, through a 1200 Hz
+       high-pass, decaying in 45 ms;
+     2 blade/card snap: a sine swept 4200 -> 1400 Hz in 18 ms, the tactile punch;
+     3 double hit: a quieter ring 14 ms later, a heavy switch locking in. */
   hover: (bus, at) => {
-    const p = 1 + (Math.random() - 0.5) * 0.06;
-    noise(bus, { at, dur: 0.012, type: 'highpass', freq: 5200, q: 0.7, gain: 0.5 });
-    [[2960, 0.045, 0.13], [4410, 0.036, 0.09], [6180, 0.028, 0.06]].forEach(([f, d, g]) => tone(bus, { at, dur: d, from: f * p, to: f * p * 0.985, gain: g }));
-    tone(bus, { at, dur: 0.018, from: 1800 * p, to: 900 * p, type: 'square', gain: 0.05 });
+    const p = 1 + (Math.random() * 2 - 1) * 0.03;
+    metalRing(bus, at, [[1420 * p, 'square', 0], [3180 * p, 'triangle', 7]], { hp: 1200, peak: 0.085, decay: 0.045 });
+    snap(bus, at, 4200 * p, 1400 * p, 0.018, 0.12);
+    metalRing(bus, at + 0.014, [[1420 * p * 1.02, 'square', -5], [3180 * p * 1.02, 'triangle', 4]], { hp: 1200, peak: 0.035, decay: 0.03 });
+  },
+  /* Big buttons (THE PLAN's chapter button, PRESS START, NEXT): a heavier "lock-on", as layered as the
+     menu's: 1 a deeper metal clang (880 Hz square + 2210 Hz triangle, detuned, through a 1600 Hz
+     band-pass, 70 ms); 2 a blade being drawn, a triangle rising 1600 -> 5200 Hz in 24 ms; 3 22 ms later
+     the chamber locks: a sine thud falling 260 -> 90 Hz with a bright tick on top. Under 100 ms. */
+  hoverBig: (bus, at) => {
+    const p = 1 + (Math.random() * 2 - 1) * 0.03;
+    metalRing(bus, at, [[880 * p, 'square', 0], [2210 * p, 'triangle', 9]], { bp: 1600, q: 2.5, peak: 0.08, decay: 0.07 });
+    snap(bus, at, 1600 * p, 5200 * p, 0.024, 0.07, 'triangle');
+    snap(bus, at + 0.022, 260 * p, 90 * p, 0.045, 0.2);
+    metalRing(bus, at + 0.022, [[1900 * p, 'square', 0], [4200 * p, 'triangle', -6]], { hp: 1500, peak: 0.05, decay: 0.025 });
   },
   /* Confirm: heavier and lower than the hover, a bass thump with a stylized slash and a gunshot-like
      punch (a crack, a short low burst, a bright sweep falling across it), plus a short metal ring. */

@@ -212,7 +212,8 @@ export function preloadSubway() {
     .then(() => slice(sideArt))
     .then(() => slice(windowProfile))
     .then(() => slice(() => tinted(sideArt())))
-    .then(() => slice(() => tinted(nose)));
+    .then(() => slice(() => tinted(nose)))
+    .then(() => slice(() => { tinted(sideArt(), ECHO_WHITE); tinted(nose, ECHO_WHITE); })); // the speed echoes' white copies
   artReady.then(() => idle(heavyNose)); // its own idle turn (the train doesn't wait for it)
   return artReady;
 }
@@ -229,6 +230,7 @@ async function gpuPrep() {
     await slice(() => r.prepare(src, cv.width, cv.height));
     await slice(() => r.upload(tinted(sideArt())));
     await slice(() => r.prepare(tinted(sideArt()), cv.width, cv.height));
+    await slice(() => r.prepare(tinted(sideArt(), ECHO_WHITE), cv.width, cv.height)); // the white speed echo
     gpuOK = true;
     box.dataset.trainGpu = 'on'; // visible in devtools, and to tests
   } catch {
@@ -804,22 +806,76 @@ function speedLines(t, power) {
   ctx.globalAlpha = 1;
 }
 
-/* a solid red copy of an image (keeps its shape), for the afterimages */
+/* a solid copy of an image in one colour (keeps its shape), for the afterimages and speed echoes */
 const reds = new Map();
-function tinted(img) {
+function tinted(img, color = '#E5191C') {
   const w = img?.naturalWidth || img?.width; // an <img> or a canvas
   if (!w) return null;
-  if (reds.has(img)) return reds.get(img);
+  const cache = color === '#E5191C' ? reds : (tints[color] ||= new Map());
+  if (cache.has(img)) return cache.get(img);
   const c = document.createElement('canvas');
   c.width = w;
   c.height = img.naturalHeight || img.height;
   const g = c.getContext('2d');
   g.drawImage(pic(img), 0, 0);
   g.globalCompositeOperation = 'source-in';
-  g.fillStyle = '#E5191C';
+  g.fillStyle = color;
   g.fillRect(0, 0, c.width, c.height);
-  reds.set(img, c);
+  cache.set(img, c);
   return c;
+}
+const tints = {}; // colour -> (image -> its solid copy)
+const ECHO_WHITE = '#F5F5F0';
+
+/* SPEED ECHOES (Nov 19, John: "afterimages... duplicate, faded, silhouetted copies trailing behind"):
+   where the train was 70, 140 and 210 ms ago, as solid silhouettes trailing back up the track, red,
+   white, red, each fainter. The side's echoes ride the GPU layer (one quad each); without it only the
+   noses echo (hundreds of 2D slices per echo would be too slow). */
+function speedEchoes(t, kk, img, power) {
+  if (power <= 0.02) return;
+  // each echo also steps back toward where the train came from on screen (right and up, toward the
+  // tunnel), so it peeks out beside the real train instead of hiding straight behind it
+  [[3, 0.21, '#E5191C', 0.32], [2, 0.14, ECHO_WHITE, 0.42], [1, 0.07, '#E5191C', 0.55]].forEach(([j, dt, color, a]) => {
+    const d = leadAt(Math.max(0, t - dt));
+    ctx.save();
+    ctx.translate(j * 34, -j * 11);
+    if (glOn) trainSide(d, kk, a * power, tinted(sideArt(), color));
+    trainNose(d, tinted(img, color), a * power);
+    ctx.restore();
+  });
+}
+
+/* MOTION SMEAR (ghosting): four faint copies of the nose where it was over the last few frames,
+   bridging its jump from frame to frame (the side already smears on the GPU, see SHUTTER) */
+function noseSmear(t, img, power) {
+  if (power <= 0.02 || !img) return;
+  for (let j = 4; j >= 1; j--) trainNose(leadAt(Math.max(0, t - j * 0.012)), img, 0.16 * power);
+}
+
+/* WIND TRAILS: streaks of air hugging the train (over the roof, along its flank on the platform side,
+   low along the floor) rushing toward the camera faster than the train, and dust kicked off the
+   platform. Thicker as they come near (perspective), each fading in and out on its own beat. */
+function windTrails(t, lead, power) {
+  if (power <= 0.02) return;
+  ctx.save();
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 26; i++) {
+    const lane = i % 4; // 0 over the roof, 1 along the flank, 2 low by the floor, 3 platform dust
+    const u = (i * 0.379 + t * (lane === 3 ? 3.4 : 2.4)) % 1;
+    const head = lead + 30 + (1 - u) * (lane === 3 ? 420 : 820);
+    if (head < 26) continue;
+    const tail = head + (lane === 3 ? 40 : 150 + (i % 3) * 90);
+    const X = lane === 0 ? SIDE_X - 20 - (i % 5) * 14 : lane === 3 ? SIDE_X + 14 + ((i * 29) % 60) : SIDE_X + 6 + (i % 4) * 7;
+    const Y = lane === 0 ? ROOF - 6 - (i % 5) * 6 : lane === 1 ? ROOF + 24 + ((i * 37) % 60) : SKIRT - 4 - (i % 3) * 6;
+    ctx.globalAlpha = power * Math.sin(Math.PI * u) * (lane === 3 ? 0.5 : 0.62);
+    ctx.strokeStyle = lane === 3 ? '#B9B4A8' : '#F5F5F0';
+    ctx.lineWidth = Math.max(1, Math.min(10, (lane === 3 ? 2.6 : 1.8) * (F / head) * 0.5));
+    ctx.beginPath();
+    ctx.moveTo(sx(X, tail), sy(Y, tail));
+    ctx.lineTo(sx(X, head), sy(Y, head));
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 /* anime afterimages: shaken-loose copies of the train, red then white, a little bigger and
@@ -862,6 +918,9 @@ function draw() {
   const lead = leadAt(t);
   const img = nose?.complete && nose.naturalWidth ? nose : null;
   afterimages(lead, kk, img, Math.max(0, Math.min(1, (MOUTH + 200 - lead) / 500)));
+  // the speed effects are strongest while it storms out of the tunnel, and ease off as it brakes
+  const fx = Math.max(0, Math.min(1, (MOUTH + 400 - lead) / 600)) * Math.min(1, speedAt(t) / 1800);
+  speedEchoes(t, kk, img, fx);
   trainSide(lead, kk, 1, sideArt(), { mat: 1, refl: 1 }); // mirrored in the glossy floor
   trainSide(lead, kk, 1, sideArt(), { mat: 1 }); // the car: heavy cel-shaded steel
   if (glOn) ctx = over; // the side is on the GPU layer: everything in front of it goes above
@@ -870,8 +929,10 @@ function draw() {
   // the trash lies on the platform, between the camera and the car, so it is drawn in front of
   // the car; against the nose it goes by depth (in front of it only once it is nearer)
   drawTrash(t, (d) => d >= lead);
+  noseSmear(t, heavyNose() || img, fx);
   trainNose(lead, heavyNose() || img, 1);
   drawTrash(t, (d) => d < lead);
+  windTrails(t, lead, Math.max(fx, 0.35 * Math.max(0, Math.min(1, (MOUTH - lead) / MOUTH))));
   headlights(lead, 1 + Math.max(0, 1 - lead / MOUTH) * 1.6, Math.min(1, t / 0.3)); // the lights fade up with the horn
   speedLines(t, state.lines);
   ctx = under;

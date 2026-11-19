@@ -959,15 +959,9 @@ if (resume.analytics.goatcounter) {
   if (company) s.addEventListener('load', () => track(`company:${company.key}`));
 }
 
-/* ---------------------------------------------------------------- motto (only if loading drags) */
-setTimeout(() => {
-  if (document.readyState === 'complete') return;
-  const m = $('#motto');
-  m.innerHTML = `<div><blockquote>“${esc(resume.motto.text)}”</blockquote><cite>— ${esc(resume.motto.by)}</cite></div>`;
-  m.classList.add('show');
-  const shownAt = Date.now();
-  window.addEventListener('load', () => setTimeout(() => m.classList.remove('show'), Math.max(0, 1600 - (Date.now() - shownAt))), { once: true });
-}, 1000);
+/* (the black motto screen that covered a slow load was removed Nov 19: on a phone it hid the station
+   until the page finished loading, and John saw a black screen until he tapped. The title and the
+   station's blurred stand-in now paint at once instead.) */
 
 /* ---------------------------------------------------------------- boot */
 show(route());
