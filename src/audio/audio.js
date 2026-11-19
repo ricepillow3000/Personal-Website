@@ -874,9 +874,14 @@ Object.assign(VOICES, {
   },
 });
 
+const lastAt = {}; // when each sound last started (see sfx)
 export function sfx(name, arg) {
   if (!enabled() || !ensure()) return;
   if (ac.state === 'suspended') ac.resume();
+  // the same sound twice within 35 ms is never meant (a fast sweep across a list): stacking it
+  // only smears into a stutter, so the second one is dropped
+  if (ac.currentTime - (lastAt[name] ?? -1) < 0.035) return;
+  lastAt[name] = ac.currentTime;
   const g = ac.createGain(); // each sound gets its own fader, so a skipped shot can be hushed
   g.connect(sfxBus);
   live.add(g);

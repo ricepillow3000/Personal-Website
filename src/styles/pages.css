@@ -174,10 +174,10 @@
 
 /* ---------- reduced motion: hold every idle loop still ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .pg-mark span, .wanted-slot, .poster-grade, .crew-star, .panel::before, .route-dash, .pg-rays, .stop-pin { animation: none !important; }
+  .pg-mark span, .wanted-slot, .poster-grade, .crew-star, .crew-m b::after, .panel::before, .route-dash, .pg-rays, .stop-pin { animation: none !important; }
 }
 body.reduce-motion :is(.pg-mark span, .wanted-slot, .poster-grade, .crew-star, .route-dash, .pg-rays, .stop-pin),
-body.reduce-motion .panel::before { animation: none !important; }
+body.reduce-motion .panel::before, body.reduce-motion .crew-m b::after { animation: none !important; }
 
 /* the rays stay inside the page (no sideways overflow on phones) */
 .card-stage { overflow: clip; padding: 30px 0; margin: -30px 0; }
@@ -248,39 +248,50 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
   animation: crewSpin 9s steps(18) infinite;
 }
 @keyframes crewSpin { to { rotate: 360deg; } }
-.crew-board { position: relative; padding: 18px 30px 16px 140px; background: rgba(8, 8, 8, .94); clip-path: polygon(0 3%, 100% 0, 96% 100%, 2% 97%); }
-.crew-list { list-style: none; margin: 0; padding: 0; }
+.crew-board { position: relative; padding: 18px 30px 16px 22px; background: rgba(8, 8, 8, .94); clip-path: polygon(0 3%, 100% 0, 96% 100%, 2% 97%); }
+/* one grid for every row (subgrid), so the CORE/KIT tags own a column and never sit on a name */
+.crew-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: max-content max-content 24px 96px minmax(110px, 1fr); column-gap: 14px; }
 .crew-cursor { position: absolute; left: 0; right: 0; top: 0; height: 52px; pointer-events: none; z-index: 0; }
-.crew-cursor i { position: absolute; inset: -4px -30px -6px 70px; display: block; transform-origin: 0 50%; } /* runs past the panel's right edge, like a highlight band */
+.crew-cursor i { position: absolute; inset: -4px -30px -6px var(--cl, 70px); display: block; transform-origin: 0 50%; } /* runs past the panel's right edge, like a highlight band */
 .crew-cursor i::before, .crew-cursor i::after { content: ""; position: absolute; inset: 0; clip-path: polygon(0 18%, 100% 0, 97% 82%, 3% 100%); }
 .crew-cursor i::before { background: var(--teal); translate: -16px 8px; }
 .crew-cursor i::after { background: var(--white); }
 .crew-row {
-  position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) 24px 96px 150px; align-items: center; gap: 14px;
+  position: relative; z-index: 1; display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center;
   min-height: 50px; padding: 2px 6px; color: var(--white); outline: none; cursor: default;
 }
-.crew-row:nth-child(odd) { margin-left: 10px; }
-.crew-row:nth-child(4n) { margin-left: -8px; }
+.crew-row:nth-child(odd) > :not(.crew-tag) { translate: 10px 0; }
+.crew-row:nth-child(4n) > :not(.crew-tag) { translate: -8px 0; }
+.crew-tag { grid-column: 1; } .crew-name { grid-column: 2; } .crew-dot { grid-column: 3; } .crew-lv { grid-column: 4; } .crew-m { grid-column: 5; }
 .crew-name { justify-self: end; text-align: right; font-family: var(--f-serif); font-weight: 900; font-size: 21px; line-height: 1.1; letter-spacing: .2px; white-space: nowrap; }
 .crew-dot { justify-self: center; font-size: 14px; color: var(--white); }
 .crew-spark { display: block; width: 20px; height: 20px; background: var(--white); rotate: 18deg; clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%); }
 .crew-lv { font-family: var(--f-head); font-size: 38px; line-height: 1; font-style: italic; letter-spacing: 1px; }
 .crew-lv small { font-size: 13px; font-style: italic; margin-right: 3px; vertical-align: 5px; }
-.crew-m { position: relative; height: 24px; }
-.crew-m::after { content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 2px; background: rgba(245, 245, 240, .3); transform: skewX(-20deg); }
-.crew-m i { position: absolute; left: 0; bottom: 3px; height: 8px; width: var(--v); background: var(--yellow); transform-origin: 0 50%; transform: skewX(-20deg); z-index: 1; }
+/* the level meter: ten chunky slanted blocks that climb like stairs (filled = yellow with a red
+   misprint, empty = an ink outline), a white star sticker on the top block, MAX blocks striped */
+.crew-m { display: flex; align-items: flex-end; gap: 4px; height: 26px; padding-right: 10px; }
+.crew-m b { position: relative; flex: 1 1 0; min-width: 6px; height: calc(9px + var(--k) * 1.5px); transform: skewX(-18deg); transform-origin: 50% 100%;
+  border: 2px solid rgba(245, 245, 240, .3); }
+.crew-m b.f { background: var(--yellow); border-color: var(--yellow); box-shadow: 2px 2px 0 var(--red); }
+.crew-max b.f { background: repeating-linear-gradient(-45deg, var(--yellow) 0 4px, var(--white) 4px 7px); }
+.crew-m b.t::after { content: ""; position: absolute; right: -9px; top: -13px; width: 17px; height: 17px; background: var(--white); transform: skewX(18deg) rotate(14deg);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
 .crew-row.on { color: var(--black); }
 .crew-row.on .crew-spark { background: var(--black); }
 .crew-row.on .crew-lv { text-shadow: 2px 2px 0 var(--teal); }
-.crew-row.on .crew-m i { height: 10px; background: var(--red); box-shadow: 0 0 0 2px var(--black); }
-.crew-row.on .crew-m::after { background: var(--black); }
+.crew-row.on .crew-m b { border-color: var(--black); }
+.crew-row.on .crew-m b.f { background: var(--red); box-shadow: 2px 2px 0 var(--black); }
+.crew-row.on .crew-max b.f { background: repeating-linear-gradient(-45deg, var(--red) 0 4px, var(--black) 4px 7px); }
+.crew-row.on .crew-m b.t::after { background: var(--black); animation: crewTip .9s steps(6) infinite; }
+@keyframes crewTip { to { rotate: 360deg; } }
 /* jagged white arrow tags pointing at their rows, sealed in a black outline */
-.crew-tag { position: absolute; left: -132px; top: 50%; translate: 0 -50%; rotate: -10deg;
+.crew-tag { position: relative; justify-self: start; rotate: -10deg; margin-right: 6px;
   filter: drop-shadow(3px 0 0 var(--black)) drop-shadow(-3px 0 0 var(--black)) drop-shadow(0 3px 0 var(--black)) drop-shadow(0 -3px 0 var(--black)) drop-shadow(4px 5px 0 var(--red)); }
 .crew-tag b { display: block; padding: 4px 36px 4px 14px; font: 400 25px/1 var(--f-head); letter-spacing: 1px; background: var(--white); color: var(--black);
   clip-path: polygon(0 8%, 72% 0, 74% 20%, 100% 46%, 75% 64%, 78% 100%, 5% 92%); }
 /* the picked skill, spelled out under the list */
-.crew-detail { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 18px; margin: 14px 0 0 -96px; padding: 12px 0 4px 6px; border-top: 2px solid rgba(245, 245, 240, .18); color: var(--white); }
+.crew-detail { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 18px; margin: 14px 0 0; padding: 12px 0 4px 6px; border-top: 2px solid rgba(245, 245, 240, .18); color: var(--white); }
 .cd-name { font-family: var(--f-head); font-weight: 400; font-size: 32px; line-height: 1.05; color: var(--red); rotate: -3deg; }
 .cd-rank { font-family: var(--f-head); font-style: italic; }
 .cd-rank small { font-size: 15px; margin-right: 3px; }
@@ -293,15 +304,30 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
 .crew-side { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-content: end; justify-items: end; gap: 12px; padding-bottom: 10px; }
 .crew-word { font-size: clamp(44px, 4.6vw, 76px); rotate: -8deg; }
 .crew-ask { margin: 0; padding: 4px 14px; font-family: var(--f-ui); font-style: italic; font-weight: 700; font-size: 18px; background: var(--black); color: var(--white); border: 2px solid var(--white); rotate: -8deg; }
+@media (min-width: 761px) and (max-width: 1180px) {
+  .crew { grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr); }
+  .crew-board { padding-right: 20px; }
+  .crew-list { grid-template-columns: max-content max-content 18px 78px minmax(96px, 1fr); column-gap: 10px; }
+  .crew-name { font-size: 18px; }
+  .crew-lv { font-size: 32px; }
+  .crew-tag b { font-size: 21px; padding-right: 30px; }
+}
+@media (min-width: 761px) and (max-width: 940px) {
+  .crew { grid-template-columns: minmax(0, 1fr); }
+  .crew-side { justify-items: start; }
+}
 @media (max-width: 760px) {
   .crew { grid-template-columns: minmax(0, 1fr); }
   .crew-star { width: 200px; height: 200px; top: -20px; }
   .crew-board { padding: 14px 12px 14px 14px; }
-  .crew-row { grid-template-columns: minmax(0, 1fr) 64px 96px; min-height: 48px; padding: 9px 4px; margin-left: 0 !important; }
+  .crew-list { display: block; }
+  .crew-row { grid-column: auto; grid-template-columns: minmax(0, 1fr) 64px 104px; column-gap: 10px; min-height: 48px; padding: 9px 4px; }
+  .crew-row > * { grid-column: auto !important; translate: none !important; }
+  .crew-m { padding-right: 8px; gap: 3px; }
   .crew-name { justify-self: start; text-align: left; font-size: 17px; white-space: normal; }
   .crew-dot, .crew-tag { display: none; }
   .crew-lv { justify-self: end; font-size: 28px; }
-  .crew-cursor i { left: 0; right: 0; }
+  .crew-cursor i { left: 0 !important; right: 0; }
   .crew-cursor i::before { translate: -6px 4px; } /* the offset band stays inside the picked row */
   .crew-detail { margin-left: 0; }
   .cd-name { font-size: 26px; }

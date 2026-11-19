@@ -90,7 +90,7 @@ function graffitiLayer() {
 
 
   <!-- torn poster A: halftone + bold mark, taped -->
-  <g transform="rotate(5 1260 635)">
+  <g transform="translate(0 46) rotate(5 1260 635)"><!-- (moved down 46 on Nov 19 so the CONNECT banner above it has room to breathe) -->
     ${poly(posterA, C.white)}
     ${poly(posterA, 'url(#dotsR)')}
     ${poly(star(1260, 610, 88), C.black)}
@@ -100,11 +100,10 @@ function graffitiLayer() {
   <!-- (the GO! poster that hung top-left was retired on Nov 19: the title's calendar sticker sits there now) -->
 
   <!-- swoosh arrow (wildstyle-ish), white with black outline -->
-  <path class="bd-arrow" d="M520 420 C 700 330, 900 330, 1040 400 L 1060 360 L 1130 460 L 1010 488 L 1028 446 C 900 392, 720 400, 560 470 Z"
+  <path class="bd-arrow" transform="translate(0 34)" d="M520 420 C 700 330, 900 330, 1040 400 L 1060 360 L 1130 460 L 1010 488 L 1028 446 C 900 392, 720 400, 560 470 Z"
     fill="${C.white}" stroke="${C.black}" stroke-width="10" stroke-linejoin="round" paint-order="stroke"/>
 
-  <!-- crown tag outline -->
-  <path d="M1360 120 l 16 -42 l 18 28 l 18 -36 l 18 36 l 18 -28 l 16 42 Z" fill="none" stroke="${C.white}" stroke-width="5" stroke-linejoin="round"/>
+  <!-- (the crown outline under the mute button was removed Nov 19, John: corny) -->
 </svg>`;
 }
 
@@ -137,21 +136,6 @@ function shardLayer() {
    ========================================================================= */
 function techLayer() {
   const K = C.black;
-  /* a strip of tape: alternating black and white triangles between two parallel edges */
-  const zigTape = (x0, y0, x1, y1, w, n) => {
-    const dx = (x1 - x0) / n;
-    const dy = (y1 - y0) / n;
-    const len = Math.hypot(x1 - x0, y1 - y0);
-    const nx = (-(y1 - y0) / len) * w;
-    const ny = ((x1 - x0) / len) * w;
-    let g = poly([[x0, y0], [x1, y1], [x1 + nx, y1 + ny], [x0 + nx, y0 + ny]], C.white, `stroke="${K}" stroke-width="5"`);
-    for (let i = 0; i < n; i++) {
-      const ax = x0 + dx * i;
-      const ay = y0 + dy * i;
-      g += poly([[ax, ay], [ax + dx, ay + dy], [ax + dx / 2 + nx, ay + dy / 2 + ny]], K);
-    }
-    return g;
-  };
   const bigStar = (cx, cy, r, rot) => poly(star(cx + r * 0.16, cy + r * 0.12, r, 0.42, 5, rot), C.red2)
     + poly(star(cx, cy, r, 0.42, 5, rot), C.white, `stroke="${K}" stroke-width="7" stroke-linejoin="miter"`);
   const card = [[-40, 700], [250, 652], [270, 708], [352, 688], [410, 940], [-40, 940]];
@@ -161,7 +145,6 @@ function techLayer() {
   <g class="cut-left">
     ${poly(card, K)}
     <path d="M-40 700 L250 652 L270 708 L352 688 L410 940" fill="none" stroke="${C.white}" stroke-width="5" stroke-linejoin="miter"/>
-    ${zigTape(-30, 900, 400, 790, 30, 16)}
     ${bigStar(232, 812, 84, -98)}
     ${poly(star(360, 660, 22, 0.42, 5, -80), C.white, `stroke="${K}" stroke-width="5"`)}
     ${poly(star(96, 716, 13, 0.42, 5, -100), C.red2)}
