@@ -9,7 +9,9 @@ const defaults = () => ({
   cleared: [],
   lit: [],
   achievements: [],
-  settings: { sound: false, music: 0.5, reduceMotion: null }
+  // sound is ON by default (Nov 19, John: "the audio should be on by default, and users can turn it
+  // on or off from there"); a visitor's own choice is kept (soundChosen)
+  settings: { sound: true, soundChosen: false, music: 0.5, reduceMotion: null }
 });
 
 function load() {
@@ -29,7 +31,9 @@ function load() {
       lit: ids(data.lit),
       achievements: ids(data.achievements),
       settings: {
-        sound: st.sound === true,
+        // (saves from before the switch to on-by-default hold the old default `false`, not a choice)
+        sound: st.soundChosen === true ? st.sound === true : true,
+        soundChosen: st.soundChosen === true,
         music: Number.isFinite(music) ? Math.min(1, Math.max(0, music)) : d.settings.music,
         reduceMotion: typeof st.reduceMotion === 'boolean' ? st.reduceMotion : null
       }

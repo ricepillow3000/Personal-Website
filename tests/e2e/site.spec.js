@@ -259,7 +259,7 @@ test('a corrupted or hostile save can never crash the site or inject markup', as
   await openBoard(page);
   await page.goto('/#/system');
   await expect(page.locator('#page h2.ransom')).toBeVisible();
-  await expect(page.locator('[data-toggle="sound"]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('[data-toggle="sound"]')).toHaveAttribute('aria-pressed', 'true'); // junk is not a choice: the default (on)
   await expect(page.locator('#musicVol')).toHaveValue('0.5');
   await page.evaluate(() => { window.dispatchEvent(new Event('blur')); window.dispatchEvent(new Event('focus')); });
   await page.waitForTimeout(300);
@@ -712,29 +712,38 @@ test('sound: SETTINGS credits every real recording, and every clip the engine as
   for (const c of SOUND_CREDITS.filter((x) => x.license.startsWith('CC BY-SA'))) expect(c.changes, c.file).toContain(c.license);
 });
 
-test('sound: the recordings download only after sound is turned on (never on page load)', async ({ page }) => {
+test('sound: on by default, but nothing downloads and nothing plays before the first tap; the first tap starts the effects and the music', async ({ page }) => {
   const fetched = [];
-  page.on('request', (r) => r.url().includes('/assets/sfx/') && fetched.push(r.url()));
+  const music = [];
+  page.on('request', (r) => { if (r.url().includes('/assets/sfx/')) fetched.push(r.url()); if (/\/music[-.]/.test(r.url())) music.push(r.url()); });
   await page.goto('/');
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'true'); // on by default
   await page.waitForTimeout(2500);
-  expect(fetched).toEqual([]); // sound is off by default: nothing extra on first load
-  await page.locator('#soundBtn').click();
+  expect(fetched).toEqual([]); // no gesture yet: no audio engine, no downloads
+  expect(music).toEqual([]);
+  await page.locator('.title-hook').click(); // the first tap anywhere
   await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(8);
+  await expect.poll(() => music.length, { timeout: 5000 }).toBe(1);
+  await expect.poll(() => page.evaluate(() => document.querySelector('#soundBtn').getAttribute('aria-pressed'))).toBe('true');
 });
 
-test('sound: the music code downloads only after sound is on, and the sound button calls out until then (once, for good)', async ({ page }) => {
-  const music = [];
-  page.on('request', (r) => /\/music[-.]/.test(r.url()) && music.push(r.url()));
+test('sound: leaving the page pauses it and coming back resumes it, with no toggling; a choice to mute is remembered', async ({ page }) => {
   await page.goto('/');
-  await page.waitForTimeout(2000);
-  expect(music).toEqual([]);
-  await expect(page.locator('#soundBtn')).toHaveClass(/sound-call/);
+  await page.locator('.title-hook').click(); // starts the sound
+  const state = () => page.evaluate(() => window.__acState?.());
+  await page.evaluate(async () => { const m = await import(performance.getEntriesByType('resource').map((e) => e.name).find((n) => /audio\.js|main-/.test(n)) || ''); return m; }).catch(() => {});
+  // the page goes away (another app or tab) and comes back
+  await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); document.dispatchEvent(new Event('visibilitychange')); });
+  await page.waitForTimeout(500);
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'true');
+  // mute, reload: it stays muted (the visitor's choice is kept)
   await page.locator('#soundBtn').click();
-  await expect.poll(() => music.length, { timeout: 5000 }).toBe(1);
-  await expect(page.locator('#soundBtn')).not.toHaveClass(/sound-call/);
-  await page.locator('#soundBtn').click(); // off again: it stays calm (it has been heard)
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'false');
   await page.reload();
-  await expect(page.locator('#soundBtn')).not.toHaveClass(/sound-call/);
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'false');
+  void state;
 });
 
 test('tower lights: every aviation light blinks on its own random beat (never all together); all steady on with reduced motion', async ({ page, browser }) => {
@@ -950,17 +959,29 @@ test('turn your phone: a red reminder on phones held upright, once a visit; turn
   await ctx.close();
 });
 
-test('the lock: its SOUND switch turns sound on without skipping the lock, and the HUD sound button follows', async ({ browser }) => {
+test('the lock: with sound on by default its switch reads TAP FOR SOUND, that tap starts the sound without skipping the lock, a second tap mutes, the HUD follows', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
   const page = await ctx.newPage();
-  await page.route('**/assets/film/subway*', async (r) => { await new Promise((s) => setTimeout(s, 2500)); await r.continue(); });
+  // the test browser lets audio start without a tap (an automation flag); real browsers don't: emulate them
+  await page.addInitScript(() => {
+    let allowed = false;
+    window.addEventListener('pointerup', () => { allowed = true; }, true);
+    const AC = window.AudioContext;
+    window.AudioContext = class extends AC {
+      constructor(o) { super(o); if (!allowed) this.suspend(); }
+      resume() { return allowed ? super.resume() : Promise.resolve(); }
+    };
+  });
+  await page.route('**/assets/film/subway*', async (r) => { await new Promise((s) => setTimeout(s, 3000)); await r.continue(); });
   await page.goto('/?intro', { waitUntil: 'commit' });
   const sw = page.locator('#loader .ld-sound');
-  await expect(sw).toHaveAttribute('aria-pressed', 'false');
+  await expect(sw).toContainText('TAP FOR SOUND');
   await sw.click();
-  await expect(sw).toHaveAttribute('aria-pressed', 'true');
+  await expect(sw).toContainText('SOUND ON');
   await expect(page.locator('#loader')).toHaveCount(1); // still picking the lock (not a skip)
+  await sw.click();
+  await expect(sw).toContainText('SOUND OFF');
   await expect(page.locator('#loader')).toHaveCount(0, { timeout: 9000 });
-  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'false');
   await ctx.close();
 });

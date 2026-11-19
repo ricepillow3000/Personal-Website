@@ -7,7 +7,7 @@
    - Rhodes-style electric piano (FM sine with a soft bell tine), stereo tremolo, low-pass ~1.8 kHz.
    - Round sub bass, laid back behind the beat, syncopated root / 5th / 7th.
    - A dusty kit: kick on 1 and the "and" of 3, rim + brush on 2 and 4, swung hats.
-   - A low organ pad, vinyl crackle, a little tape wow, a small room.
+   - A low organ pad, a little tape wow, a small room (no vinyl crackle: it read as a glitch).
    - Velocity and timing are humanized on every hit, so no two passes are identical.
 
    Loaded only after sound is turned on (a dynamic import from audio.js), scheduled with a lookahead
@@ -43,7 +43,7 @@ const MELODY = [
 ];
 // ----------------------
 
-const AHEAD = 0.2; // seconds scheduled ahead
+const AHEAD = 0.35; // seconds scheduled ahead (a busy moment, like the train, never leaves a gap)
 const LEVEL = 0.6; // the loop's own level: it sits under the site's sound effects
 const midi = (n) => 440 * 2 ** ((n - 69) / 12);
 const N = (name) => {
@@ -139,24 +139,10 @@ export function createMusic(ac, dest) {
   });
   send(epLp, 0.32);
 
-  // vinyl crackle + hiss, looping
-  const crackBuf = ac.createBuffer(1, ac.sampleRate * 4, ac.sampleRate);
-  const cd = crackBuf.getChannelData(0);
-  for (let i = 0; i < cd.length; i++) {
-    cd[i] = (Math.random() * 2 - 1) * 0.02; // hiss
-    if (Math.random() < 0.00045) cd[i] = (Math.random() < 0.5 ? -1 : 1) * rnd(0.3, 1); // a pop
-  }
-  const crackle = ac.createBufferSource();
-  crackle.buffer = crackBuf;
-  crackle.loop = true;
-  const cHp = ac.createBiquadFilter();
-  cHp.type = 'highpass';
-  cHp.frequency.value = 900;
-  const cG = ac.createGain();
-  cG.gain.value = 0.05;
-  crackle.connect(cHp).connect(cG).connect(out);
+  // (no vinyl crackle: its random pops sounded like a glitch on headphones, Nov 19)
 
-  const shared = [wow, trem, crackle];
+
+  const shared = [wow, trem];
   let started = false;
   const startShared = (t) => {
     if (started) return;
