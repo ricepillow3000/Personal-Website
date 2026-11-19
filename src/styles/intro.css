@@ -1,6 +1,7 @@
-/* ---------------------------------------------------------------- the loading star (src/ui/loader.js)
-   Black with a red slash and halftone, the star in the middle: a white ink edge with a red misprint,
-   filling with red from its foot. The CSS fallback hides it after 9 s if the script never ran. */
+/* ---------------------------------------------------------------- the lock (src/ui/loader.js)
+   Black with a red slash and halftone; in the middle a cut-paper lock plate (white ink edge, red
+   misprint), four pins that snap up yellow as the page loads, and a keyhole filling with red from its
+   foot. The CSS fallback hides it after 9 s if the script never ran. */
 .loader {
   position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; overflow: hidden;
   background:
@@ -12,16 +13,20 @@
   touch-action: none;
 }
 @keyframes ldFailsafe { to { visibility: hidden; pointer-events: none; } }
-.loader.flash .ld-fill { fill: var(--white); transition: fill .08s; }
-.loader.flash :is(.ld-pct, .ld-word) { opacity: 0; transform: translateY(14px); transition: opacity .16s, transform .16s; }
-.loader.door { background: var(--black); pointer-events: none; } /* (the doorway: plain black, cut by the growing star) */
-.loader.door .ld-core { opacity: 0; transform: scale(1.12); transition: opacity .2s, transform .2s; }
 .ld-core { position: relative; display: grid; justify-items: center; gap: 6px; }
-.ld-star { width: min(46vmin, 290px); height: auto; overflow: visible; }
+.ld-lock { width: min(56vmin, 340px); height: auto; overflow: visible; }
+.loader.turn .ld-lock { animation: ldClick .3s steps(2) 1; } /* the lock jolts as it gives */
+@keyframes ldClick { 50% { transform: translate(2px, -2px) rotate(-1deg); } }
 .ld-mis { fill: var(--red); }
-.ld-shell { fill: #1A1A1C; }
+.ld-plate { fill: #1A1A1C; stroke: var(--white); stroke-width: 5; stroke-linejoin: miter; }
+.ld-slot { fill: var(--black); stroke: #3A3A40; stroke-width: 2; }
+.ld-tumbler { fill: #6E6E72; transition: transform .22s cubic-bezier(.2, 1.8, .4, 1), fill .1s; transform-box: fill-box; }
+.ld-pin.set .ld-tumbler { fill: var(--yellow); transform: translateY(-14px); }
+.ld-shell { fill: var(--black); }
 .ld-fill { fill: var(--red); }
-.ld-edge { fill: none; stroke: var(--white); stroke-width: 7; stroke-linejoin: miter; }
+.ld-edge { fill: none; stroke: var(--white); stroke-width: 5; stroke-linejoin: round; }
+.ld-key { transform-box: view-box; transform-origin: 0 -20px; /* (view-box: the origin is the lock's own 0,0) */ transition: transform .26s cubic-bezier(.2, 1.6, .4, 1); }
+.loader.turn .ld-key { transform: rotate(90deg); } /* the key turns */
 .ld-pct { margin: 0; font-family: var(--f-head); font-size: clamp(34px, 7vmin, 56px); line-height: 1; color: var(--white);
   transform: skew(-12deg) rotate(-4deg); text-shadow: 4px 4px 0 var(--red); font-variant-numeric: tabular-nums; }
 .ld-pct i { font-style: normal; font-size: .55em; margin-left: .06em; }

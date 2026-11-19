@@ -1,13 +1,15 @@
-/* The loading star (Nov 19, John: "a loading screen... a star in the middle that acts as a progress
-   bar, and once it fills up to 100% it looks like you are entering the star, like it's a doorway,
-   and then it slowly opens up into the first page where you see the subway").
+/* The lock (Nov 19, John asked for a loading screen that fills like a progress bar and then opens like
+   a doorway into the subway; then: "we overuse the star... find other shapes that match our design,
+   in our resume theme"). The site is a heist (the calling card, "consider it stolen", TAKE YOUR
+   NETWORK), so the visitor picks a lock: a cut-paper lock plate (white ink edge, red misprint) with a
+   keyhole that fills with red as the page really loads, and four pins that snap up into place one by
+   one (25, 50, 75, 100%). At 100% the key turns, the keyhole flashes white, and the keyhole itself
+   is the doorway: a keyhole-shaped hole in the black that grows past the screen while the station
+   settles from a push-in. Original shapes (no game's logo or mascot).
 
-   The star is in app.html, so it is on screen from the very first paint (no flash of the title, no
-   black screen). It fills with red from the bottom as the page really loads: the code running, the
-   brand fonts, the platform's sharp picture, the page's load event. The number eases toward the
-   real progress (never backward, never faster than it can be read). At 100% the red flashes white,
-   the star becomes a hole in the black with the station showing through it, and the camera goes
-   through: the star grows past the edges of the screen while the station settles from a push-in.
+   It is in app.html, so it is on screen from the very first paint (no flash of the title, no black
+   screen). Progress is real: the code running, the brand fonts, the platform's sharp picture, the
+   page's load event; the number eases toward it (never backward, never faster than it can be read).
 
    Never a trap: a tap or a key skips straight to the doorway, it never waits more than CAP ms,
    if the script fails a CSS fallback hides it, and with reduced motion it simply fades. Automated
@@ -16,20 +18,14 @@ import { reducedMotion, fontsReady } from '../core/util.js';
 import { stationReady } from '../fx/backdrop.js';
 
 let opened;
-/** resolves the moment the doorway opens (at once when there is no loading star): the title's own
-    slam-in waits for it, so it plays where it can be seen instead of under the star */
+/** resolves the moment the doorway opens (at once when there is no lock screen): the title's own
+    landing punch waits for it, so it plays where it can be seen */
 export const introOpen = new Promise((r) => { opened = r; });
+// the keyhole's outline in units of its round top's radius (y down): an arc over the top, a neck that
+// widens to the foot (the same shape as the lock in app.html, there at radius 28)
+const KEYHOLE = [[0.527, 0.85], [0.697, 0.718], [0.834, 0.552], [0.933, 0.361], [0.988, 0.153], [0.998, -0.062], [0.962, -0.274], [0.881, -0.473], [0.759, -0.651], [0.603, -0.798], [0.418, -0.909], [0.214, -0.977], [0, -1], [-0.214, -0.977], [-0.418, -0.909], [-0.603, -0.798], [-0.759, -0.651], [-0.881, -0.473], [-0.962, -0.274], [-0.998, -0.062], [-0.988, 0.153], [-0.933, 0.361], [-0.834, 0.552], [-0.697, 0.718], [-0.527, 0.85], [-0.8, 2.2], [0.8, 2.2]];
 const CAP = 6000; // ms: the doorway opens by then whatever is still loading
-const MIN = 900; // ms: a cached visit still sees the star fill (it is the intro, not a wait)
-const STAR = (cx, cy, R) => {
-  let d = '';
-  for (let i = 0; i < 10; i++) {
-    const r = i % 2 ? R * 0.45 : R;
-    const a = -Math.PI / 2 + (i * Math.PI) / 5;
-    d += `${i ? 'L' : 'M'}${(cx + r * Math.cos(a)).toFixed(1)} ${(cy + r * Math.sin(a)).toFixed(1)}`;
-  }
-  return `${d}Z`;
-};
+const MIN = 900; // ms: a cached visit still sees the lock picked (it is the intro, not a wait)
 
 export function runLoader() {
   const el = document.getElementById('loader');
@@ -42,6 +38,7 @@ export function runLoader() {
   const t0 = performance.now();
   const num = el.querySelector('#ldNum');
   const level = el.querySelector('#ldLevel');
+  const pins = [...el.querySelectorAll('.ld-pin')];
   let target = 12; // the page's own code is running
   let shown = 0;
   let last = -1;
@@ -71,7 +68,8 @@ export function runLoader() {
       last = n;
       num.textContent = String(n);
       el.setAttribute('aria-valuenow', String(n));
-      level.setAttribute('y', (100 - shown * 2.1).toFixed(1)); // the red rises from the star's foot (y 100) past its tip (-110)
+      level.setAttribute('y', (44 - shown * 0.95).toFixed(1)); // the red rises from the keyhole's foot (y 42) past its top (-48)
+      pins.forEach((p) => p.classList.toggle('set', n >= Number(p.dataset.at))); // each pin snaps up as its step lands
     }
     if (shown >= 100) {
       done = true;
@@ -86,8 +84,9 @@ export function runLoader() {
   return finished;
 }
 
-/* 100%: flash, then through the star like a doorway, into the station. The doorway is the loader's
-   own black, cut by a star-shaped hole (clip-path, even-odd) that grows past the screen's corners;
+/* 100%: the key turns, a flash, then through the keyhole like a doorway, into the station. The doorway
+   is the loader's own black, cut by a keyhole-shaped hole (clip-path, even-odd) that grows past the
+   screen's corners;
    the station behind it settles from a push-in. Both run as browser animations (no per-frame
    script), so the phone's main thread stays free while the page comes to life. */
 function door(el) {
@@ -101,31 +100,28 @@ function door(el) {
   }
   const W = window.innerWidth;
   const H = window.innerHeight;
-  const core = el.querySelector('.ld-star');
+  const core = el.querySelector('.ld-lock');
   const box = core.getBoundingClientRect();
-  const cx = box.left + box.width / 2;
-  const cy = box.top + box.height / 2 + box.height * 0.035; // (the star's visual centre sits a little low)
-  const R0 = box.width / 2.2;
-  const R1 = Math.hypot(W, H) * 1.35; // its inner corners clear the screen's corners
-  const hole = (R, rot) => {
-    const pts = [];
-    for (let i = 0; i < 10; i++) {
-      const r = i % 2 ? R * 0.45 : R;
-      const a = -Math.PI / 2 + (i * Math.PI) / 5 + (rot * Math.PI) / 180;
-      pts.push(`${(cx + r * Math.cos(a)).toFixed(1)}px ${(cy + r * Math.sin(a)).toFixed(1)}px`);
-    }
+  const u = box.width / 230; // screen px per lock unit (its viewBox is 230 wide)
+  const cx = box.left + 115 * u; // the keyhole's round top: centre (0, -20), radius 28 in lock units
+  const cy = box.top + 95 * u;
+  const R0 = 28 * u;
+  const R1 = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy)) * 1.05; // its round top clears every corner
+  const hole = (R) => {
+    // turned a quarter, like the key left it (x, y) -> (-y, x)
+    const pts = KEYHOLE.map(([x, y]) => `${(cx - y * R).toFixed(1)}px ${(cy + x * R).toFixed(1)}px`);
     return `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${pts.join(', ')}, ${pts[0]}, 0 0)`;
   };
-  // the growth eases in (power 3), sampled into keyframes so the star also turns as it grows
+  // the growth eases in (power 3), sampled into keyframes
   const frames = Array.from({ length: 13 }, (_, i) => {
-    const u = i / 12;
-    const e = u * u * u;
-    return { offset: u, clipPath: hole(R0 + (R1 - R0) * e, 18 * e) };
+    const t = i / 12;
+    return { offset: t, clipPath: hole(R0 + (R1 - R0) * t * t * t) };
   });
   return new Promise((resolve) => {
-    el.classList.add('flash'); // the red flashes white
+    el.classList.add('turn'); // the key turns in the lock
+    setTimeout(() => el.classList.add('flash'), 260); // the keyhole flashes white
     setTimeout(() => {
-      el.classList.add('door'); // the star is a hole now: the station through it
+      el.classList.add('door'); // the keyhole is a hole now: the station through it
       opened();
       back.style.transformOrigin = `${cx}px ${cy}px`;
       back.animate([{ transform: 'scale(1.18)' }, { transform: 'none' }], { duration: 1500, easing: 'cubic-bezier(.2, .7, .3, 1)' });
@@ -135,6 +131,6 @@ function door(el) {
       const done = () => { if (gone) return; gone = true; el.remove(); back.style.transformOrigin = ''; resolve(); };
       try { el.animate(frames, { duration: 1000, delay: 140, easing: 'linear', fill: 'forwards' }).finished.then(done, done); } catch { done(); }
       setTimeout(done, 1400);
-    }, 170);
+    }, 430);
   });
 }
