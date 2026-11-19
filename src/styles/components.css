@@ -149,16 +149,19 @@ body.scrolled .keyhints { translate: 0 80px; opacity: 0; }
 body[data-screen="title"] .keyhints, body[data-mode="quick"] .keyhints { display: none; }
 
 /* ============ MENU OVERLAY (Nov 19, from John's command-select reference; an original design) ============
-   a deep-red poster field (tonal swirls, halftone patches, torn paper, outlined stars: src/scenes/menu.js
-   art()) with the items in cut type stepping down a diagonal; a big red jagged lightning bolt; a
+   red field + halftone on the left with the items in cut type stepping down a diagonal; a black panel
+   with a turning black/white zigzag starburst on the right; a big red jagged slash between them; a
    MAIN MENU tag and the picked item's number in big cut-out digits top-right; its name huge at the
    bottom with the one-line teaser under it; chapters read, bottom-left. No character, no hand. */
 .menu-overlay {
   position: fixed; inset: 0; z-index: 70; overflow: hidden;
-  background: #8E1217; /* (the deep crimson of the art, under it while it draws) */
+  background: radial-gradient(circle, rgba(11, 11, 11, .4) 0 1.7px, transparent 2.4px) 0 0 / 13px 13px, var(--red);
 }
 .mn-art { position: absolute; inset: 0; pointer-events: none; }
 .mn-art svg { display: block; width: 100%; height: 100%; }
+.mn-burst { transform-origin: 0 0; animation: spin 120s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .mn-burst { animation: none; } }
+body.reduce-motion .mn-burst { animation: none; }
 .stair { list-style: none; margin: 0; padding: 0; position: absolute; z-index: 2; left: var(--gutter); top: 13vh; }
 .stair li { margin: 0 0 .6vh calc(var(--i) * 1.8vw); }
 .stair-item {
