@@ -211,6 +211,36 @@ function p5Layer() {
 </svg>`;
 }
 
+/* The round tower's red LED screens are moving billboards (Nov 19, John): on each of its three
+   rings a white star made of LED dots scrolls across, wrapping around the drum (it narrows toward the edges as the screen curves away), on a loop. The outline and path
+   were measured on the art (1600x679 space; every art size has the same shape), and the layer
+   is fitted with the art's own object-fit math so it stays glued to the screen. */
+const BB_RINGS = [
+  ['top', 'M700.3 225.0 L701.0 221.1 L702.3 217.1 L704.0 213.3 L706.2 209.5 L708.9 205.8 L712.1 202.2 L715.7 198.8 L719.7 195.5 L724.1 192.4 L728.9 189.4 L734.1 186.6 L739.6 184.1 L745.4 181.7 L751.5 179.6 L757.8 177.8 L764.4 176.2 L771.2 174.8 L778.1 173.7 L785.1 172.9 L792.2 172.3 L799.4 172.0 L806.6 172.0 L813.8 172.3 L820.9 172.9 L827.9 173.7 L834.8 174.8 L841.6 176.2 L848.2 177.8 L854.5 179.6 L860.6 181.7 L866.4 184.1 L871.9 186.6 L877.1 189.4 L881.9 192.4 L886.3 195.5 L890.3 198.8 L893.9 202.2 L897.1 205.8 L899.8 209.5 L902.0 213.3 L903.7 217.1 L905.0 221.1 L905.7 225.0 L905.7 260.6 L905.0 257.2 L903.7 253.8 L902.0 250.5 L899.8 247.2 L897.1 244.1 L893.9 241.0 L890.3 238.0 L886.3 235.2 L881.9 232.5 L877.1 230.0 L871.9 227.6 L866.4 225.4 L860.6 223.4 L854.5 221.6 L848.2 220.0 L841.6 218.6 L834.8 217.4 L827.9 216.5 L820.9 215.7 L813.8 215.3 L806.6 215.0 L799.4 215.0 L792.2 215.3 L785.1 215.7 L778.1 216.5 L771.2 217.4 L764.4 218.6 L757.8 220.0 L751.5 221.6 L745.4 223.4 L739.6 225.4 L734.1 227.6 L728.9 230.0 L724.1 232.5 L719.7 235.2 L715.7 238.0 L712.1 241.0 L708.9 244.1 L706.2 247.2 L704.0 250.5 L702.3 253.8 L701.0 257.2 L700.3 260.6 Z', 17],
+  ['middle', 'M692.3 327.9 L693.1 324.7 L694.4 321.6 L696.3 318.6 L698.7 315.6 L701.6 312.7 L705.0 309.9 L708.9 307.2 L713.2 304.5 L718.0 302.1 L723.2 299.7 L728.7 297.6 L734.7 295.5 L740.9 293.7 L747.5 292.0 L754.3 290.6 L761.4 289.3 L768.7 288.2 L776.1 287.3 L783.7 286.7 L791.4 286.2 L799.1 286.0 L806.9 286.0 L814.6 286.2 L822.3 286.7 L829.9 287.3 L837.3 288.2 L844.6 289.3 L851.7 290.6 L858.5 292.0 L865.1 293.7 L871.3 295.5 L877.3 297.6 L882.8 299.7 L888.0 302.1 L892.8 304.5 L897.1 307.2 L901.0 309.9 L904.4 312.7 L907.3 315.6 L909.7 318.6 L911.6 321.6 L912.9 324.7 L913.7 327.9 L913.7 371.4 L912.9 368.9 L911.6 366.3 L909.7 363.8 L907.3 361.3 L904.4 359.0 L901.0 356.6 L897.1 354.4 L892.8 352.3 L888.0 350.2 L882.8 348.3 L877.3 346.5 L871.3 344.8 L865.1 343.3 L858.5 342.0 L851.7 340.7 L844.6 339.7 L837.3 338.8 L829.9 338.1 L822.3 337.6 L814.6 337.2 L806.9 337.0 L799.1 337.0 L791.4 337.2 L783.7 337.6 L776.1 338.1 L768.7 338.8 L761.4 339.7 L754.3 340.7 L747.5 342.0 L740.9 343.3 L734.7 344.8 L728.7 346.5 L723.2 348.3 L718.0 350.2 L713.2 352.3 L708.9 354.4 L705.0 356.6 L701.6 359.0 L698.7 361.3 L696.3 363.8 L694.4 366.3 L693.1 368.9 L692.3 371.4 Z', 21],
+  ['bottom', 'M681.3 483.1 L682.2 481.6 L683.7 480.1 L685.7 478.6 L688.4 477.2 L691.6 475.8 L695.3 474.5 L699.6 473.2 L704.4 471.9 L709.7 470.7 L715.4 469.6 L721.5 468.5 L728.1 467.6 L735.0 466.7 L742.2 465.9 L749.8 465.2 L757.6 464.6 L765.6 464.1 L773.9 463.6 L782.2 463.3 L790.7 463.1 L799.2 463.0 L807.8 463.0 L816.3 463.1 L824.8 463.3 L833.1 463.6 L841.4 464.1 L849.4 464.6 L857.2 465.2 L864.8 465.9 L872.0 466.7 L878.9 467.6 L885.5 468.5 L891.6 469.6 L897.3 470.7 L902.6 471.9 L907.4 473.2 L911.7 474.5 L915.4 475.8 L918.6 477.2 L921.3 478.6 L923.3 480.1 L924.8 481.6 L925.7 483.1 L925.7 538.0 L924.8 537.3 L923.3 536.6 L921.3 535.8 L918.6 535.1 L915.4 534.4 L911.7 533.7 L907.4 533.1 L902.6 532.5 L897.3 531.9 L891.6 531.3 L885.5 530.8 L878.9 530.3 L872.0 529.8 L864.8 529.4 L857.2 529.1 L849.4 528.8 L841.4 528.5 L833.1 528.3 L824.8 528.2 L816.3 528.1 L807.8 528.0 L799.2 528.0 L790.7 528.1 L782.2 528.2 L773.9 528.3 L765.6 528.5 L757.6 528.8 L749.8 529.1 L742.2 529.4 L735.0 529.8 L728.1 530.3 L721.5 530.8 L715.4 531.3 L709.7 531.9 L704.4 532.5 L699.6 533.1 L695.3 533.7 L691.6 534.4 L688.4 535.1 L685.7 535.8 L683.7 536.6 L682.2 537.3 L681.3 538.0 Z', 27],
+];
+function billboardLayer() {
+  return `<svg class="bd-billboard" viewBox="0 0 1600 679" preserveAspectRatio="none" aria-hidden="true">
+  <defs>
+    <pattern id="bbLed" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle cx="1.6" cy="1.6" r="1.4" fill="#fff"/></pattern>
+    <mask id="bbDots" maskUnits="userSpaceOnUse" x="560" y="120" width="500" height="460"><rect x="560" y="120" width="500" height="460" fill="url(#bbLed)"/></mask>
+    <filter id="bbGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    ${BB_RINGS.map(([n, d]) => `<clipPath id="bbRing-${n}"><path d="${d}"/></clipPath>`).join('')}
+  </defs>
+  ${BB_RINGS.map(([n, , r]) => `<g clip-path="url(#bbRing-${n})"><g filter="url(#bbGlow)"><g mask="url(#bbDots)"><g class="bb-star bb-${n}">${poly(star(0, 0, r, 0.42, 5, -90), '#FFFFFF')}</g></g></g></g>`).join('')}
+</svg>`;
+}
+/** Fit the billboard layer to where object-fit: cover (position 50% 40%) puts the city art. */
+function fitBillboard(frame) {
+  const svg = frame.querySelector('.bd-billboard');
+  const W = frame.offsetWidth;
+  const H = frame.offsetHeight;
+  if (!svg || !W || !H) return;
+  const k = Math.max(W / 1600, H / 679);
+  Object.assign(svg.style, { width: `${1600 * k}px`, height: `${679 * k}px`, left: `${(W - 1600 * k) * 0.5}px`, top: `${(H - 679 * k) * 0.4}px` });
+}
+
 /** The far city: Nano Banana night-city art (cartoon ink style: black sky, gray towers, white
     windows, red only on screens and billboards), tilted to a Dutch angle and pushed back so it
     never fights the content in front. On the title it is printed faintly into the red wall. */
@@ -223,7 +253,7 @@ export function mountBackdrop(el) {
   el.innerHTML = `
     <div class="bd-layer bd-wall"><div class="bd-drift">${wallLayer()}</div></div>
     <div class="bd-layer bd-subway"><div class="bd-drift"><div class="bd-cam"><img alt="" decoding="async"></div></div></div>
-    <div class="bd-layer bd-city"><div class="bd-drift"><img alt="" decoding="async"></div></div>
+    <div class="bd-layer bd-city"><div class="bd-drift"><div class="bd-cityframe"><img alt="" decoding="async">${billboardLayer()}</div></div></div>
     <div class="bd-layer bd-p5"><div class="bd-drift">${p5Layer()}</div></div>
     <div class="bd-layer bd-graffiti"><div class="bd-drift">${graffitiLayer()}</div></div>
     <div class="bd-layer bd-shards"><div class="bd-drift">${shardLayer()}</div></div>
@@ -246,6 +276,10 @@ export function mountBackdrop(el) {
   const later = () => setTimeout(loadCity, small() || !window.matchMedia('(pointer: fine)').matches ? 2500 : 300);
   if (document.readyState === 'complete') later();
   else window.addEventListener('load', later, { once: true });
+
+  const frame = el.querySelector('.bd-cityframe');
+  new ResizeObserver(() => fitBillboard(frame)).observe(frame);
+  fitBillboard(frame);
 
   // tall screens only see a narrow slice of the wall: show its left side (GO! poster + star)
   // instead of the empty middle

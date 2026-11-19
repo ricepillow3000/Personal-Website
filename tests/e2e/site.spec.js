@@ -624,3 +624,28 @@ test('sound: the recordings download only after sound is turned on (never on pag
   await page.locator('#soundBtn').click();
   await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(5);
 });
+
+test('city billboard: a star scrolls across each of the tower\'s three LED rings (still with reduced motion)', async ({ page, browser }) => {
+  await openBoard(page);
+  await expect(page.locator('.bd-billboard .bb-star')).toHaveCount(3);
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
+  const p2 = await ctx.newPage();
+  await p2.goto('/#/board');
+  await expect(p2.locator('.bb-top')).toBeAttached();
+  const names = await p2.locator('.bb-star').evaluateAll((els) => els.map((e) => getComputedStyle(e).animationName));
+  expect(names).toEqual(['bb-top', 'bb-middle', 'bb-bottom']);
+  await ctx.close();
+  // the default test context prefers reduced motion: the stars rest instead of scrolling
+  expect(await page.locator('.bb-top').evaluate((e) => getComputedStyle(e).animationName)).toBe('none');
+});
+
+test('PRESS START train: the GPU side passes its self-test, or the site falls back to the 2D slices (never no train)', async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  await page.goto('/');
+  await expect.poll(() => page.evaluate(() => document.querySelector('.bd-cam')?.dataset.trainGpu || ''), { timeout: 10000 }).toMatch(/^(on|off)$/);
+  const mode = await page.evaluate(() => document.querySelector('.bd-cam').dataset.trainGpu);
+  const layers = await page.locator('.bd-cam canvas').count();
+  expect(layers).toBe(mode === 'on' ? 3 : 2);
+  await ctx.close();
+});

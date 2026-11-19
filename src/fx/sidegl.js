@@ -102,8 +102,40 @@ export function createSideRenderer() {
     return t;
   }
 
+  /** Self-test (Nov 19, John: "the train in the beginning is not working" on his device): draw one
+      texel of the art into a corner and read it back. If the GPU path renders nothing, black or the
+      wrong colour on this device, the caller drops it for good and keeps the 2D slices. */
+  function selfTest(img) {
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    const t = texture(img);
+    if (!t || !w) return false;
+    const W = Math.max(8, canvas.width);
+    const H = Math.max(8, canvas.height);
+    if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+    gl.viewport(0, 0, W, H);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    // a 6px square in the top-left corner, every corner sampling the middle of the art
+    const P = 2;
+    const q = (x, y) => [x, y, 1, P * 0.5, 0.5];
+    if (!this.quad(img, [q(0, 0), q(0, 6), q(6, 0), q(6, 6)], { period: P, alpha: 1, mouth: 1e6 })) return false;
+    const px = new Uint8Array(4);
+    gl.readPixels(2, H - 3, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    // the same texel, drawn by the 2D canvas
+    const c = document.createElement('canvas');
+    c.width = c.height = 1;
+    const g = c.getContext('2d');
+    g.drawImage(img, Math.floor(w * 0.5), Math.floor(h * 0.5), 1, 1, 0, 0, 1, 1);
+    const ref = g.getImageData(0, 0, 1, 1).data;
+    const diff = Math.max(Math.abs(px[0] - ref[0]), Math.abs(px[1] - ref[1]), Math.abs(px[2] - ref[2]));
+    return px[3] > 200 && diff < 48 && gl.getError() === gl.NO_ERROR;
+  }
+
   return {
     canvas,
+    selfTest,
     /** Upload ahead of time (idle) and draw it once, invisibly: the driver compiles the shader
         and finishes the upload on first use, which cost ~95 ms on the shot's first frame. */
     prepare(img, width, height) {

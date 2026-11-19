@@ -64,6 +64,7 @@ let under = null; // 2D: floor, trash, light pools, afterimage noses
 let over = null; // 2D on top of the GPU side: the nose, headlights, speed lines
 let cvTop = null;
 let glOn = false; // this frame's side went to the GPU layer
+let gpuOK = false; // the GPU path passed its self-test on this device (until then: 2D slices)
 let box = null;
 let art = null;
 let nose = null;
@@ -108,7 +109,17 @@ export function preloadSubway() {
   const prep = () => (window.requestIdleCallback || setTimeout)(() => {
     sideArt(); windowProfile(); tinted(sideArt()); tinted(nose);
     const r = gpu();
-    if (r && cv) { r.prepare(sideTexFor(sideArt()), cv.width, cv.height); r.prepare(tinted(sideArt()), cv.width, cv.height); }
+    if (r && cv) {
+      try {
+        if (!r.selfTest(sideTexFor(sideArt()))) throw new Error('GPU side failed its self-test');
+        r.prepare(sideTexFor(sideArt()), cv.width, cv.height);
+        r.prepare(tinted(sideArt()), cv.width, cv.height);
+        gpuOK = true;
+        box.dataset.trainGpu = 'on'; // visible in devtools, and to tests
+      } catch {
+        dropGPU(); // this device draws the side with the 2D slices instead
+      }
+    }
   });
   (side.decode?.() || Promise.resolve()).then(prep, prep);
 }
@@ -319,10 +330,27 @@ function gpu() {
   }
   return sideGL || null;
 }
+/* Any trouble on the GPU path (failed self-test, an exception, a lost context) drops it for good:
+   the train is then drawn with the 2D slices, which work everywhere. */
+function dropGPU() {
+  sideGL?.canvas?.remove();
+  sideGL = null;
+  glOn = false;
+  gpuOK = false;
+  if (box) box.dataset.trainGpu = 'off';
+}
 /* the GPU gets the full-resolution car art (1828px tall), except on low-memory phones */
 const sideTexFor = (tex) => (tex === sideCopy && side?.naturalWidth && sharpArt() ? side : tex);
 function sideOnGPU(lead, alpha, tex) {
   if (!glOn) return false;
+  try {
+    return sideQuad(lead, alpha, tex);
+  } catch {
+    dropGPU();
+    return false;
+  }
+}
+function sideQuad(lead, alpha, tex) {
   const img = sideTexFor(tex);
   const tw = img.naturalWidth || img.width;
   const th = img.naturalHeight || img.height;
@@ -527,8 +555,12 @@ function draw() {
   const t = state?.t ?? 0;
   drawTrash(t);
   // the GPU layer: drawn only while the train runs (made on first use, cleared at rest)
-  const r = state ? gpu() : sideGL;
-  glOn = Boolean(r && r.begin(cv.width, cv.height) && state);
+  const r = state && gpuOK ? gpu() : sideGL;
+  try {
+    glOn = Boolean(r && gpuOK && r.begin(cv.width, cv.height) && state);
+  } catch {
+    dropGPU();
+  }
   if (!state) return;
   const lead = START - SPEED * t;
   const img = nose?.complete && nose.naturalWidth ? nose : null;
