@@ -979,6 +979,7 @@ test('loading screen: TAKE YOUR TIME is the progress bar (its letters fill as th
   await expect(page.locator('#loader .ld-o .ld-ring')).toHaveCount(2); // the O whose hole is the doorway (empty slot + ink)
   await expect(page.locator('#loader .ld-seal textPath')).toContainText("RESUMES DON'T HAVE TO BE BORING");
   await expect(page.locator('#loader .ld-go')).toBeHidden(); // no button until the bar is full
+  await expect(page.locator('#loader .ld-wheel')).toContainText('NOW LOADING'); // the loading star, bottom left
   expect(await page.locator('#loader').evaluate((e) => getComputedStyle(e).backgroundImage)).not.toContain('radial-gradient'); // flat: no soft glow
   const seen = new Set();
   let most = 0;
@@ -993,6 +994,7 @@ test('loading screen: TAKE YOUR TIME is the progress bar (its letters fill as th
   await expect(page.locator('#loader')).toHaveClass(/inked/); // TIME underlined before the button
   await expect(page.locator('#loader .ld-go')).toBeVisible();
   await expect(page.locator('#loader .ld-go')).toContainText('ENTER THE STATION');
+  await expect(page.locator('#loader .ld-wt-ok')).toBeVisible(); // READY
   await expect(page.locator('#loader .ld-go')).toBeFocused();
   await page.waitForTimeout(2500);
   await expect(page.locator('#loader')).toHaveCount(1); // it waits for the visitor's click

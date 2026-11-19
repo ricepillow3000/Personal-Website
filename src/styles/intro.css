@@ -8,10 +8,10 @@
 .loader {
   position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; overflow: hidden;
   grid-template-rows: auto auto; align-content: center; gap: clamp(10px, 3vmin, 22px);
-  /* flat, cartoon, no soft gradients (Nov 19, John: "keep it Persona 5 cartoony"); the art itself is
-     the inline poster drawing in app.html (.ld-bg, John's red themed-poster reference): deep crimson,
-     darker swirls, hard-edged halftone, torn paper, a lightning bolt, outlined stars */
-  background: #8E1217;
+  /* flat, clean, cartoon (Nov 19, John: "make one that looks clean, our Persona 5 theme"); the art is
+     the inline drawing in app.html (.ld-bg): black, one bold red diagonal band behind the words with a
+     white and a red pinstripe, a little hard-edged halftone, a few white stars */
+  background: var(--black);
   animation: ldFailsafe 0s 20s forwards;
   touch-action: none;
 }
@@ -19,7 +19,21 @@
 .loader { contain: layout paint style; } /* its changes never make the page under it recalculate */ /* (the script is running: it waits for the visitor's click) */
 @keyframes ldFailsafe { to { visibility: hidden; pointer-events: none; } }
 .ld-bg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-.ld-core, .ld-go, .ld-seal { z-index: 1; }
+.ld-core, .ld-go, .ld-seal, .ld-wheel { z-index: 1; }
+/* the loading star, bottom left (Nov 19, John: "a loading... at the bottom, maybe a star"): a white star
+   with a red misprint, spinning (one composited turn), NOW LOADING on a black slab; READY at 100% */
+.ld-wheel { position: absolute; left: max(var(--gutter), 2vmin); bottom: max(var(--gutter), 2vmin); display: flex; align-items: center; gap: 10px; }
+.ld-wheel svg { width: clamp(38px, 7vmin, 62px); height: auto; overflow: visible; animation: ldWheel 1.4s cubic-bezier(.6, .1, .3, .9) infinite; will-change: transform; }
+@keyframes ldWheel { to { transform: rotate(360deg); } }
+.ld-wheel-mis { fill: var(--red); }
+.ld-wheel-star { fill: var(--white); stroke: var(--black); stroke-width: 6; stroke-linejoin: miter; }
+.ld-wheel-txt { font-family: var(--f-menu); font-size: clamp(16px, 2.8vmin, 24px); letter-spacing: .14em; line-height: 1; padding: 5px 10px 3px; background: var(--black); color: var(--white);
+  border: 2px solid var(--white); box-shadow: 4px 4px 0 var(--red); transform: skew(-12deg); }
+.ld-wt-ok { display: none; color: var(--yellow); }
+.loader.ready .ld-wt-wait { display: none; }
+.loader.ready .ld-wt-ok { display: inline; }
+.loader.ready .ld-wheel svg { animation-duration: 3.2s; }
+.loader.going .ld-wheel { opacity: 0; transition: opacity .15s; }
 .ld-go { position: relative; } /* (over the poster) */
 .ld-core { position: relative; display: grid; justify-items: center; gap: 4px; }
 
@@ -38,6 +52,7 @@
 .ld-under { position: absolute; z-index: 3; left: -.12em; right: -.12em; bottom: -.38em; width: calc(100% + .24em); height: .26em; overflow: visible; pointer-events: none; }
 .ld-under path { fill: none; stroke: var(--white); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
 .loader.inked .ld-under path { stroke-dashoffset: 0; transition: stroke-dashoffset .3s cubic-bezier(.5, 0, .2, 1); }
+.ld-under { visibility: hidden; } .loader.inked .ld-under { visibility: visible; } /* (its round cap left a dot before it drew) */
 .ld-w { display: flex; gap: .05em; }
 .ld-l { position: relative; display: block; width: .74em; height: 1.04em; rotate: var(--r); translate: 0 var(--y); }
 .ld-l b { position: absolute; inset: 0; display: grid; place-items: center; font-weight: inherit; text-transform: uppercase; }
@@ -99,7 +114,7 @@
 .loader.ld-fade { opacity: 0; transition: opacity .25s ease-out; }
 @media (prefers-reduced-motion: reduce) {
   .loader { animation-delay: 4s; }
-  .ld-seal-ring, .ld-seal-core, .ld-l.in, .ld-go:not([hidden]) { animation: none; }
+  .ld-seal-ring, .ld-seal-core, .ld-l.in, .ld-go:not([hidden]), .ld-wheel svg { animation: none; }
 }
 /* phones held upright: the seal is smaller and sits lower so it never reaches the button */
 @media (max-aspect-ratio: 3/4) { .ld-seal { width: clamp(84px, 24vw, 120px); } }
