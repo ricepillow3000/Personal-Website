@@ -77,7 +77,7 @@ export function runLoader() {
       const at = (shown / 100) * N; // how many letters' worth of ink
       letters.forEach((l, k) => {
         const f = Math.max(0, Math.min(1, at - k));
-        const q = Math.round(f * 20) / 20;
+        const q = Math.round(f * 8) / 8; // (eighths: fewer style changes while the page is still busy loading)
         if (q === fill[k]) return;
         fill[k] = q;
         l.style.setProperty('--f', String(q));
