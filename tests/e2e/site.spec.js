@@ -600,6 +600,33 @@ test('THE PLAN: a mouse resting where a chapter slides in does not steal the pic
   await expect(page.locator('#board .pl-item.on')).toHaveAttribute('data-ch', 'contact');
 });
 
+test('contact plate: LinkedIn, GitHub and email sit at the very top of every screen, readable and tappable', async ({ page, isMobile }) => {
+  for (const r of ['/', '/#/board', '/#/missions', '/#/contact', '/#/quick']) {
+    await page.goto(r);
+    const li = page.locator('#hudLinkedIn');
+    const gh = page.locator('#hudGitHub');
+    const em = page.locator('#hudEmail');
+    await expect(li).toHaveAttribute('href', /linkedin\.com\/in\//);
+    await expect(gh).toHaveAttribute('href', 'https://github.com/ricepillow3000');
+    await expect(em).toHaveAttribute('href', /^mailto:[a-z0-9.]+@gmail\.com$/);
+    for (const a of [li, gh, em]) {
+      await expect(a).toBeVisible();
+      const box = await a.boundingBox();
+      expect(box.y, r).toBeLessThan(60); // the very top of the screen
+      if (isMobile) expect(box.width, r).toBeGreaterThanOrEqual(44); // a full tap target each
+      expect(await a.getAttribute('aria-label')).toBeTruthy(); // named even when only the icon shows
+    }
+    await expect(li).toHaveAttribute('target', '_blank');
+    await expect(gh).toHaveAttribute('rel', /noopener/);
+  }
+  // the email is copied too (many visitors have no mail app), with a toast that says so
+  await page.goto('/#/board');
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
+  await page.locator('#hudEmail').evaluate((a) => a.addEventListener('click', (e) => e.preventDefault()));
+  await page.locator('#hudEmail').click();
+  await expect(page.locator('.toast').filter({ hasText: 'EMAIL COPIED' })).toBeVisible();
+});
+
 test('sound: SETTINGS credits every real recording, and every clip the engine asks for exists', async ({ page, request }) => {
   await page.goto('/#/system');
   const credits = page.locator('.sys-credits');
