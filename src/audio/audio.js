@@ -967,8 +967,9 @@ const live = new Set();
 const SYNTH = { ...VOICES };
 /* clip levels, matched to the synthesized versions by offline renders (peaks kept under 1.0) */
 const TRAIN = { pass: 0.66, horn: 0.1, brake: 0.32, glass: 0.5 };
-/* ---------- the lock (the loading screen, src/ui/loader.js; Nov 19, John: "the lock actually makes lock
-   noises... hear the pins click up, then the lock turning, then a sound easing into the first screen").
+/* ---------- the loading screen (src/ui/loader.js; first the lock, Nov 19, John: "the lock actually makes
+   lock noises... hear the pins click up, then a sound easing into the first screen"; now TAKE YOUR
+   NETWORK: lockTick for each letter that fills, lockPin for each word that completes).
    All synthesized. A pin: a tiny dry click, a short bright ring from the pin and a low tick as its
    spring seats; each pin a step higher. The key: a short metal scrape, then a solid clunk with a
    ring as the bolt gives. The doorway: air rushing through the keyhole, swelling and settling, a low
@@ -979,16 +980,23 @@ VOICES.lockPin = (bus, at, v = 1, i = 0) => {
   metalRing(bus, at, [[2650 * p, 'triangle', 0], [4100 * p, 'sine', 6]], { hp: 1800, peak: 0.11, decay: 0.05 });
   tone(bus, { at: at + 0.012, dur: 0.03, from: 420 * p, to: 300 * p, type: 'square', gain: 0.05 });
 };
+VOICES.wordDone = (bus, at, v = 1, i = 0) => { // a word of TAKE YOUR NETWORK is complete: the pin click plus a knock under it
+  VOICES.lockPin(bus, at, v, i);
+  snap(bus, at, 240 * (1 + i * 0.1), 80, 0.07, 0.3);
+  noise(bus, { at, dur: 0.03, type: 'bandpass', freq: 1200, q: 1.2, gain: 0.25 });
+};
 VOICES.lockTick = (bus, at, v = 1, n = 0) => { // the tension wrench as the keyhole fills: soft, rising
   const p = 1 + n / 160;
   noise(bus, { at, dur: 0.004, type: 'highpass', freq: 6000, gain: 0.16 });
   metalRing(bus, at, [[3200 * p, 'triangle', 0]], { hp: 2400, peak: 0.035, decay: 0.018 });
 };
-VOICES.lockTurn = (bus, at) => {
-  sweep(bus, at, 900, 2800, 0.2, 0.1, 2.5); // the key scraping round
-  noise(bus, { at: at + 0.22, dur: 0.04, type: 'lowpass', freq: 1400, q: 0.7, gain: 0.45 }); // the bolt
-  tone(bus, { at: at + 0.22, dur: 0.14, from: 150, to: 55, gain: 0.5 }); // its weight
-  metalRing(bus, at + 0.22, [[880, 'square', 0], [1760, 'triangle', 8]], { bp: 1300, q: 3, peak: 0.08, decay: 0.18 });
+/* the dive into the O (the loading screen's ENTER THE STATION, Nov 19): the camera rushes at the word,
+   a rising air rush with a low swell under it, landing on the doorway's whoosh as the hole opens */
+VOICES.portal = (bus, at) => {
+  sweep(bus, at, 320, 2600, 0.36, 0.26, 1.3); // the rush, rising
+  sweep(bus, at + 0.05, 1400, 6200, 0.3, 0.09, 2.4); // the air's hiss on top
+  tone(bus, { at, dur: 0.4, from: 70, to: 140, gain: 0.22 }); // the swell under it
+  noise(bus, { at, dur: 0.008, type: 'highpass', freq: 5000, gain: 0.3 }); // the snap as it starts
 };
 VOICES.doorway = (bus, at) => {
   const src = ac.createBufferSource();

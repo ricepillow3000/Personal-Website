@@ -905,39 +905,34 @@ test('train horn: it dips in pitch as the train passes (a Doppler drop), never b
   for (const c of calls) expect(c, c).toContain('drop: HORN_DOPPLER');
 });
 
-test('the lock: it waits for TAP TO PICK THE LOCK; the tap picks it (keyhole fills, all 4 pins set) and the key turns into a doorway to the station', async ({ browser }) => {
+test('loading screen: TAKE YOUR NETWORK is the progress bar (its letters fill as the page loads), ENTER THE STATION appears at 100, and its click dives through the O into the station', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
   const page = await ctx.newPage();
   await page.goto('/?intro');
-  await expect(page.locator('#loader .ld-go')).toContainText('TAP TO PICK THE LOCK');
-  await page.waitForTimeout(800);
-  await expect(page.locator('#loader [role=progressbar]')).toHaveAttribute('aria-valuenow', '0'); // it waits for the visitor
-  await expect(page.locator('#loader .ld-pin')).toHaveCount(4);
-  await page.mouse.click(300, 300); // the tap
-  await expect(page.locator('#loader')).toHaveClass(/picking/);
-  let pinsSet = 0;
+  await expect(page.locator('#loader .ld-l')).toHaveCount(15); // T A K E  Y O U R  N E T W O R K
+  await expect(page.locator('#loader .ld-o .ld-ring')).toHaveCount(2); // the O whose hole is the doorway (empty slot + ink)
+  await expect(page.locator('#loader .ld-seal textPath')).toContainText("RESUMES DON'T HAVE TO BE BORING");
+  await expect(page.locator('#loader .ld-go')).toBeHidden(); // no button until the bar is full
   const seen = new Set();
-  for (let i = 0; i < 200 && (await page.locator('#loader').count()); i++) {
-    const v = await page.locator('#loader [role=progressbar]').getAttribute('aria-valuenow', { timeout: 500 }).catch(() => null);
-    if (v !== null) seen.add(Number(v));
-    pinsSet = Math.max(pinsSet, await page.locator('#loader .ld-pin.set').count().catch(() => 0));
-    await page.waitForTimeout(40);
+  let most = 0;
+  for (let i = 0; i < 200 && !(await page.locator('#loader .ld-go').isVisible()); i++) {
+    const v = await page.locator('#loader [role=progressbar]').getAttribute('aria-valuenow');
+    seen.add(Number(v));
+    most = Math.max(most, await page.locator('#loader .ld-l.in').count());
+    await page.waitForTimeout(30);
   }
-  const values = [...seen];
-  expect(Math.max(...values)).toBe(100);
-  expect(values.filter((v) => v > 0 && v < 100).length).toBeGreaterThan(3); // a steady climb, not a jump
-  expect(pinsSet).toBe(4);
-  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 8000 });
+  expect([...seen].filter((v) => v > 0 && v < 100).length).toBeGreaterThan(3); // a steady fill, not a jump
+  await expect(page.locator('#loader .ld-l.in')).toHaveCount(15); // every letter inked
+  await expect(page.locator('#loader .ld-go')).toBeVisible();
+  await expect(page.locator('#loader .ld-go')).toContainText('ENTER THE STATION');
+  await expect(page.locator('#loader .ld-go')).toBeFocused();
+  await page.waitForTimeout(2500);
+  await expect(page.locator('#loader')).toHaveCount(1); // it waits for the visitor's click
+  await page.locator('#loader .ld-go').click();
+  await expect(page.locator('#loader')).toHaveClass(/going/);
+  await expect.poll(() => page.evaluate(() => document.getElementById('loader')?.style.clipPath || ''), { timeout: 1500 }).toContain('evenodd'); // the O's hole
+  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 3000 });
   await expect(page.locator('#pressStart')).toBeVisible();
-  await ctx.close();
-});
-
-test('the lock: nobody taps, it opens by itself a few seconds after the page has loaded (never a trap)', async ({ browser }) => {
-  const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
-  const page = await ctx.newPage();
-  await page.goto('/?intro');
-  await expect(page.locator('#loader')).toHaveCount(1);
-  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 15000 });
   await ctx.close();
 });
 
@@ -965,11 +960,12 @@ test('turn your phone: a red reminder on phones held upright, once a visit; turn
   await ctx.close();
 });
 
-test('the lock: the tap that picks it turns the sound on, and the music waits until the doorway has opened', async ({ browser }) => {
+test('loading screen: the click on ENTER THE STATION turns the sound on, the dive and the doorway are heard, and the music waits until the doorway has opened', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
   const page = await ctx.newPage();
   // the test browser lets audio start without a tap (an automation flag); real browsers don't: emulate them
   await page.addInitScript(() => {
+    window.__sfxLog = [];
     let allowed = false;
     window.addEventListener('pointerup', () => { allowed = true; }, true);
     const AC = window.AudioContext;
@@ -981,14 +977,16 @@ test('the lock: the tap that picks it turns the sound on, and the music waits un
   const music = [];
   page.on('request', (r) => /\/music[-.]/.test(r.url()) && music.push(Date.now()));
   await page.goto('/?intro');
-  await page.waitForTimeout(800);
+  await expect(page.locator('#loader .ld-go')).toBeVisible({ timeout: 10000 });
   expect(music).toEqual([]);
-  await page.mouse.click(300, 300);
+  const clickAt = Date.now();
+  await page.locator('#loader .ld-go').click();
   await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 8000 });
-  const doorAt = Date.now();
+  await expect(page.locator('#loader')).toHaveCount(0, { timeout: 4000 });
+  const heard = await page.evaluate(() => window.__sfxLog);
+  expect(heard).toEqual(expect.arrayContaining(['portal', 'doorway']));
   await expect.poll(() => music.length, { timeout: 5000 }).toBe(1);
-  expect(music[0]).toBeGreaterThanOrEqual(doorAt - 400); // the music came after the doorway, not over the lock
+  expect(music[0]).toBeGreaterThanOrEqual(clickAt + 1000); // the music came after the dive (1.15 s), never over it
   await ctx.close();
 });
 
