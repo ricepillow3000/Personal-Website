@@ -572,11 +572,24 @@ const VOICES = {
   },
   /* ---------- UI + transition sounds: deliberately NOT drum sounds, so they never
      blend into the drum music. Cartoon pops, blips, paper and metal. ---------- */
-  hover: (bus, at) => tone(bus, { at, dur: 0.045, from: 1500, to: 2100, type: 'triangle', gain: 0.11 }),
+  /* Hover (Nov 19, John: "a sharp, metallic chink... a crisp mechanical snap", on every button):
+     a switch's click (12 ms of bright noise), a metal body (three inharmonic partials ringing under
+     45 ms), and a card snapping into place. Instant attack, no tail, so a fast sweep down a list
+     stays clean, like a hi-hat over the music. A hair of random pitch: never two exactly alike. */
+  hover: (bus, at) => {
+    const p = 1 + (Math.random() - 0.5) * 0.06;
+    noise(bus, { at, dur: 0.012, type: 'highpass', freq: 5200, q: 0.7, gain: 0.5 });
+    [[2960, 0.045, 0.13], [4410, 0.036, 0.09], [6180, 0.028, 0.06]].forEach(([f, d, g]) => tone(bus, { at, dur: d, from: f * p, to: f * p * 0.985, gain: g }));
+    tone(bus, { at, dur: 0.018, from: 1800 * p, to: 900 * p, type: 'square', gain: 0.05 });
+  },
+  /* Confirm: heavier and lower than the hover, a bass thump with a stylized slash and a gunshot-like
+     punch (a crack, a short low burst, a bright sweep falling across it), plus a short metal ring. */
   select: (bus, at) => {
-    tone(bus, { at, dur: 0.07, from: 480, to: 1250, type: 'triangle', gain: 0.36 }); // cartoon "pop"
-    tone(bus, { at: at + 0.045, dur: 0.09, from: 1250, to: 1300, type: 'sine', gain: 0.18 });
-    noise(bus, { at, dur: 0.015, type: 'bandpass', freq: 3200, q: 2, gain: 0.25 }); // tiny paper click
+    tone(bus, { at, dur: 0.16, from: 170, to: 48, gain: 0.65 }); // the thump
+    noise(bus, { at, dur: 0.05, type: 'lowpass', freq: 1600, q: 0.7, gain: 0.55 }); // the punch
+    noise(bus, { at, dur: 0.008, type: 'highpass', freq: 4000, gain: 0.6 }); // the crack
+    sweep(bus, at + 0.01, 5200, 1400, 0.08, 0.35, 1.2); // the slash
+    [[2350, 0.06, 0.06], [3720, 0.045, 0.04]].forEach(([f, d, g]) => tone(bus, { at: at + 0.005, dur: d, from: f, to: f * 0.98, gain: g }));
   },
   back: (bus, at) => tone(bus, { at, dur: 0.14, from: 760, to: 240, type: 'triangle', gain: 0.3 }), // "bwoop"
   toggle: (bus, at) => {
@@ -886,7 +899,7 @@ export function sfx(name, arg) {
   if (ac.state === 'suspended') ac.resume();
   // the same sound twice within 35 ms is never meant (a fast sweep across a list): stacking it
   // only smears into a stutter, so the second one is dropped
-  if (ac.currentTime - (lastAt[name] ?? -1) < 0.035) return;
+  if (ac.currentTime - (lastAt[name] ?? -1) < (name === 'hover' ? 0.015 : 0.035)) return; // hovers may overlap: rapid moves stay snappy
   lastAt[name] = ac.currentTime;
   const g = ac.createGain(); // each sound gets its own fader, so a skipped shot can be hushed
   g.connect(sfxBus);

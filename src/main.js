@@ -392,7 +392,7 @@ initTilt();
 initTooltips();
 $('#menuBtn').dataset.tip = `MENU · ${MENU_KEY}`;
 // the top buttons tick on hover like every other control
-$$('.hud-btn').forEach((b) => b.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && sfx('hover')));
+// (the top bar's hover chink comes from the shared hover sound in src/fx/impact.js)
 /* Once you scroll, the date (top-left) and stat box (bottom-left) slide away so they
    never sit on top of text; they snap back when you return to the top. */
 $$('.screen').forEach((sc) =>
