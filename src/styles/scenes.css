@@ -212,3 +212,7 @@
 .sys-credits ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
 .sys-credits a { color: var(--black); text-decoration-color: var(--red); text-underline-offset: 2px; }
 .sys-credits a:hover, .sys-credits a:focus-visible { background: var(--yellow); }
+/* PRESS START while the train is still loading: the button "boards" (a quick pulse), never frozen */
+#pressStart.boarding { animation: boarding .5s ease-in-out infinite alternate; }
+@keyframes boarding { to { transform: skew(var(--skew)) scale(.96); filter: brightness(1.25); } }
+@media (prefers-reduced-motion: reduce) { #pressStart.boarding { animation: none; opacity: .8; } }

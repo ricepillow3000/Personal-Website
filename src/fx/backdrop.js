@@ -8,7 +8,7 @@
    Geometry lives in a 1600×900 box; `xMidYMid slice` covers 100vw × 100vh.
    ========================================================================= */
 
-import { mountSubway } from './subway.js';
+import { mountSubway, hurrySubway, subwayReady } from './subway.js';
 import { artSrc } from './art.js';
 
 const C = { black: '#050505', red: '#D80000', red2: '#E60012', white: '#FFFFFF', blood: '#7A0008' };
@@ -313,6 +313,16 @@ function fitBillboard(frame) {
 /** The title's opening shot: an empty night subway platform (Nano Banana, clean toon-shaded 3D like
     a P5 cutscene: dark, glossy floor, red safety lines, fluorescent strips, no people), slow camera push. */
 
+let cityLoading = false;
+let loadSceneNow = () => {};
+/** PRESS START / CONTINUE: load the platform and the train right now (if they aren't yet) and
+    resolve once the train can play. */
+export function sceneReady() {
+  loadSceneNow();
+  hurrySubway();
+  return subwayReady();
+}
+
 export function mountBackdrop(el) {
   el.classList.add('backdrop');
   el.setAttribute('aria-hidden', 'true');
@@ -329,6 +339,8 @@ export function mountBackdrop(el) {
   // competes with the title text on a phone's first load
   const small = () => window.innerWidth <= 900;
   const loadCity = () => {
+    if (cityLoading) return;
+    cityLoading = true;
     [[el.querySelector('.bd-subway img'), artSrc('subway')], [el.querySelector('.bd-city img'), artSrc('city')]].forEach(([img, src]) => {
       img.onload = () => {
         img.classList.add('in'); // fades in once it's ready, never a half-drawn image
@@ -338,6 +350,7 @@ export function mountBackdrop(el) {
     });
 
   };
+  loadSceneNow = loadCity;
   // phones wait until the title has finished building in, then the scene fades in like an opening shot
   const later = () => setTimeout(loadCity, small() || !window.matchMedia('(pointer: fine)').matches ? 2500 : 300);
   if (document.readyState === 'complete') later();

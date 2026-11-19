@@ -73,14 +73,32 @@ let trash = null; // { lit, ink } canvases: the art lit like the station, and a 
 let pan = null; // object-position x while the camera pans (phones), else null
 let state = null; // the running shot, or null at rest
 
+/* Ready = the platform is mounted, the train art is decoded and the GPU side is set up (or ruled
+   out). PRESS START / CONTINUE waits on this, so the train always plays (Nov 19, John: on phones a
+   returning visitor tapped CONTINUE before the scene had loaded and the train was skipped). */
+let resolveReady;
+const ready = new Promise((r) => { resolveReady = r; });
+export const subwayReady = () => ready;
+let artReady = null;
+let kicked = false;
+let urgent = false;
+const idle = (fn, timeout = 800) => new Promise((res) => (window.requestIdleCallback || setTimeout)(() => { fn(); res(); }, { timeout }));
+function kick() {
+  if (kicked || !cv) return;
+  kicked = true;
+  preloadSubway().then(() => { gpuPrep(); resolveReady(); });
+}
+/** The visitor pressed START: load the train now instead of in idle time. */
+export function hurrySubway() {
+  urgent = true;
+  kick();
+}
+
 /** Mount on the title's camera box (holds the platform <img>). Called once the art has loaded. */
 export function mountSubway(camBox, img) {
   if (cv) return;
   box = camBox;
   art = img;
-  // the platform is on screen: fetch the train while the visitor reads the title, so PRESS START
-  // never waits on it (idle time, after the scene has faded in)
-  (window.requestIdleCallback || setTimeout)(() => preloadSubway(), { timeout: 2500 });
   cv = document.createElement('canvas');
   cv.setAttribute('aria-hidden', 'true');
   box.appendChild(cv);
@@ -97,31 +115,37 @@ export function mountSubway(camBox, img) {
   };
   new ResizeObserver(() => size()).observe(box);
   size();
+  // the platform is on screen: fetch the train while the visitor reads the title (idle time,
+  // after the scene has faded in), or right now if they already pressed START
+  if (urgent) kick();
+  else (window.requestIdleCallback || setTimeout)(kick, { timeout: 2500 });
 }
 
-/** Load the train art (on the first tap/key, with the other film art). */
+/** Load the train art (on the first tap/key, with the other film art). Resolves once it is decoded
+    and its working copies are built. */
 export function preloadSubway() {
-  if (nose) return;
+  if (artReady) return artReady;
   nose = load(NOSE);
   side = load(SIDE);
-  nose.decode?.().catch(() => {});
+  const dec = (img) => (img.decode ? img.decode().catch(() => new Promise((r) => { if (img.complete) r(); else img.onload = img.onerror = r; })) : new Promise((r) => { img.onload = img.onerror = r; }));
   // build the working copies ahead of time (idle), so the shot's first frame doesn't pay for them
-  const prep = () => (window.requestIdleCallback || setTimeout)(() => {
-    sideArt(); windowProfile(); tinted(sideArt()); tinted(nose);
-    const r = gpu();
-    if (r && cv) {
-      try {
-        if (!r.selfTest(sideTexFor(sideArt()))) throw new Error('GPU side failed its self-test');
-        r.prepare(sideTexFor(sideArt()), cv.width, cv.height);
-        r.prepare(tinted(sideArt()), cv.width, cv.height);
-        gpuOK = true;
-        box.dataset.trainGpu = 'on'; // visible in devtools, and to tests
-      } catch {
-        dropGPU(); // this device draws the side with the 2D slices instead
-      }
-    }
-  });
-  (side.decode?.() || Promise.resolve()).then(prep, prep);
+  artReady = Promise.all([dec(nose), dec(side)]).then(() => idle(() => { sideArt(); windowProfile(); tinted(sideArt()); tinted(nose); }));
+  return artReady;
+}
+
+/* Set up the GPU side once the platform is mounted and the art decoded (self-test first). */
+function gpuPrep() {
+  const r = gpu();
+  if (!r || !cv || !sideArt()) return;
+  try {
+    if (!r.selfTest(sideTexFor(sideArt()))) throw new Error('GPU side failed its self-test');
+    r.prepare(sideTexFor(sideArt()), cv.width, cv.height);
+    r.prepare(tinted(sideArt()), cv.width, cv.height);
+    gpuOK = true;
+    box.dataset.trainGpu = 'on'; // visible in devtools, and to tests
+  } catch {
+    dropGPU(); // this device draws the side with the 2D slices instead
+  }
 }
 
 function size() {

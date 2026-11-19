@@ -659,3 +659,28 @@ test('PRESS START train: the GPU side passes its self-test, or the site falls ba
   expect(layers).toBe(mode === 'on' ? 3 : 2);
   await ctx.close();
 });
+
+test('a returning visitor who taps CONTINUE right away still gets the train (it waits for the scene)', async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => localStorage.setItem('jn-resume-v1', JSON.stringify({ visited: ['stats', 'missions'], achievements: ['first-words'], settings: { sound: false, music: 0.5, reduceMotion: null } })));
+  await page.goto('/');
+  await expect(page.locator('#pressStart')).toHaveText('CONTINUE');
+  await page.evaluate(() => { window.__tunnel = false; new MutationObserver(() => { if (document.querySelector('.fall.tunnel')) window.__tunnel = true; }).observe(document.body, { childList: true }); });
+  await page.locator('#pressStart').tap(); // before the phone has loaded the scene on its own (2.5s)
+  await expect.poll(() => page.evaluate(() => window.__tunnel), { timeout: 6000 }).toBe(true);
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 6000 });
+  await ctx.close();
+});
+
+test('NEXT STOP always has its train car: the interior is decoded before the shot starts', async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  await page.goto('/#/missions');
+  await expect(page.locator('#page .next-ep .ne-go')).toBeAttached();
+  await page.evaluate(() => { window.__car = null; new MutationObserver(() => { const c = document.querySelector('.nextstop .ns-car'); if (c && window.__car === null) window.__car = c.complete && c.naturalWidth > 0; }).observe(document.body, { childList: true, subtree: true }); });
+  await page.locator('#page .next-ep .ne-go').click({ force: true });
+  await expect.poll(() => page.evaluate(() => window.__car), { timeout: 5000 }).toBe(true);
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'skills', { timeout: 6000 });
+  await ctx.close();
+});
