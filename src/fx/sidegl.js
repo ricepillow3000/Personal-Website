@@ -128,7 +128,9 @@ export function createSideRenderer() {
   let lost = false;
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); lost = true; });
 
-  function texture(img) {
+  /* src: what is uploaded for img (a decoded ImageBitmap of it, when there is one). The texture is
+     still looked up by img. */
+  function texture(img, src = img) {
     if (textures.has(img)) return textures.get(img);
     const w = img.naturalWidth || img.width;
     const h = img.naturalHeight || img.height;
@@ -136,7 +138,7 @@ export function createSideRenderer() {
     const t = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, t);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src); // (an ImageBitmap is already premultiplied; the flag only applies to images and canvases)
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -149,7 +151,7 @@ export function createSideRenderer() {
   /** Self-test (Nov 19, John: "the train in the beginning is not working" on his device): draw one
       texel of the art into a corner and read it back. If the GPU path renders nothing, black or the
       wrong colour on this device, the caller drops it for good and keeps the 2D slices. */
-  function selfTest(img) {
+  function selfTest(img, sample = img) { // sample: what the 2D canvas reads (a decoded copy: sampling the <img> decodes it all on the main thread)
     const w = img.naturalWidth || img.width;
     const h = img.naturalHeight || img.height;
     const t = texture(img);
@@ -171,7 +173,7 @@ export function createSideRenderer() {
     const c = document.createElement('canvas');
     c.width = c.height = 1;
     const g = c.getContext('2d');
-    g.drawImage(img, Math.floor(w * 0.5), Math.floor(h * 0.5), 1, 1, 0, 0, 1, 1);
+    g.drawImage(sample, Math.floor(w * 0.5), Math.floor(h * 0.5), 1, 1, 0, 0, 1, 1);
     const ref = g.getImageData(0, 0, 1, 1).data;
     const diff = Math.max(Math.abs(px[0] - ref[0]), Math.abs(px[1] - ref[1]), Math.abs(px[2] - ref[2]));
     return px[3] > 200 && diff < 48 && gl.getError() === gl.NO_ERROR;
@@ -180,13 +182,19 @@ export function createSideRenderer() {
   return {
     canvas,
     selfTest,
+    /** Upload now (a plain copy when a decoded ImageBitmap of img is given, see subway.js's
+        bitmapOf); call it in its own idle moment. The caller owns the bitmap. */
+    upload(img, bmp = null) {
+      if (lost) return;
+      texture(img, bmp || img);
+    },
     /** Upload ahead of time (idle) and draw it once, invisibly: the driver compiles the shader
         and finishes the upload on first use, which cost ~95 ms on the shot's first frame. */
     prepare(img, width, height) {
       if (lost || !img || !texture(img)) return;
       this.begin(width || canvas.width, height || canvas.height); // at the real size: a resize reallocates the buffers
       this.quad(img, [[0, 0, 1, 0, 0], [0, 1, 1, 0, 1], [1, 0, 1, 1, 0], [1, 1, 1, 1, 1]], { period: 1, alpha: 0, mouth: 1000 });
-      gl.finish();
+      gl.flush(); // not finish(): that blocked the main thread until the GPU was done (~280 ms on a slow phone)
       gl.clear(gl.COLOR_BUFFER_BIT);
     },
     /** start a frame: size the layer and clear it */

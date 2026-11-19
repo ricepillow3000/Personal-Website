@@ -10,7 +10,6 @@
 .bd-layer svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
 /* one shared drift + pointer parallax, scaled per layer so it moves as one wall */
-.bd-wall { --amp: 4; }
 .bd-graffiti { --amp: 10; }
 .bd-shards { --amp: 18; }
 .bd-layer { transform: translate3d(calc(var(--px) * var(--amp) * -1px), calc(var(--py) * var(--amp) * -0.5px), 0); }
@@ -46,7 +45,6 @@ body.reduce-motion .bd-layer { transform: none !important; }
    (John: "don't make it fully red"). Both fade in once loaded; the city moves least, the tech
    cutouts in front move most. */
 .backdrop { background: #0B0B0B; }
-.bd-wall { opacity: 0; }
 .bd-subway, .bd-city { --amp: 2; }
 .bd-cityframe, .bd-cam { position: absolute; width: 112%; height: 112%; inset: -6%; }
 .bd-cityframe img { position: absolute; inset: 0; width: 100%; height: 100%; }

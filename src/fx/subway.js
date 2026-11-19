@@ -57,6 +57,24 @@ const load = (src) => {
   img.src = src;
   return img;
 };
+/* Decoded copies (ImageBitmaps) of the train and litter pictures, made OFF the main thread from the
+   cached file (no second download). Drawing an <img> into a canvas decodes it again ON the main
+   thread: ~200 ms a picture on a slow phone, three times while the title loaded (Nov 19, the speed
+   pass). pic(img) is what to draw: the bitmap when it's there, else the <img> as before. */
+const bmps = new Map();
+const pic = (img) => bmps.get(img) || img;
+async function bitmapOf(img) {
+  if (bmps.has(img)) return bmps.get(img);
+  if (!window.createImageBitmap || !img?.currentSrc) return null;
+  try {
+    const blob = await (await fetch(img.currentSrc, { cache: 'force-cache' })).blob();
+    const b = await createImageBitmap(blob, { premultiplyAlpha: 'premultiply' }); // premultiplied: right for the canvas and the GPU upload alike
+    bmps.set(img, b);
+    return b;
+  } catch {
+    return null;
+  }
+}
 
 let cv = null;
 let ctx = null; // the 2D layer being drawn on right now
@@ -82,15 +100,19 @@ export const subwayReady = () => ready;
 let artReady = null;
 let kicked = false;
 let urgent = false;
-const idle = (fn, timeout = 800) => new Promise((res) => (window.requestIdleCallback || setTimeout)(() => { fn(); res(); }, { timeout }));
+const idle = (fn, timeout = 800) => new Promise((res, rej) => (window.requestIdleCallback || setTimeout)(() => { try { res(fn()); } catch (e) { rej(e); } }, { timeout })); // resolves with fn's result; a throw rejects (never hangs)
+/* one piece of the train's set-up per idle moment (never one long freeze), or right away once the
+   visitor has pressed START and is waiting */
+const slice = (fn) => (urgent ? Promise.resolve().then(fn) : idle(fn));
 function kick() {
   if (kicked || !cv) return;
   kicked = true;
-  preloadSubway().then(() => {
-    gpuPrep();
-    if (urgent) heavyNose(true); // they're waiting on the button: finish the heavy nose now
-    resolveReady();
-  });
+  preloadSubway()
+    .then(gpuPrep)
+    .then(() => {
+      if (urgent) heavyNose(true); // they're waiting on the button: finish the heavy nose now
+      resolveReady();
+    });
 }
 /** The visitor pressed START: load the train now instead of in idle time (and finish the heavy
     nose if its idle slices haven't yet, so the train never runs with the plain art). */
@@ -114,10 +136,12 @@ export function mountSubway(camBox, img) {
   box.appendChild(cvTop);
   over = cvTop.getContext('2d');
   const img2 = load(TRASH_ART);
-  img2.onload = () => {
-    const lit = litCopy(img2);
-    trash = { lit, ink: tintCopy(img2, '#0B0B0B'), box: paintedBoxes(lit) };
-    draw();
+  img2.onload = () => { // the litter's two working copies, one per idle moment, from the decoded copy
+    const t = {};
+    bitmapOf(img2)
+      .then(() => idle(() => { t.lit = litCopy(img2); }))
+      .then(() => idle(() => { t.ink = tintCopy(img2, '#0B0B0B'); }))
+      .then(() => { t.box = BOXES; trash = t; draw(); bmps.get(img2)?.close(); bmps.delete(img2); }); // only the copies are drawn
   };
   new ResizeObserver(() => size()).observe(box);
   size();
@@ -135,25 +159,37 @@ export function preloadSubway() {
   side = load(SIDE);
   const dec = (img) => (img.decode ? img.decode().catch(() => new Promise((r) => { if (img.complete) r(); else img.onload = img.onerror = r; })) : new Promise((r) => { img.onload = img.onerror = r; }));
   // build the working copies ahead of time (idle), so the shot's first frame doesn't pay for them
-  artReady = Promise.all([dec(nose), dec(side)]).then(() => idle(() => { sideArt(); windowProfile(); tinted(sideArt()); tinted(nose); }));
+  artReady = Promise.all([dec(nose), dec(side)])
+    .then(() => Promise.all([bitmapOf(nose), bitmapOf(side)]))
+    .then(() => slice(sideArt))
+    .then(() => slice(windowProfile))
+    .then(() => slice(() => tinted(sideArt())))
+    .then(() => slice(() => tinted(nose)));
   artReady.then(() => idle(heavyNose)); // its own idle turn (the train doesn't wait for it)
   return artReady;
 }
 
 /* Set up the GPU side once the platform is mounted and the art decoded (self-test first). */
-function gpuPrep() {
+async function gpuPrep() {
   const r = gpu();
   if (!r || !cv || !sideArt()) return;
   try {
-    if (!r.selfTest(sideTexFor(sideArt()))) throw new Error('GPU side failed its self-test');
-    r.prepare(sideTexFor(sideArt()), cv.width, cv.height);
-    r.prepare(tinted(sideArt()), cv.width, cv.height);
+    // one step per idle moment: upload, self-test, warm-up (never one long freeze)
+    const src = sideTexFor(sideArt());
+    await slice(() => r.upload(src, bmps.get(src))); // the decoded copy when it's the <img> (a plain copy, no decode)
+    if (!(await slice(() => r.selfTest(src, pic(src))))) throw new Error('GPU side failed its self-test');
+    await slice(() => r.prepare(src, cv.width, cv.height));
+    await slice(() => r.upload(tinted(sideArt())));
+    await slice(() => r.prepare(tinted(sideArt()), cv.width, cv.height));
     gpuOK = true;
     box.dataset.trainGpu = 'on'; // visible in devtools, and to tests
   } catch {
     dropGPU(); // this device draws the side with the 2D slices instead
   }
   if (!gpuOK) prepFallback(); // the 2D fallback's shaded copies, in idle slices
+  // the side's decoded copy has done its jobs (working copy, window profile, upload): free its memory
+  bmps.get(side)?.close();
+  bmps.delete(side);
 }
 
 function size() {
@@ -186,7 +222,7 @@ function tintCopy(img, color) {
   c.width = img.naturalWidth || img.width;
   c.height = img.naturalHeight || img.height;
   const g = c.getContext('2d');
-  g.drawImage(img, 0, 0);
+  g.drawImage(pic(img), 0, 0);
   g.globalCompositeOperation = 'source-in';
   g.fillStyle = color;
   g.fillRect(0, 0, c.width, c.height);
@@ -198,36 +234,19 @@ function litCopy(img) {
   c.width = img.naturalWidth;
   c.height = img.naturalHeight;
   const g = c.getContext('2d');
-  g.drawImage(img, 0, 0);
+  g.drawImage(pic(img), 0, 0);
   g.globalCompositeOperation = 'source-atop';
   g.fillStyle = 'rgba(14, 16, 22, 0.34)';
   g.fillRect(0, 0, c.width, c.height);
   return c;
 }
 
-/* Each cell has empty margins around its piece. Find the painted box of every cell (in the
-   1550px strip's units) so a piece's real edge, not its cell's edge, meets the floor. */
-function paintedBoxes(c) {
-  const s = c.width / TRASH_W;
-  const data = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-  const out = {};
-  for (const [kind, [cx, cw, ch]] of Object.entries(CELLS)) {
-    const x0 = Math.round(cx * s), x1 = Math.round((cx + cw) * s), y1 = Math.min(c.height, Math.round(ch * s));
-    let l = x1, r = x0, t = y1, b = 0;
-    for (let y = 0; y < y1; y++) {
-      for (let x = x0; x < x1; x++) {
-        if (data[(y * c.width + x) * 4 + 3] > 60) {
-          if (x < l) l = x;
-          if (x > r) r = x;
-          if (y < t) t = y;
-          if (y > b) b = y;
-        }
-      }
-    }
-    out[kind] = r > l ? [l / s, t / s, (r + 1 - l) / s, (b + 1 - t) / s] : [cx, 0, cw, ch];
-  }
-  return out;
-}
+/* Each cell has empty margins around its piece: the painted box of every cell (in the 1550px strip's
+   units), so a piece's real edge, not its cell's edge, meets the floor. Measured once from trash.webp's
+   alpha (> 60) and stored (Nov 19, the speed pass: scanning the picture's pixels on every visit cost a
+   slow phone ~120 ms; the browser's own scan matched these numbers exactly). Re-measure if the art
+   changes. */
+const BOXES = { news: [27, 0, 173, 110], bag: [268.5, 0, 134.5, 166], can: [409.5, 2.5, 126, 185], cup: [548, 4, 188, 132], flyer: [746, 1, 200, 137], wrapper: [950, 0, 199.5, 126], receipt: [1155, 1.5, 199, 139.5], ball: [1359.5, 2, 184.5, 185] };
 
 /* where a floor point sits in depth (so trash blows away the moment the nose reaches it) */
 const depthOf = (y) => (F * SKIRT) / Math.max(8, y - VP.y);
@@ -405,7 +424,7 @@ function steelJob(src, refl = false, maxH = 900) {
     g.translate(0, h);
     g.scale(1, -1); // upside down: the roof lands farthest from the floor line
   }
-  g.drawImage(src, 0, 0, w, h);
+  g.drawImage(pic(src), 0, 0, w, h);
   const im = g.getImageData(0, 0, w, h);
   const px = im.data;
   const L = new Float32Array(w * h); // luminance, filled a few rows ahead, for the ink outlines
@@ -533,7 +552,7 @@ function sideArt() {
   c.height = Math.round(side.naturalHeight * s);
   const g = c.getContext('2d');
   g.imageSmoothingQuality = 'high';
-  g.drawImage(side, 0, 0, c.width, c.height);
+  g.drawImage(pic(side), 0, 0, c.width, c.height);
   sideCopy = c;
   return c;
 }
@@ -629,7 +648,7 @@ function windowProfile() {
   c.width = 96;
   c.height = 24;
   const g = c.getContext('2d');
-  g.drawImage(side, 0, 0, 96, 24);
+  g.drawImage(pic(side), 0, 0, 96, 24);
   const px = g.getImageData(0, 0, 96, 24).data;
   const out = new Float32Array(96);
   for (let x = 0; x < 96; x++) {
@@ -693,7 +712,7 @@ function trainNose(d, img, alpha) {
   if (d < 14 || !img) return;
   const n = noseRect(d);
   ctx.globalAlpha = alpha * dark(d);
-  ctx.drawImage(img, n.l, n.t, n.w, n.h);
+  ctx.drawImage(pic(img), n.l, n.t, n.w, n.h);
   ctx.globalAlpha = 1;
 }
 
@@ -744,7 +763,7 @@ function tinted(img) {
   c.width = w;
   c.height = img.naturalHeight || img.height;
   const g = c.getContext('2d');
-  g.drawImage(img, 0, 0);
+  g.drawImage(pic(img), 0, 0);
   g.globalCompositeOperation = 'source-in';
   g.fillStyle = '#E5191C';
   g.fillRect(0, 0, c.width, c.height);

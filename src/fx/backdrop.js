@@ -38,36 +38,8 @@ function torn(x, y, w, h, seed = 3) {
   return p.map(([a, b]) => [+a.toFixed(1), +b.toFixed(1)]);
 }
 
-/* =========================================================================
-   LAYER 1 — WALL: concrete + crimson→black spray-paint fade + overspray clouds
-   ========================================================================= */
-function wallLayer() {
-  return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <defs>
-    <linearGradient id="wallFade" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="${C.red2}"/>
-      <stop offset=".42" stop-color="${C.red}"/>
-      <stop offset=".72" stop-color="${C.blood}"/>
-      <stop offset="1" stop-color="${C.black}"/>
-    </linearGradient>
-    <radialGradient id="glow"><stop offset="0" stop-color="#FF2A36" stop-opacity=".85"/><stop offset=".55" stop-color="${C.red2}" stop-opacity=".35"/><stop offset="1" stop-color="${C.red2}" stop-opacity="0"/></radialGradient>
-    <radialGradient id="soot"><stop offset="0" stop-color="${C.black}" stop-opacity=".92"/><stop offset=".6" stop-color="${C.black}" stop-opacity=".45"/><stop offset="1" stop-color="${C.black}" stop-opacity="0"/></radialGradient>
-    <pattern id="bricks" width="120" height="44" patternUnits="userSpaceOnUse">
-      <path d="M0 .5 H120 M0 22.5 H120 M.5 0 V22 M60.5 22 V44" stroke="${C.black}" stroke-width="1.4" opacity=".14" fill="none"/>
-    </pattern>
-    <pattern id="dotsK" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="3.2" fill="${C.black}"/></pattern>
-    <linearGradient id="dotFade" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></linearGradient>
-    <mask id="dotMask"><rect width="1600" height="900" fill="url(#dotFade)"/></mask>
-  </defs>
-  <rect x="-100" y="-100" width="1800" height="1100" fill="url(#wallFade)"/>
-  <ellipse cx="1180" cy="230" rx="560" ry="380" fill="url(#glow)"/>
-  <ellipse cx="300" cy="320" rx="380" ry="300" fill="url(#glow)" opacity=".6"/>
-  <ellipse cx="180" cy="900" rx="700" ry="420" fill="url(#soot)"/>
-  <ellipse cx="1500" cy="980" rx="560" ry="360" fill="url(#soot)"/>
-  <rect x="-100" y="-100" width="1800" height="1100" fill="url(#bricks)"/>
-  <rect x="-100" y="-100" width="1800" height="1100" fill="url(#dotsK)" mask="url(#dotMask)" opacity=".55"/>
-</svg>`;
-}
+/* (LAYER 1, the spray-painted wall, was removed Nov 19 in the speed pass: it had been fully
+   transparent since the Nano Banana art, yet was still built, laid out and moved with the mouse.) */
 
 /* =========================================================================
    LAYER 2 — GRAFFITI: stencil stars,
@@ -313,13 +285,28 @@ export function mountBackdrop(el) {
   el.classList.add('backdrop');
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `
-    <div class="bd-layer bd-wall"><div class="bd-drift">${wallLayer()}</div></div>
     <div class="bd-layer bd-subway"><div class="bd-drift"><div class="bd-cam"><img alt="" decoding="async"></div></div></div>
     <div class="bd-layer bd-city"><div class="bd-drift"><div class="bd-cityframe"><img alt="" decoding="async">${billboardLayer()}</div></div></div>
-    <div class="bd-layer bd-p5"><div class="bd-drift">${p5Layer()}</div></div>
+    <div class="bd-layer bd-p5"><div class="bd-drift" data-later="p5"></div></div>
     <div class="bd-layer bd-graffiti"><div class="bd-drift">${graffitiLayer()}</div></div>
     <div class="bd-layer bd-shards"><div class="bd-drift">${shardLayer()}</div></div>
-    <div class="bd-layer bd-tech"><div class="bd-drift">${techLayer()}</div></div>`;
+    <div class="bd-layer bd-tech"><div class="bd-drift" data-later="tech"></div></div>`;
+
+  /* The board's and pages' layers (the P5 shapes, the cut-paper corners) are hidden on the title, so
+     they are drawn after it has loaded, in idle time (Nov 19, the speed pass: building every layer up
+     front made the title's first task longer), or at once when the visitor leaves the title or
+     arrives straight on a page. */
+  const fillLater = () => el.querySelectorAll('[data-later]').forEach((d) => {
+    d.innerHTML = d.dataset.later === 'p5' ? p5Layer() : techLayer();
+    d.removeAttribute('data-later');
+  });
+  const away = () => ['board', 'page', 'quick'].includes(document.body.dataset.mode);
+  if (away()) fillLater();
+  else {
+    (window.requestIdleCallback || setTimeout)(fillLater, { timeout: 4000 });
+    const mo = new MutationObserver(() => { if (away()) { fillLater(); mo.disconnect(); } });
+    mo.observe(document.body, { attributes: true, attributeFilter: ['data-mode'] });
+  }
 
   // the city art loads only after the page has painted, sized for the screen, so it never
   // competes with the title text on a phone's first load
