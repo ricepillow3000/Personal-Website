@@ -762,7 +762,7 @@ body[data-mode="page"] .screen-page { padding-bottom: 120px; } /* nothing import
    marker points at the current one (LinkedIn; it follows the pointer and the keyboard), the others sit
    indented, and a double-printed red MAIN stamp hangs off the right edge. Roomy 46px rows. */
 .cc { position: absolute; z-index: 2; top: 96px; right: var(--gutter); width: clamp(300px, 25vw, 372px); rotate: -2deg;
-  filter: drop-shadow(5px 6px 0 var(--red)); }
+  } /* (no shadow on the header: John, Nov 19, white around the boxes only, never the title) */
 /* three separate, lopsided pieces (nothing mirrored): a jagged header, the red strip bigger than the
    panels and slanted its own way, then the list on its own off-square sheet, nudged right */
 .cc-head { position: relative; display: flex; align-items: center; padding: 14px 104px 16px 20px; margin-right: 10px; background: var(--black);
@@ -774,10 +774,10 @@ body[data-mode="page"] .screen-page { padding-bottom: 120px; } /* nothing import
 .cc-num { position: absolute; z-index: 2; right: -6px; top: -18px; display: grid; place-items: center; width: 92px; height: 82px; background: var(--red); border: 5px solid var(--black); box-shadow: 6px 6px 0 var(--black); rotate: -11deg; }
 .cc-num b { font-family: var(--f-head); font-weight: 400; font-size: 66px; line-height: 1; color: var(--black); rotate: 7deg; }
 /* the red strip: bigger type, wider than the panels, its own slant, with a white misprint box behind */
-.cc-goal { position: relative; z-index: 1; margin: -6px -14px 0 -10px; rotate: -1.5deg; filter: drop-shadow(4px 5px 0 var(--black)); }
+.cc-goal { position: relative; z-index: 1; margin: -6px -14px 0 -10px; rotate: -1.5deg; filter: drop-shadow(4px 5px 0 var(--white)); } /* a white edge, like the list's */
 .cc-goal span { display: block; padding: 10px 22px 11px; background: var(--red); color: var(--black); font-family: var(--f-serif); font-weight: 700; font-size: 21px; line-height: 1.15; letter-spacing: .3px; text-align: center;
   clip-path: polygon(0 10%, 100% 0, 98% 82%, 100% 100%, 3% 92%); }
-.cc-list { position: relative; isolation: isolate; list-style: none; margin: 8px -4px 0 14px; padding: 14px 0 18px; rotate: 1.2deg; }
+.cc-list { position: relative; isolation: isolate; list-style: none; margin: 8px -4px 0 14px; padding: 14px 0 18px; rotate: 1.2deg; filter: drop-shadow(5px 6px 0 rgba(245, 245, 240, .9)); } /* the white edge around the box (John, Nov 19: "I like the white around the whole box") */
 .cc-list::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--black);
   clip-path: polygon(0 4%, 64% 0, 100% 3%, 97% 90%, 100% 100%, 5% 97%, 2% 60%); } /* the sheet's jagged shape (on a layer, so the MAIN stamps can hang off its edge) */
 .cc-row {
