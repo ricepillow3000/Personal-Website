@@ -127,8 +127,7 @@ body.sv-open { overflow: hidden; }
 .sv-li:has(.sv-erase) .sv-slot { padding-right: calc(var(--er) + var(--erw) + 10px); } /* (a file's words end left of its tag) */
 .sv-erase:hover { background: var(--red); box-shadow: 2px 2px 0 var(--black); }
 .sv-li:has(.sv-slot.on) .sv-erase { box-shadow: 2px 2px 0 var(--white); transform: skewX(-10deg) scale(1.04); transform-origin: right bottom; }
-.sv-li:has(.sv-slot.on) .sv-li:has(.sv-erase) .sv-slot { padding-right: calc(var(--er) + var(--erw) + 10px); } /* (a file's words end left of its tag) */
-.sv-erase:hover { background: var(--white); color: var(--black); box-shadow: 2px 2px 0 var(--black); }
+.sv-li:has(.sv-slot.on) .sv-erase:hover { background: var(--white); color: var(--black); box-shadow: 2px 2px 0 var(--black); }
 .sv-erase.armed, .sv-li:has(.sv-slot.on) .sv-erase.armed { background: var(--yellow); color: var(--black); box-shadow: 2px 2px 0 var(--black); }
 .sv-erase:focus-visible, .sv-key:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
 
@@ -168,7 +167,7 @@ body.sv-open { overflow: hidden; }
   .sv-ctime { grid-column: 3; grid-row: 1 / span 2; flex-direction: column; align-items: flex-end; align-self: start; padding-top: 8px; }
   .sv-ctime b { font-size: 24px; }
   .sv-erase { right: calc(40px + var(--i) * 10px); bottom: calc(var(--ov) + 7px); /* (the tilt carries lower cards right: their tags step back in) */ padding: 6px 8px 4px; font-size: 11px; }
-  .sv-li .sv-slot { padding-right: calc(38px + var(--i) * 10px); } /* (on a phone the tag sits under the count; lower cards step in, as the tilt carries them right) */
+  .sv-li .sv-slot, .sv-li:has(.sv-erase) .sv-slot { padding-right: calc(38px + var(--i) * 10px); } /* (on a phone the tag sits under the count; lower cards step in, as the tilt carries them right) */
   .sv-li:has(.sv-complete) .sv-slot { padding-bottom: calc(var(--ov) + 24px); }
 
   .sv-li::before, .sv-li::after { width: 30%; }
