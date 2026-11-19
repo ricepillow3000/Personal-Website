@@ -32,6 +32,13 @@
 .ld-pct i { font-style: normal; font-size: .55em; margin-left: .06em; }
 .ld-word { margin: 0; font-family: var(--f-menu); font-size: clamp(16px, 3vmin, 22px); letter-spacing: .28em; color: var(--black);
   background: var(--white); padding: 2px 10px 1px 14px; transform: skew(-12deg) rotate(3deg); box-shadow: 4px 4px 0 var(--red); }
+.ld-sound { position: absolute; right: max(16px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom)); display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 4px 14px; border: 0; font-family: var(--f-menu); font-size: 18px; letter-spacing: .1em; color: var(--white); background: var(--black);
+  transform: skew(-12deg); box-shadow: 4px 4px 0 var(--red); cursor: pointer; }
+.ld-sound b { font-weight: 400; color: var(--yellow); }
+.ld-sound[aria-pressed="true"] { background: var(--red); box-shadow: 4px 4px 0 var(--white); }
+.ld-sound:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+.loader.flash .ld-sound { opacity: 0; transition: opacity .15s; }
 .loader.ld-fade { opacity: 0; transition: opacity .25s ease-out; }
 @media (prefers-reduced-motion: reduce) { .loader { animation-delay: 4s; } }
 
@@ -39,12 +46,12 @@
    Our red, edge to edge; halftone in a corner; a phone that tips onto its side under a curved arrow;
    a cut-out header on black slabs; the body on a slanted black strip; one button. */
 .rot {
-  position: fixed; inset: 0; z-index: 9998; display: grid; place-content: center; justify-items: center; gap: 18px;
+  position: fixed; inset: 0; z-index: 9998; display: grid; place-content: center; justify-items: center; gap: 18px; overflow: hidden;
   padding: 24px 22px calc(24px + env(safe-area-inset-bottom)); background: var(--red); color: var(--white); text-align: center;
-  opacity: 0; transform: scale(1.04); transition: opacity .18s ease-out, transform .25s cubic-bezier(.2, 1.5, .4, 1);
+  perspective: 900px; /* the pieces fly in and out in 3D (rotate.js) */
 }
-.rot.in { opacity: 1; transform: none; }
-.rot.out { opacity: 0; transform: scale(.96) rotate(-2deg); transition-duration: .2s; }
+.rot > * { transform-style: preserve-3d; }
+.rot-band { position: absolute; top: -20%; left: 0; width: 46vw; height: 140%; background: var(--black); transform: skewX(-18deg); translate: -70vw 0; pointer-events: none; }
 .rot-dots { position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(rgba(11, 11, 11, .28) 2px, transparent 2.3px) 0 0 / 12px 12px;
   -webkit-mask-image: linear-gradient(135deg, #000 0 22%, transparent 48%, transparent 62%, #000 92%);

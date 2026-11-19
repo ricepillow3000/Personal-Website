@@ -805,6 +805,7 @@ if (store.get().settings.sound) {
 }
 
 $('#soundBtn').addEventListener('click', () => toggleSound());
+window.addEventListener('jn-sound', () => syncSoundButton()); // the lock screen's SOUND switch
 function toggleSound() {
   const on = !store.get().settings.sound;
   setSound(on);

@@ -904,6 +904,45 @@ const live = new Set();
 const SYNTH = { ...VOICES };
 /* clip levels, matched to the synthesized versions by offline renders (peaks kept under 1.0) */
 const TRAIN = { pass: 0.66, horn: 0.1, brake: 0.32, glass: 0.5 };
+/* ---------- the lock (the loading screen, src/ui/loader.js; Nov 19, John: "the lock actually makes lock
+   noises... hear the pins click up, then the lock turning, then a sound easing into the first screen").
+   All synthesized. A pin: a tiny dry click, a short bright ring from the pin and a low tick as its
+   spring seats; each pin a step higher. The key: a short metal scrape, then a solid clunk with a
+   ring as the bolt gives. The doorway: air rushing through the keyhole, swelling and settling, a low
+   swell opening up under it and a soft high note as the station appears. ---------- */
+VOICES.lockPin = (bus, at, v = 1, i = 0) => {
+  const p = 1 + i * 0.12; // (a clear step up per pin)
+  noise(bus, { at, dur: 0.006, type: 'highpass', freq: 4200, gain: 0.45 });
+  metalRing(bus, at, [[2650 * p, 'triangle', 0], [4100 * p, 'sine', 6]], { hp: 1800, peak: 0.11, decay: 0.05 });
+  tone(bus, { at: at + 0.012, dur: 0.03, from: 420 * p, to: 300 * p, type: 'square', gain: 0.05 });
+};
+VOICES.lockTurn = (bus, at) => {
+  sweep(bus, at, 900, 2800, 0.2, 0.1, 2.5); // the key scraping round
+  noise(bus, { at: at + 0.22, dur: 0.04, type: 'lowpass', freq: 1400, q: 0.7, gain: 0.45 }); // the bolt
+  tone(bus, { at: at + 0.22, dur: 0.14, from: 150, to: 55, gain: 0.5 }); // its weight
+  metalRing(bus, at + 0.22, [[880, 'square', 0], [1760, 'triangle', 8]], { bp: 1300, q: 3, peak: 0.08, decay: 0.18 });
+};
+VOICES.doorway = (bus, at) => {
+  const src = ac.createBufferSource();
+  src.buffer = noiseBuf;
+  src.loop = true;
+  const bp = ac.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.Q.value = 0.9;
+  bp.frequency.setValueAtTime(300, at);
+  bp.frequency.exponentialRampToValueAtTime(2200, at + 0.7);
+  bp.frequency.exponentialRampToValueAtTime(480, at + 1.5);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(0.3, at + 0.55);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + 1.6);
+  src.connect(bp).connect(g).connect(bus);
+  src.start(at);
+  src.stop(at + 1.7);
+  tone(bus, { at, dur: 1.4, from: 55, to: 98, gain: 0.16 }); // opening up
+  tone(bus, { at: at + 1.05, dur: 0.6, from: 1568, to: 1568, gain: 0.045 }); // the station appears
+};
+
 Object.assign(VOICES, {
   whoosh: (bus, at, v = 1) => clip(bus, 'whoosh-b', at + 0.06, { gain: 0.6 * v, align: false }) || SYNTH.whoosh(bus, at, v),
   whipWind: (bus, at) => (clip(bus, 'whoosh-b', at, { gain: 0.35, align: false, rate: 0.85 }) && clip(bus, 'whoosh-b', at + 0.13, { gain: 0.45, align: false, rate: 1.1 })) || SYNTH.whipWind(bus, at),
