@@ -860,8 +860,10 @@ test('station: the ceiling tubes flicker on their own (never two healthy ones at
   await expect.poll(() => page.locator('.st-body .sl').count(), { timeout: 15000 }).toBe(15);
   await page.waitForTimeout(3000);
   expect(await page.locator('.st-body .sl').evaluateAll((els) => els.every((e) => e.dataset.st === 'on'))).toBe(true);
-  // the graffiti: TAKE YOUR NETWORK, and its cat, inside the screen
-  expect(await page.locator('.gf text.gf-red').allTextContents()).toEqual(['TAKE', 'YOUR', 'NETWORK']);
+  // the graffiti (TAKE YOUR NETWORK and its cat, sprayed by tools/draw-graffiti.mjs): the painting loads, inside the screen
+  const href = await page.locator('image.gf').getAttribute('href');
+  expect(href).toContain('graffiti.webp');
+  expect((await page.request.get(href)).status()).toBe(200);
   const vw = page.viewportSize().width;
   const gf = await page.locator('.gf-at').boundingBox();
   expect(gf.x).toBeGreaterThan(0);

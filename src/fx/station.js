@@ -14,8 +14,8 @@
    GRAFFITI (Nov 19, John: "on the right side, the wall that's pretty empty, a Persona-style graffiti
    that says TAKE YOUR NETWORK, with a cat at the end"). An original piece sprayed on a pillar's front
    face on the right (a flat face square to the camera, so it needs no perspective): chunky slanted red
-   letters with a black outline, a white misprint, overspray and drips, and a sitting cat with a
-   curled tail at the end. Its own design (no game's logo, mascot or lettering). */
+   letters sprayed by hand (Nov 19, John: "not a font pasted onto the pillar... like someone shook a
+   spray can and wrote it"), see tools/draw-graffiti.mjs. Its own design (no game's logo, mascot or lettering). */
 
 const NS = 'http://www.w3.org/2000/svg';
 // the panels, measured on the art: [x, y] corners (centre strip), or a slanted bar [x1, y1, x2, y2, width]
@@ -79,29 +79,10 @@ function lightsGlow() { // added: the bloom through the diffuser, and its light 
    on screen on laptops and desktops); screens that only see the middle of the art (phones) get it on
    a pillar further in instead (place() picks, by what the screen actually shows) ---- */
 const FACES = [{ x: 1128, y: 262, w: 76, h: 230 }, { x: 1046, y: 382, w: 46, h: 124 }, { x: 997, y: 398, w: 32, h: 112 }];
-function graffiti() {
-  const word = (txt, x, y, size, rot) => `<g transform="translate(${x} ${y}) rotate(${rot}) skewX(-10)">
-      <text class="gf-shadow" x="2" y="2" font-size="${size}">${txt}</text>
-      <text class="gf-white" x="-1.2" y="-1.2" font-size="${size}">${txt}</text>
-      <text class="gf-red" font-size="${size}">${txt}</text></g>`;
-  const drips = [[12, 52, 9], [27, 53, 5], [45, 93, 11], [60, 94, 6], [16, 124, 7], [38, 125, 12], [66, 124, 5]]
-    .map(([x, y, l]) => `<path d="M${x} ${y}v${l}" stroke="#B3121A" stroke-width="1.4" stroke-linecap="round"/><circle cx="${x}" cy="${y + l + 0.6}" r="1.1" fill="#B3121A"/>`).join('');
-  // an original cat: sitting, seen from the side, tail curled up like a hook, one eye a little star
-  const cat = `<g transform="translate(14 140) scale(.56)">
-      <path class="gf-cat-edge" d="M14 118c-6-18-4-40 6-56c-6-8-8-20-4-32l6-22l10 18c6-2 14-2 20 0l12-18l2 24c6 12 4 26-4 34c10 16 12 34 6 52c18 0 30-10 32-26c2-16-10-26-20-22c-8 3-8 12-2 14" />
-      <path class="gf-cat" d="M14 118c-6-18-4-40 6-56c-6-8-8-20-4-32l6-22l10 18c6-2 14-2 20 0l12-18l2 24c6 12 4 26-4 34c10 16 12 34 6 52Z" />
-      <path class="gf-tail" d="M72 118c18 0 30-10 32-26c2-16-10-26-20-22c-8 3-8 12-2 14" />
-      <path d="M40 46l3 6l6 1l-5 4l1 6l-5-3l-5 3l1-6l-5-4l6-1Z" fill="#F2F0E8"/>
-      <path d="M58 52l9-2" stroke="#F2F0E8" stroke-width="3" stroke-linecap="round"/>
-    </g>`;
-  return `<g class="gf" filter="url(#gfSpray)">
-    ${word('TAKE', 4, 50, 38, -6)}
-    ${word('YOUR', 8, 91, 36, -4)}
-    ${word('NETWORK', 0, 123, 21, -3)}
-    ${drips}
-    ${cat}
-  </g>`;
-}
+/* the piece itself is painted droplet by droplet by tools/draw-graffiti.mjs (a spray can, not a font:
+   hand-drawn strokes, wet cores, overspray mist, spatter, drips, a black shadow pass, a white cat),
+   at 4x this 76 x 230 box so it stays crisp; here it is only hung on the pillar */
+const graffiti = () => '<image class="gf" href="assets/film/graffiti.webp" width="76" height="230" preserveAspectRatio="none" decoding="async"/>';
 const faceTransform = (f) => { const k = Math.min(f.w / 76, f.h / 230); return `translate(${f.x + (f.w - 76 * k) / 2} ${f.y}) scale(${k.toFixed(3)})`; };
 
 const svg = (cls, defs, body) => `<svg class="st ${cls}" viewBox="0 0 1600 914" preserveAspectRatio="none" aria-hidden="true"><defs>${defs}</defs>${body}</svg>`;
@@ -111,17 +92,7 @@ export function mountStation(box, before) {
   wrap.className = 'st-wrap';
   wrap.setAttribute('aria-hidden', 'true');
   wrap.innerHTML = svg('st-dim', '<radialGradient id="slDim"><stop offset=".25" stop-color="#3A3C40" stop-opacity=".95"/><stop offset=".7" stop-color="#3A3C40" stop-opacity=".45"/><stop offset="1" stop-color="#3A3C40" stop-opacity="0"/></radialGradient>', lightsDim())
-    + svg('st-body', `<filter id="gfSpray" x="-10%" y="-10%" width="120%" height="120%">
-        <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" result="rough"/>
-        <feGaussianBlur in="rough" stdDeviation="1.6" result="over"/>
-        <feComponentTransfer in="over" result="overA"><feFuncA type="linear" slope=".45"/></feComponentTransfer>
-        <feTurbulence type="fractalNoise" baseFrequency="2.2" numOctaves="1" seed="3" result="g"/>
-        <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.55" result="grain"/>
-        <feComposite in="rough" in2="grain" operator="in" result="worn"/>
-        <feMerge><feMergeNode in="overA"/><feMergeNode in="worn"/></feMerge>
-      </filter>
-      <radialGradient id="gfHaze"><stop offset="0" stop-color="#E5191C" stop-opacity=".07"/><stop offset="1" stop-color="#E5191C" stop-opacity="0"/></radialGradient>`, lightsBody() + `<g class="gf-at" transform="${faceTransform(FACES[0])}">${graffiti()}</g>`)
+    + svg('st-body', '', lightsBody() + `<g class="gf-at" transform="${faceTransform(FACES[0])}">${graffiti()}</g>`)
     + svg('st-glow', `<filter id="slBloom" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="5" result="a"/><feGaussianBlur in="SourceGraphic" stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="a"/></feMerge></filter>
       <radialGradient id="slSpill"><stop offset="0" stop-color="#9FB8D8" stop-opacity=".22"/><stop offset="1" stop-color="#9FB8D8" stop-opacity="0"/></radialGradient>`, lightsGlow());
   box.insertBefore(wrap, before);
