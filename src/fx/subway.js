@@ -255,7 +255,11 @@ async function gpuPrep() {
 
 function size() {
   if (!cv) return;
-  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  /* the drawn layer's sharpness (Nov 19, John: "keep its quality... high resolution when turning the
+     phone sideways"): sideways, the track and the litter fill the bottom of a phone's screen, and at
+     1.5x they looked soft on a 3x iPhone. Now up to 2x (1.5x on phones with 3 GB of memory or less) */
+  const mem = navigator.deviceMemory;
+  const dpr = Math.min(window.devicePixelRatio || 1, mem && mem <= 3 ? 1.5 : 2);
   const w = box.offsetWidth;
   const h = box.offsetHeight;
   if (!w || !h) return;

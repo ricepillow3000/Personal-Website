@@ -896,21 +896,25 @@ test('train horn: it dips in pitch as the train passes (a Doppler drop), never b
   for (const c of calls) expect(c, c).toContain('drop: HORN_DOPPLER');
 });
 
-test('loading star: it fills as the page loads, opens like a doorway into the station, and a tap skips it', async ({ browser }) => {
+test('the lock: its keyhole fills and its pins set as the page loads, the key turns into a doorway to the station, and a tap skips it', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
   const page = await ctx.newPage();
   await page.route('**/assets/film/subway*', async (r) => { await new Promise((s) => setTimeout(s, 1200)); await r.continue(); });
   await page.goto('/?intro', { waitUntil: 'commit' });
   await expect(page.locator('#loader')).toBeVisible();
+  await expect(page.locator('#loader .ld-pin')).toHaveCount(4);
+  let pinsSet = 0;
   const seen = new Set();
   for (let i = 0; i < 200 && (await page.locator('#loader').count()); i++) {
     const v = await page.locator('#loader').getAttribute('aria-valuenow').catch(() => null);
     if (v !== null) seen.add(Number(v));
+    pinsSet = Math.max(pinsSet, await page.locator('#loader .ld-pin.set').count().catch(() => 0));
     await page.waitForTimeout(60);
   }
   const values = [...seen];
   expect(Math.max(...values)).toBe(100); // it reached 100%...
   expect(values.some((v) => v > 0 && v < 100)).toBe(true); // ...through the steps in between
+  expect(pinsSet).toBe(4); // every pin snapped into place
   await expect(page.locator('#loader')).toHaveCount(0, { timeout: 8000 }); // the doorway opened and it is gone
   await expect(page.locator('#pressStart')).toBeVisible();
   // a tap skips straight to the doorway
