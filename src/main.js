@@ -764,9 +764,20 @@ document.addEventListener('click', (e) => {
 });
 
 /* ---------------------------------------------------------------- HUD + sound */
+/* the sound button calls out (a red shadow, its X snapping into sound waves) until sound has been
+   on once, then it calms down for good */
+function soundSeen() { // (a declaration: syncSoundButton runs at boot, before this line)
+  try { return store.get().settings.sound || localStorage.getItem('jn-sound-seen') === '1'; } catch { return true; }
+}
+function syncSoundCall() {
+  const seen = soundSeen();
+  $('#soundBtn').classList.toggle('sound-call', !seen);
+  if (seen) try { localStorage.setItem('jn-sound-seen', '1'); } catch { /* private mode: it just calls out again next visit */ }
+}
 function syncSoundButton() {
   const on = store.get().settings.sound;
   $('#soundBtn').setAttribute('aria-pressed', String(on));
+  syncSoundCall();
   const t = $('#page [data-toggle="sound"]'); // the SYSTEM page toggle, when it is open
   if (t) {
     t.setAttribute('aria-pressed', String(on));
@@ -794,6 +805,7 @@ function toggleSound() {
   syncSoundButton();
   if (on) sfx('toggle');
 }
+
 
 let hinted = false;
 function soundHint() {

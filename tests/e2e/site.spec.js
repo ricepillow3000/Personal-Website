@@ -722,6 +722,45 @@ test('sound: the recordings download only after sound is turned on (never on pag
   await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(8);
 });
 
+test('sound: the music code downloads only after sound is on, and the sound button calls out until then (once, for good)', async ({ page }) => {
+  const music = [];
+  page.on('request', (r) => /\/music[-.]/.test(r.url()) && music.push(r.url()));
+  await page.goto('/');
+  await page.waitForTimeout(2000);
+  expect(music).toEqual([]);
+  await expect(page.locator('#soundBtn')).toHaveClass(/sound-call/);
+  await page.locator('#soundBtn').click();
+  await expect.poll(() => music.length, { timeout: 5000 }).toBe(1);
+  await expect(page.locator('#soundBtn')).not.toHaveClass(/sound-call/);
+  await page.locator('#soundBtn').click(); // off again: it stays calm (it has been heard)
+  await page.reload();
+  await expect(page.locator('#soundBtn')).not.toHaveClass(/sound-call/);
+});
+
+test('tower lights: every aviation light blinks on its own random beat (never all together); all steady on with reduced motion', async ({ page, browser }) => {
+  await openBoard(page); // reduced motion (this context)
+  const states = () => page.locator('.bd-avfix .av').evaluateAll((els) => els.map((e) => e.classList.contains('lit')));
+  await expect.poll(async () => (await states()).every(Boolean)).toBe(true);
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
+  const p2 = await ctx.newPage();
+  await p2.goto('/#/board');
+  const rows = [];
+  for (let i = 0; i < 40; i++) {
+    rows.push(await p2.locator('.bd-avfix .av').evaluateAll((els) => els.map((e) => (e.classList.contains('lit') ? 1 : 0)).join('')));
+    await p2.waitForTimeout(150);
+  }
+  expect(rows[0].length).toBe(23);
+  expect(rows.filter((r) => /^(0+|1+)$/.test(r)).length).toBeLessThan(3); // almost never all on or all off at once
+  for (let i = 0; i < 23; i++) expect(new Set(rows.map((r) => r[i])).size, `light ${i} blinks`).toBe(2);
+  // no two lights share a rhythm
+  const cols = [...Array(23).keys()].map((i) => rows.map((r) => r[i]).join(''));
+  expect(new Set(cols).size).toBeGreaterThan(18);
+  // its lens and its light switch together
+  const pairs = await p2.evaluate(() => [...document.querySelectorAll('.bd-avfix .av')].map((e) => e.classList.contains('lit') === document.querySelector(`.bd-avglow .av[data-av="${e.dataset.av}"]`).classList.contains('lit')));
+  expect(pairs.every(Boolean)).toBe(true);
+  await ctx.close();
+});
+
 test('city billboard: TAKE YOUR NETWORK crawls across the ring above JOHN NGUYEN ★, both looping (both rest centered with reduced motion)', async ({ page, browser }) => {
   await openBoard(page);
   await expect(page.locator('.bd-billboard .bb-ring')).toHaveCount(2);

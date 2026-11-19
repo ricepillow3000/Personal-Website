@@ -102,7 +102,11 @@ body[data-mode="title"] .bd-billboard, body[data-mode="title"] .bd-city img.in ~
 @keyframes bbFlicker { 0%, 41%, 43%, 77%, 78.5%, 100% { opacity: 1; } 42% { opacity: .86; } 77.8% { opacity: .9; } }
 .bb-sheen { animation: bbSheen 7s cubic-bezier(.5, 0, .5, 1) infinite var(--sd, 0s); transform-box: fill-box; }
 @keyframes bbSheen { 0%, 60% { translate: 0 0; } 100% { translate: 340px 0; } }
-.av .av-on { animation: avBlink var(--ap, 1.6s) linear infinite var(--ad, 0s); }
-@keyframes avBlink { 0%, 44% { opacity: 1; } 50%, 94% { opacity: 0; } 100% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .bb-flicker, .bb-sheen, .av .av-on { animation: none; } }
-body.reduce-motion :is(.bb-flicker, .bb-sheen, .av .av-on) { animation: none; }
+/* aviation lights: JS (startTicker) switches .lit on each light at random times; the lamp comes up
+   fast and dies a little slower, like a filament. Off-glow is multiplied dark, light is added on. */
+.bd-avdim { mix-blend-mode: multiply; }
+.bd-avglow { mix-blend-mode: screen; }
+.av .av-on { opacity: 0; transition: opacity .26s ease-in; }
+.av.lit .av-on { opacity: 1; transition: opacity .07s ease-out; }
+@media (prefers-reduced-motion: reduce) { .bb-flicker, .bb-sheen { animation: none; } .av .av-on { transition: none; } }
+body.reduce-motion :is(.bb-flicker, .bb-sheen) { animation: none; }
