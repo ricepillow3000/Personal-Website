@@ -124,11 +124,4 @@ body.reduce-motion :is(.bb-flicker, .bb-sheen) { animation: none; }
 .sl[data-st="off"] .sl-on { opacity: 0; transition-duration: .02s; }
 .sl[data-st="dim"] .sl-off { opacity: .5; }
 .sl[data-st="dim"] .sl-on { opacity: .28; }
-.gf text { font-family: var(--f-head); }
-.gf-red { fill: #CC161C; stroke: #0B0B0B; stroke-width: 3.2; stroke-linejoin: round; paint-order: stroke; }
-.gf-white { fill: none; stroke: #E9E7DF; stroke-width: 4.4; stroke-linejoin: round; }
-.gf-shadow { fill: #0B0B0B; opacity: .45; }
-.gf-cat { fill: #101012; }
-.gf-cat-edge { fill: none; stroke: #E9E7DF; stroke-width: 6; stroke-linejoin: round; stroke-linecap: round; }
-.gf-tail { fill: none; stroke: #101012; stroke-width: 7; stroke-linecap: round; }
-.gf { opacity: .88; } /* paint on a dim pillar, not a sticker */
+.gf { opacity: .93; } /* sprayed paint on a dim pillar (tools/draw-graffiti.mjs) */
