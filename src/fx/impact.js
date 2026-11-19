@@ -82,6 +82,7 @@ export function initClickFx() {
   ];
   let hovered = null;
   let lastAt = 0;
+  let pressed = null; // the button/link the mouse is on (each one chinks once as you reach it)
   document.addEventListener('pointerover', (e) => {
     if (e.pointerType !== 'mouse') return;
     let hit = null;
@@ -93,6 +94,17 @@ export function initClickFx() {
         voice = v;
         break;
       }
+    }
+    // every other button and link (the CONNECT rows, the top bar, page buttons...): the metal chink.
+    // The menu's items and THE PLAN's chapters play it themselves when they get picked.
+    if (!hit) {
+      const b = e.target.closest?.(`${PRESSABLE}, .cc-row, .hc-link`);
+      if (b !== pressed) {
+        pressed = b;
+        if (b && !b.disabled && !b.matches('.stair-item, [data-ch]')) sfx('hover');
+      }
+    } else {
+      pressed = null;
     }
     if (hit === hovered) return;
     hovered = hit;
@@ -109,6 +121,15 @@ export function initClickFx() {
     el.animate([{ scale: '1' }, { scale: '1.09' }, { scale: '0.98' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1)' });
     if (!el.matches('.skill, .stair-item')) sfx('hover'); // those two already play their own focus sound
   });
+
+  // Confirm: every button and link lands with the heavy thump-and-slash (capture phase, so a handler
+  // that plays its own 'select' right after is merged into this one). Buttons with their own sound
+  // (back, close, toggles, the sound and menu buttons, start over) keep it.
+  const OWN_SOUND = '[data-back], .back-btn, [data-close], [data-close-menu], [data-toggle], #soundBtn, #menuBtn, .save-reset';
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest?.(`${PRESSABLE}, .cc-row, .hc-link`);
+    if (el && !el.disabled && !el.matches(OWN_SOUND)) sfx('select');
+  }, true);
 
   // Keyboard presses (Enter/Space) fire click with detail 0: burst from the element's center.
   document.addEventListener('click', (e) => {
