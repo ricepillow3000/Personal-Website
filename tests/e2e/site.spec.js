@@ -625,18 +625,28 @@ test('sound: the recordings download only after sound is turned on (never on pag
   await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(5);
 });
 
-test('city billboard: a star scrolls across each of the tower\'s three LED rings (still with reduced motion)', async ({ page, browser }) => {
+test('city billboard: JOHN NGUYEN ★ travels from LED ring to LED ring (rests on the middle ring with reduced motion)', async ({ page, browser }) => {
   await openBoard(page);
-  await expect(page.locator('.bd-billboard .bb-star')).toHaveCount(3);
+  await expect(page.locator('.bd-billboard .bb-ring')).toHaveCount(3);
+  await expect(page.locator('.bb-top .bb-ch')).toHaveCount(12); // J O H N _ N G U Y E N ★
+  // reduced motion (this context): the name sits still on the middle ring, nothing on the others
+  await expect.poll(() => page.locator('.bb-middle .bb-ch').evaluateAll((els) => els.filter((e) => e.style.visibility === 'visible').length)).toBeGreaterThan(8);
+  expect(await page.locator('.bb-top .bb-ch, .bb-bottom .bb-ch').evaluateAll((els) => els.filter((e) => e.style.visibility === 'visible').length)).toBe(0);
+  // with motion: it moves, and over a full loop it shows up on all three rings
   const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
   const p2 = await ctx.newPage();
   await p2.goto('/#/board');
-  await expect(p2.locator('.bb-top')).toBeAttached();
-  const names = await p2.locator('.bb-star').evaluateAll((els) => els.map((e) => getComputedStyle(e).animationName));
-  expect(names).toEqual(['bb-top', 'bb-middle', 'bb-bottom']);
+  const seen = new Set();
+  const positions = new Set();
+  for (let i = 0; i < 40; i++) {
+    const r = await p2.evaluate(() => { const v = [...document.querySelectorAll('.bb-ch')].find((e) => e.style.visibility === 'visible'); return v ? [v.closest('.bb-ring').dataset.ring, v.getAttribute('transform')] : null; });
+    if (r) { seen.add(r[0]); positions.add(r[1]); }
+    if (seen.size === 3) break;
+    await p2.waitForTimeout(700);
+  }
+  expect([...seen].sort()).toEqual(['bottom', 'middle', 'top']);
+  expect(positions.size).toBeGreaterThan(3);
   await ctx.close();
-  // the default test context prefers reduced motion: the stars rest instead of scrolling
-  expect(await page.locator('.bb-top').evaluate((e) => getComputedStyle(e).animationName)).toBe('none');
 });
 
 test('PRESS START train: the GPU side passes its self-test, or the site falls back to the 2D slices (never no train)', async ({ browser }) => {
