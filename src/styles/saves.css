@@ -19,8 +19,10 @@ body.sv-open { overflow: hidden; }
   filter: drop-shadow(.05em 0 0 var(--black)) drop-shadow(-.05em 0 0 var(--black)) drop-shadow(0 .05em 0 var(--black)) drop-shadow(0 -.05em 0 var(--black)) drop-shadow(.07em .07em 0 var(--black)); }
 .sv-title .ct.box { background: var(--black); color: var(--white); }
 .sv-title .ct:first-child { background: var(--white); color: var(--red); padding: 0 .06em; }
-.sv-sub { position: absolute; z-index: 3; right: 4vw; bottom: max(18px, 4vh); margin: 0; padding: 4px 12px; background: var(--black); border: 2px solid var(--white);
-  font-family: var(--f-body); font-weight: 700; font-size: clamp(14px, 1.4vw, 18px); rotate: -4deg; box-shadow: 4px 4px 0 var(--red); }
+/* the line sits at the top, beside the title, as plain bold white text (as the reference's question does) */
+.sv-sub { position: absolute; z-index: 3; left: max(29vw, 330px); right: 3vw; top: max(30px, 6vh); margin: 0; padding: 0;
+  font-family: var(--f-body); font-weight: 800; font-size: clamp(14px, 1.3vw, 18px); rotate: -5deg; transform-origin: left center; color: var(--white);
+  text-shadow: 2px 2px 0 var(--black), -1px -1px 0 var(--black); }
 
 /* the files: slanted paper slips, fanned (each a little further right and lower) */
 /* the stack (Nov 19, John's save-screen reference: "stacked, but you can still see the other cards peeking
@@ -67,6 +69,10 @@ body.sv-open { overflow: hidden; }
 .sv-arm::after { content: ''; position: absolute; right: 12px; top: 0; bottom: 0; width: 3px; background: var(--white); opacity: .85; }
 .sv-li:has(.sv-slot.on) .sv-arm { transform: scaleY(1); transition: transform .3s cubic-bezier(.2, 1.25, .35, 1); }
 .sv-li:has(.sv-slot.on) { z-index: 3; filter: drop-shadow(9px 9px 0 var(--black)); }
+
+/* the left end of every card not picked carries a black-and-white film-strip edge (the reference's texture) */
+.sv-slot:not(.on) { padding-left: 11px; background-image: repeating-linear-gradient(180deg, var(--black) 0 7px, var(--white) 7px 12px); background-size: 7px 100%; background-repeat: no-repeat; }
+
 
 /* the file number on a black tab */
 .sv-no { grid-row: 1; align-self: stretch; display: flex; align-items: flex-end; gap: 2px; padding: 0 .4em .12em .5em; background: var(--black); color: var(--white);
@@ -125,10 +131,12 @@ body.sv-open { overflow: hidden; }
 .sv-ctime b { font-weight: 400; font-size: clamp(24px, 4.4vh, 46px); }
 .sv-complete .sv-no { background: var(--black); color: var(--white); }
 .sv-complete.on .sv-no { background: var(--white); color: var(--black); }
+.sv-slot.sv-complete:not(.on) { background-image: repeating-linear-gradient(180deg, var(--black) 0 7px, var(--white) 7px 12px); background-size: 7px 100%; background-repeat: no-repeat; }
+.sv-complete .sv-more { justify-content: center; } /* (CONTINUE clear of the COMPLETED burst) */
 .sv-complete.on .sv-time { display: none; } /* (its play time is already on the slab) */
 .sv-li:has(.sv-complete.on) { filter: drop-shadow(5px 5px 0 var(--white)) drop-shadow(8px 8px 0 var(--black)); }
 
-.sv-sub.sv-full { background: var(--red); border-color: var(--white); box-shadow: 4px 4px 0 var(--black); }
+.sv-sub.sv-full { justify-self: start; width: fit-content; padding: 3px 10px; background: var(--red); box-shadow: 3px 3px 0 var(--black); }
 
 /* CLEAR DATA: a small tag in the bottom-right corner of every file that holds a game, always there
    (Nov 19, John: "every box has a clear data box inside... bottom right side, pretty small"); the first
@@ -155,7 +163,7 @@ body.sv-open { overflow: hidden; }
 /* phones held upright: the stack goes full width, less tilt; each peek row holds the date over the place */
 @media (max-width: 760px) {
   .sv-title { top: max(18px, 3vh); font-size: clamp(34px, 11vw, 52px); }
-  .sv-sub { left: var(--gutter); right: var(--gutter); top: 74px; bottom: auto; font-size: 12px; padding: 3px 8px; rotate: -3deg; }
+  .sv-sub { left: var(--gutter); right: var(--gutter); top: 74px; bottom: auto; font-size: 12px; padding: 3px 8px; rotate: -3deg; background: var(--black); border: 2px solid var(--white); text-shadow: none; }
   .sv-list { --fan: .5deg; --ov: 14px; --arm: 22px; left: calc(4px + var(--arm)); right: -14px; top: 136px; rotate: -5deg; --off: 0px; transform: perspective(900px) rotateY(10deg); }
   .sv-arm::before { left: 4px; width: 8px; } .sv-arm::after { display: none; }
   .sv-stripes i:nth-child(n+2) { display: none; }
