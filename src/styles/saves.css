@@ -64,12 +64,14 @@ body.sv-open { overflow: hidden; }
    fits the project"): the same language as THE PLAN's picked chapter. A WHITE MISPRINT of the red card
    snaps out behind it (offset down-left, jagged left end), and the YELLOW STAR cursor pops in at its left
    end and boils (stepped wiggle), as on THE PLAN */
-.sv-li:has(.sv-slot.on)::before, .sv-li:has(.sv-slot.on)::after { display: block; bottom: auto; width: auto; z-index: -1; transform-origin: right center;
-  animation: sv-blade .22s cubic-bezier(.2, 1.3, .35, 1) both; }
-.sv-li:has(.sv-slot.on)::before { left: calc(-1 * var(--arm) - 24vw); right: 72%; top: 8%; height: 76%; background: var(--white);
-  clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 66%); }
-.sv-li:has(.sv-slot.on)::after { left: calc(-1 * var(--arm) - 15vw); right: 76%; top: 40%; height: 52%; background: var(--red);
-  clip-path: polygon(0 52%, 100% 0, 100% 100%, 0 70%); animation-delay: .05s; }
+/* (Nov 19, John: "it looks like two shapes... make it seamless, connected"): the red blade is the card
+   itself running on to the left, ONE shape: same red, the full card height where they meet (tucked a few
+   px under the card's left edge), tapering to a point. No second (white) blade: it read as a separate bar */
+.sv-li:has(.sv-slot.on)::before, .sv-li:has(.sv-slot.on)::after { display: block; bottom: auto; right: auto; z-index: -1; transform-origin: right center;
+  left: calc(-1 * var(--arm) - var(--bl)); width: calc(var(--bl) + 12px); top: -2%; height: 104%;
+  clip-path: polygon(0 46%, 100% 0, 100% 100%, 0 60%); animation: sv-blade .22s cubic-bezier(.2, 1.3, .35, 1) both; }
+.sv-li:has(.sv-slot.on)::after { --bl: 22vw; background: var(--red); }
+.sv-li:has(.sv-slot.on)::before { display: none; } /* (the white misprint read as a second shape: gone) */
 @keyframes sv-blade { from { scale: 0 1; } to { scale: 1 1; } }
 .sv-star { --s: clamp(46px, 6.6vh, 74px); filter: drop-shadow(3px 3px 0 var(--black)); position: absolute; z-index: 4; left: calc(-1 * var(--arm) - var(--s) * .9); top: calc(clamp(44px, 8.4vh, 86px) / 2 - var(--s) / 2);
   width: var(--s); height: var(--s); background: var(--yellow); pointer-events: none; opacity: 0; transform: scale(0) rotate(-90deg);
@@ -141,7 +143,7 @@ body.sv-open { overflow: hidden; }
 .sv-slot.sv-complete:not(.on) { background-image: repeating-linear-gradient(180deg, var(--black) 0 7px, var(--white) 7px 12px); background-size: 7px 100%; background-repeat: no-repeat; }
 .sv-complete .sv-more { justify-content: center; } /* (CONTINUE clear of the COMPLETED burst) */
 .sv-complete.on .sv-time { display: none; } /* (its play time is already on the slab) */
-.sv-li:has(.sv-complete.on) { filter: drop-shadow(5px 5px 0 var(--white)) drop-shadow(8px 8px 0 var(--black)); }
+/* (no white offset shadow on a finished file: it traced the blade like a second shape) */
 
 .sv-sub.sv-full { justify-self: start; width: fit-content; padding: 3px 10px; background: var(--red); box-shadow: 3px 3px 0 var(--black); }
 

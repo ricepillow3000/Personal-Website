@@ -1,12 +1,12 @@
 /* The loading screen (Nov 19, John: "instead of a lock, TAKE YOUR NETWORK in the middle... acts as the
-   loading bar. Bottom right, a star or banner with the philosophy of our resume, spinning. When the bar fully loads, a button underneath; click it and a transition opens to the
+   loading bar. When the bar fully loads, a button underneath; click it and a transition opens to the
    subway station, seamless, situational: zooming into a word, into the holes of letters, and that
    gateway opens into the station").
 
    The words (Nov 19, John: "TAKE YOUR NETWORK sounds a bit corny... more in tune with our philosophy";
    then TAKE YOUR NOTES; then "is it safe to use the motto take your time? I really like that one from
    Persona 5... change everything"): TAKE YOUR TIME, a deliberate homage (an everyday phrase; our own
-   letters, colours, seal and dive). It asks the visitor to slow down and read, the site's whole point
+   letters, colours and dive). It asks the visitor to slow down and read, the site's whole point
    against 7-second skims of boring resumes. Over the words, CASE FILE · JOHN NGUYEN in typewriter.
 
    The words are the bar: twelve cut-out letters, each an empty grey slot that fills with ink from the
@@ -14,8 +14,7 @@
    load event); a letter pops when it is full, a word clicks when it is complete. At 100% ENTER THE
    STATION slams in under the words (after a red marker underlines TIME). The click dives into the O of YOUR: the camera pushes in, the
    O's hole flashes white, then it is a hole, the station showing through, and the dive carries on
-   through it until the hole is bigger than the screen. The spinning seal (bottom right) carries the
-   site's philosophy: resumes don't have to be boring; built by directing a crew of AI agents.
+   through it until the hole is bigger than the screen. (The spinning seal that sat bottom right was removed, Nov 19: John, "keep it simple".)
 
    It is in app.html, so it is on screen from the very first paint. Sound: browsers play nothing before
    the visitor's first tap, so the fill is heard only once they have tapped (a tap during it wakes the

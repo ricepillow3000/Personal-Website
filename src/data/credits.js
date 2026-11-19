@@ -37,4 +37,34 @@ export const SOUND_CREDITS = [
     what: 'Slap and metal clang (the stamps)', file: 'hit-slap.mp3, metal-clang.mp3', title: 'bfh1_hit_07, bfh1_metal_hit_04', pack: '75 CC0 breaking / falling / hit sfx', author: 'rubberduck',
     source: 'https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx', license: 'CC0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
   },
+  {
+    what: 'Metro horn (PRESS START)', file: 'train-horn.mp3',
+    title: '4000 class train horn', pack: 'a metro car horn (Wikimedia Commons)',
+    author: 'Cityedit14', source: 'https://commons.wikimedia.org/wiki/File:4000_class_train_horn.ogg',
+    license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', changes: 'trimmed, faded and leveled; this clip is shared under CC BY-SA 4.0',
+  },
+  {
+    what: 'Metro braking into a station (NEXT STOP)', file: 'metro-brake.mp3',
+    title: 'Arribo del metro a la estación General Anaya del Metro de la Ciudad de México Línea 2', pack: 'Mexico City Metro Line 2 arriving at General Anaya (Wikimedia Commons)',
+    author: 'ProtoplasmaKid', source: 'https://commons.wikimedia.org/wiki/File:Arribo_del_metro_a_la_estaci%C3%B3n_General_Anaya_del_Metro_de_la_Ciudad_de_M%C3%A9xico_L%C3%ADnea_2.ogg',
+    license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', changes: 'trimmed to the brakes squealing (33.2 to 35.2 s), faded and leveled; this clip is shared under CC BY-SA 4.0',
+  },
+  {
+    what: 'The fall (THE DROP, THE RISE)', file: 'fall-wind.mp3',
+    title: 'Wind in Swedish pine forest at 25 mps', pack: 'a 25 m/s gale (Wikimedia Commons)',
+    author: 'W.carter', source: 'https://commons.wikimedia.org/wiki/File:Wind_in_Swedish_pine_forest_at_25_mps.ogg',
+    license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', changes: 'trimmed to its strongest gust (45.4 to 46.7 s), faded and leveled; this clip is shared under CC BY-SA 4.0',
+  },
+  {
+    what: 'Paper tearing (THE DROP)', file: 'paper-rip.mp3', title: 'paper_ripped - 1', pack: 'Various Paper Sound Effects', author: 'luckius',
+    source: 'https://opengameart.org/content/various-paper-sound-effects', license: 'CC0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+  },
+  {
+    what: 'The landing boom (THE DROP)', file: 'land-boom.mp3', title: 'Muffled Distant Explosion', pack: 'Muffled Distant Explosion', author: 'NenadSimic',
+    source: 'https://opengameart.org/content/muffled-distant-explosion', license: 'CC0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+  },
+  {
+    what: 'The landing thwack (THE DROP)', file: 'land-boom.mp3', title: 'thwack-02', pack: 'Thwack Sounds', author: 'antumdeluge',
+    source: 'https://opengameart.org/content/thwack-sounds', license: 'CC0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+  },
 ];

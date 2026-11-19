@@ -19,7 +19,7 @@
 .loader { contain: layout paint style; } /* its changes never make the page under it recalculate */ /* (the script is running: it waits for the visitor's click) */
 @keyframes ldFailsafe { to { visibility: hidden; pointer-events: none; } }
 .ld-bg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-.ld-core, .ld-go, .ld-seal, .ld-wheel { z-index: 1; }
+.ld-core, .ld-go, .ld-wheel { z-index: 1; }
 /* the loading star, bottom left (Nov 19, John: "a loading... at the bottom, maybe a star"): a white star
    with a red misprint, spinning (one composited turn), NOW LOADING on a black slab; READY at 100% */
 .ld-wheel { position: absolute; left: max(var(--gutter), 2vmin); bottom: max(var(--gutter), 2vmin); display: flex; align-items: center; gap: 10px; }
@@ -94,30 +94,13 @@
 .ld-core, .ld-go { grid-column: 1; }
 .ld-core { grid-row: 1; }
 
-/* the seal, bottom right: the resume's philosophy round a star, turning */
-.ld-seal { position: absolute; right: max(var(--gutter), 2vmin); bottom: max(var(--gutter), 2vmin); width: clamp(96px, 22vmin, 190px); aspect-ratio: 1; }
-/* two stacked layers, each turned as a whole (a composited transform on the <svg> itself, so the
-   graphics chip turns it: turning a group inside one SVG repainted the text path every frame) */
-.ld-seal svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; will-change: transform; }
-.ld-seal-ring { animation: ldSpin 14s linear infinite; }
-.ld-seal-rim { fill: var(--red); stroke: var(--black); stroke-width: 4; }
-.ld-seal-in { fill: var(--black); stroke: var(--white); stroke-width: 3; }
-@keyframes ldSpin { to { transform: rotate(360deg); } }
-.ld-seal-txt { font-family: var(--f-menu); font-size: 17.5px; letter-spacing: .5px; fill: var(--white); }
-.ld-seal-mis { fill: var(--red); }
-.ld-seal-star { fill: var(--white); stroke: var(--black); stroke-width: 4; stroke-linejoin: miter; }
-.ld-seal-core { rotate: 8deg; animation: ldStar 3.2s cubic-bezier(.2, 1.6, .4, 1) infinite; }
-@keyframes ldStar { 0%, 70% { transform: rotate(0deg); } 85%, 100% { transform: rotate(72deg); } } /* a snap a turn, like a dial */
-.loader.going .ld-seal { transition: translate .35s cubic-bezier(.6, 0, .9, .5), rotate .35s; translate: 40vmin 30vmin; rotate: 120deg; }
 .loader.going .ld-pct { opacity: 0; }
 
 .loader.ld-fade { opacity: 0; transition: opacity .25s ease-out; }
 @media (prefers-reduced-motion: reduce) {
   .loader { animation-delay: 4s; }
-  .ld-seal-ring, .ld-seal-core, .ld-l.in, .ld-go:not([hidden]), .ld-wheel svg { animation: none; }
+  .ld-l.in, .ld-go:not([hidden]), .ld-wheel svg { animation: none; }
 }
-/* phones held upright: the seal is smaller and sits lower so it never reaches the button */
-@media (max-aspect-ratio: 3/4) { .ld-seal { width: clamp(84px, 24vw, 120px); } }
 
 /* ---------------------------------------------------------------- turn your phone (src/ui/rotate.js)
    Our red, edge to edge; halftone in a corner; a phone that tips onto its side under a curved arrow;
