@@ -427,12 +427,10 @@ body { font-weight: 500; letter-spacing: .15px; }
 b, strong { font-weight: 700; }
 .skill-name { font-family: var(--f-ui) !important; font-style: italic; font-weight: 700 !important; font-size: 18px !important; text-transform: uppercase; letter-spacing: .4px; }
 
-.crew-name { font-family: var(--f-ui); font-style: italic; font-weight: 700; font-size: 21px; text-transform: uppercase; letter-spacing: .4px; }
 .person-degree, .id-info p, .panel p, .stop-card ul, .poster-brief, .bubble-say, .quest-place, .person-facts { font-family: var(--f-body); }
 .quest-place, .case-name span { font-family: var(--f-ui); font-style: italic; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
 .ql-text { font-family: var(--f-ui); font-style: italic; font-weight: 700; letter-spacing: .3px; font-size: 14.5px; }
-.calling-row, .crew-say, .id-chips, .trait { font-family: var(--f-ui); font-weight: 700; letter-spacing: .3px; }
-.crew-say { font-style: italic; font-size: 17px; }
+.calling-row, .id-chips, .trait { font-family: var(--f-ui); font-weight: 700; letter-spacing: .3px; }
 .trait { font-size: 18px; font-style: italic; }
 .page-sub { letter-spacing: 0; }
 
