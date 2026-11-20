@@ -64,7 +64,7 @@ body.reduce-motion .bd-layer { transform: none !important; }
 @keyframes camPush { to { transform: rotate(-2deg) scale(1.14) translate(-1.5%, 1%); } }
 body[data-mode="title"] .bd-subway img.in { opacity: 1; }
 /* the platform's tiny blurred stand-in (64 px webp, inline), shared by the two rules below */
-:root { --subway-lqip: url("data:image/webp;base64,UklGRg4BAABXRUJQVlA4IAIBAAAwBwCdASpAACUAPs1So0unpKshtVYKAWAZiWMA1DUgIK5IA/dpFo5DWSE9yJPu6Wz/k8JsXa038Qdzxv4umc6UNgAA/vgtrlRuH6KVLkaflUG//FCflWjxmYDZP5BnYgpYLt10I7Po5Yl3IWE4+352wqYtPL+Af7Xph08o5H3BImoR2NDuhjmRrI2UPfUWp2AkUX/5MEKOTdNIqfdmQ+ZyXADdmpl3ACA4ipaUHAAbFQFHySNi0lpBnXPI/UHrDfZitBS3TrshbnbwtWwTIpjez4LCSysGF6286JQi/jNcN5rycywazc3wDtdlbnz/ZkfZGRL8xOYh2CCl8vJ/2SwAAAA="); }
+:root { --subway-lqip: url("data:image/webp;base64,UklGRvwAAABXRUJQVlA4IPAAAADQBgCdASpAACUAPuliq02pJakiMBgMASAdCWMA052MKGtubjcKcIhEwnyiTgTkeTbKm3bx27tQC56n1eUwfAAA/vVo2F1/jItBvC5vX/b30nSPjI9l6vTCRrdrd2+hul24wckYTwnftxdj53KZoE+zKedQLu54hgj2EMNlH6m+uf3K4OHezmy+sLGmCFG9Kbok5MpiWb4Pt0C9EP/WHEz8Y9S27duCel7pMDGPYJzb99NfgZ0S+rr5SfbNdZsck2ow08YRP3hs1h0DWDsMp4aZ8s2ALWr026akNkeLb1Oy+/hNOoc2OXpbW7DrzOCAAAA="); }
 /* before any script has run (a slow phone can take a few seconds to fetch it), the page already shows
    the station blurred, not a bare red screen */
 body[data-screen="boot"]::before { content: ""; position: fixed; inset: -24px; z-index: 0; pointer-events: none;
@@ -120,17 +120,20 @@ body.reduce-motion :is(.bb-flicker, .bb-sheen) { animation: none; }
 /* the station layer (src/fx/station.js): the ceiling's lights and the pillar's graffiti, laid over the
    platform art exactly where the <img> shows it. Blend modes only reach the art from separate layers. */
 .st-wrap { position: absolute; pointer-events: none; opacity: 0; transition: opacity .3s ease-out; }
-.bd-cam img.in ~ .st-wrap { opacity: 1; }
+body[data-mode="title"] .bd-cam img.in ~ .st-wrap { opacity: 1; } /* (title only: Nov 20, John saw the departure board hanging faded over the city on THE PLAN, because the station picture fades away off the title but this layer didn't) */
 .st-wrap .st { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .st-dim { mix-blend-mode: multiply; }
 .st-glow { mix-blend-mode: screen; }
-/* the departure board (station.js): a box in the station's perspective (.ss-3d, drawn in art px) with
-   its LED screen laid on the front face (.ss-screen, sized in art px: --k = CSS px per art px) */
+/* the departure board (station.js): a painted board (.ss-img, placed in art px) with its LED screen mapped
+   onto the painted screen (.ss-screen in art px on .ss-plane, scaled by --k = CSS px per art px) */
 .ss { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease-out; }
 .ss[hidden] { display: none; }
 .ss.in { opacity: 1; } /* (the board lights up once it has picked its spot) */
-.ss-3d { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.ss-screen { position: absolute; display: grid; grid-template-rows: 1fr 1fr; gap: .2em; padding: .22em .3em; }
+.bd-cam .st-wrap img.ss-img { position: absolute; inset: auto; display: block; height: auto; opacity: 1; object-fit: fill; transition: none; transform-origin: 50% 50%; } /* (not the platform picture's rules: full size, faded until loaded) */
+/* the LED rows, laid out in art px on a plane scaled like the art, then mapped onto the painted screen's
+   four corners (a perspective transform set by station.js) */
+.ss-plane { position: absolute; left: 0; top: 0; width: 1600px; height: 914px; transform-origin: 0 0; transform: scale(var(--k, 1)); }
+.ss-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; display: grid; grid-template-rows: 1fr 1fr; gap: .2em; padding: .22em .3em; }
 .ss-row { position: relative; overflow: hidden; display: flex; align-items: center; background: #08080A; }
 /* the LED dots: a fixed grid of dark gaps over each row, so the text sliding under it lights the dots */
 .ss-row::after { content: ''; position: absolute; inset: 0; pointer-events: none;
