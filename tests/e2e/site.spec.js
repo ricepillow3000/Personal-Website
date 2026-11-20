@@ -1222,6 +1222,13 @@ test('sound for every box: side quests are heard as they land and as you scroll 
   await ctx.close();
 });
 
+test('the departure board and the station lights never show off the title (they used to hang faded over the city on THE PLAN)', async ({ page }) => {
+  await page.goto('/#/board');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  await page.waitForTimeout(1200);
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector('.st-wrap')).opacity)).toBe('0');
+});
+
 test('departure board: a 3D box in the station\'s perspective; LET US START THE GAME scrolls right to left, the clock shows the visitor\'s time (12-hour), it never covers the title, the calendar, the contact card or the top bar; on phones held upright too (a smaller board further back)', async ({ browser }) => {
   for (const [w, h, mob] of [[1440, 900, false], [852, 393, true], [390, 844, true], [390, 664, true], [412, 839, true]]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mob, hasTouch: mob, reducedMotion: 'no-preference' });
@@ -1229,11 +1236,13 @@ test('departure board: a 3D box in the station\'s perspective; LET US START THE 
     await page.goto('/');
     const sign = page.locator('.ss');
     await expect(sign).toHaveClass(/\bin\b/, { timeout: 15000 });
-    await expect(sign.locator('.ss-3d > polygon:not([class])')).toHaveCount(4); // its side, its underside, its front + the channel's front
-    // it hangs from the ceiling, never in midair: a channel bolted across the ceiling, the rods reach it, a conduit feeds it, a cable drops into the lid
-    for (const part of ['.ss-beam', '.ss-shade', '.ss-conduit', '.ss-cable']) await expect(sign.locator(part)).toHaveCount(1);
-    const gap = await sign.evaluate((e) => { const beam = e.querySelector('.ss-beam').getBoundingClientRect(); const front = e.querySelector('.ss-screen').getBoundingClientRect(); return [beam.bottom < front.top, beam.left <= front.left, beam.right >= front.right]; });
-    expect(gap).toEqual([true, true, true]); // above the board and wider than it
+    // a painted board (the station's own toon style), hung from its ceiling channel; the LED text sits inside its painted screen
+    const img = sign.locator('.ss-img');
+    await expect(img).toBeVisible();
+    expect(await img.evaluate((e) => e.complete && e.naturalWidth > 0)).toBe(true);
+    const [ib, sb] = await Promise.all([img.boundingBox(), sign.locator('.ss-screen').boundingBox()]);
+    expect(sb.x).toBeGreaterThan(ib.x); expect(sb.x + sb.width).toBeLessThan(ib.x + ib.width);
+    expect(sb.y).toBeGreaterThan(ib.y + ib.height * 0.25); expect(sb.y + sb.height).toBeLessThan(ib.y + ib.height); // (under the rods and channel)
     await expect(sign.locator('.ss-run span').first()).toHaveText('LET US START THE GAME');
     await expect(sign.locator('.ss-code')).toHaveText('JN');
     const shown = (await sign.locator('.ss-time').innerText()).replace(/\s+/g, '');

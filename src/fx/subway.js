@@ -458,7 +458,10 @@ export function cameraMotion(t, near) {
    train tracks look fully generated, not half generated"). The painted rails didn't line up with the
    car (and had sleepers on one side only), so the whole track bed is drawn here, in the train's own
    perspective: the bed, concrete sleepers, both rails (a polished head on a dark web) with their
-   clips, the far wall's kerb and the shadow under the platform's lip. Everything below platform level
+   clips, the far wall's kerb and the shadow under the platform's lip. (Nov 20, John: "fix the
+   hallucination part on the train tracks... fully built... you can see the bolts, the two big rails and
+   the things holding it down": the ballast is crushed stone now, every tie carries base plates, two
+   bolts and spring clips per rail, and the rails have a foot, a web and a head.) Everything below platform level
    is cut to the wedge the platform doesn't hide (left of its edge, as seen from the camera), so the
    near rail shows in the "mind the gap" opening beside the car, where its wheels ride and spark. */
 const P = (X, Y, d) => [sx(X, d), sy(Y, d)];
@@ -504,64 +507,174 @@ function drawTrack(g, kk) {
     quad(g, [P(EDGE_X, BED_Y, d), P(EDGE_X - 22, BED_Y, d), P(EDGE_X - 22, BED_Y, n + 1), P(EDGE_X, BED_Y, n + 1)]);
     g.fill();
   }
-  // sleepers: concrete, every 0.6 m, a lit top and a darker face toward the camera
-  const x0 = RAILS[1] - 20;
-  const x1 = RAILS[0] + 20;
-  for (let d = 18; d < TRACK_FAR; d += 21) {
-    const v = dark(d);
-    if (v <= 0.02) break;
-    const e = d + 8;
-    g.globalAlpha = v;
-    g.fillStyle = '#8A8D96';
-    quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, e), P(x0, TIE_Y, e)]);
-    g.fill();
-    g.fillStyle = '#4C4F57'; // its side facing the camera
-    quad(g, [P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x1, BED_Y, e), P(x1, TIE_Y, e)]);
-    g.fill();
-    g.fillStyle = '#44474E'; // and its front edge
-    quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x0, BED_Y, d)]);
-    g.fill();
-    g.strokeStyle = 'rgba(8, 8, 10, 0.8)';
-    g.lineWidth = ink;
-    quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, e), P(x0, TIE_Y, e)]);
-    g.stroke();
-    // the rail clips on both sides of each rail
-    g.fillStyle = '#111114';
-    RAILS.forEach((rx) => [-4.5, 2].forEach((o) => {
-      quad(g, [P(rx + o, TIE_Y - 1.6, d + 2), P(rx + o + 2.5, TIE_Y - 1.6, d + 2), P(rx + o + 2.5, TIE_Y - 1.6, d + 6), P(rx + o, TIE_Y - 1.6, d + 6)]);
-      g.fill();
-    }));
+  // the ballast: crushed stone over the whole bed, a seeded scatter of chips (lit, mid and shadow tones,
+  // each with a dark underside), sized by distance and thinned out where they'd be under a pixel
+  // (batched: every chip goes into one of five paths, one fill each, so the whole bed is a few calls; the
+  // rows thin out with distance, where a chip is a pixel)
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const TONES = ['#5E6068', '#44464D', '#34353B', '#6E7079'];
+  for (let band = 0; band < 3; band++) { // three depth bands, so the bed still darkens into the tunnel
+    const d0 = [20, 300, 900][band];
+    const d1 = [300, 900, TRACK_FAR][band];
+    const under = new Path2D();
+    const tone = TONES.map(() => new Path2D());
+    for (let d = d0; d < d1; d += Math.max(1.8, d * 0.01)) {
+      const r = (F / d) * 0.9; // a chip is about 3 cm
+      if (r < 0.35 || dark(d) <= 0.03) continue;
+      const n = Math.min(34, Math.round(20 * Math.min(1, r)));
+      for (let k = 0; k < n; k++) {
+        const X = WALL_X + 10 + rnd() * (EDGE_X - WALL_X - 30);
+        const [px, py] = P(X, BED_Y - 0.4, d + rnd() * 2.2);
+        const rr = r * (0.55 + rnd() * 0.7);
+        under.ellipse(px + rr * 0.25, py + rr * 0.3, rr, rr * 0.55, 0, 0, Math.PI * 2);
+        const t = tone[Math.floor(rnd() * 4)];
+        t.moveTo(px + rr, py);
+        t.ellipse(px, py, rr, rr * 0.55, 0, 0, Math.PI * 2);
+      }
+    }
+    g.globalAlpha = 0.95 * dark((d0 + d1) / 2 > MOUTH ? (d0 + d1) / 2 : 20);
+    g.fillStyle = '#121215';
+    g.fill(under);
+    tone.forEach((t, i) => { g.fillStyle = TONES[i]; g.fill(t); });
   }
   g.globalAlpha = 1;
-  // the rails: a dark web and foot, and a polished head that catches the station's light. Each rail is
-  // inked along its foot and never thinner than ~1.6 screen px, so it reads all the way to the tunnel
-  // (Nov 19, John: "the train tracks look too blended in... make sure they are fully visible")
+  // the sleepers: heavy concrete ties every 0.6 m, a lit top, a darker face toward the camera and its end,
+  // bold ink edges, a chipped corner now and then; on each, under each rail, a steel base plate held down
+  // by two bolts (hex heads with a lit face) and a spring clip over the rail's foot. Close up you see every
+  // part; far down the line the small parts drop out before they turn into noise.
+  const x0 = RAILS[1] - 22;
+  const x1 = RAILS[0] + 22;
+  const ties = [];
+  for (let d = 18; d < TRACK_FAR; d += 25) ties.push(d); // (a touch wider than real: seen this low, 0.6 m read as a solid stack)
+  // (far to near: seen this low, each tie's top lies under the next one out, so the near ones paint last)
+  ties.slice().reverse().forEach((d, ri) => {
+    const ti = ties.length - 1 - ri;
+    const v = dark(d);
+    if (v <= 0.02) return;
+    const e = d + 8;
+    const sc = F / d; // screen px per world unit here
+    g.globalAlpha = v;
+    g.fillStyle = '#3A3C42'; // its front face
+    quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x0, BED_Y, d)]);
+    g.fill();
+    g.fillStyle = '#2C2E33'; // its end, toward the camera
+    quad(g, [P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x1, BED_Y, e), P(x1, TIE_Y, e)]);
+    g.fill();
+    g.fillStyle = '#8C8F98'; // the lit top
+    quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, e), P(x0, TIE_Y, e)]);
+    g.fill();
+    g.fillStyle = '#A9ACB4'; // the light along its near edge
+    quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, d + 1.2), P(x0, TIE_Y, d + 1.2)]);
+    g.fill();
+    if (ti % 5 === 2 && sc > 1.2) { // a chipped corner
+      g.fillStyle = '#3A3C42';
+      quad(g, [P(x1 - 7, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, d + 3), P(x1 - 3, TIE_Y, d + 1.6)]);
+      g.fill();
+    }
+    g.strokeStyle = 'rgba(6, 6, 8, 0.9)';
+    g.lineWidth = Math.max(ink, sc * 0.35);
+    quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, e), P(x0, TIE_Y, e)]);
+    g.stroke();
+    quad(g, [P(x0, BED_Y, d), P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, BED_Y, d)]);
+    g.stroke();
+    // the fastenings
+    RAILS.forEach((rx) => {
+      const y = TIE_Y - 0.5;
+      g.fillStyle = '#5A5E67'; // the base plate: lit steel, an ink edge, its front edge in shade
+      quad(g, [P(rx - 7.5, y, d + 1), P(rx + 7.5, y, d + 1), P(rx + 7.5, y, d + 7), P(rx - 7.5, y, d + 7)]);
+      g.fill();
+      g.strokeStyle = 'rgba(4, 4, 6, 0.9)';
+      g.lineWidth = Math.max(ink * 0.8, sc * 0.25);
+      g.stroke();
+      g.fillStyle = '#33363C';
+      quad(g, [P(rx - 7.5, y, d + 1), P(rx + 7.5, y, d + 1), P(rx + 7.5, y + 0.5, d + 1), P(rx - 7.5, y + 0.5, d + 1)]);
+      g.fill();
+      if (sc < 0.9) return; // (too far: the bolts would be specks)
+      [-5.4, 5.4].forEach((o) => { // two bolts: a washer, then a hex head with a lit top face
+        const [bx, by] = P(rx + o, y - 0.4, d + 4);
+        const br = sc * 1.55;
+        g.fillStyle = '#16171A'; // the washer
+        g.beginPath(); g.ellipse(bx, by + br * 0.12, br * 1.25, br * 0.7, 0, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#B4B8C0';
+        g.beginPath();
+        for (let k = 0; k < 6; k++) { const t = (k / 6) * Math.PI * 2 + Math.PI / 6; g[k ? 'lineTo' : 'moveTo'](bx + Math.cos(t) * br, by - br * 0.25 + Math.sin(t) * br * 0.56); }
+        g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(4, 4, 6, 0.95)';
+        g.lineWidth = Math.max(0.5, sc * 0.22);
+        g.stroke();
+        g.fillStyle = '#6E737C'; // the head's side, in shade
+        quad(g, [[bx - br, by - br * 0.25], [bx + br, by - br * 0.25], [bx + br, by + br * 0.18], [bx - br, by + br * 0.18]]);
+        g.fill();
+        g.fillStyle = '#EEF0F4'; // a glint
+        g.beginPath(); g.ellipse(bx - br * 0.35, by - br * 0.42, br * 0.32, br * 0.16, 0, 0, Math.PI * 2); g.fill();
+      });
+      [-2.9, 2.9].forEach((o) => { // the spring clips gripping the rail's foot
+        const s0 = Math.sign(o);
+        g.strokeStyle = '#B9BDC5';
+        g.lineWidth = Math.max(0.6, sc * 0.55);
+        g.beginPath();
+        g.moveTo(...P(rx + o + s0 * 2.4, y - 0.4, d + 2.4));
+        g.quadraticCurveTo(...P(rx + o + s0 * 3.4, y - 1.6, d + 4), ...P(rx + o, y - 0.9, d + 5.6));
+        g.stroke();
+        g.strokeStyle = 'rgba(4, 4, 6, 0.85)';
+        g.lineWidth = Math.max(0.4, sc * 0.18);
+        g.stroke();
+      });
+    });
+  });
+  g.globalAlpha = 1;
+  // the rails: a wide foot on the plates, a dark web (its side toward the camera), and a polished head
+  // that catches the station's light, inked along both edges. Near the camera they are drawn as solid
+  // shapes; far away the head is a stroke never thinner than ~1.6 screen px, so they read all the way
+  // into the tunnel (Nov 19, John: "the train tracks look too blended in... fully visible")
   const minHead = 1.6 / kk; // (art px per 1.6 screen px)
   RAILS.forEach((rx) => {
     for (let d = 20, n; d < TRACK_FAR; d = n) {
       n = d * 1.1 + 5;
       const v = dark(d);
       g.globalAlpha = v;
-      g.fillStyle = '#16171A'; // the web, on the side toward the camera
-      quad(g, [P(rx + 1.2, RAIL_Y, d), P(rx + 1.2, TIE_Y, d), P(rx + 1.2, TIE_Y, n + 1), P(rx + 1.2, RAIL_Y, n + 1)]);
+      const sc = F / d;
+      g.fillStyle = '#1A1B1F'; // the foot
+      quad(g, [P(rx - 2.6, TIE_Y - 1, d), P(rx + 2.8, TIE_Y - 1, d), P(rx + 2.8, TIE_Y - 1, n + 1), P(rx - 2.6, TIE_Y - 1, n + 1)]);
       g.fill();
-      g.strokeStyle = 'rgba(6, 6, 8, 0.95)'; // the ink line along its foot
-      g.lineWidth = Math.max(ink, (F / d) * 0.6);
-      g.beginPath();
-      g.moveTo(...P(rx + 1.6, TIE_Y, d));
-      g.lineTo(...P(rx + 1.6, TIE_Y, n + 1));
-      g.stroke();
-      g.strokeStyle = '#C9CED6'; // the head (a stroke, so it keeps a visible width far away)
-      g.lineWidth = Math.max(minHead, (F / d) * 2.6);
-      g.beginPath();
-      g.moveTo(...P(rx, RAIL_Y, d));
-      g.lineTo(...P(rx, RAIL_Y, n + 1));
-      g.stroke();
+      g.fillStyle = '#2B2D33'; // the web, toward the camera
+      quad(g, [P(rx + 1.3, RAIL_Y + 0.6, d), P(rx + 1.3, TIE_Y - 1, d), P(rx + 1.3, TIE_Y - 1, n + 1), P(rx + 1.3, RAIL_Y + 0.6, n + 1)]);
+      g.fill();
+      if (sc > 0.8) { // the head as a solid bar with ink edges
+        g.fillStyle = '#C9CED6';
+        quad(g, [P(rx - 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y, n + 1), P(rx - 1.3, RAIL_Y, n + 1)]);
+        g.fill();
+        g.fillStyle = '#7D828C'; // its rounded side, in shade
+        quad(g, [P(rx + 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y + 0.9, d), P(rx + 1.3, RAIL_Y + 0.9, n + 1), P(rx + 1.3, RAIL_Y, n + 1)]);
+        g.fill();
+        g.strokeStyle = 'rgba(6, 6, 8, 0.95)';
+        g.lineWidth = Math.max(ink, sc * 0.3);
+        [[-1.3, 0], [1.3, 0.9], [2.8, 2.9]].forEach(([o, dy]) => {
+          g.beginPath();
+          g.moveTo(...P(rx + o, RAIL_Y + dy, d));
+          g.lineTo(...P(rx + o, RAIL_Y + dy, n + 1));
+          g.stroke();
+        });
+      } else {
+        g.strokeStyle = 'rgba(6, 6, 8, 0.95)'; // the ink line along its foot
+        g.lineWidth = Math.max(ink, sc * 0.6);
+        g.beginPath();
+        g.moveTo(...P(rx + 1.6, TIE_Y, d));
+        g.lineTo(...P(rx + 1.6, TIE_Y, n + 1));
+        g.stroke();
+        g.strokeStyle = '#C9CED6'; // the head (a stroke, so it keeps a visible width far away)
+        g.lineWidth = Math.max(minHead, sc * 2.6);
+        g.beginPath();
+        g.moveTo(...P(rx, RAIL_Y, d));
+        g.lineTo(...P(rx, RAIL_Y, n + 1));
+        g.stroke();
+      }
       g.strokeStyle = '#FFFFFF'; // its shine
-      g.lineWidth = Math.max(minHead * 0.45, (F / d) * 0.6);
+      g.lineWidth = Math.max(minHead * 0.45, sc * 0.6);
       g.beginPath();
-      g.moveTo(...P(rx + 0.3, RAIL_Y, d));
-      g.lineTo(...P(rx + 0.3, RAIL_Y, n));
+      g.moveTo(...P(rx - 0.3, RAIL_Y, d));
+      g.lineTo(...P(rx - 0.3, RAIL_Y, n));
       g.stroke();
     }
     g.globalAlpha = 1;

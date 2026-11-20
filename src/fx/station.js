@@ -135,95 +135,51 @@ const SIGN_SPOTS = [
      at scale sc (1 = the first spot) it hangs at the same real height, so its top sits at
      548 - 334 sc, its rods reach the same ceiling (60 sc long) and it is 150 sc wide; it may sit over
      either side of the platform (o = its left edge from the vanishing point at full size) */
-  ...[0.8, 0.7, 0.62, 0.55, 0.5, 0.45, 0.41].flatMap((sc) => [30, 120, 200, -184, -260]
+  ...[0.8, 0.7, 0.62, 0.55, 0.5, 0.45, 0.41, 0.37, 0.34].flatMap((sc) => [30, 120, 200, -184, -260]
     .map((o) => ({ x: Math.round(VP[0] + o * sc), y: Math.round(VP[1] - 334 * sc), w: Math.round(150 * sc) }))),
 ];
-const SIGN_H = 0.46;
-const DEPTH = 0.9; // the back face, scaled toward the vanishing point (the box's thickness)
-const toVP = ([x, y]) => [VP[0] + (x - VP[0]) * DEPTH, VP[1] + (y - VP[1]) * DEPTH];
-function geom(s) {
-  const h = s.w * SIGN_H;
-  const f = [[s.x, s.y], [s.x + s.w, s.y], [s.x + s.w, s.y + h], [s.x, s.y + h]]; // TL TR BR BL
-  const b = f.map(toVP);
-  const right = s.x + s.w / 2 > VP[0]; // right of the middle: its inner (left) side shows, else its right side
-  const side = right ? [f[0], b[0], b[3], f[3]] : [f[1], b[1], b[2], f[2]];
-  const under = [f[3], f[2], b[2], b[3]];
-  const rods = [0.2, 0.8].map((t) => [s.x + s.w * t, s.y]);
-  const rod = 60 * (s.w / 150); // (to the same ceiling, whatever its distance)
-  const pts = [...f, ...b];
-  const box = { l: Math.min(...pts.map((q) => q[0])), r: Math.max(...pts.map((q) => q[0])), t: s.y - rod, b: Math.max(...pts.map((q) => q[1])) };
-  return { f, side, under, rods, rod, box, right, h, beam: 7 * (s.w / 150) };
+/* THE BOARD IS PAINTED NOW (Nov 20, John: "the train sign... I don't think it's the right texture, it doesn't
+   even look like it fits there... make the train station and the train sign have the same textures... it's
+   looking a little out of place"). The drawn SVG box always read as a vector cut-out on the painted station
+   (restyling its greys and lines lost a blind comparison to it, both orders). So the board is a picture
+   painted the station's way: Gemini (Nano Banana Pro) rendered an original hanging board in the same toon
+   style (charcoal steel, a grey bezel, a dull amber trim, two rods up to a ceiling channel, grime), with a
+   blank black screen, on a green screen; keyed and cropped to board.webp (480 x 420). Its screen's four
+   corners were measured on the picture (BOARD_QUAD, fractions of the picture), and the live LED rows are
+   mapped onto exactly that quad with a perspective transform, so the text sits IN the screen. It hangs with
+   its ceiling channel on the station's ceiling at the spot's depth; on the left of the light strip it is
+   mirrored so its open side still faces the middle. */
+const BOARD_ASPECT = 782 / 894; // (height / width of the picture)
+const BOARD_QUAD = [[0.1432, 0.3529], [0.9374, 0.5077], [0.9597, 0.9169], [0.1174, 0.8402]]; // TL TR BR BL
+/* the board for a spot (art px): the picture's box, and the screen's four corners */
+function boardAt(s) {
+  const w = s.w * 1.12;
+  const h = w * BOARD_ASPECT;
+  const flip = s.x + s.w / 2 < VP[0]; // left of the middle: mirrored
+  const x = s.x - w * 0.04;
+  const y = s.y - 60 * (s.w / 150); // its ceiling channel on the ceiling at this depth
+  const q = flip ? [[1 - BOARD_QUAD[1][0], BOARD_QUAD[1][1]], [1 - BOARD_QUAD[0][0], BOARD_QUAD[0][1]], [1 - BOARD_QUAD[3][0], BOARD_QUAD[3][1]], [1 - BOARD_QUAD[2][0], BOARD_QUAD[2][1]]] : BOARD_QUAD;
+  return { x, y, w, h, flip, quad: q.map(([u, v]) => [x + u * w, y + v * h]), box: { l: x, r: x + w, t: y, b: y + h } };
 }
-const P = (pts) => pts.map((q) => q.map((v) => v.toFixed(1)).join(',')).join(' ');
-/* a point on the ceiling slid along the platform: f > 1 toward the camera, f < 1 toward the tunnel */
-const along = ([x, y], f) => [VP[0] + (x - VP[0]) * f, VP[1] + (y - VP[1]) * f];
-const nut = (x, y, sc, ink) => `<rect x="${(x - 2.8 * sc).toFixed(1)}" y="${(y - 1.7 * sc).toFixed(1)}" width="${(5.6 * sc).toFixed(1)}" height="${(3.4 * sc).toFixed(1)}" fill="#3A3D44" ${ink}/>`;
-/* What it hangs from (Nov 20, John: "the sign and the roof look detached, the sign is just floating in
-   midair... make it look like part of the subway station"). A steel channel bolted across the ceiling at
-   the board's depth, wider than the board, seen from below (its front and its underside, the slot down
-   its middle), a hard contact shade on the ceiling round it, a conduit running along the ceiling into it
-   from the camera's side (clamped every few metres, thicker as it nears the camera), and the board's
-   power cable dropping from the channel into its lid. Flat cel tones and ink like the art. */
-function mount(s, g, sc, ink) {
-  const y0 = s.y - g.rod; // the ceiling at the board's depth
-  const t = g.beam;
-  const xa = s.x - 0.16 * s.w;
-  const xb = s.x + 1.16 * s.w;
-  const shade = [along([xa - 3 * sc, y0], 1.018), along([xb + 3 * sc, y0], 1.018), along([xb + 3 * sc, y0], 0.95), along([xa - 3 * sc, y0], 0.95)];
-  const front = [[xa, y0], [xb, y0], [xb, y0 + t], [xa, y0 + t]];
-  const D = 0.955; // the channel's depth along the platform
-  const under = [[xa, y0 + t], [xb, y0 + t], along([xb, y0 + t], D), along([xa, y0 + t], D)];
-  const slot = [along([xa + 2 * sc, y0 + t], (1 + D) / 2), along([xb - 2 * sc, y0 + t], (1 + D) / 2)];
-  // the conduit: along the ceiling through a point near the channel's outer end (behind the channel)
-  const c0 = [g.right ? xb - 0.1 * s.w : xa + 0.1 * s.w, y0 - 0.5 * sc];
-  const A = along(c0, 1.9);
-  const B = along(c0, 1.0); // (it feeds the channel from the camera's side: run on toward the tunnel it crossed the board)
-  const len = Math.hypot(B[0] - A[0], B[1] - A[1]);
-  const n = [-(B[1] - A[1]) / len, (B[0] - A[0]) / len];
-  const wA = 1.9 * sc * 1.9;
-  const wB = 1.9 * sc;
-  const tube = [[A[0] + n[0] * wA, A[1] + n[1] * wA], [B[0] + n[0] * wB, B[1] + n[1] * wB], [B[0] - n[0] * wB, B[1] - n[1] * wB], [A[0] - n[0] * wA, A[1] - n[1] * wA]];
-  const clamps = [1.62, 1.3, 1.08].map((f) => {
-    const [x, y] = along(c0, f);
-    const w = 2.9 * sc * f;
-    return `<path d="M${(x - n[0] * w).toFixed(1)} ${(y - n[1] * w).toFixed(1)} L${(x + n[0] * w).toFixed(1)} ${(y + n[1] * w).toFixed(1)}" stroke="#050506" stroke-width="${(1.5 * sc * f).toFixed(2)}"/>`;
-  }).join('');
-  const lit = (a, b, op) => `<path d="M${P([a, b]).replace(' ', ' L')}" stroke="#CFE0F5" stroke-opacity="${op}" stroke-width="${(0.9 * sc).toFixed(2)}"/>`;
-  const cx = s.x + s.w * 0.6;
-  return `
-    <polygon class="ss-shade" points="${P(shade)}" fill="#000" fill-opacity=".38"/>
-    <polygon class="ss-conduit" points="${P(tube)}" fill="#2B2D33" ${ink}/>
-    <path d="M${P([A, B]).replace(' ', ' L')}" stroke="#9FB0C4" stroke-opacity=".3" stroke-width="${(0.8 * sc).toFixed(2)}" transform="translate(${(n[0] * wB).toFixed(1)} ${(n[1] * wB).toFixed(1)})"/>${clamps}
-    <polygon class="ss-beam" points="${P(under)}" fill="#141519" ${ink}/>
-    <path d="M${P(slot).replace(' ', ' L')}" stroke="#050506" stroke-width="${(1.3 * sc).toFixed(2)}"/>
-    <polygon points="${P(front)}" fill="#33363D" ${ink}/>
-    ${lit([xa + sc, y0 + t - 0.9 * sc], [xb - sc, y0 + t - 0.9 * sc], 0.55)}${lit([xa + sc, y0 + 0.9 * sc], [xb - sc, y0 + 0.9 * sc], 0.25)}
-    ${[0.06, 0.94].map((k) => nut(xa + (xb - xa) * k, y0 + t / 2, sc * 0.8, ink)).join('')}
-    <path class="ss-cable" d="M${cx.toFixed(1)} ${(y0 + t).toFixed(1)} Q${(cx + 7 * sc).toFixed(1)} ${((y0 + t + s.y) / 2 + 4 * sc).toFixed(1)} ${(cx + 3 * sc).toFixed(1)} ${(s.y - 0.5).toFixed(1)}" fill="none" stroke="#050506" stroke-width="${(1.5 * sc).toFixed(2)}"/>`;
-}
-function housing(s) {
-  const g = geom(s);
-  const sc = Math.max(0.55, s.w / 150); // (ink and rods thin a little with distance, never to nothing)
-  const ink = `stroke="#050506" stroke-width="${(1.6 * sc).toFixed(2)}" stroke-linejoin="round"`;
-  const [tl, tr, br, bl] = g.f;
-  const rimSide = g.right ? [tl, bl] : [tr, br]; // the edge toward the light strip catches the tubes' light
-  return `${mount(s, g, sc, ink)}
-    ${g.rods.map(([x, y]) => { const top = y - g.rod + g.beam; const lit = g.right ? -0.7 * sc : 0.7 * sc; return `<path d="M${x} ${y} V${top}" stroke="#050506" stroke-width="${(4 * sc).toFixed(2)}"/><path d="M${x} ${y} V${top}" stroke="#6E737D" stroke-width="${(2 * sc).toFixed(2)}"/><path d="M${x + lit} ${y} V${top}" stroke="#C9D6E6" stroke-opacity=".7" stroke-width="${(0.7 * sc).toFixed(2)}"/>${nut(x, top + 2.4 * sc, sc, ink)}${nut(x, y - 4.6 * sc, sc, ink)}<rect x="${x - 5 * sc}" y="${y - 3 * sc}" width="${10 * sc}" height="${4 * sc}" fill="#1A1B1F" ${ink}/>`; }).join('')}
-    <polygon points="${P(g.side)}" fill="#2A2C32" ${ink}/>
-    <polygon points="${P(g.under)}" fill="#0C0C0E" ${ink}/>
-    <path d="M${P([g.under[0], g.under[1]]).replace(' ', ' L')}" stroke="#FFB52E" stroke-opacity=".45" stroke-width="2.2" transform="translate(0 2.2)"/>
-    <polygon points="${P(g.f)}" fill="#1B1C20" ${ink}/>
-    <path d="M${P([tl, tr]).replace(' ', ' L')}" stroke="#CFE0F5" stroke-opacity=".75" stroke-width="1.1" transform="translate(0 1.2)"/>
-    <path d="M${P(rimSide).replace(' ', ' L')}" stroke="#CFE0F5" stroke-opacity=".55" stroke-width="1.1" transform="translate(${g.right ? 1.2 : -1.2} 0)"/>
-    <rect x="${tl[0] + s.w * 0.05 - 1}" y="${tl[1] + g.h * 0.1 - 1}" width="${s.w * 0.9 + 2}" height="${g.h * 0.8 + 2}" fill="#050506" stroke="#2E3036" stroke-width="1"/>`;
+/* a CSS matrix3d that maps the rectangle (0,0)-(w,h) onto the quad p (TL TR BR BL) */
+function rectToQuad(w, h, p) {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = p;
+  const dx1 = x1 - x2; const dx2 = x3 - x2; const dy1 = y1 - y2; const dy2 = y3 - y2;
+  const sx = x0 - x1 + x2 - x3; const sy = y0 - y1 + y2 - y3;
+  const det = dx1 * dy2 - dx2 * dy1;
+  const g = (sx * dy2 - dx2 * sy) / det;
+  const hh = (dx1 * sy - sx * dy1) / det;
+  const a = x1 - x0 + g * x1; const b = x3 - x0 + hh * x3; const c = x0;
+  const d = y1 - y0 + g * y1; const e = y3 - y0 + hh * y3; const f = y0;
+  return `matrix3d(${[a / w, d / w, 0, g / w, b / h, e / h, 0, hh / h, 0, 0, 1, 0, c, f, 0, 1].map((n) => +n.toFixed(6)).join(',')})`;
 }
 const SIGN_LINE = 'LET US START THE GAME';
 const signHTML = () => `<div class="ss" hidden>
-  <svg class="ss-3d" viewBox="0 0 1600 914" preserveAspectRatio="none"></svg>
-  <div class="ss-screen">
+  <img class="ss-img" src="assets/film/board.webp" alt="" width="480" height="420" decoding="async">
+  <div class="ss-plane"><div class="ss-screen">
     <div class="ss-row ss-top"><div class="ss-run"><span>${SIGN_LINE}</span><span>${SIGN_LINE}</span></div></div>
     <div class="ss-row ss-bot"><b class="ss-time"><span class="ss-h">12</span><span class="ss-colon">:</span><span class="ss-m">00</span><small class="ss-ap">PM</small></b><b class="ss-code">JN</b></div>
-  </div>
+  </div></div>
 </div>`;
 /* what the board must keep clear of (their boxes on screen, measured on resize and as the title settles) */
 const SIGN_KEEP_CLEAR = '#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr'; // (the name's letters, not its full-width line)
@@ -233,15 +189,30 @@ function measureClear() {
   clearOf = [...document.querySelectorAll(SIGN_KEEP_CLEAR)].filter((el) => getComputedStyle(el).visibility !== 'hidden').map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
 }
 /* art px -> screen px from the layer's real box on screen (it sits inside the camera's slow push-in) */
+/* art px -> screen px, measured: the layer sits inside the camera's tilt (-3deg) and push-in, so its box on
+   screen is not a plain scale of the art (the tilt alone moved a board at a phone's left edge ~36 px lower
+   than a plain scale put it, onto the name). Three probe points give the exact affine map. */
+function artToScreen(wrap) {
+  const at = ([x, y]) => {
+    const i = document.createElement('i');
+    i.style.cssText = `position:absolute;left:${(x / 1600) * 100}%;top:${(y / 914) * 100}%;width:0;height:0`;
+    wrap.appendChild(i);
+    const r = i.getBoundingClientRect();
+    i.remove();
+    return [r.left, r.top];
+  };
+  const o = at([0, 0]); const ex = at([1600, 0]); const ey = at([0, 914]);
+  return ([x, y]) => [o[0] + ((ex[0] - o[0]) * x) / 1600 + ((ey[0] - o[0]) * y) / 914, o[1] + ((ex[1] - o[1]) * x) / 1600 + ((ey[1] - o[1]) * y) / 914];
+}
 function pickSpot(wrap) {
   const pad = window.innerWidth < 600 ? 10 : 22; // (room for the rest of the push-in; less on a phone, where the boards are small)
   const W = window.innerWidth;
   const H = window.innerHeight;
-  const a = wrap.getBoundingClientRect();
-  const k = a.width / 1600;
+  const map = artToScreen(wrap);
   return SIGN_SPOTS.find((s) => {
-    const { box } = geom(s);
-    const r = { l: a.left + box.l * k, r: a.left + box.r * k, t: a.top + (s.y - 4) * k, b: a.top + box.b * k };
+    const { box } = boardAt(s);
+    const pts = [[box.l, box.t], [box.r, box.t], [box.r, box.b], [box.l, box.b]].map(map);
+    const r = { l: Math.min(...pts.map((q) => q[0])), r: Math.max(...pts.map((q) => q[0])), t: Math.min(...pts.map((q) => q[1])), b: Math.max(...pts.map((q) => q[1])) };
     if (r.l < 6 || r.t < 6 || r.r > W - 6 || r.b > H * 0.6) return false;
     return !clearOf.some((o) => r.l < o.right + pad && r.r > o.left - pad && r.t < o.bottom + pad && r.b > o.top - pad);
   }) || null;
@@ -279,7 +250,7 @@ export function mountStation(box, before) {
   wrap.insertAdjacentHTML('beforeend', signHTML());
   signClock(wrap);
   const sign = wrap.querySelector('.ss');
-  const shell = sign.querySelector('.ss-3d');
+  const img = sign.querySelector('.ss-img');
   const screen = sign.querySelector('.ss-screen');
   let spot;
   let placedOnce = false;
@@ -290,9 +261,12 @@ export function mountStation(box, before) {
     spot = s;
     sign.hidden = !s;
     if (!s) return;
-    shell.innerHTML = housing(s);
-    const h = s.w * SIGN_H;
-    Object.assign(screen.style, { left: `${((s.x + s.w * 0.05) / 1600) * 100}%`, top: `${((s.y + h * 0.1) / 914) * 100}%`, width: `${((s.w * 0.9) / 1600) * 100}%`, height: `${((h * 0.8) / 914) * 100}%`, fontSize: `calc(var(--k) * ${(s.w * 0.072).toFixed(2)}px)` });
+    const bd = boardAt(s);
+    Object.assign(img.style, { left: `${(bd.x / 1600) * 100}%`, top: `${(bd.y / 914) * 100}%`, width: `${(bd.w / 1600) * 100}%`, transform: bd.flip ? 'scaleX(-1)' : '' });
+    const [p0, p1, p2, p3] = bd.quad; // the text box, the screen's own size (art px), mapped onto its corners
+    const sw = (Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) + Math.hypot(p2[0] - p3[0], p2[1] - p3[1])) / 2;
+    const sh = (Math.hypot(p3[0] - p0[0], p3[1] - p0[1]) + Math.hypot(p2[0] - p1[0], p2[1] - p1[1])) / 2;
+    Object.assign(screen.style, { width: `${sw.toFixed(2)}px`, height: `${sh.toFixed(2)}px`, fontSize: `${(s.w * 0.072).toFixed(2)}px`, transform: rectToQuad(sw, sh, bd.quad) });
   };
   const remeasure = () => { if (!ready || document.body.dataset.mode !== 'title') return; measureClear(); spot = undefined; hang(); }; // (decided on the title only)
   // it decides once the title has settled (its fonts in, the fit guard done), then fades in; after that
@@ -301,10 +275,14 @@ export function mountStation(box, before) {
   sign.hidden = true;
   // (waits for the brand fonts itself: this file is also loaded outside a browser by the tests' pure math)
   const fontsIn = Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise((r) => setTimeout(r, 3000))]);
-  fontsIn.then(() => setTimeout(() => { ready = true; remeasure(); sign.classList.add('in'); }, 600));
+  // (1.6 s: the name's letters have dropped in and the fit guard has settled them; measured earlier, the
+  // board could land on a name that then moved under it)
+  fontsIn.then(() => setTimeout(() => { ready = true; remeasure(); sign.classList.add('in'); }, 1600));
   let rt = 0;
   const later = () => { clearTimeout(rt); rt = setTimeout(remeasure, 200); };
   window.addEventListener('resize', later, { passive: true });
+  const nameEl = document.getElementById('titleName');
+  if (nameEl && window.ResizeObserver) new ResizeObserver(later).observe(nameEl); // (and again if the name's box changes)
   new MutationObserver(later).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   box.insertBefore(wrap, before);
   const gfAt = wrap.querySelector('.gf-at');
