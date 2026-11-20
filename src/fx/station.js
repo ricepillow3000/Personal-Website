@@ -152,17 +152,63 @@ function geom(s) {
   const rod = 60 * (s.w / 150); // (to the same ceiling, whatever its distance)
   const pts = [...f, ...b];
   const box = { l: Math.min(...pts.map((q) => q[0])), r: Math.max(...pts.map((q) => q[0])), t: s.y - rod, b: Math.max(...pts.map((q) => q[1])) };
-  return { f, side, under, rods, rod, box, right, h };
+  return { f, side, under, rods, rod, box, right, h, beam: 7 * (s.w / 150) };
 }
 const P = (pts) => pts.map((q) => q.map((v) => v.toFixed(1)).join(',')).join(' ');
+/* a point on the ceiling slid along the platform: f > 1 toward the camera, f < 1 toward the tunnel */
+const along = ([x, y], f) => [VP[0] + (x - VP[0]) * f, VP[1] + (y - VP[1]) * f];
+const nut = (x, y, sc, ink) => `<rect x="${(x - 2.8 * sc).toFixed(1)}" y="${(y - 1.7 * sc).toFixed(1)}" width="${(5.6 * sc).toFixed(1)}" height="${(3.4 * sc).toFixed(1)}" fill="#3A3D44" ${ink}/>`;
+/* What it hangs from (Nov 20, John: "the sign and the roof look detached, the sign is just floating in
+   midair... make it look like part of the subway station"). A steel channel bolted across the ceiling at
+   the board's depth, wider than the board, seen from below (its front and its underside, the slot down
+   its middle), a hard contact shade on the ceiling round it, a conduit running along the ceiling into it
+   from the camera's side (clamped every few metres, thicker as it nears the camera), and the board's
+   power cable dropping from the channel into its lid. Flat cel tones and ink like the art. */
+function mount(s, g, sc, ink) {
+  const y0 = s.y - g.rod; // the ceiling at the board's depth
+  const t = g.beam;
+  const xa = s.x - 0.16 * s.w;
+  const xb = s.x + 1.16 * s.w;
+  const shade = [along([xa - 3 * sc, y0], 1.018), along([xb + 3 * sc, y0], 1.018), along([xb + 3 * sc, y0], 0.95), along([xa - 3 * sc, y0], 0.95)];
+  const front = [[xa, y0], [xb, y0], [xb, y0 + t], [xa, y0 + t]];
+  const D = 0.955; // the channel's depth along the platform
+  const under = [[xa, y0 + t], [xb, y0 + t], along([xb, y0 + t], D), along([xa, y0 + t], D)];
+  const slot = [along([xa + 2 * sc, y0 + t], (1 + D) / 2), along([xb - 2 * sc, y0 + t], (1 + D) / 2)];
+  // the conduit: along the ceiling through a point near the channel's outer end (behind the channel)
+  const c0 = [g.right ? xb - 0.1 * s.w : xa + 0.1 * s.w, y0 - 0.5 * sc];
+  const A = along(c0, 1.9);
+  const B = along(c0, 1.0); // (it feeds the channel from the camera's side: run on toward the tunnel it crossed the board)
+  const len = Math.hypot(B[0] - A[0], B[1] - A[1]);
+  const n = [-(B[1] - A[1]) / len, (B[0] - A[0]) / len];
+  const wA = 1.9 * sc * 1.9;
+  const wB = 1.9 * sc;
+  const tube = [[A[0] + n[0] * wA, A[1] + n[1] * wA], [B[0] + n[0] * wB, B[1] + n[1] * wB], [B[0] - n[0] * wB, B[1] - n[1] * wB], [A[0] - n[0] * wA, A[1] - n[1] * wA]];
+  const clamps = [1.62, 1.3, 1.08].map((f) => {
+    const [x, y] = along(c0, f);
+    const w = 2.9 * sc * f;
+    return `<path d="M${(x - n[0] * w).toFixed(1)} ${(y - n[1] * w).toFixed(1)} L${(x + n[0] * w).toFixed(1)} ${(y + n[1] * w).toFixed(1)}" stroke="#050506" stroke-width="${(1.5 * sc * f).toFixed(2)}"/>`;
+  }).join('');
+  const lit = (a, b, op) => `<path d="M${P([a, b]).replace(' ', ' L')}" stroke="#CFE0F5" stroke-opacity="${op}" stroke-width="${(0.9 * sc).toFixed(2)}"/>`;
+  const cx = s.x + s.w * 0.6;
+  return `
+    <polygon class="ss-shade" points="${P(shade)}" fill="#000" fill-opacity=".38"/>
+    <polygon class="ss-conduit" points="${P(tube)}" fill="#2B2D33" ${ink}/>
+    <path d="M${P([A, B]).replace(' ', ' L')}" stroke="#9FB0C4" stroke-opacity=".3" stroke-width="${(0.8 * sc).toFixed(2)}" transform="translate(${(n[0] * wB).toFixed(1)} ${(n[1] * wB).toFixed(1)})"/>${clamps}
+    <polygon class="ss-beam" points="${P(under)}" fill="#141519" ${ink}/>
+    <path d="M${P(slot).replace(' ', ' L')}" stroke="#050506" stroke-width="${(1.3 * sc).toFixed(2)}"/>
+    <polygon points="${P(front)}" fill="#33363D" ${ink}/>
+    ${lit([xa + sc, y0 + t - 0.9 * sc], [xb - sc, y0 + t - 0.9 * sc], 0.55)}${lit([xa + sc, y0 + 0.9 * sc], [xb - sc, y0 + 0.9 * sc], 0.25)}
+    ${[0.06, 0.94].map((k) => nut(xa + (xb - xa) * k, y0 + t / 2, sc * 0.8, ink)).join('')}
+    <path class="ss-cable" d="M${cx.toFixed(1)} ${(y0 + t).toFixed(1)} Q${(cx + 7 * sc).toFixed(1)} ${((y0 + t + s.y) / 2 + 4 * sc).toFixed(1)} ${(cx + 3 * sc).toFixed(1)} ${(s.y - 0.5).toFixed(1)}" fill="none" stroke="#050506" stroke-width="${(1.5 * sc).toFixed(2)}"/>`;
+}
 function housing(s) {
   const g = geom(s);
   const sc = Math.max(0.55, s.w / 150); // (ink and rods thin a little with distance, never to nothing)
   const ink = `stroke="#050506" stroke-width="${(1.6 * sc).toFixed(2)}" stroke-linejoin="round"`;
   const [tl, tr, br, bl] = g.f;
   const rimSide = g.right ? [tl, bl] : [tr, br]; // the edge toward the light strip catches the tubes' light
-  return `
-    ${g.rods.map(([x, y]) => `<path d="M${x} ${y} V${y - g.rod}" stroke="#050506" stroke-width="${(3.4 * sc).toFixed(2)}"/><path d="M${x} ${y} V${y - g.rod}" stroke="#4A4D55" stroke-width="${(1.4 * sc).toFixed(2)}"/><rect x="${x - 5 * sc}" y="${y - 3 * sc}" width="${10 * sc}" height="${4 * sc}" fill="#1A1B1F" ${ink}/>`).join('')}
+  return `${mount(s, g, sc, ink)}
+    ${g.rods.map(([x, y]) => { const top = y - g.rod + g.beam; const lit = g.right ? -0.7 * sc : 0.7 * sc; return `<path d="M${x} ${y} V${top}" stroke="#050506" stroke-width="${(4 * sc).toFixed(2)}"/><path d="M${x} ${y} V${top}" stroke="#6E737D" stroke-width="${(2 * sc).toFixed(2)}"/><path d="M${x + lit} ${y} V${top}" stroke="#C9D6E6" stroke-opacity=".7" stroke-width="${(0.7 * sc).toFixed(2)}"/>${nut(x, top + 2.4 * sc, sc, ink)}${nut(x, y - 4.6 * sc, sc, ink)}<rect x="${x - 5 * sc}" y="${y - 3 * sc}" width="${10 * sc}" height="${4 * sc}" fill="#1A1B1F" ${ink}/>`; }).join('')}
     <polygon points="${P(g.side)}" fill="#2A2C32" ${ink}/>
     <polygon points="${P(g.under)}" fill="#0C0C0E" ${ink}/>
     <path d="M${P([g.under[0], g.under[1]]).replace(' ', ' L')}" stroke="#FFB52E" stroke-opacity=".45" stroke-width="2.2" transform="translate(0 2.2)"/>
