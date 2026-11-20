@@ -641,7 +641,7 @@ test('every menu item fits on short laptop screens and phones held sideways', as
   }
 });
 
-test('the line map: ticket tiles (no circles), the station names over the line, a dagger stabs the stop you are at (with a sound) and passed stops keep a cut', async ({ page }) => {
+test('the line map: ticket tiles (no circles), the station names over the line, a dagger is thrown into the stop you are at (it rips the ticket, rattles, with a sound) and passed stops keep a cut', async ({ page }) => {
   await page.addInitScript(() => { window.__sfxLog = []; try { localStorage.setItem('jn-resume-v1', JSON.stringify({ visited: ['stats'] })); } catch {} });
   await page.goto('/#/missions');
   const strip = page.locator('#page .stop-strip');
@@ -653,6 +653,12 @@ test('the line map: ticket tiles (no circles), the station names over the line, 
   await expect(strip.locator('.ss-dagger')).toHaveCount(1); // only in the stop you're at
   await expect(strip.locator('.ss-stop.now .ss-dagger')).toHaveClass(/stab|in/, { timeout: 5000 });
   await expect(strip.locator('.ss-dagger')).toHaveCSS('opacity', '1', { timeout: 3000 });
+  // thrown like a dart, it lands, rips the ticket and rattles to a stop: the rip shows once it's in
+  await expect(strip.locator('.ss-stop.now .ss-tear')).toHaveCount(1);
+  await expect(strip.locator('.ss-stop.now .ss-tear')).toBeVisible();
+  // the station's name hangs under your ticket, clear of the dagger
+  const [nm, tk] = await Promise.all([strip.locator('.ss-stop.now .ss-name').boundingBox(), strip.locator('.ss-dot.now').boundingBox()]);
+  expect(nm.y).toBeGreaterThan(tk.y + tk.height - 6);
   await expect(strip).toHaveAttribute('aria-label', /SHIBUYA/);
   await expect(strip.locator('.ss-dot.now')).toHaveAttribute('aria-label', /SHIBUYA/);
   // its point is in the tile, its handle above it

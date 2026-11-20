@@ -209,6 +209,41 @@ function sweep(bus, at, from, to, dur, gain, q = 1) {
   src.stop(at + dur + 0.05);
 }
 
+/* a blade stuck in a board, rattling: a ringing blade chopped by a smooth LFO whose rate falls as the
+   swing dies, and a woody knock on each swing (alternating sides), the whole thing decaying away */
+function bladeRattle(bus, at, dur) {
+  const amp = ac.createGain();
+  amp.gain.setValueAtTime(0.0001, at);
+  amp.gain.linearRampToValueAtTime(0.24, at + 0.006);
+  amp.gain.exponentialRampToValueAtTime(0.0008, at + dur);
+  const chop = ac.createGain();
+  chop.gain.value = 0.5;
+  const lfo = ac.createOscillator();
+  lfo.type = 'sine'; // (a square chop clicked: it read as a digital glitch)
+  lfo.frequency.setValueAtTime(24, at);
+  lfo.frequency.exponentialRampToValueAtTime(15, at + dur);
+  const depth = ac.createGain();
+  depth.gain.value = 0.5;
+  lfo.connect(depth).connect(chop.gain);
+  const f = ac.createBiquadFilter();
+  f.type = 'bandpass';
+  f.frequency.value = 1050;
+  f.Q.value = 1.1;
+  const ring = ac.createOscillator();
+  ring.type = 'triangle';
+  ring.frequency.value = 1880;
+  const rg = ac.createGain();
+  rg.gain.value = 0.55;
+  ring.connect(rg).connect(f); // (no buzzy body: a sawtooth under it read as electronic)
+  f.connect(chop).connect(amp).connect(bus);
+  [ring, lfo].forEach((o) => { o.start(at); o.stop(at + dur + 0.02); });
+  // a little woody knock each time the blade swings back (24 -> 15 a second, quieter as it settles)
+  for (let t = 0, k = 0; t < dur * 0.8; k++) {
+    const r = 24 * (15 / 24) ** (t / dur);
+    noise(bus, { at: at + t, dur: 0.016, type: 'bandpass', freq: 1200 + (k % 2) * 500, q: 1.6, gain: 0.3 * (1 - t / dur) ** 2 }); // (alternate sides of the swing)
+    t += 1 / r;
+  }
+}
 function tone(bus, { at, dur, from, to, type = 'sine', gain = 0.6 }) {
   const o = ac.createOscillator();
   o.type = type;
@@ -873,16 +908,24 @@ const VOICES = {
     tone(bus, { at: at + 0.05, dur: 0.07, from: 1175 * k, to: 1175 * k, type: 'triangle', gain: 0.07 });
     tone(bus, { at: at + 0.09, dur: 0.12, from: 1568 * k, to: 1568 * k, type: 'triangle', gain: 0.06 });
   },
-  // THE LINE MAP: the stiletto driven into your stop (Nov 20): a thin blade's air cut coming in, the
-  // point biting in at 0.115 s (a dull thock in the board, a bright splinter), then the blade's
-  // quiver as a short, beating steel twang that dies away
+  // THE LINE MAP: the stiletto THROWN into your stop (Nov 20, John: "like a throwing dart... it lands, it
+  // shakes like a rattle"): the site's own real recordings where they exist (the whoosh, the slap, the
+  // paper rip, the metal clang, all already credited) layered on a synth thock, then the synth rattle: a
+  // woody buzz knocking at twice the swing of the drawn rattle (24 -> 15 a second), dying away
   stab: (bus, at) => {
-    sweep(bus, at, 2400, 6200, 0.1, 0.16, 2.2);
-    const hit = at + 0.115;
-    snap(bus, hit, 260, 70, 0.07, 0.36);
-    noise(bus, { at: hit, dur: 0.016, type: 'highpass', freq: 4200, gain: 0.3 });
-    noise(bus, { at: hit, dur: 0.05, type: 'bandpass', freq: 900, q: 1.4, gain: 0.22 });
-    metalRing(bus, hit + 0.006, [[1870, 'triangle', 0], [1883, 'triangle', 0], [4120, 'sine', 4]], { hp: 1200, peak: 0.07, decay: 0.16 });
+    const hit = at + 0.16;
+    // the flight: the real whoosh peaking just before it lands (synth air if the clip isn't in yet)
+    if (!clip(bus, 'whoosh-b', hit - 0.05, { gain: 0.75, rate: 1.15 })) sweep(bus, at, 700, 2200, 0.15, 0.22, 0.7);
+    // the punch: a heavy thock (synth), the real slap made heavier, the real paper rip cut short, a steel ring
+    snap(bus, hit, 300, 58, 0.11, 0.6);
+    noise(bus, { at: hit, dur: 0.02, type: 'highpass', freq: 3800, gain: 0.38 });
+    clip(bus, 'hit-slap', hit, { gain: 1.05, rate: 0.8 });
+    const r = 1.35;
+    if (!clip(bus, 'paper-rip', hit + 0.004, { gain: 0.55, rate: r, env: [[0, 1], [0.338 / r + 0.1, 1], [0.338 / r + 0.18, 0]] })) {
+      noise(bus, { at: hit + 0.006, dur: 0.13, type: 'bandpass', freq: 3200, q: 0.7, gain: 0.3 });
+    }
+    clip(bus, 'metal-clang', hit + 0.012, { gain: 0.3, rate: 1.25 });
+    bladeRattle(bus, hit + 0.05, 0.8);
   },
   // MY EDGE: a comic panel slapped down (a paper slap, a low thud, a crisp edge)
   panelSlap: (bus, at, v = 1, i = 0) => {
