@@ -434,19 +434,25 @@ function stopStripMarkup(id) {
     <ol class="ss-line" style="--at:${i}">${CHAPTERS.map((c, k) => `<li class="ss-stop${k === i ? ' now' : seen.includes(c) ? ' seen' : ''}"><a class="ss-dot${k === i ? ' now' : seen.includes(c) ? ' seen' : ''}" href="#/${c}" data-nav aria-label="Stop ${k + 1}, ${esc(STATIONS[c])}, ${esc(SECTION_TITLES[c])}${k === i ? ' (you are here)' : ''}"${k === i ? ' aria-current="step"' : ''}><span class="ss-num">${pad(k + 1)}</span></a><span class="ss-name" aria-hidden="true">${esc(STATIONS[c])}</span>${k === i ? DAGGER : ''}</li>`).join('')}</ol>
   </nav>`;
 }
-/* the stiletto (original, drawn for the site): pommel, a grip wrapped in red, a thin crossguard, a long
-   needle blade cel-shaded in two tones; drawn point down, its point at the bottom edge (where it goes in) */
-const DAGGER = `<span class="ss-dagger" aria-hidden="true"><svg viewBox="0 0 24 96"><g stroke="#0B0B0B" stroke-width="1.3" stroke-linejoin="round">
-  <polygon points="9.4,38 14.6,38 12.7,95 11.3,95" fill="#8D96A3" stroke="none"/><polygon points="9.4,38 12,38 12,95 11.3,95" fill="#EEF1F5" stroke="none"/><polygon points="9.4,38 14.6,38 12.7,95 11.3,95" fill="none"/>
-  <path d="M12 40 V93" stroke="#5C6470" stroke-width=".7"/><path d="M10.6 42 L11.2 70" stroke="#FFF" stroke-width=".9" stroke-linecap="round"/>
-  <rect x="10" y="33.5" width="4" height="4.5" fill="#2A2C31"/>
-  <path d="M1.5 31.5 Q12 27.5 22.5 31.5 L21.5 35 Q12 32 2.5 35 Z" fill="#1A1B1F"/><path d="M3.5 31.8 Q12 28.8 20.5 31.8" fill="none" stroke="#C9D6E6" stroke-width=".8"/>
-  <rect x="9.3" y="10" width="5.4" height="21" fill="#0B0B0B"/>
-  <path d="M9.3 14 L14.7 12 M9.3 19 L14.7 17 M9.3 24 L14.7 22 M9.3 29 L14.7 27" stroke="#E5191C" stroke-width="1.7"/>
-  <path d="M12 1.5 L16.2 6 L12 10.5 L7.8 6 Z" fill="#1A1B1F"/><path d="M12 3 L14 6" stroke="#FFF" stroke-width=".9" stroke-linecap="round"/>
-</g></svg></span>`;
-/* The dagger stabs the stop once the chapter has landed (the entrance's wipe has lifted): it flies in
-   along its own line, sinks in with a thunk, the tile jolts, the dagger quivers and stays. */
+/* the stiletto (original, drawn for the site; Nov 20, after John's reference of a dagger stabbed through a
+   calendar day): a round pommel with a red stone, a black grip wrapped in white, curled quillons, a long
+   needle blade in two cel tones; drawn point down, the point at the bottom edge (it goes into the paper).
+   With it, the puncture it rips in the ticket's face (a ragged black hole burst open in the paper, torn
+   white paper round it, cracks running off; Gemini preferred this bold burst to a thin slash, both orders; it sits over the point, so the point is IN the hole) and three paper chips. */
+const DAGGER = `<span class="ss-dagger" aria-hidden="true"><svg viewBox="0 0 32 110"><g stroke="#0B0B0B" stroke-width="1.4" stroke-linejoin="round">
+  <polygon points="13,52 19,52 17.4,104 16,110 14.6,104" fill="#8D96A3" stroke="none"/><polygon points="13,52 16,52 16,110 14.6,104" fill="#F5F5F0" stroke="none"/><polygon points="13,52 19,52 17.4,104 16,110 14.6,104" fill="none"/>
+  <path d="M16 55 V100" stroke-width=".8"/><path d="M14.4 58 L14.9 82" stroke="#FFF" stroke-width="1" stroke-linecap="round"/>
+  <rect x="12.5" y="47" width="7" height="6" fill="#2A2C31"/>
+  <path d="M3 50 C1 45 5 41 9 44 C11 45.5 12 46 16 46 C20 46 21 45.5 23 44 C27 41 31 45 29 50 C28 47 25 46 23 48 C21 49.5 19 50 16 50 C13 50 11 49.5 9 48 C7 46 4 47 3 50 Z" fill="#0B0B0B"/>
+  <path d="M6 45.2 C8 43.8 10 46 16 47.1 C22 46 24 43.8 26 45.2" fill="none" stroke="#F5F5F0" stroke-width=".9"/>
+  <path d="M11.4 14 L20.6 14 L19.6 46 L12.4 46 Z" fill="#0B0B0B"/>
+  <path d="M11.6 20 L20.4 16 M11.8 26 L20.2 22 M12 32 L20 28 M12.1 38 L19.9 34 M12.3 44 L19.7 40" stroke="#F5F5F0" stroke-width="1.7"/>
+  <circle cx="16" cy="8" r="6.2" fill="#0B0B0B"/><path d="M12.4 5.4 A4.5 4.5 0 0 1 18 3.5" stroke="#F5F5F0" stroke-width="1.1" fill="none"/><circle cx="16" cy="8" r="1.9" fill="#E5191C" stroke="none"/>
+</g></svg></span><span class="ss-tear" aria-hidden="true"><svg viewBox="0 0 24 24"><g stroke="#0B0B0B" stroke-linejoin="round"><path d="M10 13 L2.5 7.5 M10.5 14.5 L4 21 M12.5 15 L14 23.2 M14 13.5 L22 18.5" stroke-width=".8" fill="none"/><polygon points="12,3.4 14.2,8 19.6,6.4 16.2,11 21.2,13.6 15.8,14.6 17.6,20.2 12.6,16.4 9.4,21.2 9.4,15.6 3.4,17 7.6,12.4 3.2,8.2 9,9 9.8,3.6" fill="#F5F5F0" stroke-width=".8"/><polygon points="12,8.4 13.6,10.6 16,10.1 14.2,12.3 15.4,14.8 12.6,13.7 11,16 10.5,13.3 8.2,12.7 10.3,11.2 9.4,8.8" fill="#0B0B0B" stroke="none"/></g></svg><i class="ss-chip"></i><i class="ss-chip"></i><i class="ss-chip"></i></span>`;
+/* The dagger is THROWN at the stop once the chapter has landed (the entrance's wipe has lifted): it flies
+   in from the camera like a dart, punches in (the ticket rips, chips fly, the line jolts, a white flash),
+   then rattles on its point and settles (Nov 20, John: "violently stabs the box... a tear in the box like
+   paper... like a throwing dart, when you throw it, it lands, it shakes like a rattle"). */
 function stabStop(root, tok) {
   const d = root.querySelector('.ss-dagger');
   if (!d) return;
