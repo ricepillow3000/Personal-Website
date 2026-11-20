@@ -22,12 +22,10 @@ import { store } from '../core/store.js';
 /** The resume, start to finish: who he is, what he built, what he can do, where he worked,
     why he's different, how to reach him. Each chapter ends with NEXT EPISODE to the next one. */
 export const CHAPTERS = ['stats', 'missions', 'skills', 'side-quests', 'different', 'contact'];
-/** The JN line's stations, one per chapter (Nov 20, John wanted real station names over the line map).
-    Real Atlanta MARTA stops, John's own city, picked for what each chapter is: his university, the
-    city's center where the work happens, the tech district, the stop by the country club he worked at,
-    the arts stop for what makes him different, the airport at the end of the line. (The game's own
-    stations are its text and its fictional places: not ours to copy.) */
-export const STATIONS = { stats: 'GEORGIA STATE', missions: 'FIVE POINTS', skills: 'MIDTOWN', 'side-quests': 'DUNWOODY', different: 'ARTS CENTER', contact: 'AIRPORT' };
+/** The JN line's stations, one per chapter (Nov 20, John: "use these stops instead"). John's call, a
+    deliberate homage like TAKE YOUR TIME: Yongen-Jaya (the game's home neighborhood, invented for it)
+    and five real Tokyo stations its story rides through. Only the names, in our own design. */
+export const STATIONS = { stats: 'YONGEN-JAYA', missions: 'SHIBUYA', skills: 'AOYAMA-ITCHOME', 'side-quests': 'SHINJUKU', different: 'AKIHABARA', contact: 'KICHIJOJI' };
 const label = (id) => MENU_ITEMS.find((m) => m.id === id)?.label || id.toUpperCase();
 const no = (i) => String(i + 1).padStart(2, '0');
 
