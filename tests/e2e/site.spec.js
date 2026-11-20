@@ -641,6 +641,34 @@ test('every menu item fits on short laptop screens and phones held sideways', as
   }
 });
 
+test('the line map: ticket tiles (no circles), real station names over the line, a dagger stabs the stop you are at (with a sound) and passed stops keep a cut', async ({ page }) => {
+  await page.addInitScript(() => { window.__sfxLog = []; try { localStorage.setItem('jn-resume-v1', JSON.stringify({ visited: ['stats'] })); } catch {} });
+  await page.goto('/#/missions');
+  const strip = page.locator('#page .stop-strip');
+  await expect(strip.locator('.ss-name')).toHaveText(['GEORGIA STATE', 'FIVE POINTS', 'MIDTOWN', 'DUNWOODY', 'ARTS CENTER', 'AIRPORT']);
+  await expect(strip.locator('.ss-num')).toHaveText(['01', '02', '03', '04', '05', '06']);
+  expect(await strip.locator('.ss-dot').first().evaluate((e) => getComputedStyle(e).borderRadius)).toBe('0px'); // not a circle
+  await expect(strip.locator('.ss-stop.now .ss-name')).toHaveText('FIVE POINTS');
+  await expect(strip.locator('.ss-stop.seen')).toHaveCount(1);
+  await expect(strip.locator('.ss-dagger')).toHaveCount(1); // only in the stop you're at
+  await expect(strip.locator('.ss-stop.now .ss-dagger')).toHaveClass(/stab|in/, { timeout: 5000 });
+  await expect(strip.locator('.ss-dagger')).toHaveCSS('opacity', '1', { timeout: 3000 });
+  await expect(strip).toHaveAttribute('aria-label', /FIVE POINTS/);
+  await expect(strip.locator('.ss-dot.now')).toHaveAttribute('aria-label', /FIVE POINTS/);
+  // its point is in the tile, its handle above it
+  const [tile, dag] = await Promise.all([strip.locator('.ss-dot.now').boundingBox(), strip.locator('.ss-dagger').boundingBox()]);
+  expect(dag.y + dag.height).toBeGreaterThan(tile.y);
+  expect(dag.y).toBeLessThan(tile.y - 20);
+  // the next chapter moves the dagger there (a click first: browsers play no sound before one)
+  await page.mouse.click(4, 640);
+  await page.waitForTimeout(300);
+  await page.evaluate(() => { location.hash = '#/skills'; });
+  await expect(page.locator('#page .stop-strip .ss-stop.now .ss-name')).toHaveText('MIDTOWN', { timeout: 8000 });
+  await expect(page.locator('#page .stop-strip .ss-dagger')).toHaveCount(1);
+  await expect(page.locator('#page .stop-strip .ss-stop.seen')).toHaveCount(2); // the stop you left keeps its cut
+  await expect.poll(() => page.evaluate(() => window.__sfxLog.includes('stab')), { timeout: 6000 }).toBe(true);
+});
+
 test('the guide: every chapter shows where you are, and the guide button leads to the next stop', async ({ page, isMobile }) => {
   await page.goto('/#/skills');
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'skills');
@@ -1194,7 +1222,11 @@ test('departure board: a 3D box in the station\'s perspective; LET US START THE 
     await page.goto('/');
     const sign = page.locator('.ss');
     await expect(sign).toHaveClass(/\bin\b/, { timeout: 15000 });
-    await expect(sign.locator('.ss-3d polygon')).toHaveCount(3); // its side, its underside and its front
+    await expect(sign.locator('.ss-3d > polygon:not([class])')).toHaveCount(4); // its side, its underside, its front + the channel's front
+    // it hangs from the ceiling, never in midair: a channel bolted across the ceiling, the rods reach it, a conduit feeds it, a cable drops into the lid
+    for (const part of ['.ss-beam', '.ss-shade', '.ss-conduit', '.ss-cable']) await expect(sign.locator(part)).toHaveCount(1);
+    const gap = await sign.evaluate((e) => { const beam = e.querySelector('.ss-beam').getBoundingClientRect(); const front = e.querySelector('.ss-screen').getBoundingClientRect(); return [beam.bottom < front.top, beam.left <= front.left, beam.right >= front.right]; });
+    expect(gap).toEqual([true, true, true]); // above the board and wider than it
     await expect(sign.locator('.ss-run span').first()).toHaveText('LET US START THE GAME');
     await expect(sign.locator('.ss-code')).toHaveText('JN');
     const shown = (await sign.locator('.ss-time').innerText()).replace(/\s+/g, '');

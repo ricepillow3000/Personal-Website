@@ -873,6 +873,17 @@ const VOICES = {
     tone(bus, { at: at + 0.05, dur: 0.07, from: 1175 * k, to: 1175 * k, type: 'triangle', gain: 0.07 });
     tone(bus, { at: at + 0.09, dur: 0.12, from: 1568 * k, to: 1568 * k, type: 'triangle', gain: 0.06 });
   },
+  // THE LINE MAP: the stiletto driven into your stop (Nov 20): a thin blade's air cut coming in, the
+  // point biting in at 0.115 s (a dull thock in the board, a bright splinter), then the blade's
+  // quiver as a short, beating steel twang that dies away
+  stab: (bus, at) => {
+    sweep(bus, at, 2400, 6200, 0.1, 0.16, 2.2);
+    const hit = at + 0.115;
+    snap(bus, hit, 260, 70, 0.07, 0.36);
+    noise(bus, { at: hit, dur: 0.016, type: 'highpass', freq: 4200, gain: 0.3 });
+    noise(bus, { at: hit, dur: 0.05, type: 'bandpass', freq: 900, q: 1.4, gain: 0.22 });
+    metalRing(bus, hit + 0.006, [[1870, 'triangle', 0], [1883, 'triangle', 0], [4120, 'sine', 4]], { hp: 1200, peak: 0.07, decay: 0.16 });
+  },
   // MY EDGE: a comic panel slapped down (a paper slap, a low thud, a crisp edge)
   panelSlap: (bus, at, v = 1, i = 0) => {
     const p = 1 + (i % 4) * 0.06;

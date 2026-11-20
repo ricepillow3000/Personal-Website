@@ -29,7 +29,7 @@ import { fallWipe, riseWipe, trainWipe, cardWipe, preloadFilm, slashWipe, paperW
 import { ransom, dropIn, NAME_SEED } from './ui/ransom.js';
 import { startCalendar } from './ui/hud.js';
 import { watchTitleFit } from './ui/titlefit.js';
-import { createBoard, CHAPTERS } from './scenes/board.js';
+import { createBoard, CHAPTERS, STATIONS } from './scenes/board.js';
 import { openSaves, savesOpen, savesKey } from './scenes/saves.js';
 import { toast } from './ui/toast.js';
 import { createMenu, MENU_ITEMS } from './scenes/menu.js';
@@ -182,6 +182,7 @@ function pageEnter(id, punch) {
   enter($('#page')); // back button, subtitle and other [data-in] items
   pageIntro?.($('#page')); // each page's own entrance
   slamOnScroll($('#page'), SLAM_PAGE, slamSound); // blocks further down punch in (and are heard) when you reach them
+  stabStop($('#page'), navSeq); // the dagger marks the stop you're at
 }
 
 let navSeq = 0; // a newer navigation cancels whatever an older one still had left to do
@@ -422,10 +423,39 @@ function stopStripMarkup(id) {
   const i = CHAPTERS.indexOf(id);
   if (i < 0) return '';
   const seen = store.get().visited || [];
-  return `<nav class="stop-strip" aria-label="You are at stop ${i + 1} of ${CHAPTERS.length}">
-    <span class="ss-label">STOP <b>${String(i + 1).padStart(2, '0')}</b> / ${String(CHAPTERS.length).padStart(2, '0')}</span>
-    <ol class="ss-line">${CHAPTERS.map((c, k) => `<li><a class="ss-dot${k === i ? ' now' : seen.includes(c) ? ' seen' : ''}" href="#/${c}" data-nav aria-label="Stop ${k + 1}, ${esc(SECTION_TITLES[c])}${k === i ? ' (you are here)' : ''}"${k === i ? ' aria-current="step"' : ''}></a></li>`).join('')}</ol>
+  const pad = (n) => String(n).padStart(2, '0');
+  /* THE LINE MAP (Nov 20, John: "instead of a circle, a very unique Persona 5 design-like placeholder...
+     station names above... when the transition plays, a dagger will stab that placeholder"): each stop
+     is a jagged ticket tile with its number (white = ahead, black with a red cut = passed, red = here),
+     the line runs red as far as you've come, each station's name rises off its tile like a transit
+     map's, and a stiletto is driven into the stop you're at (stabStop, after the entrance). */
+  return `<nav class="stop-strip" aria-label="You are at stop ${i + 1} of ${CHAPTERS.length}, ${esc(STATIONS[id])}">
+    <span class="ss-label">STOP <b>${pad(i + 1)}</b> / ${pad(CHAPTERS.length)}</span>
+    <ol class="ss-line" style="--at:${i}">${CHAPTERS.map((c, k) => `<li class="ss-stop${k === i ? ' now' : seen.includes(c) ? ' seen' : ''}"><a class="ss-dot${k === i ? ' now' : seen.includes(c) ? ' seen' : ''}" href="#/${c}" data-nav aria-label="Stop ${k + 1}, ${esc(STATIONS[c])}, ${esc(SECTION_TITLES[c])}${k === i ? ' (you are here)' : ''}"${k === i ? ' aria-current="step"' : ''}><span class="ss-num">${pad(k + 1)}</span></a><span class="ss-name" aria-hidden="true">${esc(STATIONS[c])}</span>${k === i ? DAGGER : ''}</li>`).join('')}</ol>
   </nav>`;
+}
+/* the stiletto (original, drawn for the site): pommel, a grip wrapped in red, a thin crossguard, a long
+   needle blade cel-shaded in two tones; drawn point down, its point at the bottom edge (where it goes in) */
+const DAGGER = `<span class="ss-dagger" aria-hidden="true"><svg viewBox="0 0 24 96"><g stroke="#0B0B0B" stroke-width="1.3" stroke-linejoin="round">
+  <polygon points="9.4,38 14.6,38 12.7,95 11.3,95" fill="#8D96A3" stroke="none"/><polygon points="9.4,38 12,38 12,95 11.3,95" fill="#EEF1F5" stroke="none"/><polygon points="9.4,38 14.6,38 12.7,95 11.3,95" fill="none"/>
+  <path d="M12 40 V93" stroke="#5C6470" stroke-width=".7"/><path d="M10.6 42 L11.2 70" stroke="#FFF" stroke-width=".9" stroke-linecap="round"/>
+  <rect x="10" y="33.5" width="4" height="4.5" fill="#2A2C31"/>
+  <path d="M1.5 31.5 Q12 27.5 22.5 31.5 L21.5 35 Q12 32 2.5 35 Z" fill="#1A1B1F"/><path d="M3.5 31.8 Q12 28.8 20.5 31.8" fill="none" stroke="#C9D6E6" stroke-width=".8"/>
+  <rect x="9.3" y="10" width="5.4" height="21" fill="#0B0B0B"/>
+  <path d="M9.3 14 L14.7 12 M9.3 19 L14.7 17 M9.3 24 L14.7 22 M9.3 29 L14.7 27" stroke="#E5191C" stroke-width="1.7"/>
+  <path d="M12 1.5 L16.2 6 L12 10.5 L7.8 6 Z" fill="#1A1B1F"/><path d="M12 3 L14 6" stroke="#FFF" stroke-width=".9" stroke-linecap="round"/>
+</g></svg></span>`;
+/* The dagger stabs the stop once the chapter has landed (the entrance's wipe has lifted): it flies in
+   along its own line, sinks in with a thunk, the tile jolts, the dagger quivers and stays. */
+function stabStop(root, tok) {
+  const d = root.querySelector('.ss-dagger');
+  if (!d) return;
+  if (reducedMotion()) { d.classList.add('in'); setTimeout(() => { if (tok === navSeq && d.isConnected) sfx('stab'); }, 650); return; } // (still, but still heard)
+  setTimeout(() => {
+    if (tok !== navSeq || !d.isConnected) return;
+    d.classList.add('stab');
+    sfx('stab'); // (its point bites in at 0.115 s, the frame it lands)
+  }, 650);
 }
 const guide = document.createElement('button');
 guide.type = 'button';
