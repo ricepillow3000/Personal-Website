@@ -12,7 +12,7 @@ The project skill `.claude/skills/design-bible/SKILL.md` enforces the same thing
 
 - Show the phone number (site, build, PDF).
 - Use "HIRE ME", begging, the codename "PIRATE", or emojis.
-- Copy Persona 5 assets, screens, fonts, music or text (approved exceptions: the everyday lines TAKE YOUR TIME and LET US START THE GAME, in our own design; see DESIGN.md).
+- Copy Persona 5 assets, screens, fonts, music or text (approved exceptions, in our own design: the lines TAKE YOUR TIME and LET US START THE GAME, and the line map's station names Yongen-Jaya, Shibuya, Aoyama-Itchome, Shinjuku, Akihabara, Kichijoji; see DESIGN.md).
 - Use ":" or ";" in casual sentences (colons only for lists and labels).
 
 ## Working style
