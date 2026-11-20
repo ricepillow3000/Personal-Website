@@ -162,7 +162,7 @@ function boardAt(s) {
   return { x, y, w, h, flip, quad: q.map(([u, v]) => [x + u * w, y + v * h]), box: { l: x, r: x + w, t: y, b: y + h } };
 }
 /* a CSS matrix3d that maps the rectangle (0,0)-(w,h) onto the quad p (TL TR BR BL) */
-function rectToQuad(w, h, p) {
+export function rectToQuad(w, h, p) {
   const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = p;
   const dx1 = x1 - x2; const dx2 = x3 - x2; const dy1 = y1 - y2; const dy2 = y3 - y2;
   const sx = x0 - x1 + x2 - x3; const sy = y0 - y1 + y2 - y3;

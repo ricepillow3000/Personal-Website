@@ -1222,6 +1222,22 @@ test('sound for every box: side quests are heard as they land and as you scroll 
   await ctx.close();
 });
 
+test('SIDE QUESTS plays THE SQUARE: a painted square with nine screens, the big one says SIDE QUESTS, the small ones carry our ads', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/#/board');
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => { location.hash = '#/side-quests'; });
+  const sq = page.locator('.sqr');
+  await expect(sq).toHaveCount(1, { timeout: 6000 });
+  await expect(sq.locator('.sq-img')).toHaveCount(1);
+  await expect(sq.locator('.sq-scr')).toHaveCount(9);
+  expect((await sq.locator('.sq-scr.sq-main .sq-label').innerText()).replace(/\s+/g, '')).toMatch(/SIDEQUESTS/i);
+  for (const t of ['TIME', 'JOHN', 'BORING', '727']) await expect(sq).toContainText(t);
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'side-quests', { timeout: 8000 });
+  await expect(sq).toHaveCount(0, { timeout: 4000 }); // (it cleans itself up)
+});
+
 test('the departure board and the station lights never show off the title (they used to hang faded over the city on THE PLAN)', async ({ page }) => {
   await page.goto('/#/board');
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
