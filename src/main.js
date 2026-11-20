@@ -435,19 +435,22 @@ function stopStripMarkup(id) {
   </nav>`;
 }
 /* the stiletto (original, drawn for the site; Nov 20, after John's reference of a dagger stabbed through a
-   calendar day): a round pommel with a red stone, a black grip wrapped in white, curled quillons, a long
-   needle blade in two cel tones; drawn point down, the point at the bottom edge (it goes into the paper).
+   calendar day, then: "one clean color, like the white, and use black for shadows and detail, make the
+   knife thicker... like it is in a comic"): all paper white, thick black ink outlines, solid black cel
+   shadows down its right side, black wraps on the grip, a few hatch strokes on the blade; a round pommel,
+   curled quillons, a thick blade; drawn point down, the point at the bottom edge (it goes into the paper).
    With it, the puncture it rips in the ticket's face (a ragged black hole burst open in the paper, torn
    white paper round it, cracks running off; Gemini preferred this bold burst to a thin slash, both orders; it sits over the point, so the point is IN the hole) and three paper chips. */
-const DAGGER = `<span class="ss-dagger" aria-hidden="true"><svg viewBox="0 0 32 110"><g stroke="#0B0B0B" stroke-width="1.4" stroke-linejoin="round">
-  <polygon points="13,52 19,52 17.4,104 16,110 14.6,104" fill="#8D96A3" stroke="none"/><polygon points="13,52 16,52 16,110 14.6,104" fill="#F5F5F0" stroke="none"/><polygon points="13,52 19,52 17.4,104 16,110 14.6,104" fill="none"/>
-  <path d="M16 55 V100" stroke-width=".8"/><path d="M14.4 58 L14.9 82" stroke="#FFF" stroke-width="1" stroke-linecap="round"/>
-  <rect x="12.5" y="47" width="7" height="6" fill="#2A2C31"/>
-  <path d="M3 50 C1 45 5 41 9 44 C11 45.5 12 46 16 46 C20 46 21 45.5 23 44 C27 41 31 45 29 50 C28 47 25 46 23 48 C21 49.5 19 50 16 50 C13 50 11 49.5 9 48 C7 46 4 47 3 50 Z" fill="#0B0B0B"/>
-  <path d="M6 45.2 C8 43.8 10 46 16 47.1 C22 46 24 43.8 26 45.2" fill="none" stroke="#F5F5F0" stroke-width=".9"/>
-  <path d="M11.4 14 L20.6 14 L19.6 46 L12.4 46 Z" fill="#0B0B0B"/>
-  <path d="M11.6 20 L20.4 16 M11.8 26 L20.2 22 M12 32 L20 28 M12.1 38 L19.9 34 M12.3 44 L19.7 40" stroke="#F5F5F0" stroke-width="1.7"/>
-  <circle cx="16" cy="8" r="6.2" fill="#0B0B0B"/><path d="M12.4 5.4 A4.5 4.5 0 0 1 18 3.5" stroke="#F5F5F0" stroke-width="1.1" fill="none"/><circle cx="16" cy="8" r="1.9" fill="#E5191C" stroke="none"/>
+const DAGGER = `<span class="ss-dagger" aria-hidden="true"><svg viewBox="0 0 40 120"><g stroke="#0B0B0B" stroke-linejoin="round" stroke-linecap="round">
+  <polygon points="14,57 26,57 24.6,98 20,119 15.4,98" fill="#F5F5F0" stroke-width="2.4"/><polygon points="21.4,59 24.6,59 23.4,97 20.4,113" fill="#0B0B0B" stroke="none"/>
+  <path d="M18.4 61 L18.9 104" stroke-width="1.3"/><path d="M15.6 70 L17.2 68.4 M15.8 78 L17.4 76.4 M16 86 L17.6 84.4" stroke-width="1"/>
+  <rect x="15" y="51" width="10" height="7" fill="#F5F5F0" stroke-width="2.2"/><rect x="21.6" y="52.2" width="2.4" height="4.8" fill="#0B0B0B" stroke="none"/>
+  <path d="M5 54 C2.5 47 8.5 42 13 46.5 C15 48 17 48.5 20 48.5 C23 48.5 25 48 27 46.5 C31.5 42 37.5 47 35 54 C33.5 50 30 49.5 27.5 51.5 C25 53.5 22.5 54 20 54 C17.5 54 15 53.5 12.5 51.5 C10 49.5 6.5 50 5 54 Z" fill="#F5F5F0" stroke-width="2.4"/>
+  <path d="M27.5 51.5 C30 49.5 33.5 50 35 54 C35.6 51 34.4 49 32.6 48.4 C31 49 29 50 27.5 51.5 Z" fill="#0B0B0B" stroke="none"/><circle cx="8" cy="48.6" r="1.4" fill="#0B0B0B" stroke="none"/><circle cx="32" cy="48.6" r="1.4" fill="#0B0B0B" stroke="none"/>
+  <path d="M14.4 16 L25.6 16 L24.4 48 L15.6 48 Z" fill="#F5F5F0" stroke-width="2.4"/><polygon points="22.4,17.2 25.4,17.2 24.3,46.8 21.8,46.8" fill="#0B0B0B" stroke="none"/>
+  <path d="M14.8 23 L25.2 18.6 M15 30 L25 25.6 M15.2 37 L24.8 32.6 M15.4 44 L24.6 39.6" stroke-width="2.6"/>
+  <rect x="16.4" y="13.6" width="7.2" height="3.4" fill="#F5F5F0" stroke-width="2"/>
+  <circle cx="20" cy="8.4" r="7" fill="#F5F5F0" stroke-width="2.4"/><path d="M23.4 3 A6 6 0 0 1 22.4 14.2 A7.6 7.6 0 0 0 23.4 3 Z" fill="#0B0B0B" stroke="none"/><circle cx="18.6" cy="8" r="1.7" fill="#0B0B0B" stroke="none"/>
 </g></svg></span><span class="ss-tear" aria-hidden="true"><svg viewBox="0 0 24 24"><g stroke="#0B0B0B" stroke-linejoin="round"><path d="M10 13 L2.5 7.5 M10.5 14.5 L4 21 M12.5 15 L14 23.2 M14 13.5 L22 18.5" stroke-width=".8" fill="none"/><polygon points="12,3.4 14.2,8 19.6,6.4 16.2,11 21.2,13.6 15.8,14.6 17.6,20.2 12.6,16.4 9.4,21.2 9.4,15.6 3.4,17 7.6,12.4 3.2,8.2 9,9 9.8,3.6" fill="#F5F5F0" stroke-width=".8"/><polygon points="12,8.4 13.6,10.6 16,10.1 14.2,12.3 15.4,14.8 12.6,13.7 11,16 10.5,13.3 8.2,12.7 10.3,11.2 9.4,8.8" fill="#0B0B0B" stroke="none"/></g></svg><i class="ss-chip"></i><i class="ss-chip"></i><i class="ss-chip"></i></span>`;
 /* The dagger is THROWN at the stop once the chapter has landed (the entrance's wipe has lifted): it flies
    in from the camera like a dart, punches in (the ticket rips, chips fly, the line jolts, a white flash),
