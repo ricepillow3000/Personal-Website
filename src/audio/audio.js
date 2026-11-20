@@ -88,6 +88,7 @@ const CLIP_HIT = {
   'paper-rip': 0.338, // the paper giving way
   'fall-wind': 0, // a real 25 m/s gale: the fall
   'land-boom': 0.02, // a real deep boom with a thwack on top: the landing
+  'knife-thunk': 0.001, // a real wood impact (Kenney, CC0): the dagger's point landing in your stop
 };
 const clips = {};
 let clipsReady = null;
@@ -214,7 +215,7 @@ function sweep(bus, at, from, to, dur, gain, q = 1) {
 function bladeRattle(bus, at, dur) {
   const amp = ac.createGain();
   amp.gain.setValueAtTime(0.0001, at);
-  amp.gain.linearRampToValueAtTime(0.24, at + 0.006);
+  amp.gain.linearRampToValueAtTime(0.3, at + 0.006);
   amp.gain.exponentialRampToValueAtTime(0.0008, at + dur);
   const chop = ac.createGain();
   chop.gain.value = 0.5;
@@ -909,21 +910,20 @@ const VOICES = {
     tone(bus, { at: at + 0.09, dur: 0.12, from: 1568 * k, to: 1568 * k, type: 'triangle', gain: 0.06 });
   },
   // THE LINE MAP: the stiletto THROWN into your stop (Nov 20, John: "like a throwing dart... it lands, it
-  // shakes like a rattle"): the site's own real recordings where they exist (the whoosh, the slap, the
-  // paper rip, the metal clang, all already credited) layered on a synth thock, then the synth rattle: a
-  // woody buzz knocking at twice the swing of the drawn rattle (24 -> 15 a second), dying away
+  // shakes like a rattle"; then: "add a realistic sound of a knife, or like a dart being shot"): the real
+  // whoosh as it flies, a REAL wood impact as the point bites in (Kenney's Impact Sounds, CC0; a real
+  // knife "chop" won alone but read as a wet, fleshy stab in the mix, and lost the blind A/B 2 of 6), then
+  // the synth rattle of the stuck blade (a ringing blade and a woody knock per swing, 24 -> 15 a second)
   stab: (bus, at) => {
     const hit = at + 0.16;
     // the flight: the real whoosh peaking just before it lands (synth air if the clip isn't in yet)
     if (!clip(bus, 'whoosh-b', hit - 0.05, { gain: 0.75, rate: 1.15 })) sweep(bus, at, 700, 2200, 0.15, 0.22, 0.7);
-    // the punch: a heavy thock (synth), the real slap made heavier, the real paper rip cut short, a steel ring
+    // the landing: a solid synth thock, the real slap slowed, a REAL wood impact (the point biting into the
+    // board) and a little ring of the steel
     snap(bus, hit, 300, 58, 0.11, 0.6);
     noise(bus, { at: hit, dur: 0.02, type: 'highpass', freq: 3800, gain: 0.38 });
     clip(bus, 'hit-slap', hit, { gain: 1.05, rate: 0.8 });
-    const r = 1.35;
-    if (!clip(bus, 'paper-rip', hit + 0.004, { gain: 0.55, rate: r, env: [[0, 1], [0.338 / r + 0.1, 1], [0.338 / r + 0.18, 0]] })) {
-      noise(bus, { at: hit + 0.006, dur: 0.13, type: 'bandpass', freq: 3200, q: 0.7, gain: 0.3 });
-    }
+    clip(bus, 'knife-thunk', hit, { gain: 1 });
     clip(bus, 'metal-clang', hit + 0.012, { gain: 0.3, rate: 1.25 });
     bladeRattle(bus, hit + 0.05, 0.8);
   },

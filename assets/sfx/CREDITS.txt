@@ -76,3 +76,8 @@ land-boom.mp3
   "Muffled Distant Explosion" by NenadSimic (https://opengameart.org/content/muffled-distant-explosion)
   with "thwack-02" from "Thwack Sounds" by antumdeluge (https://opengameart.org/content/thwack-sounds)
   License: CC0 1.0 https://creativecommons.org/publicdomain/zero/1.0/ (both)
+
+knife-thunk.mp3
+  "impactWood_light_000" from "Impact Sounds" by Kenney (www.kenney.nl)
+  Source: https://kenney.nl/assets/impact-sounds
+  License: CC0 1.0 https://creativecommons.org/publicdomain/zero/1.0/
