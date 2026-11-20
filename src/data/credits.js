@@ -67,4 +67,8 @@ export const SOUND_CREDITS = [
     what: 'The landing thwack (THE DROP)', file: 'land-boom.mp3', title: 'thwack-02', pack: 'Thwack Sounds', author: 'antumdeluge',
     source: 'https://opengameart.org/content/thwack-sounds', license: 'CC0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
   },
+  {
+    what: 'The dagger landing in your stop (the line map)', file: 'knife-thunk.mp3', title: 'impactWood_light_000', pack: 'Impact Sounds', author: 'Kenney',
+    source: 'https://kenney.nl/assets/impact-sounds', license: 'CC0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+  },
 ];

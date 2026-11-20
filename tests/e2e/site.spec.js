@@ -641,7 +641,7 @@ test('every menu item fits on short laptop screens and phones held sideways', as
   }
 });
 
-test('the line map: ticket tiles (no circles), the station names over the line, a dagger is thrown into the stop you are at (it rips the ticket, rattles, with a sound) and passed stops keep a cut', async ({ page }) => {
+test('the line map: ticket tiles (no circles), the station names over the line, a dagger is thrown through the stop you are at (it pokes through the ticket, rattles, with a sound) and passed stops keep a cut', async ({ page }) => {
   await page.addInitScript(() => { window.__sfxLog = []; try { localStorage.setItem('jn-resume-v1', JSON.stringify({ visited: ['stats'] })); } catch {} });
   await page.goto('/#/missions');
   const strip = page.locator('#page .stop-strip');
@@ -651,9 +651,10 @@ test('the line map: ticket tiles (no circles), the station names over the line, 
   await expect(strip.locator('.ss-stop.now .ss-name')).toHaveText('SHIBUYA');
   await expect(strip.locator('.ss-stop.seen')).toHaveCount(1);
   await expect(strip.locator('.ss-dagger')).toHaveCount(1); // only in the stop you're at
-  await expect(strip.locator('.ss-stop.now .ss-dagger')).toHaveClass(/stab|in/, { timeout: 5000 });
+  await expect(strip.locator('.ss-stop.now')).toHaveClass(/\bstab\b|\bin\b/, { timeout: 5000 });
+  await expect(strip.locator('.ss-stop.now .ss-dagger-back')).toHaveCount(1); // (its point comes out under the ticket)
   await expect(strip.locator('.ss-dagger')).toHaveCSS('opacity', '1', { timeout: 3000 });
-  // thrown like a dart, it lands, rips the ticket and rattles to a stop: the rip shows once it's in
+  // thrown like a dart, it pokes through the ticket and rattles to a stop: the slit shows once it's in
   await expect(strip.locator('.ss-stop.now .ss-tear')).toHaveCount(1);
   await expect(strip.locator('.ss-stop.now .ss-tear')).toBeVisible();
   // the station's name hangs under your ticket, clear of the dagger
@@ -847,10 +848,10 @@ test('sound: SETTINGS credits every real recording, and every clip the engine as
   await expect(credits).toContainText('CC BY-SA 3.0');
   await expect(credits).toContainText('ProtoplasmaKid'); // the NEXT STOP metro braking
   await expect(credits).toContainText('W.carter'); // THE DROP's gale
-  await expect(credits.locator('li')).toHaveCount(13);
+  await expect(credits.locator('li')).toHaveCount(14);
   const src = readFileSync(join(process.cwd(), 'src/audio/audio.js'), 'utf8');
   const names = [...src.slice(src.indexOf('const CLIP_HIT = {'), src.indexOf('};', src.indexOf('const CLIP_HIT = {'))).matchAll(/'([a-z-]+)':/g)].map((m) => m[1]);
-  expect(names.length).toBe(13);
+  expect(names.length).toBe(14);
   for (const n of names) {
     const r = await request.get(`/assets/sfx/${n}.mp3`);
     expect(r.status(), n).toBe(200);
@@ -879,7 +880,7 @@ test('sound: on by default, but nothing downloads and nothing plays before the f
   expect(fetched).toEqual([]); // no gesture yet: no audio engine, no downloads
   expect(music).toEqual([]);
   await page.locator('.title-hook').click(); // the first tap anywhere
-  await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(13);
+  await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(14);
   await expect.poll(() => music.length, { timeout: 5000 }).toBe(1);
   await expect.poll(() => page.evaluate(() => document.querySelector('#soundBtn').getAttribute('aria-pressed'))).toBe('true');
 });
