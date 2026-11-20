@@ -1187,8 +1187,8 @@ test('sound for every box: side quests are heard as they land and as you scroll 
   await ctx.close();
 });
 
-test('departure board: a 3D box in the station\'s perspective; LET US START THE GAME scrolls right to left, the clock shows the visitor\'s time (12-hour), it never covers the title, the calendar, the contact card or the top bar; none on a phone held upright', async ({ browser }) => {
-  for (const [w, h, mob] of [[1440, 900, false], [852, 393, true]]) {
+test('departure board: a 3D box in the station\'s perspective; LET US START THE GAME scrolls right to left, the clock shows the visitor\'s time (12-hour), it never covers the title, the calendar, the contact card or the top bar; on phones held upright too (a smaller board further back)', async ({ browser }) => {
+  for (const [w, h, mob] of [[1440, 900, false], [852, 393, true], [390, 844, true], [390, 664, true], [412, 839, true]]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mob, hasTouch: mob, reducedMotion: 'no-preference' });
     const page = await ctx.newPage();
     await page.goto('/');
@@ -1218,12 +1218,6 @@ test('departure board: a 3D box in the station\'s perspective; LET US START THE 
     if (w === 1440) await expect(page.locator('#contactCard')).toBeVisible(); // Ways to Connect always stays
     await ctx.close();
   }
-  const up = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-  const p = await up.newPage();
-  await p.goto('/');
-  await p.waitForTimeout(3000);
-  expect(await p.locator('.ss').evaluate((e) => e.hidden || getComputedStyle(e).display === 'none')).toBe(true);
-  await up.close();
 });
 
 test('the floor mirrors the tubes: a tube going off takes its own stretch of the floor reflection with it', async ({ page }) => {

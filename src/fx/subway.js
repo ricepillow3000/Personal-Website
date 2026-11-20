@@ -489,7 +489,7 @@ function drawTrack(g, kk) {
   for (let d = 20, n; d < TRACK_FAR; d = n) {
     n = d * 1.12 + 6;
     const v = dark(d);
-    g.fillStyle = `rgb(${Math.round(8 + 22 * v)}, ${Math.round(8 + 22 * v)}, ${Math.round(10 + 25 * v)})`;
+    g.fillStyle = `rgb(${Math.round(10 + 34 * v)}, ${Math.round(10 + 34 * v)}, ${Math.round(12 + 39 * v)})`; // (Nov 19, John: "too blended in": a lighter bed, so the rails and sleepers read on it)
     quad(g, [P(EDGE_X, BED_Y, d), P(WALL_X, BED_Y, d), P(WALL_X, BED_Y, n + 1), P(EDGE_X, BED_Y, n + 1)]);
     g.fill();
   }
@@ -512,13 +512,13 @@ function drawTrack(g, kk) {
     if (v <= 0.02) break;
     const e = d + 8;
     g.globalAlpha = v;
-    g.fillStyle = '#6A6C74';
+    g.fillStyle = '#8A8D96';
     quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, e), P(x0, TIE_Y, e)]);
     g.fill();
-    g.fillStyle = '#3E4046'; // its side facing the camera
+    g.fillStyle = '#4C4F57'; // its side facing the camera
     quad(g, [P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x1, BED_Y, e), P(x1, TIE_Y, e)]);
     g.fill();
-    g.fillStyle = '#383A40'; // and its front edge
+    g.fillStyle = '#44474E'; // and its front edge
     quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x0, BED_Y, d)]);
     g.fill();
     g.strokeStyle = 'rgba(8, 8, 10, 0.8)';
@@ -533,20 +533,32 @@ function drawTrack(g, kk) {
     }));
   }
   g.globalAlpha = 1;
-  // the rails: a dark web and foot, and a polished head that catches the station's light
+  // the rails: a dark web and foot, and a polished head that catches the station's light. Each rail is
+  // inked along its foot and never thinner than ~1.6 screen px, so it reads all the way to the tunnel
+  // (Nov 19, John: "the train tracks look too blended in... make sure they are fully visible")
+  const minHead = 1.6 / kk; // (art px per 1.6 screen px)
   RAILS.forEach((rx) => {
     for (let d = 20, n; d < TRACK_FAR; d = n) {
       n = d * 1.1 + 5;
       const v = dark(d);
       g.globalAlpha = v;
-      g.fillStyle = '#1D1E22'; // the web, on the side toward the camera
+      g.fillStyle = '#16171A'; // the web, on the side toward the camera
       quad(g, [P(rx + 1.2, RAIL_Y, d), P(rx + 1.2, TIE_Y, d), P(rx + 1.2, TIE_Y, n + 1), P(rx + 1.2, RAIL_Y, n + 1)]);
       g.fill();
-      g.fillStyle = '#AEB3BC'; // the head
-      quad(g, [P(rx - 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y, n + 1), P(rx - 1.3, RAIL_Y, n + 1)]);
-      g.fill();
-      g.strokeStyle = '#E6EAF0'; // its shine
-      g.lineWidth = Math.max(0.5, (F / d) * 0.5);
+      g.strokeStyle = 'rgba(6, 6, 8, 0.95)'; // the ink line along its foot
+      g.lineWidth = Math.max(ink, (F / d) * 0.6);
+      g.beginPath();
+      g.moveTo(...P(rx + 1.6, TIE_Y, d));
+      g.lineTo(...P(rx + 1.6, TIE_Y, n + 1));
+      g.stroke();
+      g.strokeStyle = '#C9CED6'; // the head (a stroke, so it keeps a visible width far away)
+      g.lineWidth = Math.max(minHead, (F / d) * 2.6);
+      g.beginPath();
+      g.moveTo(...P(rx, RAIL_Y, d));
+      g.lineTo(...P(rx, RAIL_Y, n + 1));
+      g.stroke();
+      g.strokeStyle = '#FFFFFF'; // its shine
+      g.lineWidth = Math.max(minHead * 0.45, (F / d) * 0.6);
       g.beginPath();
       g.moveTo(...P(rx + 0.3, RAIL_Y, d));
       g.lineTo(...P(rx + 0.3, RAIL_Y, n));

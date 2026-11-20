@@ -148,8 +148,7 @@ body.reduce-motion :is(.bb-flicker, .bb-sheen) { animation: none; }
 .ss-code { color: #FF3B3B; text-shadow: 0 0 .3em rgba(255, 40, 40, .85); }
 @media (prefers-reduced-motion: reduce) { .ss-run, .ss-colon { animation: none; } }
 body.reduce-motion .ss-run, body.reduce-motion .ss-colon { animation: none; }
-/* phones held upright: the CONNECT card owns the top of the screen there (and the phone asks to be turned) */
-@media (max-aspect-ratio: 3/4) { .ss { display: none !important; } }
+/* (phones held upright show it too since Nov 19: a smaller board further back, wherever it fits) */
 .sl .sl-off { opacity: 0; transition: opacity .04s linear; }
 .sl .sl-on { opacity: 1; transition: opacity .05s linear; }
 .sl[data-st="off"] .sl-off { opacity: 1; transition-duration: .02s; } /* a tube dies at once... */

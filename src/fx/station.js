@@ -130,6 +130,13 @@ const VP = [870, 548];
 const SIGN_SPOTS = [
   { x: 900, y: 214, w: 150 }, { x: 896, y: 262, w: 122 },
   { x: 686, y: 204, w: 150 }, { x: 716, y: 258, w: 122 },
+  /* then smaller boards further back, for phones held upright (Nov 19, John: "add back the train sign
+     hanging from the roof at the back... part of the movie"). Each one keeps the station's perspective:
+     at scale sc (1 = the first spot) it hangs at the same real height, so its top sits at
+     548 - 334 sc, its rods reach the same ceiling (60 sc long) and it is 150 sc wide; it may sit over
+     either side of the platform (o = its left edge from the vanishing point at full size) */
+  ...[0.8, 0.7, 0.62, 0.55, 0.5, 0.45, 0.41].flatMap((sc) => [30, 120, 200, -184, -260]
+    .map((o) => ({ x: Math.round(VP[0] + o * sc), y: Math.round(VP[1] - 334 * sc), w: Math.round(150 * sc) }))),
 ];
 const SIGN_H = 0.46;
 const DEPTH = 0.9; // the back face, scaled toward the vanishing point (the box's thickness)
@@ -142,18 +149,20 @@ function geom(s) {
   const side = right ? [f[0], b[0], b[3], f[3]] : [f[1], b[1], b[2], f[2]];
   const under = [f[3], f[2], b[2], b[3]];
   const rods = [0.2, 0.8].map((t) => [s.x + s.w * t, s.y]);
+  const rod = 60 * (s.w / 150); // (to the same ceiling, whatever its distance)
   const pts = [...f, ...b];
-  const box = { l: Math.min(...pts.map((q) => q[0])), r: Math.max(...pts.map((q) => q[0])), t: s.y - 60, b: Math.max(...pts.map((q) => q[1])) };
-  return { f, side, under, rods, box, right, h };
+  const box = { l: Math.min(...pts.map((q) => q[0])), r: Math.max(...pts.map((q) => q[0])), t: s.y - rod, b: Math.max(...pts.map((q) => q[1])) };
+  return { f, side, under, rods, rod, box, right, h };
 }
 const P = (pts) => pts.map((q) => q.map((v) => v.toFixed(1)).join(',')).join(' ');
 function housing(s) {
   const g = geom(s);
-  const ink = 'stroke="#050506" stroke-width="1.6" stroke-linejoin="round"';
+  const sc = Math.max(0.55, s.w / 150); // (ink and rods thin a little with distance, never to nothing)
+  const ink = `stroke="#050506" stroke-width="${(1.6 * sc).toFixed(2)}" stroke-linejoin="round"`;
   const [tl, tr, br, bl] = g.f;
   const rimSide = g.right ? [tl, bl] : [tr, br]; // the edge toward the light strip catches the tubes' light
   return `
-    ${g.rods.map(([x, y]) => `<path d="M${x} ${y} V${y - 60}" stroke="#050506" stroke-width="3.4"/><path d="M${x} ${y} V${y - 60}" stroke="#4A4D55" stroke-width="1.4"/><rect x="${x - 5}" y="${y - 3}" width="10" height="4" fill="#1A1B1F" ${ink}/>`).join('')}
+    ${g.rods.map(([x, y]) => `<path d="M${x} ${y} V${y - g.rod}" stroke="#050506" stroke-width="${(3.4 * sc).toFixed(2)}"/><path d="M${x} ${y} V${y - g.rod}" stroke="#4A4D55" stroke-width="${(1.4 * sc).toFixed(2)}"/><rect x="${x - 5 * sc}" y="${y - 3 * sc}" width="${10 * sc}" height="${4 * sc}" fill="#1A1B1F" ${ink}/>`).join('')}
     <polygon points="${P(g.side)}" fill="#2A2C32" ${ink}/>
     <polygon points="${P(g.under)}" fill="#0C0C0E" ${ink}/>
     <path d="M${P([g.under[0], g.under[1]]).replace(' ', ' L')}" stroke="#FFB52E" stroke-opacity=".45" stroke-width="2.2" transform="translate(0 2.2)"/>
@@ -179,7 +188,7 @@ function measureClear() {
 }
 /* art px -> screen px from the layer's real box on screen (it sits inside the camera's slow push-in) */
 function pickSpot(wrap) {
-  const pad = 22; // (room for the rest of the push-in)
+  const pad = window.innerWidth < 600 ? 10 : 22; // (room for the rest of the push-in; less on a phone, where the boards are small)
   const W = window.innerWidth;
   const H = window.innerHeight;
   const a = wrap.getBoundingClientRect();
