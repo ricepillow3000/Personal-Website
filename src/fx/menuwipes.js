@@ -6,7 +6,8 @@ import { gsap } from 'gsap';
 import { reducedMotion } from '../core/util.js';
 import { ransom } from '../ui/ransom.js';
 import { sfx } from '../audio/audio.js';
-import { track, shake, snapshotScreen } from './transitions.js';
+import { track, shake, snapshotScreen, filmReady, filmImg } from './transitions.js';
+import { rectToQuad } from './station.js';
 import { artSrc } from './art.js';
 
 function scene(cls, html, label) {
@@ -137,46 +138,110 @@ export function glassWipe(swap) {
   return track(tl);
 }
 
-/** SIDE QUESTS ("city life"): a hard cut to a night street. Car light trails streak past, a horn,
-    a big billboard on the building flickers on with the page name, and the camera pushes into
-    the screen until it is the page. */
-export function cityWipe(swap, label = 'SIDE QUESTS') {
+/* THE SQUARE (Nov 20, John: "make it look like an actual billboard instead of a poster in front of a
+   building... the middle of a Tokyo square with other mini advertisements, our star design, our name, our
+   philosophy, filler billboards... the biggest one in the middle is SIDE QUESTS... digital, attached to the
+   building with the same textures"). An original scramble-crossing square at night (Gemini, Nano Banana
+   Pro, in the station's toon style), its nine video screens painted INTO the buildings (bezels, frames,
+   brackets) and keyed out (square.webp, 2752 x 1536, the screen faces clear). Live LED content sits BEHIND
+   the picture, each screen's content mapped onto its measured four corners (rectToQuad) with a little
+   overscan, so the painted bezels frame it like real hardware; a soft glow of each screen's own colour is
+   added on top (screen blend), so its light spills onto the frame and the wall. The stage is the picture's
+   own 1376 x 768 space, scaled to cover the screen and kept on the big screen; the camera pushes into
+   SIDE QUESTS until it fills the frame, a flash, the page. */
+const SQ_W = 1376;
+const SQ_H = 768;
+const SQ_SCREENS = [ // [id, TL, TR, BR, BL] in the picture's own px, and the ad each screen plays
+  ['main', [598, 260], [828, 241], [831, 395], [594, 404]],
+  ['time', [1143, 246], [1223, 228], [1246, 473], [1160, 479]],
+  ['name', [204, 213], [332, 228], [327, 287], [197, 276]],
+  ['star', [206, 312], [319, 293], [307, 369], [200, 382]],
+  ['proof', [1176, 524], [1279, 518], [1286, 587], [1180, 587]],
+  ['motto', [371, 382], [478, 390], [476, 445], [366, 441]],
+  ['stripes', [1322, 245], [1400, 233], [1400, 357], [1334, 357]],
+  ['checks', [411, 480], [462, 485], [459, 559], [408, 558]],
+  ['jn', [480, 328], [537, 332], [535, 388], [480, 388]],
+];
+const SQ_ADS = {
+  main: '<span class="sq-on">NOW SHOWING</span><span class="sq-label ransom" data-label></span><i class="sq-slash"></i>',
+  time: '<b>TAKE</b><b>YOUR</b><b class="sq-big">TIME</b>',
+  name: '<b class="sq-john">JOHN</b><b class="sq-ng">NGUYEN</b>',
+  star: '<i class="sq-starmark"></i>',
+  proof: '<b><em>2</em> LIVE APPS</b><b><em>2,000+</em> TESTS</b>',
+  motto: '<b>RESUMES DON\'T</b><b>HAVE TO BE</b><b class="sq-red">BORING</b>',
+  stripes: '<i class="sq-run"></i>',
+  checks: '<b class="sq-big">727</b><b>/728</b><b class="sq-sm">CHECKS</b>',
+  jn: '<b class="sq-big">JN</b>',
+};
+const SQ_FS = { main: 1, time: 1.65, name: 1, star: 1, proof: 1.05, motto: 1, stripes: 1, checks: 1.75, jn: 1 }; // (text size per screen)
+const sqGrow = (q, k) => { // the quad grown about its centre (overscan, hidden under the bezel)
+  const cx = q.reduce((t, p) => t + p[0], 0) / 4;
+  const cy = q.reduce((t, p) => t + p[1], 0) / 4;
+  return q.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k]);
+};
+const sqSize = (q) => [(Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]) + Math.hypot(q[2][0] - q[3][0], q[2][1] - q[3][1])) / 2,
+  (Math.hypot(q[3][0] - q[0][0], q[3][1] - q[0][1]) + Math.hypot(q[2][0] - q[1][0], q[2][1] - q[1][1])) / 2];
+export async function cityWipe(swap, label = 'SIDE QUESTS') {
   if (reducedMotion()) return instant(swap);
-  const city = artSrc('city');
-  const el = scene('citylife', `<div class="cl-cam"><img class="cl-city" src="${city}" alt=""><i class="cl-shade"></i>
-      <div class="cl-board"><div class="cl-screen"><span class="cl-on">NOW SHOWING</span><span class="cl-label ransom" data-label></span></div></div>
-      <div class="cl-trails">${'<i></i>'.repeat(10)}</div></div><i class="cl-flash"></i>`, label);
-  const cam = el.querySelector('.cl-cam');
-  const board = el.querySelector('.cl-board');
-  const screen = el.querySelector('.cl-screen');
-  const trails = el.querySelectorAll('.cl-trails i');
+  await filmReady(['square']);
+  const screens = SQ_SCREENS.map(([id, ...q]) => {
+    const g = sqGrow(q, 1.05);
+    const [w, h] = sqSize(g);
+    return { id, q, g, w, h, tf: rectToQuad(w, h, g) };
+  });
+  const scr = screens.map((s) => `<div class="sq-scr sq-${s.id}" style="width:${s.w.toFixed(1)}px;height:${s.h.toFixed(1)}px;font-size:${((Math.min(s.w, s.h * 1.6) / 10) * SQ_FS[s.id]).toFixed(2)}px;transform:${s.tf}">${SQ_ADS[s.id]}</div>`).join('');
+  const glow = screens.map((s) => `<i class="sq-glow sq-g-${s.id}" style="width:${s.w.toFixed(1)}px;height:${s.h.toFixed(1)}px;transform:${s.tf}"></i>`).join('');
+  const el = scene('citylife sqr', `<div class="sq-stage">${scr}<span class="sq-art"></span>${glow}<div class="cl-trails">${'<i></i>'.repeat(8)}</div></div><i class="cl-flash"></i>`, label);
+  const stage = el.querySelector('.sq-stage');
+  el.querySelector('.sq-art').replaceWith(filmImg('square', 'sq-img'));
   const flash = el.querySelector('.cl-flash');
+  const trails = el.querySelectorAll('.cl-trails i');
   trails.forEach((t, i) => {
-    gsap.set(t, { top: `${74 + ((i * 7) % 20)}%`, width: `${18 + ((i * 13) % 30)}vw` });
+    gsap.set(t, { top: 624 + ((i * 11) % 60), width: 180 + ((i * 53) % 260) });
     if (i % 3 === 0) t.classList.add('red'); // taillights; the rest are headlights
   });
-  const r = board.getBoundingClientRect();
-  const push = Math.max(window.innerWidth / r.width, window.innerHeight / r.height) * 1.1;
-  const ox = r.left + r.width / 2;
-  const oy = r.top + r.height / 2;
+  // where the camera starts (the picture covering the screen, the big screen centred as far as it can be)
+  // and where it ends (inside the big screen, filling the frame)
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const main = screens[0];
+  const mx = main.q.reduce((t, p) => t + p[0], 0) / 4;
+  const my = main.q.reduce((t, p) => t + p[1], 0) / 4;
+  const s0 = Math.max(vw / SQ_W, vh / SQ_H);
+  const narrow = vw / vh < 1;
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const x0 = clamp(vw / 2 - mx * s0, vw - SQ_W * s0, 0);
+  const y0 = clamp(vh / 2 - my * s0, vh - SQ_H * s0, 0);
+  const [mw, mh] = sqSize(main.q);
+  const s1 = Math.max(vw / mw, vh / mh) * 1.12;
+  const x1 = vw / 2 - mx * s1;
+  const y1 = vh / 2 - my * s1;
+  const scrs = el.querySelectorAll('.sq-scr');
+  const glows = el.querySelectorAll('.sq-glow');
   const tl = gsap.timeline({ onComplete: () => el.remove() });
   tl.set(el, { visibility: 'visible' })
+    .set(stage, { transformOrigin: '0 0', x: x0, y: y0, scale: s0 }, 0)
+    // a phone held upright sees one building at a time: the camera pans across the ads on the left first
+    .fromTo(stage, { x: narrow ? clamp(vw / 2 - 330 * s0, vw - SQ_W * s0, 0) : x0 }, { x: x0, duration: narrow ? 0.4 : 0.01, ease: 'power2.inOut' }, 0.02)
     .add(() => sfx('city'), 0)
-    .fromTo(cam, { scale: 1.12, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.14, ease: 'power3.out', transformOrigin: `${ox}px ${oy}px` }, 0)
+    .fromTo(stage, { opacity: 0 }, { opacity: 1, duration: 0.12, ease: 'power2.out' }, 0)
     // headlights and taillights streaking along the street, both ways
-    .fromTo(trails, { x: (i) => (i % 2 ? '-40vw' : '120vw') }, { x: (i) => (i % 2 ? '120vw' : '-40vw'), duration: 0.42, ease: 'none', stagger: 0.03 }, 0)
-    // the billboard flickers on
-    .fromTo(screen, { opacity: 0 }, { opacity: 1, duration: 0.12, ease: 'steps(4)' }, 0.16)
-    .add(() => sfx('buzz'), 0.16)
-    // the camera pushes into the screen until it fills the frame
-    .to(cam, { scale: push, duration: 0.32, ease: 'power3.in' }, 0.34)
-    .fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.06 }, 0.62)
+    .fromTo(trails, { x: (i) => (i % 2 ? -400 : SQ_W + 100) }, { x: (i) => (i % 2 ? SQ_W + 100 : -400), duration: 0.6, ease: 'none', stagger: 0.04 }, 0)
+    // the screens switch on, one after another, the big one last (a stepped flicker, like LED panels)
+    // (the small ads first, quickly, so a phone's pan finds them lit; the big screen last, the beat before the push)
+    .fromTo([...scrs].slice(1), { opacity: 0 }, { opacity: 1, duration: 0.08, ease: 'steps(3)', stagger: 0.018 }, 0.02)
+    .fromTo([...glows].slice(1), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08, ease: 'steps(3)', stagger: 0.018 }, 0.02)
+    .fromTo([scrs[0], glows[0]], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.12, ease: 'steps(4)' }, 0.22)
+    .add(() => sfx('buzz'), 0.2)
+    // the camera pushes into SIDE QUESTS until it fills the frame
+    .to(stage, { x: x1, y: y1, scale: s1, duration: 0.36, ease: 'power3.in' }, 0.46)
+    .fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.06 }, 0.78)
     .add(() => {
       swap();
       sfx('thwack', 0.7);
-    }, 0.66)
-    .set(cam, { opacity: 0 }, 0.66)
-    .to(flash, { opacity: 0, duration: 0.22, ease: 'power2.out' }, 0.68);
+    }, 0.82)
+    .set(stage, { opacity: 0 }, 0.82)
+    .to(flash, { opacity: 0, duration: 0.22, ease: 'power2.out' }, 0.84);
   return track(tl);
 }
 

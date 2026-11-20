@@ -322,7 +322,7 @@ export function snapshotScreen() {
 /* ---- the city set pieces (public/assets/film): original art generated with Google's Nano Banana
    (gemini-2.5-flash-image) to John's brief and approved by him: a low-angle look up at the towers
    against a red sky, the tower's crown, its glass facade, and the subway car. WebP, loaded while idle. */
-const FILM = { upshot: artSrc('city'), facade: 'assets/film/facade.webp', crown: 'assets/film/crown.webp', train: 'assets/film/train.webp', interior: 'assets/film/interior.webp' };
+const FILM = { upshot: artSrc('city'), facade: 'assets/film/facade.webp', crown: 'assets/film/crown.webp', train: 'assets/film/train.webp', interior: 'assets/film/interior.webp', square: 'assets/film/square.webp' };
 const filmCache = {};
 const decoded = {};
 export function preloadFilm() {
@@ -341,12 +341,12 @@ export function preloadFilm() {
 }
 /* A film cut never plays with a missing picture (Nov 19, John: NEXT STOP played "but the train car
    didn't even go through"): it waits for its art to be decoded, at most `ms`, before it starts. */
-function filmReady(keys, ms = 1500) {
+export function filmReady(keys, ms = 1500) {
   preloadFilm();
   return Promise.race([Promise.all(keys.map((k) => decoded[k])), new Promise((r) => setTimeout(r, ms))]);
 }
 /* the cached, already-decoded picture (a fresh <img> would decode again and show up late) */
-function filmImg(key, cls) {
+export function filmImg(key, cls) {
   const img = filmCache[key];
   img.className = cls;
   return img;
