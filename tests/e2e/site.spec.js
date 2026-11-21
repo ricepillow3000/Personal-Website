@@ -1261,6 +1261,21 @@ test('the departure board and the station lights never show off the title (they 
   expect(await page.evaluate(() => getComputedStyle(document.querySelector('.st-wrap')).opacity)).toBe('0');
 });
 
+test('MY EDGE: the page watermark never jumps while the panels land (it sits beside #page, so their jolt cannot re-anchor it)', async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
+  const page = await ctx.newPage();
+  await page.goto('/#/different');
+  await expect(page.locator('#screen-page > .pg-mark')).toHaveCount(1);
+  await expect(page.locator('#page .pg-mark')).toHaveCount(0);
+  const ys = [];
+  for (let i = 0; i < 14; i++) { // across the whole panel entrance (each panel shakes #page as it lands)
+    ys.push(await page.evaluate(() => Math.round(document.querySelector('.pg-mark').getBoundingClientRect().y)));
+    await page.waitForTimeout(80);
+  }
+  expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(4); // (it used to drop ~270 px and snap back)
+  await ctx.close();
+});
+
 test('departure board: a 3D box in the station\'s perspective; LET US START THE GAME scrolls right to left, the clock shows the visitor\'s time (12-hour), it never covers the title, the calendar, the contact card or the top bar; on phones held upright too (a smaller board further back)', async ({ browser }) => {
   for (const [w, h, mob] of [[1440, 900, false], [852, 393, true], [390, 844, true], [390, 664, true], [412, 839, true]]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mob, hasTouch: mob, reducedMotion: 'no-preference' });
