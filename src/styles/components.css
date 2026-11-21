@@ -525,12 +525,12 @@ body[data-mode="board"] .hud-tl .hud-meta { display: grid; }
   translate: 0 -110%; transition: translate .18s ease-out;
 }
 body.scrolled:is([data-mode="board"], [data-mode="page"], [data-mode="quick"]) .screen.active::before { translate: 0 0; }
-.back-btn { transition: top .18s ease-out; }
-body.scrolled[data-mode="page"] .back-btn { top: 12px; }
+.back-btn { transition: translate .18s ease-out; } /* (a transform: was top, a re-measure every frame) */
+body.scrolled[data-mode="page"] .back-btn { translate: 0 -72px; } /* (84px -> 12px) */
 @media (max-width: 760px) {
   body { --strip-h: 52px; }
   body[data-mode="page"], body[data-mode="quick"] { --strip-h: 110px; }
-  body.scrolled[data-mode="page"] .back-btn { top: 64px; }
+  body.scrolled[data-mode="page"] .back-btn { translate: 0 -6px; } /* (70px -> 64px) */
 }
 @media (prefers-reduced-motion: reduce) { .screen::before, .back-btn, .keyhints { transition: none; } }
 
@@ -1106,3 +1106,29 @@ body[data-screen="title"].cal-off .hud-cal { display: none; } /* no room at all 
 
 /* the outbound-link arrow (a drawn shape, never the north-east arrow character, which phones show as an emoji) */
 .ext { display: inline-block; width: .62em; height: .62em; margin-left: .35em; vertical-align: .06em; overflow: visible; }
+
+/* ---- easing curves for CSS-run animations (Nov 21): GSAP's back.out(s) sampled exactly into linear(), so a CSS animation
+   bounces just like the GSAP tween it replaced; browsers without linear() get a close cubic-bezier */
+:root { --e-back19: linear(0.000, 0.166, 0.316, 0.451, 0.570, 0.675, 0.766, 0.845, 0.913, 0.969, 1.015, 1.051, 1.079, 1.099, 1.112, 1.119, 1.121, 1.117, 1.110, 1.100, 1.087, 1.073, 1.059, 1.044, 1.030, 1.018, 1.009, 1.002, 1.000); --e-back22: linear(0.000, 0.176, 0.335, 0.476, 0.601, 0.711, 0.806, 0.887, 0.956, 1.013, 1.059, 1.095, 1.121, 1.139, 1.150, 1.154, 1.152, 1.146, 1.135, 1.121, 1.105, 1.087, 1.070, 1.052, 1.036, 1.021, 1.010, 1.003, 1.000); --e-back24: linear(0.000, 0.183, 0.347, 0.493, 0.622, 0.735, 0.832, 0.916, 0.985, 1.043, 1.089, 1.124, 1.149, 1.166, 1.175, 1.177, 1.173, 1.164, 1.151, 1.135, 1.117, 1.097, 1.077, 1.057, 1.039, 1.023, 1.011, 1.003, 1.000); --e-back26: linear(0.000, 0.190, 0.359, 0.510, 0.643, 0.759, 0.859, 0.944, 1.015, 1.072, 1.118, 1.153, 1.177, 1.193, 1.200, 1.200, 1.194, 1.183, 1.168, 1.149, 1.128, 1.106, 1.084, 1.062, 1.043, 1.025, 1.012, 1.003, 1.000);
+  --e-p3out: cubic-bezier(.215, .61, .355, 1); --e-p3in: cubic-bezier(.55, .055, .675, .19); --e-p4out: cubic-bezier(.165, .84, .44, 1); }
+@supports not (animation-timing-function: linear(0, 1)) { :root { --e-back19: cubic-bezier(.3, 1.6, .5, 1); --e-back22: cubic-bezier(.3, 1.75, .5, 1); --e-back24: cubic-bezier(.3, 1.8, .5, 1); --e-back26: cubic-bezier(.3, 1.85, .5, 1); } }
+
+/* ---- the menu, run by the browser (Nov 21, John's friend: "transform just shifts the picture... the CSS transform doesn't
+   wait in the lane"): it opened with a GSAP timeline, which runs in the page's one lane and stalls when that lane is busy
+   (the menu is built in the same moment). Now the same moves are CSS animations of transform and opacity, which the
+   browser plays on the graphics side; only the diagonal unfold is a clip-path (a paint, not a re-measure). */
+.menu-overlay.mn-in { animation: mnWipe .32s var(--e-p3out) both; }
+.menu-overlay.mn-in .stair li { animation: mnItem .3s var(--e-back22) calc(60ms + var(--i) * 45ms) both; }
+.menu-overlay.mn-in .mn-slash { transform-box: fill-box; transform-origin: 50% 0; animation: mnSlash .26s var(--e-p4out) 40ms both; }
+.menu-overlay.mn-in .mn-tag { animation: mnSide .28s var(--e-back24) 120ms both; }
+.menu-overlay.mn-in .mn-num { animation: mnSide .28s var(--e-back24) 170ms both; }
+.menu-overlay.mn-in .mn-count { animation: mnSide .28s var(--e-back24) 220ms both; }
+.menu-overlay.mn-in .menu-teaser { animation: mnTease .3s var(--e-back26) 220ms both; }
+.menu-overlay.mn-out { animation: mnWipe .22s var(--e-p3in) 60ms reverse both; }
+.menu-overlay.mn-out .stair li { animation: mnItemOut .16s var(--e-p3in) calc(var(--i) * 20ms) both; }
+@keyframes mnWipe { from { clip-path: polygon(0% 0%, 0% 0%, 0% 0%); } to { clip-path: polygon(0% 0%, 260% 0%, 0% 260%); } }
+@keyframes mnItem { from { transform: translateX(-60vw) rotate(-14deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes mnItemOut { to { transform: translateX(40vw) rotate(10deg); opacity: 0; visibility: hidden; } }
+@keyframes mnSlash { from { transform: scaleY(0); } to { transform: none; } }
+@keyframes mnSide { from { transform: translateX(120px) rotate(12deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes mnTease { from { transform: scale(.3) rotate(-12deg); } to { transform: none; } }
