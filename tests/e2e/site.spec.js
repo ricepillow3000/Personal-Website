@@ -684,8 +684,16 @@ test('the guide: every chapter shows where you are, and the guide button leads t
   await expect(strip.locator('.ss-dot.now')).toHaveAttribute('href', '#/skills');
   if (isMobile) {
     const guide = page.locator('.guide');
-    await expect(guide).toBeVisible();
     await expect(guide).toContainText('NEXT: SIDE QUESTS');
+    // it never rests on words (Nov 21): at the top of SKILLS on a phone its corner is all skill meters, so it waits;
+    // scrolled to a clear spot (between the list and RECEIPTS) it shows, and never over the page's words
+    await expect.poll(async () => {
+      await page.locator('#screen-page').evaluate((s) => { s.scrollTop += 60; s.dispatchEvent(new Event('scroll')); });
+      await page.waitForTimeout(1100);
+      return guide.isVisible();
+    }, { timeout: 20000, intervals: [0] }).toBe(true);
+    expect(await page.evaluate(() => { const r = document.querySelector('.guide').getBoundingClientRect(); const hit = (q) => q.left < r.right - 2 && q.right > r.left + 2 && q.top < r.bottom - 2 && q.bottom > r.top + 2;
+      return [...document.querySelectorAll('#page *')].some((el) => { if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) return false; const g = document.createRange(); g.selectNodeContents(el); return [...g.getClientRects()].some(hit); }); })).toBe(false);
     await guide.click(); // scrolls to the NEXT STOP card, then bows out
     await expect(page.locator('#page .next-ep')).toBeInViewport();
     await expect(guide).toBeHidden();
