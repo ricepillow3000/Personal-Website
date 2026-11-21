@@ -212,7 +212,9 @@ async function show(id) {
   };
 
   if (prev === null) {
+    revealBuilt = true; // the first screen of the visit: it sits under the loading screen
     swap();
+    revealBuilt = false;
   } else if (prev === 'title' && id === 'board' && pendingStart) {
     pendingStart = false;
     revealDelay = 0.28; // the screen swaps under the star-flash; THE PLAN slams in as it clears and the city fades up
@@ -388,9 +390,10 @@ const board = createBoard($('#board'), ctx);
 
 let boardSeen = false;
 let revealDelay = 0;
+let revealBuilt = false; // (set by show() for the visit's first screen: see board.reveal)
 function enterBoard() {
   renderProgress();
-  board.reveal(revealDelay);
+  board.reveal(revealDelay, revealBuilt);
   revealDelay = 0;
   focusSoon($('#board .plan-continue'));
   if (!boardSeen) {
