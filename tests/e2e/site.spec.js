@@ -1109,7 +1109,9 @@ test('turn your phone: a red reminder on phones held upright, once a visit; turn
   await expect(rot).toBeVisible();
   await expect(rot).toHaveAttribute('role', 'dialog');
   await expect(page.locator('#rotTitle')).toHaveAttribute('aria-label', 'Turn your phone');
-  expect(await rot.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe('rgb(229, 25, 28)'); // our red
+  // our red, painted as an image over a black colour (so the browser never tints the notch strips red after it closes)
+  expect(await rot.evaluate((e) => getComputedStyle(e).backgroundImage)).toContain('rgb(229, 25, 28)');
+  expect(await rot.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe('rgb(11, 11, 11)');
   await expect(page.locator('.rot-ok')).toBeFocused();
   await page.locator('.rot-ok').click();
   await expect(rot).toHaveCount(0);

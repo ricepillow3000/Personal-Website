@@ -107,7 +107,11 @@
    a cut-out header on black slabs; the body on a slanted black strip; one button. */
 .rot {
   position: fixed; inset: 0; z-index: 9998; display: grid; place-content: center; justify-items: center; gap: 18px; overflow: hidden;
-  padding: 24px 22px calc(24px + env(safe-area-inset-bottom)); background: var(--red); color: var(--white); text-align: center;
+  padding: 24px 22px calc(24px + env(safe-area-inset-bottom)); color: var(--white); text-align: center;
+  /* the red is painted as an image over a black colour (Nov 21, John: red side strips on the title in Chrome, phone
+     sideways): the browser tints the strips beside the notch with a full-screen fixed layer's background COLOUR and
+     on the title (which never scrolls) kept that red after this reminder closed */
+  background: var(--black) linear-gradient(var(--red), var(--red));
   perspective: 900px; /* the pieces fly in and out in 3D (rotate.js) */
 }
 .rot > * { transform-style: preserve-3d; }
