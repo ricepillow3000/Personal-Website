@@ -511,59 +511,99 @@ function drawTrack(g, kk) {
   g.save();
   pitClip(g);
   const ink = Math.max(0.6, 0.9 / kk);
-  // the bed, in depth bands so it darkens into the tunnel
-  for (let d = 20, n; d < TRACK_FAR; d = n) {
-    n = d * 1.12 + 6;
-    const v = dark(d);
-    g.fillStyle = `rgb(${Math.round(10 + 44 * v)}, ${Math.round(10 + 42 * v)}, ${Math.round(11 + 38 * v)})`; // (Nov 21: a concrete slab, warm grey, in the pit's shade below the platform; darker into the tunnel)
-    quad(g, [P(EDGE_X, BED_Y, d), P(WALL_X, BED_Y, d), P(WALL_X, BED_Y, n + 1), P(EDGE_X, BED_Y, n + 1)]);
-    g.fill();
-  }
-  // the far wall's kerb, and the shadow under the platform's lip (on the bed beside the edge)
-  for (let d = 20, n; d < TRACK_FAR; d = n) {
-    n = d * 1.12 + 6;
-    const v = dark(d);
-    g.fillStyle = `rgba(52, 52, 58, ${v})`;
-    quad(g, [P(WALL_X, BED_Y, d), P(WALL_X + 9, BED_Y, d), P(WALL_X + 9, BED_Y, n + 1), P(WALL_X, BED_Y, n + 1)]);
-    g.fill();
-    // the platform's shadow on the bed beside its edge (Nov 21, John: "make it very noticeable that they are not
-    // the same level"): deep under the lip, fading out across the bed, in hard cel steps
-    [[60, 0.35], [38, 0.5], [18, 0.8]].forEach(([w, a]) => {
-      g.fillStyle = `rgba(0, 0, 0, ${a * v})`;
-      quad(g, [P(EDGE_X, BED_Y, d), P(EDGE_X - w, BED_Y, d), P(EDGE_X - w, BED_Y, n + 1), P(EDGE_X, BED_Y, n + 1)]);
-      g.fill();
-    });
-  }
-  // (Nov 21, John: "the ground below the train tracks is all gravel, it looks like an outdoor train track; make it an
-  // actual subway track with subway floors underneath"): no ballast. A subway's track sits on a CONCRETE SLAB: smooth
-  // cast concrete with expansion joints across it every few metres, a drainage channel down the middle between the
-  // rails (a dark gutter with lit lips), a second one along the wall's kerb; the sleepers are
-  // cast into it (below). Cel-shaded like the station: flat tones, ink joints.
+  /* (Nov 21, John: "the train tracks look a little bit too simple and too bland... full, drawn out designs that
+     match our current design"). The bed is built the way the station's walls and floor are: big flat pieces, each
+     its own aged shade of one warm concrete, ink joints, and the wear a real slab track carries. Far wall to
+     platform: grime at the wall's foot, a CABLE TROUGH under concrete covers (each cover its own shade, two lifting
+     slots), a drain beside it, the slab cast in bays with a construction joint along it, rust washed off each rail
+     onto the slab, an oil and brake-dust streak between the rails, a grated drain down the middle, and the
+     platform's shadow. Flat cel tones, no noise; the same on every visit (shades are seeded). */
   const MID = (RAILS[0] + RAILS[1]) / 2;
-  for (let d = 20, n; d < TRACK_FAR; d = n) {
-    n = d * 1.12 + 6;
-    const v = dark(d);
-    if (v <= 0.02) continue;
-    g.fillStyle = `rgba(8, 8, 10, ${0.92 * v})`; // the centre drain, a gutter between the rails
-    quad(g, [P(MID - 6, BED_Y - 0.2, d), P(MID + 6, BED_Y - 0.2, d), P(MID + 6, BED_Y - 0.2, n + 1), P(MID - 6, BED_Y - 0.2, n + 1)]);
-    g.fill();
-    g.fillStyle = `rgba(150, 146, 136, ${0.55 * v})`; // its far lip, catching the light
-    quad(g, [P(MID - 7.5, BED_Y - 0.3, d), P(MID - 6, BED_Y - 0.3, d), P(MID - 6, BED_Y - 0.3, n + 1), P(MID - 7.5, BED_Y - 0.3, n + 1)]);
-    g.fill();
-    g.fillStyle = `rgba(8, 8, 10, ${0.85 * v})`; // the drain along the wall's kerb
-    quad(g, [P(WALL_X + 9, BED_Y - 0.2, d), P(WALL_X + 15, BED_Y - 0.2, d), P(WALL_X + 15, BED_Y - 0.2, n + 1), P(WALL_X + 9, BED_Y - 0.2, n + 1)]);
-    g.fill();
+  const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const strip = (xa, xb, d0, d1, y = BED_Y) => quad(g, [P(xa, y, d0), P(xb, y, d0), P(xb, y, d1), P(xa, y, d1)]);
+  const tone = (c, f, v = 1) => `rgb(${c.map((n, i) => Math.round([10, 10, 11][i] + (Math.min(255, n * f) - [10, 10, 11][i]) * v)).join(', ')})`;
+  const steps = (fn) => { for (let d = 20, n; d < TRACK_FAR; d = n) { n = d * 1.12 + 6; const v = dark(d); if (v > 0.02) fn(d, n + 1, v); } };
+  const BAY = 150; // a bay of slab, about 4.4 m, between expansion joints
+  const TROUGH = [WALL_X + 3, WALL_X + 21];
+  // the slab, bay by bay (each its own shade; inside the tunnel it sinks into the dark in a few steps)
+  for (let k = 0, d0 = 20; d0 < TRACK_FAR; k++) {
+    const d1 = 30 + BAY * k;
+    const parts = d1 > MOUTH ? 4 : 1;
+    for (let q = 0; q < parts; q++) {
+      const a0 = d0 + ((d1 - d0) * q) / parts; const a1 = d0 + ((d1 - d0) * (q + 1)) / parts;
+      const v = dark((a0 + a1) / 2);
+      g.fillStyle = tone([64, 60, 53], 0.9 + 0.2 * hash(k), v);
+      strip(WALL_X, EDGE_X, a0, a1 + 1);
+      g.fill();
+    }
+    d0 = d1;
   }
-  // (Nov 21, the full-scene scan: the slab's "water stains" were hard-edged dark trapezoids that read as stray shapes;
-  // removed. The slab is plain cast concrete with its drains and joints.)
-  // expansion joints straight across the slab, every ~3.6 m
-  for (let d = 30; d < TRACK_FAR; d += 150) {
+  // the slab was cast in two strips: a construction joint along it, the wall-side strip a shade darker
+  steps((d, n, v) => { g.fillStyle = `rgba(0, 0, 0, ${0.1 * v})`; strip(TROUGH[1], RAILS[1] - 52, d, n); g.fill(); });
+  // rust washed off each rail onto the slab, and the oil and brake-dust streak between the rails (two cel steps each)
+  steps((d, n, v) => {
+    RAILS.forEach((rx) => {
+      g.fillStyle = `rgba(126, 66, 32, ${0.15 * v})`; strip(rx - 11, rx + 11, d, n); g.fill();
+      g.fillStyle = `rgba(126, 66, 32, ${0.17 * v})`; strip(rx - 6, rx + 6, d, n); g.fill();
+    });
+    g.fillStyle = `rgba(0, 0, 0, ${0.16 * v})`; strip(MID - 17, MID + 17, d, n); g.fill();
+    g.fillStyle = `rgba(0, 0, 0, ${0.16 * v})`; strip(MID - 11, MID + 11, d, n); g.fill();
+  });
+  // expansion joints straight across the slab, between the bays
+  for (let d = 30; d < TRACK_FAR; d += BAY) {
     const v = dark(d);
     if (v <= 0.03) continue;
-    g.strokeStyle = `rgba(6, 6, 8, ${0.8 * v})`;
+    g.strokeStyle = `rgba(6, 6, 8, ${0.85 * v})`;
     g.lineWidth = Math.max(ink * 0.8, (F / d) * 0.5);
-    g.beginPath(); g.moveTo(...P(WALL_X + 15, BED_Y - 0.1, d)); g.lineTo(...P(EDGE_X, BED_Y - 0.1, d)); g.stroke();
+    g.beginPath(); g.moveTo(...P(TROUGH[1], BED_Y - 0.1, d)); g.lineTo(...P(EDGE_X, BED_Y - 0.1, d)); g.stroke();
   }
+  steps((d, n, v) => {
+    // the construction joint's ink line
+    g.strokeStyle = `rgba(6, 6, 8, ${0.7 * v})`;
+    g.lineWidth = Math.max(ink * 0.7, (F / d) * 0.3);
+    g.beginPath(); g.moveTo(...P(RAILS[1] - 52, BED_Y - 0.1, d)); g.lineTo(...P(RAILS[1] - 52, BED_Y - 0.1, n)); g.stroke();
+    // grime where the slab meets the wall, and the drain beside the trough (a dark gutter, its far lip lit)
+    g.fillStyle = `rgba(0, 0, 0, ${0.5 * v})`; strip(WALL_X, TROUGH[0], d, n); g.fill();
+    g.fillStyle = `rgba(8, 8, 10, ${0.9 * v})`; strip(TROUGH[1] + 2, TROUGH[1] + 7, d, n, BED_Y - 0.2); g.fill();
+    g.fillStyle = `rgba(150, 142, 126, ${0.5 * v})`; strip(TROUGH[1] + 7, TROUGH[1] + 8.2, d, n, BED_Y - 0.3); g.fill();
+    // the centre drain between the rails: a gutter with lit lips
+    g.fillStyle = `rgba(8, 8, 10, ${0.92 * v})`; strip(MID - 6, MID + 6, d, n, BED_Y - 0.2); g.fill();
+    g.fillStyle = `rgba(150, 142, 126, ${0.55 * v})`; strip(MID - 7.5, MID - 6, d, n, BED_Y - 0.3); g.fill();
+    // the platform's shadow on the bed beside its edge (Nov 21, John: "make it very noticeable that they are not
+    // the same level"): deep under the lip, fading out across the bed, in hard cel steps
+    [[60, 0.35], [38, 0.5], [18, 0.8]].forEach(([w, a]) => { g.fillStyle = `rgba(0, 0, 0, ${a * v})`; strip(EDGE_X - w, EDGE_X, d, n); g.fill(); });
+  });
+  // the centre drain's grating (cast-iron bars across it; they drop out far down the line)
+  for (let d = 24; d < 1300; d += 9) {
+    if (F / d < 0.75) break;
+    g.fillStyle = 'rgba(112, 106, 94, 0.85)';
+    strip(MID - 5.2, MID + 5.2, d, d + 2.2, BED_Y - 0.4);
+    g.fill();
+  }
+  // the cable trough's covers: precast concrete, one every 0.9 m, each its own shade, two lifting slots, ink joints
+  for (let i = 0, d = 20; d < TRACK_FAR; i++, d += 30) {
+    const v = dark(d + 15);
+    if (v <= 0.02) continue;
+    const sc = F / d;
+    g.fillStyle = tone([92, 86, 75], 0.88 + 0.24 * hash(i + 7), v);
+    strip(TROUGH[0], TROUGH[1], d, d + 31);
+    g.fill();
+    if (sc > 0.45) {
+      g.strokeStyle = `rgba(6, 6, 8, ${0.8 * v})`;
+      g.lineWidth = Math.max(ink * 0.7, sc * 0.3);
+      g.beginPath(); g.moveTo(...P(TROUGH[0], BED_Y - 0.1, d)); g.lineTo(...P(TROUGH[1], BED_Y - 0.1, d)); g.stroke();
+    }
+    if (sc > 0.9) {
+      g.fillStyle = 'rgba(8, 8, 10, 0.85)';
+      [5, 13].forEach((o) => { strip(TROUGH[0] + o - 1.6, TROUGH[0] + o + 1.6, d + 13, d + 18, BED_Y - 0.1); g.fill(); });
+    }
+  }
+  steps((d, n, v) => { // the trough's long edges, inked; a thin light along the edge that faces the tubes
+    g.strokeStyle = `rgba(6, 6, 8, ${0.85 * v})`;
+    g.lineWidth = Math.max(ink * 0.8, (F / d) * 0.35);
+    TROUGH.forEach((x) => { g.beginPath(); g.moveTo(...P(x, BED_Y - 0.1, d)); g.lineTo(...P(x, BED_Y - 0.1, n)); g.stroke(); });
+    g.fillStyle = `rgba(170, 160, 140, ${0.35 * v})`; strip(TROUGH[1] - 1.6, TROUGH[1] - 0.4, d, n, BED_Y - 0.15); g.fill();
+  });
   // the sleepers: heavy concrete ties every 0.6 m, a lit top, a darker face toward the camera and its end,
   // bold ink edges, a chipped corner now and then; on each, under each rail, a steel base plate held down
   // by two bolts (hex heads with a lit face) and a spring clip over the rail's foot. Close up you see every
@@ -580,20 +620,24 @@ function drawTrack(g, kk) {
     const e = d + 8;
     const sc = F / d; // screen px per world unit here
     g.globalAlpha = v;
-    g.fillStyle = '#3A3C42'; // its front face
+    const tv = 0.9 + 0.2 * hash(ti + 40); // (each tie its own shade of the same warm concrete, like the tiles)
+    g.fillStyle = 'rgba(0, 0, 0, 0.4)'; // its shadow on the slab, toward the camera
+    strip(x0, x1, d - 3, d + 0.5, BED_Y - 0.05);
+    g.fill();
+    g.fillStyle = tone([62, 57, 49], tv); // its front face
     quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x0, BED_Y, d)]);
     g.fill();
-    g.fillStyle = '#2C2E33'; // its end, toward the camera
+    g.fillStyle = tone([46, 42, 37], tv); // its end, toward the camera
     quad(g, [P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x1, BED_Y, e), P(x1, TIE_Y, e)]);
     g.fill();
-    g.fillStyle = '#8C8F98'; // the lit top
+    g.fillStyle = tone([122, 115, 100], tv); // the lit top (down in the pit: dimmer than the platform's floor)
     quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, e), P(x0, TIE_Y, e)]);
     g.fill();
-    g.fillStyle = '#A9ACB4'; // the light along its near edge
+    g.fillStyle = tone([150, 142, 124], tv); // the light along its near edge
     quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, d + 1.2), P(x0, TIE_Y, d + 1.2)]);
     g.fill();
     if (ti % 5 === 2 && sc > 1.2) { // a chipped corner
-      g.fillStyle = '#3A3C42';
+      g.fillStyle = tone([62, 57, 49], tv);
       quad(g, [P(x1 - 7, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, d + 3), P(x1 - 3, TIE_Y, d + 1.6)]);
       g.fill();
     }
@@ -603,16 +647,19 @@ function drawTrack(g, kk) {
     g.stroke();
     quad(g, [P(x0, BED_Y, d), P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, BED_Y, d)]);
     g.stroke();
-    // the fastenings
+    // the fastenings (and, under each, the rust the rail has bled onto the tie's top)
     RAILS.forEach((rx) => {
       const y = TIE_Y - 0.5;
-      g.fillStyle = '#5A5E67'; // the base plate: lit steel, an ink edge, its front edge in shade
+      g.fillStyle = 'rgba(126, 66, 32, 0.3)';
+      strip(rx - 13, rx + 13, d + 0.6, e - 0.4, TIE_Y - 0.05);
+      g.fill();
+      g.fillStyle = '#5F5850'; // the base plate: steel gone brown with rust and brake dust, an ink edge, its front edge in shade
       quad(g, [P(rx - 7.5, y, d + 1), P(rx + 7.5, y, d + 1), P(rx + 7.5, y, d + 7), P(rx - 7.5, y, d + 7)]);
       g.fill();
       g.strokeStyle = 'rgba(4, 4, 6, 0.9)';
       g.lineWidth = Math.max(ink * 0.8, sc * 0.25);
       g.stroke();
-      g.fillStyle = '#33363C';
+      g.fillStyle = '#35302B';
       quad(g, [P(rx - 7.5, y, d + 1), P(rx + 7.5, y, d + 1), P(rx + 7.5, y + 0.5, d + 1), P(rx - 7.5, y + 0.5, d + 1)]);
       g.fill();
       if (sc < 0.9) return; // (too far: the bolts would be specks)
@@ -621,22 +668,22 @@ function drawTrack(g, kk) {
         const br = sc * 1.55;
         g.fillStyle = '#16171A'; // the washer
         g.beginPath(); g.ellipse(bx, by + br * 0.12, br * 1.25, br * 0.7, 0, 0, Math.PI * 2); g.fill();
-        g.fillStyle = '#B4B8C0';
+        g.fillStyle = '#B5AE9F';
         g.beginPath();
         for (let k = 0; k < 6; k++) { const t = (k / 6) * Math.PI * 2 + Math.PI / 6; g[k ? 'lineTo' : 'moveTo'](bx + Math.cos(t) * br, by - br * 0.25 + Math.sin(t) * br * 0.56); }
         g.closePath(); g.fill();
         g.strokeStyle = 'rgba(4, 4, 6, 0.95)';
         g.lineWidth = Math.max(0.5, sc * 0.22);
         g.stroke();
-        g.fillStyle = '#6E737C'; // the head's side, in shade
+        g.fillStyle = '#6F685C'; // the head's side, in shade
         quad(g, [[bx - br, by - br * 0.25], [bx + br, by - br * 0.25], [bx + br, by + br * 0.18], [bx - br, by + br * 0.18]]);
         g.fill();
-        g.fillStyle = '#EEF0F4'; // a glint
+        g.fillStyle = '#F4EEDD'; // a glint
         g.beginPath(); g.ellipse(bx - br * 0.35, by - br * 0.42, br * 0.32, br * 0.16, 0, 0, Math.PI * 2); g.fill();
       });
       [-2.9, 2.9].forEach((o) => { // the spring clips gripping the rail's foot
         const s0 = Math.sign(o);
-        g.strokeStyle = '#B9BDC5';
+        g.strokeStyle = '#B4AC9C';
         g.lineWidth = Math.max(0.6, sc * 0.55);
         g.beginPath();
         g.moveTo(...P(rx + o + s0 * 2.4, y - 0.4, d + 2.4));
@@ -660,17 +707,17 @@ function drawTrack(g, kk) {
       const v = dark(d);
       g.globalAlpha = v;
       const sc = F / d;
-      g.fillStyle = '#1A1B1F'; // the foot
+      g.fillStyle = '#2A1D16'; // the foot (rust-dark)
       quad(g, [P(rx - 2.6, TIE_Y - 1, d), P(rx + 2.8, TIE_Y - 1, d), P(rx + 2.8, TIE_Y - 1, n + 1), P(rx - 2.6, TIE_Y - 1, n + 1)]);
       g.fill();
-      g.fillStyle = '#2B2D33'; // the web, toward the camera
+      g.fillStyle = '#5A3524'; // the web, toward the camera: rail steel is rust-brown everywhere the wheels don't polish it
       quad(g, [P(rx + 1.3, RAIL_Y + 0.6, d), P(rx + 1.3, TIE_Y - 1, d), P(rx + 1.3, TIE_Y - 1, n + 1), P(rx + 1.3, RAIL_Y + 0.6, n + 1)]);
       g.fill();
       if (sc > 0.8) { // the head as a solid bar with ink edges
-        g.fillStyle = '#C9CED6';
+        g.fillStyle = '#D6D0C0';
         quad(g, [P(rx - 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y, n + 1), P(rx - 1.3, RAIL_Y, n + 1)]);
         g.fill();
-        g.fillStyle = '#7D828C'; // its rounded side, in shade
+        g.fillStyle = '#857A6A'; // its rounded side, in shade
         quad(g, [P(rx + 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y + 0.9, d), P(rx + 1.3, RAIL_Y + 0.9, n + 1), P(rx + 1.3, RAIL_Y, n + 1)]);
         g.fill();
         g.strokeStyle = 'rgba(6, 6, 8, 0.95)';
@@ -688,14 +735,14 @@ function drawTrack(g, kk) {
         g.moveTo(...P(rx + 1.6, TIE_Y, d));
         g.lineTo(...P(rx + 1.6, TIE_Y, n + 1));
         g.stroke();
-        g.strokeStyle = '#C9CED6'; // the head (a stroke, so it keeps a visible width far away)
+        g.strokeStyle = '#D6D0C0'; // the head (a stroke, so it keeps a visible width far away)
         g.lineWidth = Math.max(minHead, sc * 2.6);
         g.beginPath();
         g.moveTo(...P(rx, RAIL_Y, d));
         g.lineTo(...P(rx, RAIL_Y, n + 1));
         g.stroke();
       }
-      g.strokeStyle = '#FFFFFF'; // its shine
+      g.strokeStyle = '#FFF9EA'; // its shine (the tubes are warm)
       g.lineWidth = Math.max(minHead * 0.45, sc * 0.6);
       g.beginPath();
       g.moveTo(...P(rx - 0.3, RAIL_Y, d));
@@ -703,6 +750,23 @@ function drawTrack(g, kk) {
       g.stroke();
     }
     g.globalAlpha = 1;
+  });
+  /* (Nov 21, John: "ensure the leveling is absolutely correct, the track bed and the tracks lower than the walking
+     platform, and you can see it very clearly"). The track is 0.68 m under the platform in the model (bed 77 against
+     the platform's 54), but seen from the platform the near rail lies right past the lip, so it read as lying ON the
+     edge. What tells the eye "down there": the platform's own shade falls over everything under its lip, the tie
+     ends and the near rail too (not only the slab), deepest right under the edge, in hard cel steps; so the lit
+     coping stands bright over a dark drop, and the ties visibly run in under it. The near rail keeps a dim line of
+     light on its head so the track still reads whole. */
+  steps((d, n, v) => {
+    [[70, 0.32], [48, 0.45], [30, 0.55], [14, 0.8]].forEach(([w, a]) => {
+      g.fillStyle = `rgba(4, 4, 6, ${a * v})`;
+      quad(g, [P(EDGE_X, SKIRT, d), P(EDGE_X - w, BED_Y, d), P(EDGE_X - w, BED_Y, n), P(EDGE_X, SKIRT, n)]);
+      g.fill();
+    });
+    g.strokeStyle = `rgba(214, 208, 192, ${0.38 * v})`;
+    g.lineWidth = Math.max(minHead * 0.5, (F / d) * 0.7);
+    g.beginPath(); g.moveTo(...P(RAILS[0] - 0.2, RAIL_Y, d)); g.lineTo(...P(RAILS[0] - 0.2, RAIL_Y, n)); g.stroke();
   });
   g.restore();
 }
