@@ -532,7 +532,7 @@ function drawTrack(g, kk) {
     for (let q = 0; q < parts; q++) {
       const a0 = d0 + ((d1 - d0) * q) / parts; const a1 = d0 + ((d1 - d0) * (q + 1)) / parts;
       const v = dark((a0 + a1) / 2);
-      g.fillStyle = tone([64, 60, 53], 0.9 + 0.2 * hash(k), v);
+      g.fillStyle = tone([56, 53, 47], 0.9 + 0.2 * hash(k), v); // (a step under the platform's floor: it is down in the pit)
       strip(WALL_X, EDGE_X, a0, a1 + 1);
       g.fill();
     }
@@ -585,7 +585,7 @@ function drawTrack(g, kk) {
     const v = dark(d + 15);
     if (v <= 0.02) continue;
     const sc = F / d;
-    g.fillStyle = tone([92, 86, 75], 0.88 + 0.24 * hash(i + 7), v);
+    g.fillStyle = tone([80, 75, 66], 0.88 + 0.24 * hash(i + 7), v);
     strip(TROUGH[0], TROUGH[1], d, d + 31);
     g.fill();
     if (sc > 0.45) {
@@ -621,23 +621,23 @@ function drawTrack(g, kk) {
     const sc = F / d; // screen px per world unit here
     g.globalAlpha = v;
     const tv = 0.9 + 0.2 * hash(ti + 40); // (each tie its own shade of the same warm concrete, like the tiles)
-    g.fillStyle = 'rgba(0, 0, 0, 0.4)'; // its shadow on the slab, toward the camera
-    strip(x0, x1, d - 3, d + 0.5, BED_Y - 0.05);
+    g.fillStyle = 'rgba(0, 0, 0, 0.58)'; // its contact shadow on the slab, toward the camera (hard: it sits ON the slab)
+    strip(x0 - 1.5, x1, d - 4, d + 0.5, BED_Y - 0.05);
     g.fill();
-    g.fillStyle = tone([62, 57, 49], tv); // its front face
+    g.fillStyle = tone([52, 48, 41], tv); // its front face
     quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x0, BED_Y, d)]);
     g.fill();
-    g.fillStyle = tone([46, 42, 37], tv); // its end, toward the camera
+    g.fillStyle = tone([40, 37, 32], tv); // its end, toward the camera
     quad(g, [P(x1, TIE_Y, d), P(x1, BED_Y, d), P(x1, BED_Y, e), P(x1, TIE_Y, e)]);
     g.fill();
-    g.fillStyle = tone([122, 115, 100], tv); // the lit top (down in the pit: dimmer than the platform's floor)
+    g.fillStyle = tone([100, 94, 82], tv); // the lit top (down in the pit: clearly dimmer than the platform's floor)
     quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, e), P(x0, TIE_Y, e)]);
     g.fill();
-    g.fillStyle = tone([150, 142, 124], tv); // the light along its near edge
+    g.fillStyle = tone([126, 119, 104], tv); // the light along its near edge
     quad(g, [P(x0, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, d + 1.2), P(x0, TIE_Y, d + 1.2)]);
     g.fill();
     if (ti % 5 === 2 && sc > 1.2) { // a chipped corner
-      g.fillStyle = tone([62, 57, 49], tv);
+      g.fillStyle = tone([52, 48, 41], tv);
       quad(g, [P(x1 - 7, TIE_Y, d), P(x1, TIE_Y, d), P(x1, TIE_Y, d + 3), P(x1 - 3, TIE_Y, d + 1.6)]);
       g.fill();
     }
@@ -696,6 +696,12 @@ function drawTrack(g, kk) {
     });
   });
   g.globalAlpha = 1;
+  // each rail's own shadow on the ties and the slab, on the side away from the tubes (they hang over the platform,
+  // to the right): one hard strip, so the rail stands ON the track instead of lying drawn across it
+  steps((d, n, v) => {
+    g.fillStyle = `rgba(0, 0, 0, ${0.36 * v})`;
+    RAILS.forEach((rx) => { strip(rx - 9.5, rx - 2.6, d, n, TIE_Y - 0.06); g.fill(); });
+  });
   // the rails: a wide foot on the plates, a dark web (its side toward the camera), and a polished head
   // that catches the station's light, inked along both edges. Near the camera they are drawn as solid
   // shapes; far away the head is a stroke never thinner than ~1.6 screen px, so they read all the way
@@ -714,7 +720,7 @@ function drawTrack(g, kk) {
       quad(g, [P(rx + 1.3, RAIL_Y + 0.6, d), P(rx + 1.3, TIE_Y - 1, d), P(rx + 1.3, TIE_Y - 1, n + 1), P(rx + 1.3, RAIL_Y + 0.6, n + 1)]);
       g.fill();
       if (sc > 0.8) { // the head as a solid bar with ink edges
-        g.fillStyle = '#D6D0C0';
+        g.fillStyle = '#B8B2A3';
         quad(g, [P(rx - 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y, d), P(rx + 1.3, RAIL_Y, n + 1), P(rx - 1.3, RAIL_Y, n + 1)]);
         g.fill();
         g.fillStyle = '#857A6A'; // its rounded side, in shade
@@ -735,7 +741,7 @@ function drawTrack(g, kk) {
         g.moveTo(...P(rx + 1.6, TIE_Y, d));
         g.lineTo(...P(rx + 1.6, TIE_Y, n + 1));
         g.stroke();
-        g.strokeStyle = '#D6D0C0'; // the head (a stroke, so it keeps a visible width far away)
+        g.strokeStyle = '#B8B2A3'; // the head (a stroke, so it keeps a visible width far away)
         g.lineWidth = Math.max(minHead, sc * 2.6);
         g.beginPath();
         g.moveTo(...P(rx, RAIL_Y, d));
@@ -759,7 +765,7 @@ function drawTrack(g, kk) {
      coping stands bright over a dark drop, and the ties visibly run in under it. The near rail keeps a dim line of
      light on its head so the track still reads whole. */
   steps((d, n, v) => {
-    [[70, 0.32], [48, 0.45], [30, 0.55], [14, 0.8]].forEach(([w, a]) => {
+    [[74, 0.34], [51, 0.62], [14, 0.8]].forEach(([w, a]) => { // (what the eye sees past the lip starts ~38 out: a deep step to the drain's near lip, a lighter one to its far lip, then the lit slab)
       g.fillStyle = `rgba(4, 4, 6, ${a * v})`;
       quad(g, [P(EDGE_X, SKIRT, d), P(EDGE_X - w, BED_Y, d), P(EDGE_X - w, BED_Y, n), P(EDGE_X, SKIRT, n)]);
       g.fill();

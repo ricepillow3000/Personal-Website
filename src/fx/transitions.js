@@ -200,7 +200,7 @@ export function tunnelWipe(swap) {
       ease: 'none',
       onUpdate: () => {
         const t = clock.t;
-        shot.tick(t, { rumble: Math.min(1, t / 0.5), panP: gsap.parseEase('power2.inOut')(Math.min(1, t / 0.45)) });
+        shot.tick(t, { rumble: Math.min(1, t / 0.5), panP: gsap.parseEase('power3.out')(Math.min(1, t / 0.5)) }); // (a whip pan that settles: off at once, decisive stop; the floaty in-out curve is not our motion)
         // a heavy train: a deep rumble that swells as it comes, a thump per wheel set, the air
         // wall's shove as the nose passes (never a random buzz: that read as weightless)
         const m = shot.motion(t);
