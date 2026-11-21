@@ -1165,7 +1165,7 @@ test('loading screen: the click on ENTER THE STATION turns the sound on, the div
   await ctx.close();
 });
 
-test('sideways phones: the whole ATL poster stays on screen, a tap asks for full screen (never upright, never desktop), and the home-screen app files exist', async ({ browser, request }) => {
+test('sideways phones: the station shows clear (no ATL poster or arrow), a tap asks for full screen (never upright, never desktop), and the home-screen app files exist', async ({ browser, request }) => {
   const ctx = await browser.newContext({ viewport: { width: 829, height: 361 }, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   await page.addInitScript(() => {
@@ -1174,9 +1174,7 @@ test('sideways phones: the whole ATL poster stays on screen, a tap asks for full
   });
   await page.goto('/');
   await expect(page.locator('#pressStart')).toBeVisible();
-  const r = await page.locator('.bd-poster').boundingBox();
-  expect(r.y).toBeGreaterThanOrEqual(0);
-  expect(r.y + r.height).toBeLessThanOrEqual(361); // (it ran off the bottom before)
+  await expect(page.locator('.bd-poster, .bd-arrow')).toHaveCount(0); // (Nov 21, John: removed, corny)
   await page.touchscreen.tap(700, 120);
   await expect.poll(() => page.evaluate(() => window.__fs)).toBe(1);
   expect(await page.evaluate(() => window.__fsOpt)).toEqual({ navigationUI: 'hide' });
