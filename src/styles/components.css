@@ -824,7 +824,14 @@ body[data-mode="page"] .hud-tl { display: none; }
 .ss-line::before { content: ""; position: absolute; left: calc(6px + var(--S) / 2 - 12px); right: calc(6px + var(--S) / 2 - 12px); top: 50%; height: 7px; margin-top: -3.5px;
   background: linear-gradient(90deg, var(--red) 0 calc(var(--at) * var(--S) + 12px), var(--black) 0);
   box-shadow: 3px 3px 0 var(--red-dark); clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
-.ss-line li { position: relative; display: flex; justify-content: center; width: var(--S); }
+.ss-line li { position: relative; display: flex; justify-content: center; width: var(--S);
+  /* each stop's box reaches as far up and down as its name and the dagger do (invisible padding, cancelled
+     by a negative margin, so nothing moves and its centre stays the tile's). Nov 21, John's phone held
+     sideways, twice: after a scroll down and back up, iPhone Safari redrew the line cut along a straight
+     line, everything above the tiles (the names, the dagger's handle) gone. It only repaints what a box says
+     it covers, and the names and the dagger hang out of a 40px row. Taps pass through the padding. */
+  padding-block: 130px; margin-block: -130px; pointer-events: none; }
+.ss-line .ss-dot { pointer-events: auto; }
 .ss-line li + li { margin-left: 0; }
 .ss-dot { position: relative; display: grid; place-items: center; width: var(--t); height: calc(var(--t) * .86); border: 0; border-radius: 0; background: none;
   filter: drop-shadow(1.6px 0 0 var(--black)) drop-shadow(-1.6px 0 0 var(--black)) drop-shadow(0 1.6px 0 var(--black)) drop-shadow(0 -1.6px 0 var(--black)) drop-shadow(3px 3px 0 var(--red));
