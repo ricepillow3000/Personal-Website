@@ -89,6 +89,7 @@ const CLIP_HIT = {
   'fall-wind': 0, // a real 25 m/s gale: the fall
   'land-boom': 0.02, // a real deep boom with a thwack on top: the landing
   'knife-thunk': 0.001, // a real wood impact (Kenney, CC0): the dagger's point landing in your stop
+  'street-life': 0, // a real busy street (Oculus Audio Pack 01, CC BY 4.0): the SIDE QUESTS square
 };
 const clips = {};
 let clipsReady = null;
@@ -450,6 +451,15 @@ function flapping(bus, at, dur, gain) {
   loopBuf(noiseBuf, at, end).connect(bp).connect(chop).connect(g);
 }
 /* a car going by down on the street: a swell of tire noise that rises and falls in pitch */
+/* BUSY STREET LIFE (Nov 21, John: "add busy street life sound effects" to the SIDE QUESTS square): a real
+   recording of a busy street (crowd babble, footsteps, traffic; `street-life`). A synthesized crowd was tried
+   first and failed by ear (its babble read as "shakers" and "footsteps on gravel"), so until the clip has
+   loaded only a quiet traffic bed and a far horn stand in. */
+function streetFallback(bus, at, dur) {
+  noise(bus, { at, dur, type: 'lowpass', freq: 170, gain: 0.08 });
+  noise(bus, { at, dur, type: 'bandpass', freq: 900, q: 0.6, gain: 0.03 });
+  carHorn(pan(bus, 0.6), at + 0.9, 0.2, [370, 466], 0.02);
+}
 function carPass(bus, at, dur, gain, side) {
   const src = loopBuf(brownBuf, at, at + dur);
   const f = ac.createBiquadFilter();
@@ -761,6 +771,7 @@ const VOICES = {
     carPass(bus, at + 0.12, 0.45, 0.25, 0.5);
     carHorn(pan(bus, 0.3), at + 0.08, 0.16, [392, 494], 0.06);
   },
+  street: (bus, at) => clip(bus, 'street-life', at, { gain: 1, align: false }) || streetFallback(bus, at, 2.1),
   /* a big LED billboard switching on: an electrical buzz and a hum */
   buzz: (bus, at) => {
     tone(bus, { at, dur: 0.2, from: 120, to: 120, type: 'square', gain: 0.05 });

@@ -71,4 +71,8 @@ export const SOUND_CREDITS = [
     what: 'The dagger landing in your stop (the line map)', file: 'knife-thunk.mp3', title: 'impactWood_light_000', pack: 'Impact Sounds', author: 'Kenney',
     source: 'https://kenney.nl/assets/impact-sounds', license: 'CC0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
   },
+  {
+    what: 'The busy street (the SIDE QUESTS square)', file: 'street-life.mp3', title: 'AMBUrbn_CityEuroDaytime_LOOP_01', pack: 'Oculus Audio Pack 01', author: 'Oculus VR, LLC',
+    source: 'https://developers.meta.com/vr/downloads/package/oculus-audio-pack-1/', license: 'CC BY 4.0', licenseUrl: 'https://creativecommons.org/licenses/by/4.0/', changes: 'trimmed to 2.4 s (59.0 to 61.4 s), faded, leveled, mono MP3',
+  },
 ];

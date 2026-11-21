@@ -848,10 +848,10 @@ test('sound: SETTINGS credits every real recording, and every clip the engine as
   await expect(credits).toContainText('CC BY-SA 3.0');
   await expect(credits).toContainText('ProtoplasmaKid'); // the NEXT STOP metro braking
   await expect(credits).toContainText('W.carter'); // THE DROP's gale
-  await expect(credits.locator('li')).toHaveCount(14);
+  await expect(credits.locator('li')).toHaveCount(15);
   const src = readFileSync(join(process.cwd(), 'src/audio/audio.js'), 'utf8');
   const names = [...src.slice(src.indexOf('const CLIP_HIT = {'), src.indexOf('};', src.indexOf('const CLIP_HIT = {'))).matchAll(/'([a-z-]+)':/g)].map((m) => m[1]);
-  expect(names.length).toBe(14);
+  expect(names.length).toBe(15);
   for (const n of names) {
     const r = await request.get(`/assets/sfx/${n}.mp3`);
     expect(r.status(), n).toBe(200);
@@ -880,7 +880,7 @@ test('sound: on by default, but nothing downloads and nothing plays before the f
   expect(fetched).toEqual([]); // no gesture yet: no audio engine, no downloads
   expect(music).toEqual([]);
   await page.locator('.title-hook').click(); // the first tap anywhere
-  await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(14);
+  await expect.poll(() => fetched.length, { timeout: 5000 }).toBe(15);
   await expect.poll(() => music.length, { timeout: 5000 }).toBe(1);
   await expect.poll(() => page.evaluate(() => document.querySelector('#soundBtn').getAttribute('aria-pressed'))).toBe('true');
 });
