@@ -1233,7 +1233,8 @@ test('SIDE QUESTS plays THE SQUARE: a painted square with nine screens, the big 
   await expect(sq.locator('.sq-img')).toHaveCount(1);
   await expect(sq.locator('.sq-scr')).toHaveCount(9);
   expect((await sq.locator('.sq-scr.sq-main .sq-label').innerText()).replace(/\s+/g, '')).toMatch(/SIDEQUESTS/i);
-  for (const t of ['TIME', 'JOHN', 'BORING', '727']) await expect(sq).toContainText(t);
+  for (const t of ['CLOSER', 'JOHN', 'ROUTINE', 'STEAL']) await expect(sq).toContainText(t);
+  for (const t of ['TAKE YOUR', '2,000+', '727', 'BORING']) await expect(sq).not.toContainText(t); // (fresh lines, not the ones the rest of the site repeats)
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'side-quests', { timeout: 8000 });
   await expect(sq).toHaveCount(0, { timeout: 4000 }); // (it cleans itself up)
 });
@@ -1262,8 +1263,9 @@ test('departure board: a 3D box in the station\'s perspective; LET US START THE 
     await expect(sign.locator('.ss-run span').first()).toHaveText('LET US START THE GAME');
     await expect(sign.locator('.ss-code')).toHaveText('JN');
     const shown = (await sign.locator('.ss-time').innerText()).replace(/\s+/g, '');
-    const want = await page.evaluate(() => { const d = new Date(); const hr = d.getHours(); return [`${hr % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}${hr < 12 ? 'AM' : 'PM'}`, d.getSeconds()]; });
-    if (want[1] < 58) expect(shown).toBe(want[0]); // (unless the minute turns over right now)
+    // the visitor's time now, or a minute ago (the sign updates once a second, so a read right at the turn of a minute can lag)
+    const want = await page.evaluate(() => [0, 60000].map((ms) => { const d = new Date(Date.now() - ms); const hr = d.getHours(); return `${hr % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}${hr < 12 ? 'AM' : 'PM'}`; }));
+    expect(want).toContain(shown);
     const x = () => sign.locator('.ss-run').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).m41);
     const a = await x();
     await page.waitForTimeout(500);

@@ -164,16 +164,16 @@ const SQ_SCREENS = [ // [id, TL, TR, BR, BL] in the picture's own px, and the ad
 ];
 const SQ_ADS = {
   main: '<span class="sq-on">NOW SHOWING</span><span class="sq-label ransom" data-label></span><i class="sq-slash"></i>',
-  time: '<b>TAKE</b><b>YOUR</b><b class="sq-big">TIME</b>',
-  name: '<b class="sq-john">JOHN</b><b class="sq-ng">NGUYEN</b>',
+  time: '<b>LOOK</b><b class="sq-big">CLOSER</b>',
+  name: '<b class="sq-wanted">WANTED</b><b class="sq-john">JOHN</b><b class="sq-ng">NGUYEN</b>',
   star: '<i class="sq-starmark"></i>',
-  proof: '<b><em>2</em> LIVE APPS</b><b><em>2,000+</em> TESTS</b>',
-  motto: '<b>RESUMES DON\'T</b><b>HAVE TO BE</b><b class="sq-red">BORING</b>',
+  proof: '<b>STEAL</b><b><em>THE SHOW</em></b>',
+  motto: '<b>BREAK THE</b><b class="sq-red">ROUTINE</b>',
   stripes: '<i class="sq-run"></i>',
-  checks: '<b class="sq-big">727</b><b>/728</b><b class="sq-sm">CHECKS</b>',
+  checks: '<b class="sq-sm">NEW</b><b class="sq-big">?</b><b class="sq-sm">LEAD</b>',
   jn: '<b class="sq-big">JN</b>',
 };
-const SQ_FS = { main: 1, time: 1.65, name: 1, star: 1, proof: 1.05, motto: 1, stripes: 1, checks: 1.75, jn: 1 }; // (text size per screen)
+const SQ_FS = { main: 1, time: 1.45, name: 0.9, star: 1, proof: 1.15, motto: 1.25, stripes: 1, checks: 1.75, jn: 1 }; // (text size per screen)
 const sqGrow = (q, k) => { // the quad grown about its centre (overscan, hidden under the bezel)
   const cx = q.reduce((t, p) => t + p[0], 0) / 4;
   const cy = q.reduce((t, p) => t + p[1], 0) / 4;
