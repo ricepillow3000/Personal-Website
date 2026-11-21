@@ -42,16 +42,10 @@ function torn(x, y, w, h, seed = 3) {
    transparent since the Nano Banana art, yet was still built, laid out and moved with the mouse.) */
 
 /* =========================================================================
-   LAYER 2 — GRAFFITI: stencil stars,
-   torn posters with tape, a swoosh arrow.
+   LAYER 2 — GRAFFITI: the stencil star behind the title.
    ========================================================================= */
 function graffitiLayer() {
-  const posterA = torn(1120, 470, 280, 330, 11);
-  const tape = (x, y, r) => `<rect x="${x}" y="${y}" width="74" height="22" fill="${C.white}" opacity=".55" transform="rotate(${r} ${x + 37} ${y + 11})"/>`;
   return `<svg viewBox="${VB}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <defs>
-    <pattern id="dotsR" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="2.6" fill="${C.red2}"/></pattern>
-  </defs>
 
   <!-- giant stencil star with an offset red echo -->
   <g class="spin-slow" style="--spin:120s">
@@ -61,21 +55,7 @@ function graffitiLayer() {
   ${poly(star(330, 560, 110), C.black)}
 
 
-  <!-- torn poster A: halftone + bold mark, taped -->
-  <g class="bd-poster"><!-- (on phones held sideways, CSS lifts and shrinks it so the whole poster stays on screen) -->
-  <g transform="translate(0 46) rotate(5 1260 635)"><!-- (moved down 46 on Nov 19 so the CONNECT banner above it has room to breathe) -->
-    ${poly(posterA, C.white)}
-    ${poly(posterA, 'url(#dotsR)')}
-    ${poly(star(1260, 610, 88), C.black)}
-    <text x="1260" y="770" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="64" fill="${C.black}" letter-spacing="4">ATL</text>
-    ${tape(1104, 456, -18)}<g class="atl-tape">${tape(1340, 452, 14)}</g>
-  </g>
-  </g>
-  <!-- (the GO! poster that hung top-left was retired on Nov 19: the title's calendar sticker sits there now) -->
-
-  <!-- swoosh arrow (wildstyle-ish), white with black outline -->
-  <path class="bd-arrow" transform="translate(0 34)" d="M520 420 C 700 330, 900 330, 1040 400 L 1060 360 L 1130 460 L 1010 488 L 1028 446 C 900 392, 720 400, 560 470 Z"
-    fill="${C.white}" stroke="${C.black}" stroke-width="10" stroke-linejoin="round" paint-order="stroke"/>
+  <!-- (the ATL poster and the swoosh arrow pointing at it were removed Nov 21, John: "kind of corny"; the station shows clear) -->
 
   <!-- (the crown outline under the mute button was removed Nov 19, John: corny) -->
 </svg>`;

@@ -372,6 +372,8 @@ Run after every design change; report results honestly.
 
 ## 13. Decision log (what was tried and rejected, so it doesn't come back)
 
+- **The ATL poster and the white swoosh arrow pointing at it (title, removed Nov 21, John: "I don't like the arrow pointing to the ATL sticker... kind of corny").** Both gone from the graffiti layer (`backdrop.js`), with their CSS (the sideways-phone lift, the tall-screen hide); the station shows clear, the stencil star behind the title stays, and the vending machine is no longer half hidden on desktops. Don't bring back a poster or an arrow pointing at one there; any new piece on the title must not crowd the station.
+
 - **Red themed-poster background on the loading screen** (swirls, torn paper, lightning bolt, outlined stars) → replaced the same day by a clean black + one red band (John: "I don't like the background... make one that looks clean").
 - **One save with a "Save found · Start over" line (and Undo) under the title button** → replaced Nov 19 by SAVE DATA: five files, picked after PRESS START / CONTINUE (John's save-screen reference).
 - **The red themed-poster background on the MENU** → reverted the same day: the reference was for the **loading screen** (John: "when I sent that reference I was talking about the loading background design"). Ask which screen a reference is for when it isn't said.
