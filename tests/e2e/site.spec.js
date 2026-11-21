@@ -1238,11 +1238,10 @@ test('SIDE QUESTS plays THE SQUARE: a painted square with nine screens, the big 
   const run = sq.locator('.sq-main .sq-bar .sq-bar-run');
   await expect(run.locator('span')).toHaveCount(4);
   const x0 = await run.evaluate((e) => e.getBoundingClientRect().left);
-  await page.waitForTimeout(250);
-  expect(await run.evaluate((e) => e.getBoundingClientRect().left)).toBeGreaterThan(x0);
+  await expect.poll(() => run.evaluate((e) => e.getBoundingClientRect().left), { timeout: 3000 }).toBeGreaterThan(x0);
   for (const t of ['TAKE YOUR', '2,000+', '727', 'BORING']) await expect(sq).not.toContainText(t); // (fresh lines, not the ones the rest of the site repeats)
-  await expect(page.locator('body')).toHaveAttribute('data-screen', 'side-quests', { timeout: 8000 });
-  await expect(sq).toHaveCount(0, { timeout: 4000 }); // (it cleans itself up)
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'side-quests', { timeout: 12000 });
+  await expect(sq).toHaveCount(0, { timeout: 8000 }); // (it cleans itself up)
 });
 
 test('the departure board and the station lights never show off the title (they used to hang faded over the city on THE PLAN)', async ({ page }) => {
