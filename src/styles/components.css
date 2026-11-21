@@ -711,6 +711,10 @@ body[data-mode="title"] .scroll-meter { display: none; }
 .sq-g-time { --c: 229, 25, 28; }
 .sq-name { background: var(--black); } .sq-name .sq-john { font: 400 2.6em/1 var(--f-head); color: var(--white); background: var(--red); padding: 0 .15em; rotate: -4deg; text-shadow: none; } .sq-name .sq-ng { font-size: 1.75em; letter-spacing: .16em; margin-top: .12em; }
 .sq-g-name { --c: 229, 25, 28; opacity: .6; }
+.sq-time b { font-size: 2em !important; } .sq-time .sq-big { letter-spacing: .02em; }
+.sq-name .sq-wanted { font-size: 1.55em; letter-spacing: .25em; color: var(--yellow); margin-bottom: .1em; }
+.sq-proof b { font-size: 1.7em; } .sq-proof em { font-size: 1.1em; }
+.sq-checks .sq-sm { font-size: 1.5em !important; letter-spacing: .12em !important; } .sq-checks .sq-big { font-size: 3.4em; color: var(--yellow); text-shadow: .05em .05em 0 var(--red), 0 0 .2em var(--yellow); }
 .sq-scr.sq-star { background: var(--red); }
 .sq-starmark { position: relative; z-index: 1; width: 6.4em; height: 6.4em; background: var(--white); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
   animation: sq-spin 1.2s linear infinite; }
