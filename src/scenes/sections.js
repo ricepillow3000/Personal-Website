@@ -1,4 +1,6 @@
 import { SOUND_CREDITS } from '../data/credits.js';
+/* an outbound-link arrow drawn as a shape (Nov 21, John: the north-east arrow character showed as a blue emoji tile on his iPhone; no emojis anywhere) */
+const EXT = '<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 9.5 9 3M4 2.5h5.5V8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg>';
 import { gsap } from 'gsap';
 import { resume } from '../data/resume.js';
 import { reorder } from '../data/companies.js';
@@ -69,8 +71,8 @@ export function dossierMarkup(m) {
       <ul class="dossier-stack">${m.stack.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
     </header>
     <div class="dossier-links">
-      <a class="btn" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}" data-clear="${m.id}">Try it live ↗</a>
-      <a class="btn" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}" data-clear="${m.id}">Code on GitHub ↗</a>
+      <a class="btn" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}" data-clear="${m.id}">Try it live ${EXT}</a>
+      <a class="btn" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}" data-clear="${m.id}">Code on GitHub ${EXT}</a>
     </div>
     <p class="dossier-hint">${isCleared(m.id) ? 'Case cleared. Thanks for checking it out.' : 'Visit the live app or the code to clear this case.'}</p>
     <div class="dossier-cols">
@@ -335,9 +337,9 @@ function contact() {
         </div>
       </div></div>
       <div class="contact-btns" data-in>
-        <a class="btn btn-primary" data-nav data-magnetic href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect on LinkedIn ↗</a>
+        <a class="btn btn-primary" data-nav data-magnetic href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect on LinkedIn ${EXT}</a>
         <a class="btn" data-nav href="mailto:${esc(L.email)}" data-track="email_click">${esc(L.email)}</a>
-        <a class="btn" data-nav href="${esc(L.github)}" target="_blank" rel="noopener" data-track="github_click">GitHub ↗</a>
+        <a class="btn" data-nav href="${esc(L.github)}" target="_blank" rel="noopener" data-track="github_click">GitHub ${EXT}</a>
         <a class="btn btn-accent" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">↓ PDF resume</a>
       </div>`,
     after(root) {
