@@ -214,9 +214,14 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
 /* the off-the-record starburst lives on the ID card (it moved here from the old board) */
 .idcard { position: relative; }
 .idcard .gpa-burst { position: absolute; top: 54px; right: 18px; }
+/* (Nov 21, whole-site pass: on a phone held sideways the sticker sat ON the end of the school's name, "Georgia State
+   Universi"). The name keeps clear of the sticker: it wraps to a second line before it can run under it. */
+.idcard .id-info h3 { max-width: calc(100% - 120px); }
+.idcard .id-info h3 + p { max-width: calc(100% - 112px); } /* (the degree line too: the sticker's lowest point reached its last word) */
 @media (max-width: 760px) {
   .id-band { flex-direction: column; gap: 2px; font-size: 17px; letter-spacing: 2px; }
   .idcard .gpa-burst { top: auto; bottom: 12px; right: 10px; transform: rotate(10deg) scale(.82); }
+  .idcard .id-info h3, .idcard .id-info h3 + p { max-width: none; } /* (the sticker sits at the card's foot here) */
 }
 
 /* ---- Nov 18 spacing review fixes ---- */

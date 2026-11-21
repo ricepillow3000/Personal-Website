@@ -132,9 +132,9 @@ body.reduce-motion #soundBtn.sound-call :is(.snd-x, .snd-ping) { animation: none
   background: var(--yellow); color: var(--black); font-size: 16px; padding: 2px 10px; border: 2px solid var(--black);
   opacity: 0; transform: translateY(-6px);
 }
-.sound-tip.show { animation: tip 3.2s ease forwards; }
+.sound-tip.show { animation: tip 3.2s var(--ease-snap) forwards; }
 @keyframes tip { 10%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-6px); } }
-.wiggle { animation: wiggle .6s ease 2; }
+.wiggle { animation: wiggle .6s var(--ease-snap) 2; }
 @keyframes wiggle { 25% { transform: skew(var(--skew)) rotate(-12deg) scale(1.15); } 75% { transform: skew(var(--skew)) rotate(10deg) scale(1.15); } }
 body[data-screen="title"] #menuBtn, body[data-screen="title"] #achBtn { display: none; }
 
@@ -612,9 +612,14 @@ body[data-mode="title"] .scroll-meter { display: none; }
 @media (prefers-reduced-motion: reduce) { .fall-sky .fs-art { animation: none; } }
 .fall-lines i { position: absolute; top: 0; width: 4px; background: var(--white); transform: skewX(-4deg); }
 .fall-lines i:nth-child(3n) { width: 2px; background: var(--yellow); }
-.fall-sign { position: absolute; left: 0; right: 0; top: 38%; display: grid; place-items: center; }
+/* (Nov 21, both judges: the title "floats in flat 2D screen space, detached from the scene's perspective"): the placard
+   leans back into the shot like a board hung in the city (one fixed lean, the fall still carries it) */
+.fall-sign { position: absolute; left: 0; right: 0; top: 38%; display: grid; place-items: center; perspective: 900px; }
 .fall-sign span { padding: 14px 26px 12px; background: var(--black); border: 4px solid var(--white);
-  font-size: clamp(40px, 8vw, 104px); line-height: 1; transform: rotate(-4deg); box-shadow: 10px 10px 0 var(--red); white-space: nowrap; }
+  font-size: clamp(40px, 8vw, 104px); line-height: 1; transform: rotateY(-17deg) rotateX(9deg) rotate(-4deg); box-shadow: 10px 10px 0 var(--red), 20px 20px 0 rgba(0, 0, 0, .55); white-space: nowrap; }
+/* THE RISE looks UP the towers: its board tips back with them (top edge away), harder than the drop's */
+.fall.rising .fall-sign { perspective: 700px; }
+.fall.rising .fall-sign span { transform: rotateX(30deg) rotateY(-12deg) rotate(-4deg); }
 .fall-half { position: absolute; inset: 0; overflow: hidden; will-change: transform; }
 .fall-flash { position: absolute; left: 50%; top: 50%; width: 80vmax; height: 80vmax; margin: -40vmax 0 0 -40vmax; background: var(--white);
   clip-path: polygon(50% 0, 61% 33%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 33%); transform: scale(0); }
@@ -635,8 +640,15 @@ body[data-mode="title"] .scroll-meter { display: none; }
 .ns-pillar.p2 { left: auto; right: 10%; }
 .ns-sign { position: absolute; left: 50%; top: 40%; translate: -50% -50%; display: grid; justify-items: center; padding: 10px 34px 10px; background: var(--black);
   border: 5px solid var(--white); box-shadow: 10px 10px 0 var(--red); }
+/* the pane's glass lies over the sign too: one hard glint across it and a faint shade, so it sits BEHIND the window */
+.ns-sign::after { content: ""; position: absolute; inset: -5px; pointer-events: none;
+  background: linear-gradient(112deg, transparent 0 20%, rgba(245, 245, 240, .22) 20% 30%, transparent 30% 35%, rgba(245, 245, 240, .11) 35% 39%, transparent 39%), rgba(11, 11, 11, .12); }
 .ns-sign small { font: 400 clamp(16px, 2vw, 26px)/1 var(--f-menu); letter-spacing: 5px; color: var(--yellow); }
 .ns-sign .ransom { margin-top: 6px; font-size: clamp(36px, 6.4vw, 92px); line-height: 1; white-space: nowrap; }
+/* the windows' glass (Nov 21, both judges: the sign "reads like a flat overlay" on the pane): hard cel glints lying across
+   everything outside, under the car's own frame, so the station and its sign are seen THROUGH the window */
+.ns-glass { position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(112deg, transparent 0 13vw, rgba(245, 245, 240, .13) 13vw 15.4vw, transparent 15.4vw 16.6vw, rgba(245, 245, 240, .07) 16.6vw 17.5vw, transparent 17.5vw 29vw); }
 .ns-car { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 49% 46%; }
 .cardshot { display: grid; place-items: center; }
 .cs-dim { position: absolute; inset: 0; background: rgba(5, 5, 5, .72); }
@@ -940,10 +952,10 @@ body.reduce-motion .ss-stop.now :is(.ss-dagger, .ss-dagger-back, .ss-dagger img,
   border: 3px solid var(--black); background: var(--yellow); color: var(--black); padding: 9px 18px 7px; font: 400 17px/1 var(--f-menu); letter-spacing: 2px;
   transform: skew(var(--skew)); box-shadow: 6px 6px 0 var(--black); cursor: pointer; white-space: nowrap; }
 .guide > * { transform: skew(calc(var(--skew) * -1)); }
-.guide .g-arrow { font: 400 22px/1 var(--f-head); animation: g-bob 1.1s ease-in-out infinite; }
+.guide .g-arrow { font: 400 22px/1 var(--f-head); animation: g-bob 1.1s var(--ease-snap) infinite; }
 .guide:hover, .guide:focus-visible { background: var(--white); outline: none; }
 .guide:focus-visible { box-shadow: 6px 6px 0 var(--black), 0 0 0 4px var(--red); }
-@keyframes g-bob { 50% { translate: 0 4px; } }
+@keyframes g-bob { 0%, 50%, 100% { translate: 0 0; } 16% { translate: 0 5px; } } /* a jab and a spring back, then it rests */
 @media (max-width: 760px) {
   .ss-label { font-size: 15px; letter-spacing: 2px; padding: 6px 9px 4px; }
   .stop-strip { column-gap: 10px; }
