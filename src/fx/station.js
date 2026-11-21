@@ -357,13 +357,13 @@ const RAIL_X = -2.22; // on the edge strip, just inside the grip grooves (m)
 const RAIL_RUNS = [[9.2, 10.9], [14.6, 16.3], [20.4, 22.1], [27.2, 28.9], [35.6, 37.3], [45.8, 47.5]];
 /* (Nov 21, John: "look at the guardrails for this reference photo, make it exactly like that"): each section is one
    bent-tube frame, navy steel, its top corners ROUNDED down into the end posts, a bottom rail just above the floor
-   on two small feet, and evenly spaced vertical bars (about 15 cm apart) between them; 1.1 m tall. */
+   on two small feet, and five evenly spaced vertical bars from the bottom rail up into the top rail; 1.1 m tall. */
 function railsSVG() {
   const F = 1040; const EY = 1.6;
   const P = (X, h, Z) => [VP[0] + (F * X) / Z, VP[1] - (F * (h - EY)) / Z];
   const line = (q) => q.map(([x, y]) => `${f2(x)},${f2(y)}`).join(' ');
   const navy = '#34405C'; const lit = '#7F8DAA';
-  const TOP = 1.1; const LOW = 0.12; const R = 0.16;
+  const TOP = 1.1; const LOW = 0.16; const R = 0.2;
   let g = '';
   RAIL_RUNS.forEach(([z0, z1]) => {
     const zm = (z0 + z1) / 2; const px = F / zm; // px per metre here
@@ -378,9 +378,9 @@ function railsSVG() {
     fr.push([z0, 0.03]);
     const frP = fr.map(([z, h]) => P(RAIL_X, h, z));
     // bars and the bottom rail first (under the frame)
-    const n = Math.round((z1 - z0) / 0.15);
+    const n = 6; // (Nov 21, John: "only 5 bars"): five bars, evenly spaced, from the bottom rail up into the top rail
     for (let k = 1; k < n; k++) {
-      const z = z1 - ((z1 - z0) * k) / n; const [a1, a2] = [P(RAIL_X, LOW, z), P(RAIL_X, TOP - 0.02, z)];
+      const z = z1 - ((z1 - z0) * k) / n; const [a1, a2] = [P(RAIL_X, LOW, z), P(RAIL_X, TOP, z)];
       g += `<polyline points="${line([a1, a2])}" fill="none" stroke="${INK}" stroke-width="${f2(thin + inkw * 2)}"/>`;
       g += `<polyline points="${line([a1, a2])}" fill="none" stroke="${navy}" stroke-width="${f2(thin)}"/>`;
     }
