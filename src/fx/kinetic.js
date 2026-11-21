@@ -108,14 +108,27 @@ export function initScrollMeter() {
   document.body.appendChild(bar);
   const fill = bar.firstChild;
   const setX = gsap.quickTo(fill, 'scaleX', { duration: 0.35, ease: 'power3.out' }); // springy follow
-  const sync = () => {
-    const sc = document.querySelector('.screen.active');
-    const room = sc ? sc.scrollHeight - sc.clientHeight : 0;
+  /* (Nov 21: this ran on every scroll event, read the page's height (a forced re-measure) and wrote --sp on the whole
+     scrolling screen, which marked every element on the page as changed. Now the page's scroll room is measured only
+     when it can change (a new page, a resize, content growing), and --sp goes on the one watermark that uses it.) */
+  let room = 0; let sc = null; let ro = null;
+  const measure = () => { room = sc ? sc.scrollHeight - sc.clientHeight : 0; };
+  const sync = (e) => {
+    const now = document.querySelector('.screen.active');
+    if (now !== sc || e?.type === 'resize') {
+      sc = now; ro?.disconnect(); measure();
+      if (sc && window.ResizeObserver) { ro = new ResizeObserver(() => { measure(); place(); }); ro.observe(sc); if (sc.firstElementChild) ro.observe(sc.firstElementChild); }
+    }
+    place();
+  };
+  let lastOn = null;
+  const place = () => {
     const on = room > 60;
     const sp = on ? Math.min(1, Math.max(0, sc.scrollTop / room)) : 0;
-    bar.classList.toggle('on', on);
+    if (on !== lastOn) { bar.classList.toggle('on', on); lastOn = on; }
     setX(sp);
-    sc?.style.setProperty('--sp', sp.toFixed(3)); // background layers drift with the story (see pages.css)
+    // the watermark pans slower than the page (depth): moved directly, a transform only
+    sc?.querySelectorAll('.pg-mark').forEach((m) => { m.style.translate = `${(-22 * sp).toFixed(2)}% ${(-60 * sp).toFixed(1)}px`; });
   };
   document.addEventListener('scroll', sync, { capture: true, passive: true }); // screens scroll, not the page
   window.addEventListener('resize', sync, { passive: true });
@@ -127,28 +140,30 @@ export function initScrollMeter() {
     Anime.js loads lazily (its own small file) and is skipped entirely with reduced motion.
     It only moves the separate translate/rotate/scale properties through one CSS variable,
     so it can't clash with GSAP entrances or hover lifts. Nothing is ever hidden. */
-let animeLib;
+/* (Nov 21: the slam was an Anime.js tween of a CSS variable, recalculated by script every frame in the page's one lane.
+   It is now a Web Animation of translate / rotate / scale: the browser plays it on the graphics side.) */
+const SLAM_EASE = typeof CSS !== 'undefined' && CSS.supports('animation-timing-function', 'linear(0, 1)')
+  ? getComputedStyle(document.documentElement).getPropertyValue('--e-back19').trim() || 'cubic-bezier(.3, 1.6, .5, 1)'
+  : 'cubic-bezier(.3, 1.6, .5, 1)';
 export function slamOnScroll(root, selector, onSlam) {
   if (!root) return;
   root._slamIO?.disconnect();
   root.querySelectorAll('.slam-wait').forEach((el) => el.classList.remove('slam-wait'));
-  if (reducedMotion() || !('IntersectionObserver' in window)) return;
-  (animeLib ||= import('./anime-lite.js')).then(({ animate, stagger }) => {
-    if (!root.isConnected || reducedMotion()) return;
-    const below = [...root.querySelectorAll(selector)].filter((el) => el.getBoundingClientRect().top > window.innerHeight);
-    if (!below.length) return;
-    const io = new IntersectionObserver((entries) => {
-      const hit = entries.filter((en) => en.isIntersecting).map((en) => en.target);
-      if (!hit.length) return;
-      hit.forEach((el) => io.unobserve(el));
-      // each box is heard as it lands (a page's own voice, see main.js), on the same 70 ms stagger
-      if (onSlam) hit.slice(0, 5).forEach((el, k) => setTimeout(() => onSlam(el), k * 70));
-      animate(hit, {
-        '--slam': [0, 1], duration: 560, ease: 'outBack(1.9)', delay: stagger(70),
-        onComplete: () => hit.forEach((el) => { el.classList.remove('slam-wait'); el.style.removeProperty('--slam'); })
-      });
-    }, { threshold: 0.1 });
-    below.forEach((el) => { el.classList.add('slam-wait'); io.observe(el); });
-    root._slamIO = io;
-  }).catch(() => {}); // no Anime.js, no slam: the page simply stays still
+  if (reducedMotion() || !('IntersectionObserver' in window) || !Element.prototype.animate) return;
+  const below = [...root.querySelectorAll(selector)].filter((el) => el.getBoundingClientRect().top > window.innerHeight);
+  if (!below.length) return;
+  const io = new IntersectionObserver((entries) => {
+    const hit = entries.filter((en) => en.isIntersecting).map((en) => en.target);
+    if (!hit.length) return;
+    hit.forEach((el) => io.unobserve(el));
+    // each box is heard as it lands (a page's own voice, see main.js), on the same 70 ms stagger
+    if (onSlam) hit.slice(0, 5).forEach((el, k) => setTimeout(() => onSlam(el), k * 70));
+    hit.forEach((el, k) => {
+      el.classList.remove('slam-wait');
+      el.animate([{ translate: '0 70px', rotate: '-4deg', scale: '.86' }, { translate: '0 0', rotate: '0deg', scale: '1' }],
+        { duration: 560, delay: k * 70, easing: SLAM_EASE, fill: 'backwards', composite: 'replace' });
+    });
+  }, { threshold: 0.1 });
+  below.forEach((el) => { el.classList.add('slam-wait'); io.observe(el); });
+  root._slamIO = io;
 }

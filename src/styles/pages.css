@@ -13,7 +13,7 @@
 .pg-mark {
   position: fixed; left: 0; right: 0; top: 46%; z-index: -1; pointer-events: none; overflow: hidden;
   white-space: nowrap; transform: rotate(-8deg); opacity: .5;
-  translate: calc(var(--sp, 0) * -22%) calc(var(--sp, 0) * -60px); /* depth: the watermark pans slower than the page as you scroll */
+  will-change: translate; /* (kinetic.js pans it slower than the page as you scroll: depth) */
 }
 .pg-mark span {
   display: inline-block; padding-right: .4em; font-family: var(--f-head); font-size: clamp(120px, 22vw, 320px); line-height: 1;
@@ -69,12 +69,13 @@
   position: absolute; right: 10px; bottom: -34px; font-family: var(--f-head); font-size: 200px; line-height: 1;
   color: transparent; -webkit-text-stroke: 4px currentColor; opacity: .3; pointer-events: none;
 }
-.panel::before { /* drifting halftone */
-  content: ""; position: absolute; inset: -20px; pointer-events: none; opacity: .22;
+.panel::before { /* drifting halftone: a painted dot layer slid by transform (Nov 21: animating background-position
+  repainted every dot every frame); it moves whole tiles (10 x 5 of 14px), so the loop is seamless */
+  content: ""; position: absolute; inset: -90px -160px -20px -20px; pointer-events: none; opacity: .22;
   background: radial-gradient(circle, currentColor 28%, transparent 30%) 0 0 / 14px 14px;
-  animation: dots 8s linear infinite;
+  animation: dots 8s linear infinite; will-change: transform;
 }
-@keyframes dots { to { background-position: 140px 70px; } }
+@keyframes dots { from { transform: translate(-140px, -70px); } to { transform: none; } }
 .panel-0 { background: var(--white); color: var(--black); clip-path: polygon(0 0, 100% 0, 96% 100%, 0 100%); }
 .panel-0 h3 { background: var(--black); color: var(--white); }
 .panel-1 { background: var(--red); color: var(--white); clip-path: polygon(4% 0, 100% 0, 100% 92%, 0 100%); }
