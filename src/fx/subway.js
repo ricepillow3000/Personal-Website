@@ -583,9 +583,6 @@ function drawTrack(g, kk) {
     // the centre drain between the rails: a gutter with lit lips
     g.fillStyle = `rgba(8, 8, 10, ${0.92 * v})`; strip(MID - 6, MID + 6, d, n, BED_Y - 0.2); g.fill();
     g.fillStyle = `rgba(150, 142, 126, ${0.55 * v})`; strip(MID - 7.5, MID - 6, d, n, BED_Y - 0.3); g.fill();
-    // the platform's shadow on the bed beside its edge (Nov 21, John: "make it very noticeable that they are not
-    // the same level"): deep under the lip, fading out across the bed, in hard cel steps
-    [[60, 0.35], [38, 0.5], [18, 0.8]].forEach(([w, a]) => { g.fillStyle = `rgba(0, 0, 0, ${a * v})`; strip(EDGE_X - w, EDGE_X, d, n); g.fill(); });
   });
   // the centre drain's grating (cast-iron bars across it; they drop out far down the line)
   for (let d = 24; d < 1300; d += 9) {
@@ -712,9 +709,30 @@ function drawTrack(g, kk) {
   g.globalAlpha = 1;
   // each rail's own shadow on the ties and the slab, on the side away from the tubes (they hang over the platform,
   // to the right): one hard strip, so the rail stands ON the track instead of lying drawn across it
-  steps((d, n, v) => {
-    g.fillStyle = `rgba(0, 0, 0, ${0.36 * v})`;
-    RAILS.forEach((rx) => { strip(rx - 9.5, rx - 2.6, d, n, TIE_Y - 0.06); g.fill(); });
+  /* (Nov 21, John: "the shadows, I can see the layers, make sure it's blended in"). A shadow here is one smooth fall of
+     light, never stacked bands. Every line of equal shade on the track runs to the vanishing point, so the shade is a
+     matter of ANGLE round that point: one conic gradient, one fill, no steps and no seams at any distance. It only
+     darkens what is already drawn (source-atop), so the track's own fade into the tunnel is kept. `stops` are
+     [x, y, darkness] across the track, from the edge nearest the platform outward. */
+  const cone = (x0, x1, y0, y1, stops) => {
+    if (!g.createConicGradient) return false; // (an old browser: the caller draws plain steps)
+    const ang = stops.map(([x, y]) => Math.atan2(y, x));
+    const gr = g.createConicGradient(ang[0], VP.x, VP.y);
+    stops.forEach(([, , a], q) => gr.addColorStop(Math.max(0, Math.min(1, (ang[q] - ang[0]) / (2 * Math.PI))), `rgba(3, 3, 5, ${Math.max(0, a).toFixed(3)})`));
+    g.save();
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = gr;
+    quad(g, [P(x0, y0, 20), P(x1, y1, 20), P(x1, y1, TRACK_FAR), P(x0, y0, TRACK_FAR)]);
+    g.fill();
+    g.restore();
+    return true;
+  };
+  // each rail's own shadow on the ties and the slab, on the side away from the tubes (they hang over the platform)
+  RAILS.forEach((rx) => {
+    const y = TIE_Y - 0.06;
+    if (!cone(rx - 2.4, rx - 11, y, y, [[rx - 2.4, y, 0.44], [rx - 6, y, 0.21], [rx - 11, y, 0]])) {
+      steps((d, n, v) => { g.fillStyle = `rgba(0, 0, 0, ${0.3 * v})`; strip(rx - 9.5, rx - 2.6, d, n, y); g.fill(); });
+    }
   });
   // the rails: a wide foot on the plates, a dark web (its side toward the camera), and a polished head
   // that catches the station's light, inked along both edges. Near the camera they are drawn as solid
@@ -778,12 +796,14 @@ function drawTrack(g, kk) {
      ends and the near rail too (not only the slab), deepest right under the edge, in hard cel steps; so the lit
      coping stands bright over a dark drop, and the ties visibly run in under it. The near rail keeps a dim line of
      light on its head so the track still reads whole. */
+  // (blended: one smooth fall from deep shade at the lip to the lit slab past the far rail; what the eye sees past the
+  // lip starts ~38 out. It was two hard steps, and the steps showed as layers.)
+  const lipShade = [[EDGE_X, SKIRT, 0.86], [EDGE_X - 44, BED_Y, 0.82], [EDGE_X - 52, BED_Y, 0.7], [EDGE_X - 61, BED_Y, 0.52],
+    [EDGE_X - 71, BED_Y, 0.32], [EDGE_X - 81, BED_Y, 0.15], [EDGE_X - 90, BED_Y, 0.05], [EDGE_X - 97, BED_Y, 0]];
+  if (!cone(EDGE_X, EDGE_X - 97, SKIRT, BED_Y, lipShade)) {
+    steps((d, n, v) => [[74, 0.34], [51, 0.62]].forEach(([w, al]) => { g.fillStyle = `rgba(4, 4, 6, ${al * v})`; quad(g, [P(EDGE_X, SKIRT, d), P(EDGE_X - w, BED_Y, d), P(EDGE_X - w, BED_Y, n), P(EDGE_X, SKIRT, n)]); g.fill(); }));
+  }
   steps((d, n, v) => {
-    [[74, 0.34], [51, 0.62], [14, 0.8]].forEach(([w, a]) => { // (what the eye sees past the lip starts ~38 out: a deep step to the drain's near lip, a lighter one to its far lip, then the lit slab)
-      g.fillStyle = `rgba(4, 4, 6, ${a * v})`;
-      quad(g, [P(EDGE_X, SKIRT, d), P(EDGE_X - w, BED_Y, d), P(EDGE_X - w, BED_Y, n), P(EDGE_X, SKIRT, n)]);
-      g.fill();
-    });
     g.strokeStyle = `rgba(214, 208, 192, ${0.38 * v})`;
     g.lineWidth = Math.max(minHead * 0.5, (F / d) * 0.7);
     g.beginPath(); g.moveTo(...P(RAILS[0] - 0.2, RAIL_Y, d)); g.lineTo(...P(RAILS[0] - 0.2, RAIL_Y, n)); g.stroke();
@@ -1031,6 +1051,11 @@ function prepFallback() {
 const sx = (X, d) => VP.x + (X * F) / d;
 const sy = (Y, d) => VP.y + (Y * F) / d;
 const dark = (d) => Math.max(0, Math.min(1, 1 - (d - MOUTH) / FADE)); // fades into the tunnel's dark
+/* (Nov 21, John: "make sure the train comes out realistic"). The car used to fade in see-through, like a ghost, with the
+   tunnel showing through it. A train in a dark tunnel is SOLID and unlit: you see its lamps and its lit windows on a
+   black body, and the station's light climbs onto it as it reaches the mouth. So `dark` is now how much station
+   light is on the body, and `seen` is how solid it is: whole until well past the mouth, lost only deep inside. */
+const seen = (d) => Math.max(0, Math.min(1, 1 - (d - MOUTH - 40) / 400));
 
 /* The car-side art is 2770px wide for sharpness, but the train never covers more than ~900 art
    pixels of height, and drawing hundreds of slices a frame from the full file is slow on phones.
@@ -1080,7 +1105,7 @@ function sideQuad(lead, alpha, tex, { mat = 0, refl = 0 } = {}) {
   const tw = img.naturalWidth || img.width;
   const th = img.naturalHeight || img.height;
   const near = Math.max(lead, 18);
-  const far = Math.min(lead + LEN, MOUTH + FADE + 10); // past MOUTH + FADE it has faded into the tunnel's dark
+  const far = Math.min(lead + LEN, MOUTH + 450); // (deeper than that it is lost in the tunnel's dark: `seen`)
   if (far <= near) return true;
   const m = ctx.getTransform(); // art space -> canvas pixels
   const P = (Y, d) => {
@@ -1197,6 +1222,26 @@ function cabinLight(lead) {
   ctx.restore();
 }
 
+/* the nose's own shape in near-black, with holes where it glows (the cab's lit windows): laid over the nose while it is
+   still in the tunnel. Built once, small (the mask is soft anyway). */
+let noseShadeC = null;
+let noseTmp = null;
+function noseShade() {
+  if (noseShadeC || !nose?.complete || !nose.naturalWidth) return noseShadeC;
+  const w = 414; const h = Math.round((w * nose.naturalHeight) / nose.naturalWidth);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(pic(nose), 0, 0, w, h);
+  const im = g.getImageData(0, 0, w, h); const p = im.data;
+  for (let i = 0; i < p.length; i += 4) {
+    const lum = (0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]) / 255;
+    const glass = Math.max(0, Math.min(1, ((Math.min(p[i], p[i + 1]) - p[i + 2]) / 255) * 5)) * (lum > 0.45 ? 1 : 0); // (the shader's own test for a lit window)
+    p[i] = 6; p[i + 1] = 6; p[i + 2] = 8; p[i + 3] = Math.round(p[i + 3] * (1 - 0.86 * glass));
+  }
+  g.putImageData(im, 0, 0);
+  noseShadeC = c;
+  return c;
+}
 function noseRect(d) {
   const by = bounce();
   const l = sx(SIDE_X - WIDE, d);
@@ -1208,8 +1253,25 @@ function noseRect(d) {
 function trainNose(d, img, alpha) {
   if (d < 14 || !img) return;
   const n = noseRect(d);
-  ctx.globalAlpha = alpha * dark(d);
-  ctx.drawImage(pic(img), n.l, n.t, n.w, n.h);
+  const unlit = 1 - dark(d); // inside the tunnel: the body in the dark, its lit windows still glowing
+  const sh = unlit > 0.01 ? noseShade() : null;
+  ctx.globalAlpha = alpha * seen(d);
+  if (sh) {
+    // darkened first, on a scratch sheet, THEN faded as one thing (two layers faded separately left it half lit)
+    const k = Math.abs(ctx.getTransform().a) || 1;
+    const w = Math.max(2, Math.ceil(n.w * k)); const h = Math.max(2, Math.ceil(n.h * k));
+    const tc = (noseTmp ||= document.createElement('canvas'));
+    if (tc.width < w || tc.height < h) { tc.width = Math.max(tc.width, w); tc.height = Math.max(tc.height, h); }
+    const tg = tc.getContext('2d');
+    tg.globalCompositeOperation = 'source-over'; tg.globalAlpha = 1;
+    tg.clearRect(0, 0, w, h);
+    tg.drawImage(pic(img), 0, 0, w, h);
+    tg.globalCompositeOperation = 'source-atop'; tg.globalAlpha = unlit * 0.93;
+    tg.drawImage(sh, 0, 0, w, h);
+    ctx.drawImage(tc, 0, 0, w, h, n.l, n.t, n.w, n.h);
+  } else {
+    ctx.drawImage(pic(img), n.l, n.t, n.w, n.h);
+  }
   ctx.globalAlpha = 1;
 }
 
