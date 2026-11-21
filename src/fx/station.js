@@ -84,7 +84,7 @@ function reflection(p, i) {
 function lightsBody() { // normal: the dull diffuser of a tube that is off, and its reflection gone from the floor
   return PANELS.map((p, i) => {
     const s = shape(p, 0.6);
-    const paint = Array.isArray(p[0]) ? 'fill="#5E636B"' : 'stroke="#5E636B"';
+    const paint = Array.isArray(p[0]) ? 'fill="#6B665E"' : 'stroke="#6B665E"';
     return `<g class="sl" data-l="${i}"><g class="sl-off">${s} ${paint}/>${reflection(p, i)}</g></g>`;
   }).join('');
 }
@@ -92,7 +92,7 @@ function lightsGlow() { // added: the bloom through the diffuser, and its light 
   return PANELS.map((p, i) => {
     const [x, y] = centre(p);
     const sz = size(p);
-    const paint = Array.isArray(p[0]) ? 'fill="#DCEBFF"' : 'stroke="#DCEBFF"';
+    const paint = Array.isArray(p[0]) ? 'fill="#FFE2B0"' : 'stroke="#FFE2B0"';
     return `<g class="sl" data-l="${i}"><g class="sl-on">
       <ellipse cx="${x}" cy="${y}" rx="${sz * 1.6 + 10}" ry="${sz * 1.1 + 8}" fill="url(#slSpill)"/>
       <g filter="url(#slBloom)" opacity=".8">${shape(p, 1)} ${paint}/></g></g></g>`;
@@ -380,7 +380,7 @@ export function mountStation(box, before) {
   wrap.innerHTML = svg('st-dim', '<radialGradient id="slDim"><stop offset=".25" stop-color="#3A3C40" stop-opacity=".95"/><stop offset=".7" stop-color="#3A3C40" stop-opacity=".45"/><stop offset="1" stop-color="#3A3C40" stop-opacity="0"/></radialGradient>', lightsDim())
     + svg('st-body', '<radialGradient id="slFloor"><stop offset=".5" stop-color="#313134" stop-opacity=".97"/><stop offset=".8" stop-color="#313134" stop-opacity=".6"/><stop offset="1" stop-color="#313134" stop-opacity="0"/></radialGradient>', lightsBody() + `<g class="gf-at" transform="${faceTransform(FACES[0])}">${graffiti()}</g>`)
     + svg('st-glow', `<filter id="slBloom" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="5" result="a"/><feGaussianBlur in="SourceGraphic" stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="a"/></feMerge></filter>
-      <radialGradient id="slSpill"><stop offset="0" stop-color="#9FB8D8" stop-opacity=".22"/><stop offset="1" stop-color="#9FB8D8" stop-opacity="0"/></radialGradient>`, lightsGlow());
+      <radialGradient id="slSpill"><stop offset="0" stop-color="#E8C48A" stop-opacity=".22"/><stop offset="1" stop-color="#E8C48A" stop-opacity="0"/></radialGradient>`, lightsGlow());
   wrap.insertAdjacentHTML('beforeend', signHTML());
   signClock(wrap);
   const sign = wrap.querySelector('.ss');
