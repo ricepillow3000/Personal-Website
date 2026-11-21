@@ -1,7 +1,10 @@
 /* Street-art wall background — 3 stacked SVG layers, fixed behind all UI. */
 .backdrop {
   position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
-  background: #B0000E;
+  /* the same red wall, painted as an image over a black colour (Nov 21, John: "when turning the phone sideways
+     red borders show on the train section"): iPhone Safari and the apps built on it tint the strips beside the
+     notch with the background COLOUR of the fixed layer at that edge, and this layer's was red */
+  background: var(--black) linear-gradient(#B0000E, #B0000E);
   --px: 0; --py: 0;
   transition: filter .3s steps(4);
 }
