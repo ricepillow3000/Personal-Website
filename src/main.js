@@ -456,6 +456,11 @@ function stabStop(root, tok) {
     if (tok !== navSeq || !li.isConnected) return;
     li.classList.add('stab');
     sfx('stab'); // (its point bites in at 0.16 s, the frame it lands)
+    /* once it has settled, the throw's animations are dropped for the still pose (.in, the same picture).
+       Left on their last frame (fill-mode both), iPhone Safari kept the line on its own GPU layer and, after
+       a scroll down and back up, redrew it cut to the line's 40px box: the station names and the dagger's
+       handle were sliced off (Nov 21, John's phone held sideways). */
+    setTimeout(() => { if (li.isConnected) { li.classList.add('in'); li.classList.remove('stab'); } }, 1200);
   }, 650);
 }
 const guide = document.createElement('button');
