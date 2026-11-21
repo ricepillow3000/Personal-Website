@@ -159,10 +159,18 @@ export function createBoard(root, ctx) {
   refresh(false);
 
   let revealedOnce = false;
-  function reveal(delay = 0) {
+  /** built: THE PLAN is the first screen of the visit (a deep link). It is drawn finished at once,
+      because the loading screen covers it until the visitor clicks ENTER THE STATION (at least 1.6 s),
+      so the cascade below would only ever play unseen under it, while holding the board's big words
+      at opacity 0 (Nov 21: a phone's Lighthouse timed THE PLAN's largest paint at 3-7 s). */
+  function reveal(delay = 0, built = false) {
     armed = restXY === null; // wait for the resting mouse to move before it can pick anything
     refresh(revealedOnce);
     if (reducedMotion()) return;
+    if (built && !revealedOnce) {
+      revealedOnce = true; // the full cascade counts as played: coming back is the quick slam, as before
+      return;
+    }
     const parts = root.querySelectorAll('[data-board-item]');
     if (revealedOnce) {
       return gsap.from(parts, { x: -30, opacity: 0, duration: 0.22, ease: 'power3.out', stagger: 0.03, delay, clearProps: 'transform,opacity' });

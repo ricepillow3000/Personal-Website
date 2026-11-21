@@ -175,6 +175,15 @@ const BB_TEXT = {
 const BB_ORDER = Object.keys(BB_TEXT);
 const bbSize = (n) => (BB_GEO[n].b0 - BB_GEO[n].t0) * BB_TEXT[n].fill;
 const RINGS_USED = BB_RINGS.filter(([n]) => BB_TEXT[n]);
+/* a ring's screen, as a box round its outline (with a little air), in the art's 1600x679 space */
+function ringBox(n) {
+  const v = BB_RINGS.find(([k]) => k === n)[1].match(/[\d.]+/g).map(Number);
+  const xs = v.filter((_, i) => i % 2 === 0);
+  const ys = v.filter((_, i) => i % 2 === 1);
+  const x = Math.floor(Math.min(...xs)) - 4;
+  const y = Math.floor(Math.min(...ys)) - 4;
+  return { x, y, w: Math.ceil(Math.max(...xs)) + 4 - x, h: Math.ceil(Math.max(...ys)) + 4 - y };
+}
 /* the rooftop aviation lights painted in the city art (x, y, radius in the 1600x679 art), found by
    their red glow on the art (the red reflections on walls and the wet street are left out) */
 const AV_LIGHTS = [[842.3, 49.2, 5], [755.4, 51.9, 5], [1191.3, 71.7, 2], [390.6, 85.8, 3.5], [620.5, 101.8, 4.5], [924.5, 114.5, 4.5],
@@ -188,10 +197,16 @@ function billboardLayer() {
       ? `<g class="bb-ch" data-w="1.05">${poly(star(0, 0, size * 0.48, 0.42, 5, -90), '#FFFFFF')}</g>`
       : `<g class="bb-ch" data-w="${ch === ' ' ? 0.42 : /[IJ]/.test(ch) ? 0.5 : /[MW]/.test(ch) ? 0.92 : 0.66}"><text font-size="${size.toFixed(1)}" text-anchor="middle" dominant-baseline="central">${ch === ' ' ? '' : ch}</text></g>`)).join('');
   };
+  /* The letters are the MASK and the LED dots are what shows through it (Nov 21, the deep-link speed
+     pass). It used to be the other way round (letters masked by the dots): the same white dots
+     either way, but live <text> was the biggest thing a browser saw "paint" on THE PLAN, and it only
+     appears once the 430 KB city picture has loaded, so a phone's Lighthouse timed the board's
+     largest paint at ~7 s. Inside a mask the letters are a stencil, not page text, and the board's
+     own words count instead. (The words stay in the DOM for the tests and the ticker.) */
   return `<svg class="bd-billboard" viewBox="0 0 1600 679" preserveAspectRatio="none" aria-hidden="true">
   <defs>
     <pattern id="bbLed" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle cx="1.6" cy="1.6" r="1.4" fill="#fff"/></pattern>
-    <mask id="bbDots" maskUnits="userSpaceOnUse" x="560" y="120" width="500" height="460"><rect x="560" y="120" width="500" height="460" fill="url(#bbLed)"/></mask>
+    ${RINGS_USED.map(([n]) => { const b = ringBox(n); return `<mask id="bbText-${n}" maskUnits="userSpaceOnUse" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></mask>`; }).join('')}
     <!-- real LED light (Nov 19, John: "amplify it, make it actually look like billboard lights"): a
          tight white glow round every lit dot, a wide red-pink light spilling onto the screen around
          the letters, and the dots themselves a little warm, like LEDs behind a red face -->
@@ -212,7 +227,7 @@ function billboardLayer() {
        "make it all a solid color, following the texture pattern"): the base red (matched to the art
        shown at 72%), the fine LED grid, and a little shade toward the edges so it still reads as a drum -->
   ${BB_RINGS.map(([n, d]) => `<path d="${d}" fill="#A3112A"/><path d="${d}" fill="url(#bbGrid)"/><path d="${d}" fill="url(#bbCurve-${n})"/>`).join('')}
-  ${RINGS_USED.map(([n]) => `<g clip-path="url(#bbRing-${n})"><g class="bb-flicker" filter="url(#bbGlow)"><g mask="url(#bbDots)"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></g></g></g>`).join('')}
+  ${RINGS_USED.map(([n]) => { const b = ringBox(n); return `<g clip-path="url(#bbRing-${n})"><g class="bb-flicker" filter="url(#bbGlow)"><rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="url(#bbLed)" mask="url(#bbText-${n})"/></g></g>`; }).join('')}
   <!-- a faint light sweep gliding across each screen's glass, out of step, now and then -->
   ${BB_RINGS.map(([n], i) => { const g = BB_GEO[n]; return `<g clip-path="url(#bbFace-${n})"><rect class="bb-sheen" style="--sd:${(i * 2.3).toFixed(1)}s" x="${g.cx - g.R - 60}" y="${g.t0 - g.ta - 10}" width="60" height="${g.b0 - g.t0 + g.ta + 30}" fill="url(#bbSheen)" transform="skewX(-12)"/></g>`; }).join('')}
 </svg>`;
@@ -298,9 +313,13 @@ function startTicker(svg) {
     });
   };
   const t0 = performance.now();
+  const art = svg.parentNode.querySelector('img');
   const frame = (now) => {
     requestAnimationFrame(frame);
     if (document.body.dataset.mode === 'title') return; // the city isn't shown on the title
+    /* nor before its picture has arrived: the billboard fades in with it (.bd-city img.in ~), and
+       moving invisible letters cost a layout every frame while THE PLAN's entrance was playing */
+    if (!art.classList.contains('in')) return;
     const still = reduce();
     lightsStep(now, still);
     rings.forEach((r) => {
