@@ -1344,11 +1344,23 @@ function draw() {
     g.setTransform(k, 0, 0, k, ox, oy);
   });
   ctx = under;
+  // (Nov 21, John: "the train does not come in"): every layer is drawn on its own, so one that fails on a
+  // visitor's machine (a graphics driver, a canvas limit) costs only that layer, never the train. A failure
+  // is kept in window.__trainErrors (and logged once) so it can be found.
+  const safe = (name, fn) => {
+    try { return fn(); } catch (e) {
+      const log = (window.__trainErrors ||= []);
+      if (!log.some((x) => x.name === name)) { log.push({ name, msg: String(e && e.message || e) }); console.warn('[train]', name, e); }
+      try { ctx.restore(); } catch { /* (nothing saved) */ }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      return undefined;
+    }
+  };
   const t = state?.t ?? 0;
-  stampTrack(kk); // the full track, under everything
-  if (!state) drawTrash(t); // at rest; during the shot it is drawn in front of the car, below
+  safe('track', () => stampTrack(kk)); // the full track, under everything
+  if (!state) safe('trash', () => drawTrash(t)); // at rest; during the shot it is drawn in front of the car, below
   // the GPU layer: drawn only while the train runs (made on first use, cleared at rest)
-  const r = state && gpuOK ? gpu() : sideGL;
+  const r = state && gpuOK ? safe('gpu', () => gpu()) : sideGL;
   try {
     glOn = Boolean(r && gpuOK && r.begin(cv.width, cv.height) && state);
   } catch {
@@ -1359,23 +1371,27 @@ function draw() {
   const img = nose?.complete && nose.naturalWidth ? nose : null;
   // the speed cues are strongest while it storms out of the tunnel, and ease off as it brakes
   const fx = Math.max(0, Math.min(1, (MOUTH + 400 - lead) / 600)) * Math.min(1, speedAt(t) / 1800);
-  headlightWash(lead, Math.min(1, t / 0.3));
-  railShine(t, lead, Math.min(1, t / 0.3));
-  runningGear(lead); // wheels on the rail, seen through the gap (the car hides their tops)
-  trainSide(lead, kk, 1, sideArt(), { mat: 1, refl: 1 }); // mirrored in the glossy floor
-  trainSide(lead, kk, 1, sideArt(), { mat: 1 }); // the car: heavy cel-shaded steel
+  safe('wash', () => headlightWash(lead, Math.min(1, t / 0.3)));
+  safe('shine', () => railShine(t, lead, Math.min(1, t / 0.3)));
+  safe('gear', () => runningGear(lead)); // wheels on the rail, seen through the gap (the car hides their tops)
+  safe('reflection', () => trainSide(lead, kk, 1, sideArt(), { mat: 1, refl: 1 })); // mirrored in the glossy floor
+  if (safe('side', () => { trainSide(lead, kk, 1, sideArt(), { mat: 1 }); return true; }) !== true) { // the car: heavy cel-shaded steel
+    dropGPU(); // (the GPU side failed: draw the car with the plain 2D slices, from the plain art)
+    safe('side-2d', () => trainSide(lead, kk, 1, sideArt()));
+  }
   if (glOn) ctx = over; // the side is on the GPU layer: everything in front of it goes above
-  cabinLight(lead); // its warm window light on the floor, on top of the reflection (light adds up)
+  safe('cabin', () => cabinLight(lead)); // its warm window light on the floor, on top of the reflection (light adds up)
   // the trash lies on the platform, between the camera and the car, so it is drawn in front of
   // the car; against the nose it goes by depth (in front of it only once it is nearer)
-  drawTrash(t, (d) => d >= lead);
-  brakeSparks(t, lead, Math.min(1, speedAt(t) / 2400) * (t < T_CRAWL ? 1 : 0.3));
-  noseGear(lead);
-  noseSmear(t, heavyNose() || img, fx);
-  trainNose(lead, heavyNose() || img, 1);
-  drawTrash(t, (d) => d < lead);
-  dust(t, lead);
-  headlights(lead, 1 + Math.max(0, 1 - lead / MOUTH) * 1.6, Math.min(1, t / 0.3)); // the lights fade up with the horn
+  safe('trash', () => drawTrash(t, (d) => d >= lead));
+  safe('sparks', () => brakeSparks(t, lead, Math.min(1, speedAt(t) / 2400) * (t < T_CRAWL ? 1 : 0.3)));
+  safe('nosegear', () => noseGear(lead));
+  const heavy = safe('heavynose', () => heavyNose()) || img;
+  safe('smear', () => noseSmear(t, heavy, fx));
+  if (safe('nose', () => { trainNose(lead, heavy, 1); return true; }) !== true && img) safe('nose-plain', () => trainNose(lead, img, 1));
+  safe('trash', () => drawTrash(t, (d) => d < lead));
+  safe('dust', () => dust(t, lead));
+  safe('lights', () => headlights(lead, 1 + Math.max(0, 1 - lead / MOUTH) * 1.6, Math.min(1, t / 0.3))); // the lights fade up with the horn
   ctx = under;
 }
 
