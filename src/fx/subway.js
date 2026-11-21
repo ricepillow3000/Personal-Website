@@ -214,6 +214,11 @@ export function mountSubway(camBox, img) {
   // after the scene has faded in), or right now if they already pressed START
   if (urgent) kick();
   else warmWhenAlive();
+  // (Nov 21, John: "I click continue, the train does not come in"): on a slow connection the train's pictures
+  // were only fetched after the tap and often weren't there in time, so the shot played an empty station. They
+  // are now fetched quietly a few seconds after the platform shows (the browser keeps them; the set-up still
+  // waits for the visitor), so they're usually in hand before anyone taps CONTINUE.
+  setTimeout(() => { if (!artReady) { const a = load(NOSE); const b = load(SIDE); a.fetchPriority = b.fetchPriority = 'low'; } }, 2500);
 }
 
 /** Load the train art (on the first tap/key, with the other film art). Resolves once it is decoded
@@ -1206,6 +1211,50 @@ function headlightWash(lead, power) {
   });
   ctx.restore();
 }
+/* (Nov 21, John: "make the rails shine as the train comes in"): the headlights catch the polished rail heads ahead
+   of the nose. Each rail lights up from the nose toward the camera, brightest just ahead of the train and fading
+   with distance, warm like the lamps, getting stronger as the train comes out of the tunnel; a hot glint (the
+   lamps' reflection) slides along each rail toward the camera, faster than the train, the way a real specular
+   highlight races ahead. Drawn additively in the pit (under the car), so it stops where the car covers the rail. */
+function railShine(t, lead, power) {
+  if (power <= 0.02 || lead < 30) return;
+  const near = Math.max(20, lead - 900);
+  const out = Math.max(0, Math.min(1, (MOUTH + 600 - lead) / 900)); // 0 deep in the tunnel, 1 out of it
+  const k = power * (0.35 + 0.65 * out);
+  ctx.save();
+  pitClip(ctx);
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineCap = 'round';
+  RAILS.forEach((rx, ri) => {
+    for (let d = near, n; d < lead; d = n) {
+      n = Math.min(lead, d * 1.08 + 4);
+      const f = 1 - (lead - d) / (lead - near + 1); // 1 at the nose, 0 at the near end
+      const a = k * (0.08 + 0.5 * f * f) * dark(d) * (ri ? 0.8 : 1);
+      if (a < 0.01) continue;
+      const w = Math.max(0.8, (F / d) * 2.4);
+      ctx.strokeStyle = `rgba(255, 214, 150, ${(a * 0.5).toFixed(3)})`; // the warm bloom on the head
+      ctx.lineWidth = w * 2.2;
+      ctx.beginPath(); ctx.moveTo(sx(rx, d), sy(RAIL_Y, d)); ctx.lineTo(sx(rx, n), sy(RAIL_Y, n)); ctx.stroke();
+      ctx.strokeStyle = `rgba(255, 246, 226, ${a.toFixed(3)})`; // the lit head itself
+      ctx.lineWidth = w * 0.7;
+      ctx.stroke();
+    }
+    // the racing glint: a short white-hot streak running toward the camera ahead of the nose
+    const g = 20 + (lead - 20) * (0.3 + 0.12 * Math.sin(t * 9 + ri * 1.7));
+    if (g < lead - 10) {
+      const len = Math.max(12, g * 0.18);
+      const gw = Math.max(1, (F / g) * 2.8);
+      const a = k * dark(g) * (ri ? 0.75 : 1);
+      ctx.strokeStyle = `rgba(255, 236, 200, ${(0.35 * a).toFixed(3)})`;
+      ctx.lineWidth = gw * 4;
+      ctx.beginPath(); ctx.moveTo(sx(rx, g), sy(RAIL_Y, g)); ctx.lineTo(sx(rx, g + len), sy(RAIL_Y, g + len)); ctx.stroke();
+      ctx.strokeStyle = `rgba(255, 255, 250, ${Math.min(1, 0.95 * a).toFixed(3)})`;
+      ctx.lineWidth = gw;
+      ctx.stroke();
+    }
+  });
+  ctx.restore();
+}
 function brakeSparks(t, lead, power) {
   if (power <= 0.02) return;
   const v = speedAt(t);
@@ -1311,6 +1360,7 @@ function draw() {
   // the speed cues are strongest while it storms out of the tunnel, and ease off as it brakes
   const fx = Math.max(0, Math.min(1, (MOUTH + 400 - lead) / 600)) * Math.min(1, speedAt(t) / 1800);
   headlightWash(lead, Math.min(1, t / 0.3));
+  railShine(t, lead, Math.min(1, t / 0.3));
   runningGear(lead); // wheels on the rail, seen through the gap (the car hides their tops)
   trainSide(lead, kk, 1, sideArt(), { mat: 1, refl: 1 }); // mirrored in the glossy floor
   trainSide(lead, kk, 1, sideArt(), { mat: 1 }); // the car: heavy cel-shaded steel
@@ -1332,8 +1382,10 @@ function draw() {
 /* ---------------------------------------------------------------- the shot */
 /** Start the pass-by. Returns controls for the transition timeline:
     tick(t) to draw time t (seconds), end() to reset to the quiet platform. */
+/** true once both train pictures (side and nose) are loaded: the shot never plays without its train */
+export const trainArtLoaded = () => Boolean(side?.complete && side.naturalWidth && nose?.complete && nose.naturalWidth);
 export function trainShot({ panTo = null } = {}) {
-  if (!ctx || reduce()) return null;
+  if (!ctx || reduce() || !trainArtLoaded()) return null;
   state = {
     t: 0,
     rumble: 0,

@@ -316,7 +316,7 @@ renderStartLabel();
 /* PRESS START / CONTINUE always opens with the train (Nov 19, John: "the train is going to be the
    main title every single time"). If the platform or the train art isn't ready yet (a returning
    visitor taps CONTINUE before the phone has loaded the scene), the button "boards" for a moment
-   while they load, at most 4s, then the shot plays. */
+   while they load (up to 20 s), then the shot plays. */
 let starting = false;
 $('#pressStart').addEventListener('click', () => {
   if (starting || savesOpen()) return;
@@ -339,7 +339,9 @@ async function startFile(i) {
     let late = false;
     const wait = sceneReady();
     const t = setTimeout(() => { late = true; btn.classList.add('boarding'); btn.setAttribute('aria-busy', 'true'); }, 120);
-    await Promise.race([wait, new Promise((r) => setTimeout(r, 4000))]);
+    // (Nov 21: the cap was 4 s, and on a slow phone the shot then played with no train: the button now boards
+    // until the train is really here, up to 20 s; past that the shot is skipped, never played empty)
+    await Promise.race([wait, new Promise((r) => setTimeout(r, 20000))]);
     clearTimeout(t);
     if (late) { btn.classList.remove('boarding'); btn.removeAttribute('aria-busy'); }
   }
