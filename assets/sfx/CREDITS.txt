@@ -81,3 +81,10 @@ knife-thunk.mp3
   "impactWood_light_000" from "Impact Sounds" by Kenney (www.kenney.nl)
   Source: https://kenney.nl/assets/impact-sounds
   License: CC0 1.0 https://creativecommons.org/publicdomain/zero/1.0/
+
+street-life.mp3
+  "AMBUrbn_CityEuroDaytime_LOOP_01" from "Oculus Audio Pack 01" by Oculus VR, LLC
+  Source: https://developers.meta.com/vr/downloads/package/oculus-audio-pack-1/
+  (via facebookincubator/Meta-open-sound, corpora/oculus-audio-pack)
+  License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+  Changes: trimmed to 2.4 s (59.0-61.4 s), faded in/out, level adjusted, mono MP3.
