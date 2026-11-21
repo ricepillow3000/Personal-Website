@@ -5,7 +5,6 @@
      red borders show on the train section"): iPhone Safari and the apps built on it tint the strips beside the
      notch with the background COLOUR of the fixed layer at that edge, and this layer's was red */
   background: var(--black) linear-gradient(#B0000E, #B0000E);
-  --px: 0; --py: 0;
   transition: filter .3s steps(4);
 }
 .bd-layer { position: absolute; inset: -4%; will-change: transform; }
@@ -15,7 +14,7 @@
 /* one shared drift + pointer parallax, scaled per layer so it moves as one wall */
 .bd-graffiti { --amp: 10; }
 .bd-shards { --amp: 18; }
-.bd-layer { transform: translate3d(calc(var(--px) * var(--amp) * -1px), calc(var(--py) * var(--amp) * -0.5px), 0); }
+.bd-layer { transform: translate3d(0, 0, 0); } /* (backdrop.js moves each layer with the pointer, scaled by its --amp) */
 .bd-drift { animation: bd-drift 18s ease-in-out infinite alternate; }
 @keyframes bd-drift {
   from { transform: translate3d(calc(var(--amp) * -1px), 0, 0); }

@@ -267,12 +267,14 @@ function startTicker(svg) {
       const t = th + ring.widths[i] / 2;
       th += ring.widths[i];
       const cos = Math.cos(t);
-      if (cos <= 0.04) { c.style.visibility = 'hidden'; return; }
+      // (Nov 21: only what changed is written: a letter round the back was set hidden again every frame)
+      if (cos <= 0.04) { if (c._v !== 0) { c.style.visibility = 'hidden'; c._v = 0; } return; }
       const { cx, R, t0, ta, b0, ba } = ring.g;
       const x = cx + R * Math.sin(t);
       const y = (t0 + b0) / 2 + ((ta + ba) / 2) * (1 - cos);
-      c.style.visibility = 'visible';
-      c.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${cos.toFixed(3)} 1)`);
+      if (c._v !== 1) { c.style.visibility = 'visible'; c._v = 1; }
+      const tf = `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${cos.toFixed(3)} 1)`;
+      if (c._tf !== tf) { c.setAttribute('transform', tf); c._tf = tf; }
     });
   };
   const reduce = () => document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -298,11 +300,17 @@ function startTicker(svg) {
     });
   };
   const t0 = performance.now();
+  /* The LED rings step 30 times a second, like a real LED sign (Nov 21: every letter sits under a glow filter, a dot
+     mask and a clip, so each step is an SVG re-layout and a filtered repaint in the page's one lane; at 60 a second that
+     ran behind every chapter all the time. Under the dot mask 30 steps look the same, at half the work.) */
+  let lastLed = 0;
   const frame = (now) => {
     requestAnimationFrame(frame);
     if (document.body.dataset.mode === 'title') return; // the city isn't shown on the title
     const still = reduce();
     lightsStep(now, still);
+    if (now - lastLed < 1000 / 30 - 2) return;
+    lastLed = now;
     rings.forEach((r) => {
       if (still) place(r, -r.total / 2);
       else place(r, EDGE - ((((now - t0) / 1000 + r.offset) % r.pass) * SPEED)); // enters at the right, travels left
@@ -427,14 +435,17 @@ export function mountBackdrop(el) {
     let raf = 0;
     let tx = 0;
     let ty = 0;
+    let layers = null;
     window.addEventListener('pointermove', (e) => {
       tx = (e.clientX / window.innerWidth) * 2 - 1;
       ty = (e.clientY / window.innerHeight) * 2 - 1;
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
-        el.style.setProperty('--px', tx.toFixed(3));
-        el.style.setProperty('--py', ty.toFixed(3));
+        // (Nov 21: was --px/--py on the whole backdrop, which re-checked the style of every element in it each move;
+        // now each layer's own transform is set: the graphics side just slides the painted layer)
+        layers ||= [...el.querySelectorAll('.bd-layer')].map((l) => [l, parseFloat(getComputedStyle(l).getPropertyValue('--amp')) || 0]);
+        for (const [l, amp] of layers) l.style.transform = `translate3d(${(-tx * amp).toFixed(2)}px, ${(-ty * amp * 0.5).toFixed(2)}px, 0)`;
       });
     }, { passive: true });
   }
