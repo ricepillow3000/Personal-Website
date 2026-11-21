@@ -119,7 +119,17 @@ void main() {
     }
     c = vec4(clamp(col, 0.0, 1.0) * c.a, c.a);
   }
-  outColor = c * (uAlpha * dark); // premultiplied
+  /* (Nov 21, John: "make sure the train comes out realistic"). It used to fade in see-through. Now it is solid in the
+     tunnel and UNLIT there: the station's light (dark: 0 deep inside, 1 from the mouth on) climbs onto the body as it
+     comes out, its lit windows glow the whole way, and it is lost only deep in the tunnel (seen). Its reflection in
+     the platform's floor still fades the old way (there is no platform in the tunnel). */
+  if (uRefl > 0.5 || uMat < 0.5) { outColor = c * (uAlpha * dark); return; }
+  float seen = clamp(1.0 - (vD - uMouth - 40.0) / 400.0, 0.0, 1.0);
+  vec3 k = c.a > 0.0 ? c.rgb / c.a : vec3(0.0);
+  float glow = clamp((min(k.r, k.g) - k.b) * 5.0, 0.0, 1.0) * step(0.45, dot(k, vec3(0.299, 0.587, 0.114)));
+  float light = mix(0.07, 1.0, dark);
+  c.rgb *= mix(light, max(light, 0.9), glow);
+  outColor = c * (uAlpha * seen); // premultiplied
 }`;
 
 export function createSideRenderer() {

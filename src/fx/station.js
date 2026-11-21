@@ -391,81 +391,94 @@ const RAIL_RUNS = [[9.2, 10.9], [14.6, 16.3], [20.4, 22.1], [27.2, 28.9], [35.6,
    bent-tube frame, navy steel, its top corners ROUNDED down into the end posts, a bottom rail just above the floor
    on two small feet, and five evenly spaced vertical bars from the bottom rail up into the top rail; 1.1 m tall. */
 function railsSVG() {
-  /* (Nov 21, John: "focus on the hand guardrails to ensure they are fully drawn out designs"). Same rail as before
-     (one bent tube, five bars, a bottom rail), now finished like a real one: every tube has a lit side and a shaded
-     side, the bars are welded into the rails with small collars, each post stands on a round flange bolted to the
-     floor, the paint is scuffed to bare steel low on the posts where feet and bags hit it, and its shadow lies on
-     the floor with soft ends. */
+  /* (Nov 21, John: "make the guardrails look more 3D, they kinda look like PNGs"; and of their shadows: "I can see the
+     layers, make sure it's blended in"). The rail was flat navy with two thin lines on it: a cut-out. Same rail (one
+     bent tube, five bars, a bottom rail, bolted flanges), now drawn as ROUND STEEL in the station's light:
+     - every tube is a cylinder: from its shaded side through its paint's own colour to a light band and a warm glint
+       on the side that faces the tubes (they hang over the platform: to the right, and above), six tones, not two;
+     - the light falls off down the rail: bright along the top, dimmer toward the floor;
+     - the top rail is seen from below (the eye is lower than it), so its underside shows as a darker band;
+     - each flange is a disc with a lit top face, a dark rim and its bolts;
+     - its shadow is ONE soft shape on the floor, thrown toward the track, darkest where the rail and the posts meet
+       the tiles: no stripes, no stacked bands. */
   const F = 1040; const EY = 1.6;
   const P = (X, h, Z) => [VP[0] + (F * X) / Z, VP[1] - (F * (h - EY)) / Z];
   const line = (q) => q.map(([x, y]) => `${f2(x)},${f2(y)}`).join(' ');
-  const navy = '#34405C'; const lit = '#A5A7AC'; const deep = '#1E2638'; const bare = '#A7A294'; // (lit: navy paint under the WARM tubes shines a warm grey, not a cool blue)
-  const TOP = 1.1; const LOW = 0.16; const R = 0.2;
-  const tubeLine = (q, w, inkw) => `<polyline points="${line(q)}" fill="none" stroke="${INK}" stroke-width="${f2(w + inkw * 2)}" stroke-linejoin="round" stroke-linecap="round"/><polyline points="${line(q)}" fill="none" stroke="${navy}" stroke-width="${f2(w)}" stroke-linejoin="round" stroke-linecap="round"/>`;
-  const shift = (q, dx, dy = 0) => q.map(([x, y]) => [x + dx, y + dy]);
+  const C = { deep: '#141B2C', navy: '#2C3856', mid: '#415079', lite: '#7483A6', spec: '#E4DCC6', bare: '#A7A294' };
+  const TOP = 1.1; const LOW = 0.16; const R = 0.2; const LIP = -2.6;
+  const st = (pts, col, sw, op = 1) => `<polyline points="${line(pts)}" fill="none" stroke="${col}" stroke-width="${f2(sw)}" stroke-linejoin="round" stroke-linecap="round"${op < 1 ? ` stroke-opacity="${op}"` : ''}/>`;
+  // a tube lit from the direction (lx, ly): ink, its shaded side, the paint, a light band, a glint; then the falloff
+  const tube = (q, w, inkw, [lx, ly], fall) => {
+    const sh = (t) => q.map(([x, y]) => [x + lx * w * t, y + ly * w * t]);
+    return st(q, INK, w + inkw * 2) + st(q, C.deep, w) + st(sh(0.08), C.navy, w * 0.8) + st(sh(0.16), C.mid, w * 0.5)
+      + st(sh(0.23), C.lite, w * 0.25) + st(sh(0.28), C.spec, w * 0.09, 0.9) + (fall ? st(q, `url(#${fall})`, w) : '');
+  };
   let g = '';
-  RAIL_RUNS.forEach(([z0, z1]) => {
+  RAIL_RUNS.forEach(([z0, z1], si) => {
     const zm = (z0 + z1) / 2; const px = F / zm; // px per metre here
-    const tube = 0.042 * px; const thin = 0.026 * px; const inkw = Math.max(0.5, 0.012 * px);
+    const tw = 0.05 * px; const thin = 0.031 * px; const inkw = Math.max(0.4, 0.008 * px);
     const fine = px > 34; // (near enough for the small parts; far down the platform they would be specks)
-    /* its shadow on the floor (the depth pass: both judges saw "floating stickers", "minimal contact shadows at
-       the feet"). The tubes hang over the middle of the platform, to the right of the rail and 3.35 m up, so the
-       rail's shadow is thrown LEFT, toward the track: the bottom rail's as a line beside it, each post's and each
-       bar's as a hard stripe running to the platform's lip and off it (the top rail's own shadow lands in the pit).
-       Hard-edged and flat, like every shadow in the station's ink style. */
-    const LIP = -2.6; const lowS = RAIL_X - (LOW * -RAIL_X) / (3.35 - LOW); // where the bottom rail's shadow lies
-    const shade = (q, o) => `<polygon points="${line(q)}" fill="#050506" fill-opacity="${o}"/>`;
-    g += shade([P(RAIL_X, 0, z1), P(LIP, 0, z1), P(LIP, 0, z0), P(RAIL_X, 0, z0)], 0.2); // the whole section's shade, one flat shape from its foot to the lip
-    g += shade([P(lowS - 0.035, 0, z1), P(lowS - 0.035, 0, z0), P(lowS + 0.035, 0, z0), P(lowS + 0.035, 0, z1)], 0.4);
-    [z1, z0].forEach((z) => { g += shade([P(RAIL_X, 0, z + 0.05), P(LIP, 0, z + 0.05), P(LIP, 0, z - 0.05), P(RAIL_X, 0, z - 0.05)], 0.46); });
-    for (let k = 1; k < 6; k++) { const z = z1 - ((z1 - z0) * k) / 6; g += shade([P(lowS, 0, z + 0.03), P(LIP, 0, z + 0.03), P(LIP, 0, z - 0.03), P(lowS, 0, z - 0.03)], 0.26); }
-    // the flanges first: a round plate on the floor under each post, two bolts, an ink edge
+    const [, yTop] = P(RAIL_X, TOP, z0); const [, yBot] = P(RAIL_X, 0, z0);
+    const [xa] = P(LIP, 0, z0); const [xb] = P(RAIL_X, 0, z1); // (the shadow's reach: the lip at the near post, the far post's foot)
+    const fall = `grF${si}`; const soft = `grS${si}`;
+    g += `<defs><linearGradient id="${fall}" gradientUnits="userSpaceOnUse" x1="0" y1="${f2(yTop)}" x2="0" y2="${f2(yBot)}"><stop offset="0" stop-color="#05060A" stop-opacity="0"/><stop offset=".45" stop-color="#05060A" stop-opacity=".1"/><stop offset="1" stop-color="#05060A" stop-opacity=".42"/></linearGradient>`
+      + `<filter id="${soft}" filterUnits="userSpaceOnUse" x="${f2(xa - 0.2 * px)}" y="${f2(P(RAIL_X, 0, z1)[1] - 0.12 * px)}" width="${f2(xb - xa + 0.5 * px)}" height="${f2(yBot - P(RAIL_X, 0, z1)[1] + 0.3 * px)}"><feGaussianBlur stdDeviation="${f2(Math.max(0.5, 0.016 * px))}"/></filter></defs>`;
+    // ---- its shadow: one soft shape from the rail's foot to the lip (the top rail's own shadow lands in the pit)
+    const flat = (q, o) => `<polygon points="${line(q)}" fill="#030305" fill-opacity="${o}"/>`;
+    const lowS = RAIL_X - (LOW * -RAIL_X) / (3.35 - LOW); // where the bottom rail's shadow lies
+    let shd = flat([P(RAIL_X, 0, z1 + 0.04), P(LIP, 0, z1 + 0.04), P(LIP, 0, z0 - 0.04), P(RAIL_X, 0, z0 - 0.04)], 0.24);
+    shd += flat([P(lowS - 0.05, 0, z1), P(lowS - 0.05, 0, z0), P(lowS + 0.04, 0, z0), P(lowS + 0.04, 0, z1)], 0.3);
     [z1, z0].forEach((z) => {
-      const [cx, cy] = P(RAIL_X, 0.012, z); const rx = 0.085 * px; const ry = rx * 0.34;
-      g += `<ellipse cx="${f2(cx - rx * 0.3)}" cy="${f2(cy + ry * 0.55)}" rx="${f2(rx * 1.3)}" ry="${f2(ry * 1.25)}" fill="#050506" fill-opacity=".5"/>`; // its contact shadow on the tiles
-      g += `<ellipse cx="${f2(cx)}" cy="${f2(cy + ry * 0.5)}" rx="${f2(rx)}" ry="${f2(ry)}" fill="${INK}"/>`; // its thickness
-      g += `<ellipse cx="${f2(cx)}" cy="${f2(cy)}" rx="${f2(rx)}" ry="${f2(ry)}" fill="${deep}" stroke="${INK}" stroke-width="${f2(inkw)}"/>`;
-      if (fine) [-1, 1].forEach((q) => { g += `<ellipse cx="${f2(cx + q * rx * 0.66)}" cy="${f2(cy)}" rx="${f2(rx * 0.14)}" ry="${f2(ry * 0.3)}" fill="${bare}" stroke="${INK}" stroke-width="${f2(inkw * 0.5)}"/>`; });
+      shd += flat([P(RAIL_X, 0, z + 0.05), P(LIP, 0, z + 0.05), P(LIP, 0, z - 0.05), P(RAIL_X, 0, z - 0.05)], 0.3);
+      // where the flange sits on the tiles: a small dark patch on its track side only (a ring all round it read as a blob)
+      const [cx, cy] = P(RAIL_X - 0.07, 0, z); const rx = 0.085 * px;
+      shd += `<ellipse cx="${f2(cx)}" cy="${f2(cy + rx * 0.1)}" rx="${f2(rx)}" ry="${f2(rx * 0.34)}" fill="#030305" fill-opacity=".55"/>`;
     });
-    // the frame: far post up, round corner, top rail, round corner, near post down (one bent tube)
+    g += `<g filter="url(#${soft})">${shd}</g>`;
+    // ---- the flanges: a disc on the floor under each post: dark rim, lit top face, two bolts
+    [z1, z0].forEach((z) => {
+      const [cx, cy] = P(RAIL_X, 0.014, z); const rx = 0.09 * px; const ry = rx * 0.34;
+      g += `<ellipse cx="${f2(cx)}" cy="${f2(cy + ry * 0.55)}" rx="${f2(rx)}" ry="${f2(ry)}" fill="${INK}"/>`; // its thickness
+      g += `<ellipse cx="${f2(cx)}" cy="${f2(cy)}" rx="${f2(rx)}" ry="${f2(ry)}" fill="${C.navy}" stroke="${INK}" stroke-width="${f2(inkw)}"/>`;
+      g += `<ellipse cx="${f2(cx + rx * 0.14)}" cy="${f2(cy - ry * 0.14)}" rx="${f2(rx * 0.74)}" ry="${f2(ry * 0.7)}" fill="${C.mid}"/>`; // the top face, toward the light
+      g += `<path d="M ${f2(cx + rx * 0.2)} ${f2(cy - ry * 0.78)} A ${f2(rx * 0.86)} ${f2(ry * 0.86)} 0 0 1 ${f2(cx + rx * 0.84)} ${f2(cy - ry * 0.1)}" fill="none" stroke="${C.lite}" stroke-width="${f2(inkw * 1.1)}" stroke-linecap="round"/>`;
+      if (fine) [-1, 1].forEach((q) => { g += `<ellipse cx="${f2(cx + q * rx * 0.66)}" cy="${f2(cy)}" rx="${f2(rx * 0.15)}" ry="${f2(ry * 0.34)}" fill="${C.bare}" stroke="${INK}" stroke-width="${f2(inkw * 0.6)}"/>`; });
+    });
+    // ---- the bars and the bottom rail (under the frame)
+    const n = 6; // (Nov 21, John: "only 5 bars"): five bars, evenly spaced, from the bottom rail up into the top rail
+    for (let k = 1; k < n; k++) {
+      const z = z1 - ((z1 - z0) * k) / n;
+      g += tube([P(RAIL_X, LOW, z), P(RAIL_X, TOP, z)], thin, inkw, [1, 0], fall);
+    }
+    const low = [P(RAIL_X, LOW, z1), P(RAIL_X, LOW, z0)];
+    g += tube(low, tw, inkw, [0.3, -0.95], fall);
+    if (fine) { // the weld collar where each bar stands on the bottom rail
+      for (let k = 1; k < n; k++) {
+        const z = z1 - ((z1 - z0) * k) / n; const [cx, cy] = P(RAIL_X, LOW + 0.03, z);
+        g += `<ellipse cx="${f2(cx)}" cy="${f2(cy)}" rx="${f2(thin * 0.85)}" ry="${f2(thin * 0.4)}" fill="${C.navy}" stroke="${INK}" stroke-width="${f2(inkw * 0.7)}"/>`;
+        g += `<ellipse cx="${f2(cx + thin * 0.2)}" cy="${f2(cy - thin * 0.08)}" rx="${f2(thin * 0.4)}" ry="${f2(thin * 0.16)}" fill="${C.lite}" fill-opacity=".8"/>`;
+      }
+    }
+    // ---- the frame: far post up, round corner, top rail, round corner, near post down (one bent tube)
     const fr = [];
     fr.push([z1, 0.02]);
     for (let k = 0; k <= 8; k++) { const t = (Math.PI / 2) * (k / 8); fr.push([z1 - R + R * Math.cos(t), TOP - R + R * Math.sin(t)]); }
     for (let k = 0; k <= 8; k++) { const t = Math.PI / 2 + (Math.PI / 2) * (k / 8); fr.push([z0 + R + R * Math.cos(t), TOP - R + R * Math.sin(t)]); }
     fr.push([z0, 0.02]);
     const frP = fr.map(([z, h]) => P(RAIL_X, h, z));
-    // bars and the bottom rail first (under the frame)
-    const n = 6; // (Nov 21, John: "only 5 bars"): five bars, evenly spaced, from the bottom rail up into the top rail
-    for (let k = 1; k < n; k++) {
-      const z = z1 - ((z1 - z0) * k) / n; const bar = [P(RAIL_X, LOW, z), P(RAIL_X, TOP, z)];
-      g += tubeLine(bar, thin, inkw);
-      g += `<polyline points="${line(shift(bar, thin * 0.24))}" fill="none" stroke="${lit}" stroke-opacity=".6" stroke-width="${f2(thin * 0.26)}"/>`;
-      g += `<polyline points="${line(shift(bar, -thin * 0.3))}" fill="none" stroke="${deep}" stroke-opacity=".8" stroke-width="${f2(thin * 0.24)}"/>`;
-    }
-    const low = [P(RAIL_X, LOW, z1), P(RAIL_X, LOW, z0)];
-    g += tubeLine(low, tube, inkw);
-    g += `<polyline points="${line(shift(low, 0, -tube * 0.24))}" fill="none" stroke="${lit}" stroke-opacity=".6" stroke-width="${f2(tube * 0.26)}"/>`;
-    g += `<polyline points="${line(shift(low, 0, tube * 0.3))}" fill="none" stroke="${deep}" stroke-opacity=".8" stroke-width="${f2(tube * 0.24)}"/>`;
-    if (fine) { // the weld collar where each bar stands on the bottom rail
-      for (let k = 1; k < n; k++) {
-        const z = z1 - ((z1 - z0) * k) / n; const [cx, cy] = P(RAIL_X, LOW + 0.028, z);
-        g += `<ellipse cx="${f2(cx)}" cy="${f2(cy)}" rx="${f2(thin * 0.85)}" ry="${f2(thin * 0.42)}" fill="${navy}" stroke="${INK}" stroke-width="${f2(inkw * 0.7)}"/>`;
-      }
-    }
-    g += tubeLine(frP, tube, inkw);
-    // the tube catches the ceiling light along its top and down the side of each post, and is shaded on the other
-    const hiP = fr.map(([z, h]) => P(RAIL_X, h + 0.012, z)).slice(1, -1);
-    g += `<polyline points="${line(hiP)}" fill="none" stroke="${lit}" stroke-opacity=".75" stroke-width="${f2(tube * 0.32)}" stroke-linejoin="round"/>`;
+    g += tube(frP, tw, inkw, [0.62, -0.62], fall);
+    // the top rail's underside (the eye is below it): a darker band along it, and the tubes' warm light along its crown
+    const topRun = fr.slice(5, -5).map(([z, h]) => P(RAIL_X, h, z));
+    g += st(topRun.map(([x, y]) => [x, y + tw * 0.3]), C.deep, tw * 0.3, 0.9);
+    g += st(topRun.map(([x, y]) => [x, y - tw * 0.3]), C.spec, tw * 0.12, 0.95);
     [z1, z0].forEach((z) => {
-      const post = [P(RAIL_X, 0.2, z), P(RAIL_X, TOP - R, z)];
-      g += `<polyline points="${line(shift(post, tube * 0.24))}" fill="none" stroke="${lit}" stroke-opacity=".6" stroke-width="${f2(tube * 0.24)}"/>`;
-      g += `<polyline points="${line(shift(post, -tube * 0.3))}" fill="none" stroke="${deep}" stroke-opacity=".8" stroke-width="${f2(tube * 0.22)}"/>`;
-      // the collar at its foot, and the paint scuffed to bare steel just above it
-      const [cx, cy] = P(RAIL_X, 0.04, z);
-      g += `<ellipse cx="${f2(cx)}" cy="${f2(cy)}" rx="${f2(tube * 0.9)}" ry="${f2(tube * 0.4)}" fill="${navy}" stroke="${INK}" stroke-width="${f2(inkw * 0.8)}"/>`;
+      // the collar at each post's foot, and the paint scuffed to bare steel just above it
+      const [cx, cy] = P(RAIL_X, 0.045, z);
+      g += `<ellipse cx="${f2(cx)}" cy="${f2(cy)}" rx="${f2(tw * 0.92)}" ry="${f2(tw * 0.4)}" fill="${C.navy}" stroke="${INK}" stroke-width="${f2(inkw * 0.8)}"/>`;
+      g += `<ellipse cx="${f2(cx + tw * 0.22)}" cy="${f2(cy - tw * 0.08)}" rx="${f2(tw * 0.44)}" ry="${f2(tw * 0.16)}" fill="${C.lite}" fill-opacity=".8"/>`;
       if (fine) {
-        g += `<polyline points="${line(shift([P(RAIL_X, 0.09, z), P(RAIL_X, 0.15, z)], tube * 0.1))}" fill="none" stroke="${bare}" stroke-opacity=".7" stroke-width="${f2(tube * 0.3)}" stroke-linecap="round"/>`;
-        g += `<polyline points="${line(shift([P(RAIL_X, 0.2, z), P(RAIL_X, 0.23, z)], -tube * 0.16))}" fill="none" stroke="${bare}" stroke-opacity=".55" stroke-width="${f2(tube * 0.22)}" stroke-linecap="round"/>`;
+        g += st([P(RAIL_X, 0.1, z), P(RAIL_X, 0.16, z)].map(([x, y]) => [x + tw * 0.14, y]), C.bare, tw * 0.3, 0.7);
+        g += st([P(RAIL_X, 0.21, z), P(RAIL_X, 0.24, z)].map(([x, y]) => [x - tw * 0.16, y]), C.bare, tw * 0.22, 0.5);
       }
     });
   });
