@@ -1232,8 +1232,14 @@ test('SIDE QUESTS plays THE SQUARE: a painted square with nine screens, the big 
   await expect(sq).toHaveCount(1, { timeout: 6000 });
   await expect(sq.locator('.sq-img')).toHaveCount(1);
   await expect(sq.locator('.sq-scr')).toHaveCount(9);
-  expect((await sq.locator('.sq-scr.sq-main .sq-label').innerText()).replace(/\s+/g, '')).toMatch(/SIDEQUESTS/i);
+  expect((await sq.locator('.sq-scr.sq-main .sq-label').textContent()).replace(/\s+/g, '')).toMatch(/SIDEQUESTS/i);
   for (const t of ['CLOSER', 'JOHN', 'ROUTINE', 'STEAL']) await expect(sq).toContainText(t);
+  // the big screen's black bar: NOW SHOWING sliding left to right, a new copy following from the left
+  const run = sq.locator('.sq-main .sq-bar .sq-bar-run');
+  await expect(run.locator('span')).toHaveCount(4);
+  const x0 = await run.evaluate((e) => e.getBoundingClientRect().left);
+  await page.waitForTimeout(250);
+  expect(await run.evaluate((e) => e.getBoundingClientRect().left)).toBeGreaterThan(x0);
   for (const t of ['TAKE YOUR', '2,000+', '727', 'BORING']) await expect(sq).not.toContainText(t); // (fresh lines, not the ones the rest of the site repeats)
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'side-quests', { timeout: 8000 });
   await expect(sq).toHaveCount(0, { timeout: 4000 }); // (it cleans itself up)

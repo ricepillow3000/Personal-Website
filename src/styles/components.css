@@ -702,7 +702,6 @@ body[data-mode="title"] .scroll-meter { display: none; }
   box-shadow: 0 0 18px 6px rgba(var(--c), .38), 0 0 46px 16px rgba(var(--c), .16); } /* (outside the screen only: light spilling onto the bezel and the wall) */
 /* the ads */
 .sq-main { background: var(--red); gap: .1em; }
-.sq-main .sq-on { position: relative; z-index: 2; font: 400 .7em/1 var(--f-menu); letter-spacing: .4em; color: var(--yellow); background: var(--black); padding: .2em .5em; }
 .sq-main .sq-label { position: relative; z-index: 2; font-size: 1.55em; max-width: 96%; }
 .sq-main .sq-slash { position: absolute; left: -10%; right: -10%; top: 58%; height: 30%; background: var(--black); rotate: -8deg; z-index: 1;
   box-shadow: 0 -.15em 0 var(--white); }
@@ -715,6 +714,51 @@ body[data-mode="title"] .scroll-meter { display: none; }
 .sq-name .sq-wanted { font-size: 1.55em; letter-spacing: .25em; color: var(--yellow); margin-bottom: .1em; }
 .sq-proof b { font-size: 1.7em; } .sq-proof em { font-size: 1.1em; }
 .sq-checks .sq-sm { font-size: 1.5em !important; letter-spacing: .12em !important; } .sq-checks .sq-big { font-size: 3.4em; color: var(--yellow); text-shadow: .05em .05em 0 var(--red), 0 0 .2em var(--yellow); }
+/* the ads move (Nov 21, John: "make the ads on the billboards animate more"): each its own loop, stepped like LED
+   panels; a bright scan bar rolls down every screen now and then */
+.sq-scr > * { position: relative; z-index: 2; }
+.sq-scr::before { animation: sq-scan 1.6s linear infinite; background: linear-gradient(180deg, transparent 0 40%, rgba(255, 255, 255, .16) 48% 52%, transparent 60%) 0 0 / 100% 250% no-repeat, linear-gradient(180deg, rgba(255, 255, 255, .1), transparent 30%, transparent 70%, rgba(0, 0, 0, .25)); }
+@keyframes sq-scan { from { background-position: 0 130%, 0 0; } to { background-position: 0 -130%, 0 0; } }
+.sq-main .sq-slash { animation: sq-slash 1.4s cubic-bezier(.6, 0, .4, 1) infinite alternate; }
+@keyframes sq-slash { from { translate: -6% 0; } to { translate: 6% 0; } }
+.sq-main .sq-label .rl { animation: sq-hop .9s steps(2) infinite; } .sq-main .sq-label .rl:nth-child(even) { animation-delay: .45s; }
+@keyframes sq-hop { 50% { translate: 0 -.06em; } }
+@keyframes sq-blink { 50% { opacity: .35; } }
+.sq-time .sq-look { animation: sq-blink .7s steps(2) infinite; }
+.sq-time .sq-big { animation: sq-zoom 1.1s cubic-bezier(.2, 1.4, .4, 1) infinite alternate; }
+@keyframes sq-zoom { from { scale: .9; } to { scale: 1.12; } }
+.sq-eye { position: absolute; left: 50%; top: 72%; width: 2.2em; height: 1.1em; translate: -50% 0; border: .18em solid var(--white); border-radius: 50%; }
+.sq-eye::after { content: ""; position: absolute; top: 50%; left: 50%; width: .5em; height: .5em; margin: -.25em; background: var(--white); border-radius: 50%; animation: sq-look 1.6s steps(4) infinite; }
+@keyframes sq-look { 0%, 100% { translate: -.45em 0; } 50% { translate: .45em 0; } }
+.sq-name .sq-wanted { animation: sq-blink .6s steps(2) infinite; }
+.sq-name .sq-john { animation: sq-jolt 1.2s steps(1) infinite; }
+@keyframes sq-jolt { 0%, 80% { rotate: -4deg; translate: 0 0; } 84% { rotate: 3deg; translate: .08em -.05em; } 90% { rotate: -6deg; translate: -.06em .04em; } }
+.sq-proof { place-content: center start; overflow: hidden; }
+.sq-tick { display: flex; width: max-content; animation: sq-tick 2.4s linear infinite; }
+.sq-tick b { white-space: nowrap; padding-right: .6em; }
+@keyframes sq-tick { to { translate: -50% 0; } }
+.sq-motto .sq-red { position: relative; animation: sq-glitch 1s steps(1) infinite; }
+@keyframes sq-glitch { 0%, 70%, 100% { translate: 0 0; text-shadow: none; } 72% { translate: .08em 0; text-shadow: -.08em 0 var(--yellow); } 76% { translate: -.1em 0; text-shadow: .08em 0 var(--black); } 80% { translate: 0 0; } }
+.sq-checks .sq-big { animation: sq-bounce .8s cubic-bezier(.3, 1.8, .5, 1) infinite alternate; }
+@keyframes sq-bounce { from { translate: 0 .1em; rotate: -8deg; } to { translate: 0 -.12em; rotate: 8deg; } }
+.sq-checks .sq-sm { animation: sq-blink .8s steps(2) infinite; } .sq-checks .sq-sm + .sq-big + .sq-sm { animation-delay: .4s; }
+.sq-jn { overflow: hidden; } .sq-jn .sq-big { animation: sq-flip 1.4s steps(6) infinite; }
+@keyframes sq-flip { 0%, 60% { scale: 1 1; } 70% { scale: .1 1; } 80% { scale: 1 1; } }
+.sq-sweep { position: absolute; inset: -20% auto -20% 0; width: 30%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent); rotate: 12deg; animation: sq-sweep 1.4s ease-in infinite; }
+@keyframes sq-sweep { from { translate: -150% 0; } to { translate: 450% 0; } }
+.sq-starmark { animation-duration: .9s; }
+@media (prefers-reduced-motion: reduce) { .sqr * { animation: none !important; } }
+/* the big screen's NOW SHOWING bar (Nov 21, John: "a black bar on top, inside the billboard, not obstructing the
+   headline... NOW SHOWING traversing from the left side to the right... when one reaches the right, another pops up
+   from the left, like a loop"): a black strip across the top of the screen; two pairs of NOW SHOWING slide left to
+   right, seamless (the track is two identical halves, moved by one half) */
+.sq-main { padding-top: 1.5em; }
+.sq-bar { position: absolute !important; left: 0; right: 0; top: 0; height: 1.25em; z-index: 3 !important; background: var(--black); overflow: hidden;
+  border-bottom: .08em solid var(--yellow); display: flex; align-items: center; }
+.sq-bar-run { display: flex; width: max-content; animation: sq-bar 2.2s linear infinite; }
+.sq-bar-run span { font: 400 .78em/1 var(--f-menu); letter-spacing: .35em; color: var(--yellow); padding: 0 1.6em; white-space: nowrap; text-shadow: 0 0 .3em rgba(255, 225, 26, .7); }
+.sq-bar-run span::after { content: "★"; margin-left: 1.6em; color: var(--red); letter-spacing: 0; }
+@keyframes sq-bar { from { translate: -50% 0; } to { translate: 0 0; } }
 .sq-scr.sq-star { background: var(--red); }
 .sq-starmark { position: relative; z-index: 1; width: 6.4em; height: 6.4em; background: var(--white); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
   animation: sq-spin 1.2s linear infinite; }
