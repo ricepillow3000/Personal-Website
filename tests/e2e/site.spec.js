@@ -1369,3 +1369,13 @@ test('SAVE DATA really saves: five new games fill five files (each its own progr
   await expect(page.locator('#pressStart')).toHaveText('PRESS START'); // nothing saved any more
   expect(errors).toEqual([]);
 });
+
+test('no emojis anywhere: no emoji-capable character in the site (phones draw them as emoji tiles), and outbound links use the drawn arrow', async ({ page }) => {
+  const files = [];
+  const walk = (d) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) walk(p); else if (/\.(js|css|html)$/.test(f)) files.push(p); } };
+  walk('src'); files.push('app.html');
+  const found = files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/\p{Extended_Pictographic}/gu)].filter((m) => m[0].codePointAt(0) > 127).map((m) => `${f}: U+${m[0].codePointAt(0).toString(16)}`));
+  expect(found).toEqual([]);
+  await page.goto('/#/contact');
+  await expect(page.locator('#page a[href*="github"] .ext').first()).toBeAttached();
+});

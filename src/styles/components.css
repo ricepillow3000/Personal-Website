@@ -1103,3 +1103,6 @@ body[data-screen="title"].cal-off .hud-cal { display: none; } /* no room at all 
   .cal-sky { width: 38px; height: 38px; }
   .cal-sky svg { width: 22px; height: 22px; }
 }
+
+/* the outbound-link arrow (a drawn shape, never the north-east arrow character, which phones show as an emoji) */
+.ext { display: inline-block; width: .62em; height: .62em; margin-left: .35em; vertical-align: .06em; overflow: visible; }
