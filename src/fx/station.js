@@ -142,28 +142,30 @@ const SIGN_SPOTS = [
   ...[0.8, 0.7, 0.62, 0.55, 0.5, 0.45, 0.41, 0.37, 0.34].flatMap((sc) => [30, 120, 200, -184, -260]
     .map((o) => ({ x: Math.round(VP[0] + o * sc), y: Math.round(VP[1] - 334 * sc), w: Math.round(150 * sc) }))),
 ];
-/* THE BOARD IS PAINTED NOW (Nov 20, John: "the train sign... I don't think it's the right texture, it doesn't
-   even look like it fits there... make the train station and the train sign have the same textures... it's
-   looking a little out of place"). The drawn SVG box always read as a vector cut-out on the painted station
-   (restyling its greys and lines lost a blind comparison to it, both orders). So the board is a picture
-   painted the station's way: Gemini (Nano Banana Pro) rendered an original hanging board in the same toon
-   style (charcoal steel, a grey bezel, a dull amber trim, two rods up to a ceiling channel, grime), with a
-   blank black screen, on a green screen; keyed and cropped to board.webp (480 x 420). Its screen's four
-   corners were measured on the picture (BOARD_QUAD, fractions of the picture), and the live LED rows are
-   mapped onto exactly that quad with a perspective transform, so the text sits IN the screen. It hangs with
-   its ceiling channel on the station's ceiling at the spot's depth; on the left of the light strip it is
-   mirrored so its open side still faces the middle. */
-const BOARD_ASPECT = 782 / 894; // (height / width of the picture)
-const BOARD_QUAD = [[0.1432, 0.3529], [0.9374, 0.5077], [0.9597, 0.9169], [0.1174, 0.8402]]; // TL TR BR BL
-/* the board for a spot (art px): the picture's box, and the screen's four corners */
+/* THE SIGNS, AS A REAL PLATFORM HAS THEM (Nov 21, John, with a reference shot of a Tokyo platform's signs:
+   "the textures don't really match the subway background... look at the sign mainly: the exit sign, the
+   other sign in back and the digital sign"). The painted board picture (Nano Banana, Nov 20) never matched
+   the station: brighter, crisper and grimier than the art round it, with a brass trim the station has
+   nowhere; grading it didn't help (a blind judge picked whichever it saw first). Real platform signs are
+   plain: a long slim black LED board on two thin rods, a backlit yellow EXIT sign, a white direction sign
+   further back. So all three are built in the station's own perspective and light (lit from the strip's
+   side, falling off into the dark, thin ink like the art's): the LED board facing down the platform (its
+   front a rectangle, its underside and the side toward the middle showing), hung on two rods from the steel
+   cross beam; behind it, on rods up into the ceiling, a yellow EXIT sign and a white sign pointing up to THE CITY (the
+   next scene), with our line's red JN tile. Our own words and layout; arrows are drawn, not characters. */
+const SIGN_H = 34; // the LED board's height at depth 1 (art px): long and slim
+const depthOf = (s) => s.w / 150;
+const toVP = (pts, r) => pts.map(([x, y]) => [VP[0] + (x - VP[0]) * r, VP[1] + (y - VP[1]) * r]);
+/* the board for a spot (art px): its front face, the box behind it, the screen, and the box it needs clear */
 function boardAt(s) {
-  const w = s.w * 1.12;
-  const h = w * BOARD_ASPECT;
-  const flip = s.x + s.w / 2 < VP[0]; // left of the middle: mirrored
-  const x = s.x - w * 0.04;
-  const y = s.y - 60 * (s.w / 150); // its ceiling channel on the ceiling at this depth
-  const q = flip ? [[1 - BOARD_QUAD[1][0], BOARD_QUAD[1][1]], [1 - BOARD_QUAD[0][0], BOARD_QUAD[0][1]], [1 - BOARD_QUAD[3][0], BOARD_QUAD[3][1]], [1 - BOARD_QUAD[2][0], BOARD_QUAD[2][1]]] : BOARD_QUAD;
-  return { x, y, w, h, flip, quad: q.map(([u, v]) => [x + u * w, y + v * h]), box: { l: x, r: x + w, t: y, b: y + h } };
+  const d = depthOf(s);
+  const flip = s.x + s.w / 2 < VP[0]; // left of the middle: its side face shows on its right
+  const w = s.w * 1.12; const x = s.x - s.w * 0.06;
+  const y = s.y + 8 * d; const h = SIGN_H * d;
+  const bz = 3.2 * d;
+  const quad = [[x + bz, y + bz], [x + w - bz, y + bz], [x + w - bz, y + h - bz], [x + bz, y + h - bz]];
+  const beamY = VP[1] - 380 * d; // the beam's underside over it
+  return { x, y, w, h, d, flip, quad, box: { l: x, r: x + w, t: beamY, b: y + h * 1.25 } };
 }
 /* a CSS matrix3d that maps the rectangle (0,0)-(w,h) onto the quad p (TL TR BR BL) */
 export function rectToQuad(w, h, p) {
@@ -177,13 +179,115 @@ export function rectToQuad(w, h, p) {
   const d = y1 - y0 + g * y1; const e = y3 - y0 + hh * y3; const f = y0;
   return `matrix3d(${[a / w, d / w, 0, g / w, b / h, e / h, 0, hh / h, 0, 0, 1, 0, c, f, 0, 1].map((n) => +n.toFixed(6)).join(',')})`;
 }
+/* ---- bolted into the roof (Nov 21, John: "make the train station sign look like it is bolted in a part of the
+   roof, still kind of looks out of place"). Signs hang from STEEL CROSS BEAMS that are part of the station: a
+   box beam across the ceiling at the sign's depth, from the light strip's housing to the wall over the
+   platform (in this one-point view a cross beam is level on screen, like the ceiling's own joints). Its front
+   face catches the strip's glow, its underside takes the rods: a plate and two bolts each. (A first try ran
+   two strut rails toward the vanishing point: they read as two poles.) Depth d: a ceiling point at depth d
+   sits at y = 548 - 394 d, x = 870 + o d. ---- */
+const WALL_O = { right: 421, left: -600, stripR: 12, stripL: -44 }; // the ceiling's edges at depth 1 (the pillars' wall; the light strip's sides, measured on the art)
+const f2 = (n) => n.toFixed(1);
+const pts = (q) => q.map(([x, y]) => `${f2(x)},${f2(y)}`).join(' ');
+const INK = '#060607';
+function beamSVG(d, flip, id) {
+  const P = (o, dd, hgt) => [VP[0] + o * dd, VP[1] - hgt * dd];
+  const sn = 1.062 * d; const sf = 0.958 * d; const HB = 380; const HC = 394;
+  const [o1, o2] = flip ? [WALL_O.left, WALL_O.stripL] : [WALL_O.stripR, WALL_O.right];
+  const lw = f2(0.7 * d);
+  const eo = flip ? o2 : o1; // its end at the strip: that face looks toward the middle, so you see it
+  const ex = P(eo, sn, HB)[0]; const fx = P(flip ? o1 : o2, sn, HB)[0];
+  const grad = (gid, a, b) => `<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="${f2(ex)}" y1="0" x2="${f2(fx)}" y2="0"><stop offset="0" stop-color="${a}"/><stop offset=".55" stop-color="${b}"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>`;
+  let g = `<defs>${grad(`${id}U`, '#2E3034', '#17181B')}${grad(`${id}F`, '#4A4D52', '#202125')}</defs>`;
+  g += `<polygon points="${pts([P(o1, sn, HB), P(o2, sn, HB), P(o2, sf, HB), P(o1, sf, HB)])}" fill="url(#${id}U)" stroke="${INK}" stroke-width="${lw}" stroke-linejoin="round"/>`;
+  g += `<polygon points="${pts([P(o1, sn, HC), P(o2, sn, HC), P(o2, sn, HB), P(o1, sn, HB)])}" fill="url(#${id}F)" stroke="${INK}" stroke-width="${lw}" stroke-linejoin="round"/>`;
+  g += `<polygon points="${pts([P(eo, sn, HC), P(eo, sn, HB), P(eo, sf, HB), P(eo, sf, HC)])}" fill="#55595F" stroke="${INK}" stroke-width="${lw}" stroke-linejoin="round"/>`;
+  const near = P(eo, sn, HB);
+  [[0.45, 0.22], [0.22, 0.45]].forEach(([op, len]) => {
+    const fr = P(eo + (flip ? -1 : 1) * (o2 - o1) * len, sn, HB);
+    g += `<line x1="${f2(near[0])}" y1="${f2(near[1] - 0.9 * d)}" x2="${f2(fr[0])}" y2="${f2(fr[1] - 0.9 * d)}" stroke="#AEB9C6" stroke-opacity="${op}" stroke-width="${f2(1.3 * d)}"/>`;
+  });
+  for (let o = Math.min(o1, o2) + 22; o < Math.max(o1, o2) - 10; o += 46) {
+    const [x, y] = P(o, sn, (HC + HB) / 2);
+    g += `<circle cx="${f2(x)}" cy="${f2(y)}" r="${(1.5 * d).toFixed(2)}" fill="#7E8690" fill-opacity="${Math.max(0.15, 1 - Math.abs(o - eo) / Math.abs(o2 - o1)).toFixed(2)}" stroke="${INK}" stroke-width="${(0.4 * d).toFixed(2)}"/>`;
+  }
+  return g;
+}
+/* two rods from a sign's top up to the beam's underside, with a plate and two bolts where they meet it */
+function rodsSVG(xs, top, d, ceiling = false) {
+  const by = VP[1] - (ceiling ? 394 : 380) * d; // the beam's underside (or the ceiling) at this depth
+  let g = '';
+  xs.forEach((x) => {
+    if (ceiling) { g += `<rect x="${f2(x - 0.8 * d)}" y="${f2(by)}" width="${f2(1.6 * d)}" height="${f2(top - by)}" fill="#33363B" stroke="${INK}" stroke-width="${f2(0.4 * d)}"/>`; return; }
+    g += `<rect x="${f2(x - 0.9 * d)}" y="${f2(by)}" width="${f2(1.8 * d)}" height="${f2(top - by)}" fill="#3A3D42" stroke="${INK}" stroke-width="${f2(0.45 * d)}"/>`;
+    g += `<polygon points="${pts([[x - 5.5 * d, by - 0.6 * d], [x + 5.5 * d, by - 0.6 * d], [x + 5 * d, by + 2.2 * d], [x - 5 * d, by + 2.2 * d]])}" fill="#2C2F34" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
+    [-1, 1].forEach((q) => { g += `<circle cx="${f2(x + q * 3.2 * d)}" cy="${f2(by + 0.8 * d)}" r="${f2(1 * d)}" fill="#6E757E" stroke="${INK}" stroke-width="${f2(0.35 * d)}"/>`; });
+  });
+  return g;
+}
+/* a sign box facing down the platform: its front rectangle, the underside and the side toward the middle
+   (the box recedes toward the vanishing point), lit from the strip's side */
+function boxSVG(x, y, w, h, flip, face, d, id) {
+  const fr = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+  const bk = toVP(fr, 0.968);
+  const sideI = flip ? [1, 2] : [0, 3]; // the side edge toward the middle
+  let g = `<polygon points="${pts([fr[3], fr[2], bk[2], bk[3]])}" fill="#0F1012" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
+  g += `<polygon points="${pts([fr[sideI[0]], fr[sideI[1]], bk[sideI[1]], bk[sideI[0]]])}" fill="#3B3E44" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
+  const lx = flip ? x + w : x; const dx = flip ? x : x + w; // lit edge -> dark edge
+  g += `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${f2(lx)}" y1="0" x2="${f2(dx)}" y2="0">${face}</linearGradient></defs>`;
+  g += `<rect x="${f2(x)}" y="${f2(y)}" width="${f2(w)}" height="${f2(h)}" fill="url(#${id})" stroke="${INK}" stroke-width="${f2(0.7 * d)}"/>`;
+  g += `<line x1="${f2(x + 0.8 * d)}" y1="${f2(y + 0.6 * d)}" x2="${f2(x + w - 0.8 * d)}" y2="${f2(y + 0.6 * d)}" stroke="#C9D2DC" stroke-opacity=".28" stroke-width="${f2(0.6 * d)}"/>`;
+  return g;
+}
+const arrow = (cx, cy, sz, dir, fill) => { // a drawn arrow (no arrow characters), pointing left or up
+  const a = dir === 'up'
+    ? [[0, -1], [0.75, -0.1], [0.28, -0.1], [0.28, 1], [-0.28, 1], [-0.28, -0.1], [-0.75, -0.1]]
+    : [[-1, 0], [-0.1, -0.75], [-0.1, -0.28], [1, -0.28], [1, 0.28], [-0.1, 0.28], [-0.1, 0.75]];
+  return `<polygon points="${pts(a.map(([u, v]) => [cx + u * sz, cy + v * sz]))}" fill="${fill}"/>`;
+};
+function signsSVG(bd) {
+  const { d, flip } = bd;
+  let back = '';
+  // the second hang, further back: a backlit yellow EXIT sign and a white sign pointing up to THE CITY
+  if (d > 0.45) {
+    const d2 = d * 0.8;
+    const L = (o) => VP[0] + o * d2;
+    const oa = (bd.x - VP[0]) / d; const ob = (bd.x + bd.w - VP[0]) / d; // the board's lateral span
+    const top = VP[1] - 316 * d2; const hh = 23 * d2;
+    const span = (u0, u1) => { const a = flip ? 1 - u1 : u0; const b = flip ? 1 - u0 : u1; return [L(oa + (ob - oa) * a), L(oa + (ob - oa) * b)]; };
+    const [ex0, ex1] = span(0.04, 0.44); const [dx0, dx1] = span(0.5, 0.98);
+    // (no second beam: their rods rise to the ceiling behind the LED board, which hides where they meet it)
+    back += rodsSVG([ex0 + (ex1 - ex0) * 0.2, ex0 + (ex1 - ex0) * 0.8, dx0 + (dx1 - dx0) * 0.2, dx0 + (dx1 - dx0) * 0.8], top, d2, true);
+    const fs = (13.5 * d2).toFixed(1);
+    // EXIT: a glow round it (it is lit from inside), the yellow face, a black arrow and the word
+    back += `<rect x="${f2(ex0 - 3 * d2)}" y="${f2(top - 3 * d2)}" width="${f2(ex1 - ex0 + 6 * d2)}" height="${f2(hh + 6 * d2)}" fill="#E8B923" opacity=".22" filter="url(#slBloom)"/>`;
+    back += boxSVG(ex0, top, ex1 - ex0, hh, flip, '<stop offset="0" stop-color="#E9BE24"/><stop offset="1" stop-color="#9E7E12"/>', d2, 'ssExF');
+    back += arrow(ex0 + 8.5 * d2, top + hh / 2, 6.2 * d2, 'left', '#0B0B0B');
+    back += `<text x="${f2(ex0 + 18 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.06em">EXIT</text>`;
+    // THE CITY: white face, a red JN tile (our line), an up arrow
+    back += `<rect x="${f2(dx0 - 2 * d2)}" y="${f2(top - 2 * d2)}" width="${f2(dx1 - dx0 + 4 * d2)}" height="${f2(hh + 4 * d2)}" fill="#DCE3EA" opacity=".12" filter="url(#slBloom)"/>`;
+    back += boxSVG(dx0, top, dx1 - dx0, hh, flip, '<stop offset="0" stop-color="#E6EAEE"/><stop offset="1" stop-color="#8E959D"/>', d2, 'ssDiF');
+    back += `<rect x="${f2(dx0 + 3 * d2)}" y="${f2(top + 4 * d2)}" width="${f2(14 * d2)}" height="${f2(hh - 8 * d2)}" fill="#C8161A"/>`;
+    back += `<text x="${f2(dx0 + 10 * d2)}" y="${f2(top + hh * 0.7)}" font-size="${(9 * d2).toFixed(1)}" fill="#F5F5F0" text-anchor="middle" style="font-family:var(--f-menu)">JN</text>`;
+    back += arrow(dx0 + 24 * d2, top + hh / 2, 6 * d2, 'up', '#0B0B0B');
+    back += `<text x="${f2(dx0 + 33 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.05em">THE CITY</text>`;
+  }
+  // the LED board itself, on its beam: a slim charcoal box, the screen inset in it
+  back += beamSVG(d, flip, 'ssB1');
+  back += rodsSVG([bd.x + bd.w * 0.16, bd.x + bd.w * 0.84], bd.y, d);
+  back += boxSVG(bd.x, bd.y, bd.w, bd.h, flip, '<stop offset="0" stop-color="#3C3F45"/><stop offset=".6" stop-color="#202226"/><stop offset="1" stop-color="#141517"/>', d, 'ssBdF');
+  const [q0, , q2] = bd.quad;
+  back += `<rect x="${f2(q0[0])}" y="${f2(q0[1])}" width="${f2(q2[0] - q0[0])}" height="${f2(q2[1] - q0[1])}" fill="#08080A" stroke="${INK}" stroke-width="${f2(0.5 * d)}"/>`;
+  return back;
+}
 const SIGN_LINE = 'LET US START THE GAME';
 const signHTML = () => `<div class="ss" hidden>
-  <img class="ss-img" src="assets/film/board.webp" alt="" width="480" height="420" decoding="async">
-  <div class="ss-plane"><div class="ss-screen">
-    <div class="ss-row ss-top"><div class="ss-run"><span>${SIGN_LINE}</span><span>${SIGN_LINE}</span></div></div>
-    <div class="ss-row ss-bot"><b class="ss-time"><span class="ss-h">12</span><span class="ss-colon">:</span><span class="ss-m">00</span><small class="ss-ap">PM</small></b><b class="ss-code">JN</b></div>
-  </div></div>
+  <svg class="st ss-signs" viewBox="0 0 1600 914" preserveAspectRatio="none" aria-hidden="true"></svg>
+  <div class="ss-plane"><div class="ss-screen"><div class="ss-row">
+    <b class="ss-time"><span class="ss-h">12</span><span class="ss-colon">:</span><span class="ss-m">00</span><small class="ss-ap">PM</small></b>
+    <div class="ss-win"><div class="ss-run"><span>${SIGN_LINE}</span><span>${SIGN_LINE}</span></div></div>
+    <b class="ss-code">JN</b>
+  </div></div></div>
 </div>`;
 /* what the board must keep clear of (their boxes on screen, measured on resize and as the title settles) */
 const SIGN_KEEP_CLEAR = '#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr'; // (the name's letters, not its full-width line)
@@ -243,6 +347,58 @@ function signClock(wrap) {
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 }
 
+/* ---- platform guardrails (Nov 21, John, from a reference of a real Tokyo platform: "the hand guardrails near the
+   train track"). Steel barrier sections standing on the platform's edge strip, between where the doors would stop:
+   a top rail, a low rail, close vertical bars and end posts, in the station's own perspective (floor at 1.6 m below
+   the eye; a point X across, Y up, Z deep sits at x = 870 + 1040 X / Z, y = 548 - 1040 Y / Z, 1600-px art), dark
+   blue-grey steel catching the tubes along its top, a soft shadow at its foot. They live on a layer ABOVE the
+   train's canvases, so the train passes behind them. ---- */
+const RAIL_X = -2.22; // on the edge strip, just inside the grip grooves (m)
+const RAIL_RUNS = [[9.2, 10.9], [14.6, 16.3], [20.4, 22.1], [27.2, 28.9], [35.6, 37.3], [45.8, 47.5]];
+/* (Nov 21, John: "look at the guardrails for this reference photo, make it exactly like that"): each section is one
+   bent-tube frame, navy steel, its top corners ROUNDED down into the end posts, a bottom rail just above the floor
+   on two small feet, and evenly spaced vertical bars (about 15 cm apart) between them; 1.1 m tall. */
+function railsSVG() {
+  const F = 1040; const EY = 1.6;
+  const P = (X, h, Z) => [VP[0] + (F * X) / Z, VP[1] - (F * (h - EY)) / Z];
+  const line = (q) => q.map(([x, y]) => `${f2(x)},${f2(y)}`).join(' ');
+  const navy = '#34405C'; const lit = '#7F8DAA';
+  const TOP = 1.1; const LOW = 0.12; const R = 0.16;
+  let g = '';
+  RAIL_RUNS.forEach(([z0, z1]) => {
+    const zm = (z0 + z1) / 2; const px = F / zm; // px per metre here
+    const tube = 0.042 * px; const thin = 0.026 * px; const inkw = Math.max(0.5, 0.012 * px);
+    // its shadow on the floor
+    g += `<polygon points="${line([P(RAIL_X - 0.03, 0, z0), P(RAIL_X - 0.03, 0, z1), P(RAIL_X + 0.18, 0, z1), P(RAIL_X + 0.18, 0, z0)])}" fill="#000" opacity=".3"/>`;
+    // the frame: far post up, round corner, top rail, round corner, near post down (one bent tube)
+    const fr = [];
+    fr.push([z1, 0.03]);
+    for (let k = 0; k <= 8; k++) { const t = (Math.PI / 2) * (k / 8); fr.push([z1 - R + R * Math.cos(t), TOP - R + R * Math.sin(t)]); }
+    for (let k = 0; k <= 8; k++) { const t = Math.PI / 2 + (Math.PI / 2) * (k / 8); fr.push([z0 + R + R * Math.cos(t), TOP - R + R * Math.sin(t)]); }
+    fr.push([z0, 0.03]);
+    const frP = fr.map(([z, h]) => P(RAIL_X, h, z));
+    // bars and the bottom rail first (under the frame)
+    const n = Math.round((z1 - z0) / 0.15);
+    for (let k = 1; k < n; k++) {
+      const z = z1 - ((z1 - z0) * k) / n; const [a1, a2] = [P(RAIL_X, LOW, z), P(RAIL_X, TOP - 0.02, z)];
+      g += `<polyline points="${line([a1, a2])}" fill="none" stroke="${INK}" stroke-width="${f2(thin + inkw * 2)}"/>`;
+      g += `<polyline points="${line([a1, a2])}" fill="none" stroke="${navy}" stroke-width="${f2(thin)}"/>`;
+    }
+    const low = [P(RAIL_X, LOW, z1), P(RAIL_X, LOW, z0)];
+    g += `<polyline points="${line(low)}" fill="none" stroke="${INK}" stroke-width="${f2(tube + inkw * 2)}"/><polyline points="${line(low)}" fill="none" stroke="${navy}" stroke-width="${f2(tube)}"/>`;
+    g += `<polyline points="${line(frP)}" fill="none" stroke="${INK}" stroke-width="${f2(tube + inkw * 2)}" stroke-linejoin="round"/>`;
+    g += `<polyline points="${line(frP)}" fill="none" stroke="${navy}" stroke-width="${f2(tube)}" stroke-linejoin="round"/>`;
+    // the tube catches the ceiling light along its top
+    const hiP = fr.map(([z, h]) => P(RAIL_X, h + 0.012, z)).slice(1, -1);
+    g += `<polyline points="${line(hiP)}" fill="none" stroke="${lit}" stroke-opacity=".7" stroke-width="${f2(tube * 0.32)}" stroke-linejoin="round"/>`;
+    // the feet: small plates bolted to the floor under each post
+    [z1, z0].forEach((z) => {
+      g += `<polygon points="${line([P(RAIL_X - 0.06, 0.015, z - 0.05), P(RAIL_X - 0.06, 0.015, z + 0.05), P(RAIL_X + 0.06, 0.015, z + 0.05), P(RAIL_X + 0.06, 0.015, z - 0.05)])}" fill="#1C2333" stroke="${INK}" stroke-width="${f2(inkw)}"/>`;
+    });
+  });
+  return g;
+}
+
 export function mountStation(box, before) {
   const wrap = document.createElement('div');
   wrap.className = 'st-wrap';
@@ -254,8 +410,8 @@ export function mountStation(box, before) {
   wrap.insertAdjacentHTML('beforeend', signHTML());
   signClock(wrap);
   const sign = wrap.querySelector('.ss');
-  const img = sign.querySelector('.ss-img');
   const screen = sign.querySelector('.ss-screen');
+  const signsEl = sign.querySelector('.ss-signs');
   let spot;
   let placedOnce = false;
   const hang = () => {
@@ -266,7 +422,7 @@ export function mountStation(box, before) {
     sign.hidden = !s;
     if (!s) return;
     const bd = boardAt(s);
-    Object.assign(img.style, { left: `${(bd.x / 1600) * 100}%`, top: `${(bd.y / 914) * 100}%`, width: `${(bd.w / 1600) * 100}%`, transform: bd.flip ? 'scaleX(-1)' : '' });
+    signsEl.innerHTML = signsSVG(bd);
     const [p0, p1, p2, p3] = bd.quad; // the text box, the screen's own size (art px), mapped onto its corners
     const sw = (Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) + Math.hypot(p2[0] - p3[0], p2[1] - p3[1])) / 2;
     const sh = (Math.hypot(p3[0] - p0[0], p3[1] - p0[1]) + Math.hypot(p2[0] - p1[0], p2[1] - p1[1])) / 2;
@@ -289,6 +445,12 @@ export function mountStation(box, before) {
   if (nameEl && window.ResizeObserver) new ResizeObserver(later).observe(nameEl); // (and again if the name's box changes)
   new MutationObserver(later).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   box.insertBefore(wrap, before);
+  // the guardrails, on their own layer above the train (appended last: over its canvases)
+  const front = document.createElement('div');
+  front.className = 'st-wrap st-front';
+  front.setAttribute('aria-hidden', 'true');
+  front.innerHTML = svg('st-rails', '', railsSVG());
+  box.appendChild(front);
   const gfAt = wrap.querySelector('.gf-at');
   let placed = '';
   const groups = PANELS.map((_, i) => [...wrap.querySelectorAll(`.sl[data-l="${i}"]`)]);
@@ -302,6 +464,7 @@ export function mountStation(box, before) {
       if (key === placed) return; // (called every frame of the train shot: only moves when the camera does)
       placed = key;
       Object.assign(wrap.style, { width: `${1600 * k}px`, height: `${914 * k}px`, left: `${ox}px`, top: `${oy}px` });
+      Object.assign(front.style, { width: wrap.style.width, height: wrap.style.height, left: wrap.style.left, top: wrap.style.top });
       wrap.style.setProperty('--k', k.toFixed(4)); // (CSS px per art px: the departure board is sized in art px)
       placedOnce = true;
       if (spot === undefined) hang(); // (the first placement; later ones keep the spot it picked)

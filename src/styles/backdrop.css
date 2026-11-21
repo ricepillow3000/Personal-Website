@@ -118,17 +118,16 @@ body[data-mode="title"] .bd-cam img.in ~ .st-wrap { opacity: 1; } /* (title only
 .st-wrap .st { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .st-dim { mix-blend-mode: multiply; }
 .st-glow { mix-blend-mode: screen; }
-/* the departure board (station.js): a painted board (.ss-img, placed in art px) with its LED screen mapped
-   onto the painted screen (.ss-screen in art px on .ss-plane, scaled by --k = CSS px per art px) */
+/* the platform signs (station.js): the LED board, the EXIT and THE CITY signs and their beams are drawn in
+   art px (.ss-signs); the LED row is HTML on a plane scaled like the art (--k = CSS px per art px), mapped
+   onto the board's screen */
 .ss { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease-out; }
 .ss[hidden] { display: none; }
-.ss.in { opacity: 1; } /* (the board lights up once it has picked its spot) */
-.bd-cam .st-wrap img.ss-img { position: absolute; inset: auto; display: block; height: auto; opacity: 1; object-fit: fill; transition: none; transform-origin: 50% 50%; } /* (not the platform picture's rules: full size, faded until loaded) */
-/* the LED rows, laid out in art px on a plane scaled like the art, then mapped onto the painted screen's
-   four corners (a perspective transform set by station.js) */
+.ss.in { opacity: 1; } /* (the signs light up once they have picked their spot) */
 .ss-plane { position: absolute; left: 0; top: 0; width: 1600px; height: 914px; transform-origin: 0 0; transform: scale(var(--k, 1)); }
-.ss-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; display: grid; grid-template-rows: 1fr 1fr; gap: .2em; padding: .22em .3em; }
-.ss-row { position: relative; overflow: hidden; display: flex; align-items: center; background: #08080A; }
+.ss-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; display: grid; padding: .16em .2em; }
+.ss-row { position: relative; overflow: hidden; display: flex; align-items: center; gap: .55em; padding: 0 .35em; background: #08080A; }
+.ss-win { flex: 1; min-width: 0; overflow: hidden; } /* (the line scrolls between the clock and JN) */
 /* the LED dots: a fixed grid of dark gaps over each row, so the text sliding under it lights the dots */
 .ss-row::after { content: ''; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(circle, transparent 0 .05em, rgba(5, 5, 6, .92) .08em) 0 0 / .16em .16em; }
@@ -136,8 +135,7 @@ body[data-mode="title"] .bd-cam img.in ~ .st-wrap { opacity: 1; } /* (title only
 .ss-run span { padding-right: 3em; font-family: var(--f-menu); font-size: 1.32em; letter-spacing: .06em; line-height: 1; white-space: nowrap;
   color: #FFC83A; text-shadow: 0 0 .3em rgba(255, 170, 30, .85); }
 @keyframes ssRun { from { transform: translateX(0); } to { transform: translateX(-50%); } } /* right to left, seamless */
-.ss-bot { justify-content: space-between; padding: 0 .4em; }
-.ss-bot b { font-family: var(--f-menu); font-weight: 400; font-size: 1.32em; letter-spacing: .1em; line-height: 1; }
+.ss-row > b { flex: none;  font-family: var(--f-menu); font-weight: 400; font-size: 1.32em; letter-spacing: .1em; line-height: 1; }
 .ss-time { color: #4BEA74; text-shadow: 0 0 .3em rgba(60, 230, 110, .8); font-variant-numeric: tabular-nums; }
 .ss-ap { font-size: .62em; margin-left: .3em; letter-spacing: .08em; }
 .ss-colon { animation: ssBlink 1s steps(2) infinite; }

@@ -508,19 +508,22 @@ test('SAVE DATA is a stack: every card peeks out, and picking one opens it and s
   await expect(slot(0).locator('.sv-go')).toBeVisible();
   expect(await slot(3).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeLessThan(2); // closed cards keep their details row shut
   expect(await slot(0).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeGreaterThan(20);
-  // all black, no red L; the picked file pops with THE PLAN's language: a yellow star cursor at its left end
-  // and ONE red blade: the card itself running on to the left (no second white blade: it read as two shapes); a red halftone corner
+  // all black, no red L, no blade (John, Nov 21: the triangle "doesn't look like it's part of the design"); the picked file is a
+  // sheet lifted off the pile: a white offset edge, its No. tab turns yellow (THE PLAN's picked tag) with the yellow star stuck on its corner
   await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); // file 3 picked
   await settle();
   const pop = await page.evaluate(() => {
     const lis = [...document.querySelectorAll('#saves .sv-li')];
     const star = (li) => { const r = li.querySelector('.sv-star').getBoundingClientRect(); return { on: getComputedStyle(li.querySelector('.sv-star')).opacity === '1', inView: r.left >= 0 && r.right <= innerWidth && r.width > 20 }; };
-    const blade = (li) => getComputedStyle(li, '::before').display;
+    const tab = lis[2].querySelector('.sv-no').getBoundingClientRect(), st = lis[2].querySelector('.sv-star').getBoundingClientRect();
+    const onTab = st.right > tab.left && st.left < tab.left + tab.width / 2 && st.bottom > tab.top && st.top < tab.top + tab.height / 2; // stuck on the tab's top-left corner
     return { bg: getComputedStyle(document.querySelector('#saves')).backgroundColor, gone: document.querySelectorAll('#saves .sv-l, #saves .sv-band, #saves .sv-arm').length,
       star: star(lis[2]), others: lis.filter((l, k) => k !== 2).every((l) => getComputedStyle(l.querySelector('.sv-star')).opacity === '0'),
-      white: blade(lis[2]), red: getComputedStyle(lis[2], '::after').backgroundColor, dots: !!document.querySelector('#saves .sv-dots') };
+      blade: [getComputedStyle(lis[2], '::before').display, getComputedStyle(lis[2], '::after').display], onTab,
+      tab: getComputedStyle(lis[2].querySelector('.sv-no')).backgroundColor, lift: /rgb\(245, 245, 240\)/.test(getComputedStyle(lis[2]).filter),
+      dots: !!document.querySelector('#saves .sv-dots') };
   });
-  expect(pop).toEqual({ bg: 'rgb(11, 11, 11)', gone: 0, star: { on: true, inView: true }, others: true, white: 'none', red: 'rgb(229, 25, 28)', dots: true });
+  expect(pop).toEqual({ bg: 'rgb(11, 11, 11)', gone: 0, star: { on: true, inView: true }, others: true, blade: ['none', 'none'], onTab: true, tab: 'rgb(255, 225, 26)', lift: true, dots: true });
   expect(errors).toEqual([]);
 });
 
@@ -1266,13 +1269,15 @@ test('departure board: a 3D box in the station\'s perspective; LET US START THE 
     await page.goto('/');
     const sign = page.locator('.ss');
     await expect(sign).toHaveClass(/\bin\b/, { timeout: 15000 });
-    // a painted board (the station's own toon style), hung from its ceiling channel; the LED text sits inside its painted screen
-    const img = sign.locator('.ss-img');
-    await expect(img).toBeVisible();
-    expect(await img.evaluate((e) => e.complete && e.naturalWidth > 0)).toBe(true);
-    const [ib, sb] = await Promise.all([img.boundingBox(), sign.locator('.ss-screen').boundingBox()]);
-    expect(sb.x).toBeGreaterThan(ib.x); expect(sb.x + sb.width).toBeLessThan(ib.x + ib.width);
-    expect(sb.y).toBeGreaterThan(ib.y + ib.height * 0.25); expect(sb.y + sb.height).toBeLessThan(ib.y + ib.height); // (under the rods and channel)
+    // real platform signs, drawn in the station's perspective (Nov 21, John's reference): a slim LED board on two rods from
+    // a steel cross beam; the LED row sits inside the board's screen; no painted picture any more
+    await expect(sign.locator('.ss-img')).toHaveCount(0);
+    const scr = sign.locator('.ss-signs rect[fill="#08080A"]');
+    await expect(scr).toHaveCount(1);
+    const [ib, sb] = await Promise.all([scr.boundingBox(), sign.locator('.ss-screen').boundingBox()]);
+    expect(Math.abs(sb.x - ib.x)).toBeLessThan(3); expect(Math.abs(sb.x + sb.width - ib.x - ib.width)).toBeLessThan(3);
+    expect(Math.abs(sb.y - ib.y)).toBeLessThan(3); expect(sb.width / sb.height).toBeGreaterThan(4); // (long and slim)
+    if (w === 1440) await expect(sign.locator('.ss-signs text')).toContainText(['EXIT', 'JN', 'THE CITY']); // the signs behind it
     await expect(sign.locator('.ss-run span').first()).toHaveText('LET US START THE GAME');
     await expect(sign.locator('.ss-code')).toHaveText('JN');
     const shown = (await sign.locator('.ss-time').innerText()).replace(/\s+/g, '');
