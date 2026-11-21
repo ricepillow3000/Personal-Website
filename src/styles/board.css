@@ -209,7 +209,10 @@ body[data-mode="board"] .hud-tl { display: none; } /* the tiny rotated status ta
 .plan-line { grid-area: list; align-self: center; position: relative; }
 .plan-line::before { content: ""; position: absolute; z-index: -1; inset: -4% 8% -6% -40vw; background: rgba(11, 11, 11, .78); clip-path: polygon(0 4%, 100% 0, 88% 100%, 0 96%); rotate: -5deg; pointer-events: none; }
 .plan-line ol { list-style: none; margin: 0; padding: 0 0 0 clamp(4px, 2vw, 40px); display: grid; justify-items: start; gap: clamp(0px, .5vh, 6px); rotate: -5deg; }
-.plan-line li { font-size: clamp(26px, min(4vw, 5.1vh), 58px); padding-left: calc(var(--zig) * .5em); }
+.plan-line { container-type: inline-size; }
+/* (Nov 21, John: the picked SIDE QUESTS slid under the INSIDE box) the picked word grows 16%; the longest one needs ~9.8x
+   its font size, so the words are capped at 9.6% of their own column: full size wherever it fits, never past the column */
+.plan-line li { font-size: min(clamp(26px, min(4vw, 5.1vh), 58px), 9.6cqi); padding-left: calc(var(--zig) * .5em); }
 .pl-item { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: .04em .28em 0 .2em; color: var(--white); text-decoration: none; line-height: 1;
   transform-origin: left center; transition: scale .18s var(--ease-pop), translate .18s var(--ease-pop); } /* state sizing uses scale/translate; GSAP's entrance owns transform + opacity (a CSS transition on those made the entrance flash and lag) */
 .pl-word { position: relative; z-index: 2; display: inline-flex; align-items: baseline; white-space: nowrap;
@@ -338,3 +341,5 @@ body[data-mode="board"] .hud-tl { display: none; } /* the tiny rotated status ta
 @media (min-width: 761px) and (max-aspect-ratio: 1/1) {
   .cmd { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto; grid-template-areas: "list num" "loot loot" "go go"; align-content: space-evenly; }
 }
+
+@media (max-width: 1100px) and (min-width: 761px) { .lt { font-size: clamp(16px, min(1.7vw, 3vh), 28px); } } /* (the INSIDE box clears the big number on ~1000px screens) */
