@@ -783,9 +783,15 @@ body[data-mode="title"] .scroll-meter { display: none; }
 .sq-checks { background: var(--black); } .sq-checks .sq-big { font: 400 3em/1 var(--f-head); color: var(--yellow); } .sq-checks b { font-size: 1.6em; } .sq-checks .sq-sm { font-size: 1.1em; letter-spacing: .2em; color: var(--red); }
 .sq-g-checks { --c: 255, 225, 26; opacity: .5; }
 .sq-jn { background: var(--red); } .sq-jn .sq-big { font: 400 4.6em/1 var(--f-head); color: var(--black); text-shadow: .06em .06em 0 var(--white); } .sq-g-jn { --c: 229, 25, 28; opacity: .6; }
+/* passing cars' light (Nov 21, John: "the car light beams look a bit off... make them realistic and not look like
+   spikes"): not hard flat-ended bars but a long-exposure trail, a soft round line, brightest at the lamp end (the
+   way the car is going: .rev runs leftward) and fading out behind it, with a faint warm glow; tail lights red */
 .sqr .cl-trails i { height: 3px; }
-.cl-trails i { position: absolute; left: 0; height: 5px; background: var(--white); box-shadow: 0 0 10px rgba(245, 245, 240, .7); }
-.cl-trails i.red { height: 4px; background: var(--red); box-shadow: 0 0 10px rgba(229, 25, 28, .8); }
+.cl-trails i { --c: 255, 244, 222; position: absolute; left: 0; height: 5px; border-radius: 3px;
+  background: linear-gradient(90deg, rgba(var(--c), 0), rgba(var(--c), .35) 45%, rgba(var(--c), .8) 88%, rgba(var(--c), 1));
+  box-shadow: 0 0 7px 1px rgba(var(--c), .28); opacity: .85; }
+.cl-trails i.rev { background: linear-gradient(270deg, rgba(var(--c), 0), rgba(var(--c), .35) 45%, rgba(var(--c), .8) 88%, rgba(var(--c), 1)); }
+.cl-trails i.red { --c: 229, 25, 28; height: 3px; opacity: .75; }
 .cl-flash { position: absolute; inset: 0; background: var(--white); opacity: 0; }
 /* SETTINGS: the security monitor */
 .crt-t, .crt-b { position: absolute; left: 0; right: 0; height: 50.5vh; background: #050505; }

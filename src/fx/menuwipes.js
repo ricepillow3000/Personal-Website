@@ -199,6 +199,7 @@ export async function cityWipe(swap, label = 'SIDE QUESTS') {
   trails.forEach((t, i) => {
     gsap.set(t, { top: 624 + ((i * 11) % 60), width: 180 + ((i * 53) % 260) });
     if (i % 3 === 0) t.classList.add('red'); // taillights; the rest are headlights
+    if (i % 2 === 0) t.classList.add('rev'); // (these run leftward: their lamp end is on the left)
   });
   // where the camera starts (the picture covering the screen, the big screen centred as far as it can be)
   // and where it ends (inside the big screen, filling the frame)
