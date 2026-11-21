@@ -28,9 +28,9 @@ const ROOF = -62;
 const SKIRT = 54; // platform level (the car's floor and the bottom of its body)
 const WIDE = 100; // the train's width
 const LEN = 5200; // the whole train
-const RAIL_Y = 70; // the rails' heads, half a metre below the platform
+const RAIL_Y = 72; // the rails' heads, on the slab's sleepers
 const RAILS = [SIDE_X - 27, SIDE_X - 73]; // near rail, far rail: standard gauge, centred under the car
-const TIE_Y = 73; // the sleepers' top
+const TIE_Y = 75; // the sleepers' top (cast into the slab: they stand only a little proud of it)
 const BED_Y = 77; // the track bed
 const WALL_X = -273; // where the bed meets the far wall (measured on the art)
 const MOUTH = 1730; // the tunnel mouth: where the track enters the arch in the art
@@ -65,7 +65,7 @@ const TRASH_W = 1550; // CELLS below are measured on a 1550x200 strip (the file 
 const CELLS = { news: [0, 200, 111], bag: [204, 200, 167], can: [408, 130, 190], cup: [542, 200, 140], flyer: [746, 200, 139], wrapper: [950, 200, 126], receipt: [1154, 200, 141], ball: [1358, 188, 190] };
 // Flat pieces (paper, wrapper) lie ON the floor: they turn in the floor's plane and are squashed
 // by the floor's perspective, centered on their spot. Solid pieces (can, cup, bag, ball) stand on
-// it: their lowest painted pixel touches the spot, upright, never tilted off their base.
+// it: their lowest painted pixel touches the spot, upright, never tilted off their base (the bag lies on its side).
 const FLAT = new Set(['news', 'receipt', 'flyer', 'wrapper']);
 const TRASH = [
   [600, 838, 'news', 1.2, -6],
@@ -393,6 +393,32 @@ function drawTrash(t, keep = null) {
       if (shade > 0.02) piece(trash.ink, Math.min(0.8, shade));
       ctx.restore();
     } else {
+      // (Nov 21, John: "the bag kind of looks like it's floating... make sure they're laying down"): the painted
+      // bag stood on one tipped corner, so it lies on its SIDE now (turned a quarter, a little flatter), its long
+      // side along the floor. Every standing piece also gets a hard contact shadow right where it touches.
+      const side = kind === 'bag';
+      const ext = side ? w * 0.72 : h; // its height on screen
+      const foot = side ? h * 0.92 : w * 0.5; // its contact's width
+      if (air < 0.9) {
+        ctx.save();
+        ctx.translate(gx, gy);
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.55 * (1 - air)})`;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, foot * 0.5, Math.max(1.2, foot * 0.06), 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      if (side) {
+        ctx.save();
+        ctx.translate(gx, gy - lift - (ext / 2) * squash + ext * 0.1); // (+0.1: its folded bottom panel is drawn inset; this rests that panel on the floor)
+        ctx.rotate(rot + Math.PI / 2 + 0.085); // (+0.085: the painted bag leans; this sets its long side flat on the tiles)
+        ctx.scale(0.72 * squash, 1);
+        piece(trash.lit, 1);
+        if (shade > 0.02) piece(trash.ink, Math.min(0.8, shade));
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        return;
+      }
       // standing: its lowest pixel on the spot, and a faint mirror image in the glossy tiles
       // that starts exactly where it touches
       if (air < 0.9) {
@@ -492,7 +518,7 @@ function drawTrack(g, kk) {
   for (let d = 20, n; d < TRACK_FAR; d = n) {
     n = d * 1.12 + 6;
     const v = dark(d);
-    g.fillStyle = `rgb(${Math.round(10 + 34 * v)}, ${Math.round(10 + 34 * v)}, ${Math.round(12 + 39 * v)})`; // (Nov 19, John: "too blended in": a lighter bed, so the rails and sleepers read on it)
+    g.fillStyle = `rgb(${Math.round(10 + 44 * v)}, ${Math.round(10 + 42 * v)}, ${Math.round(11 + 38 * v)})`; // (Nov 21: a concrete slab, warm grey, in the pit's shade below the platform; darker into the tunnel)
     quad(g, [P(EDGE_X, BED_Y, d), P(WALL_X, BED_Y, d), P(WALL_X, BED_Y, n + 1), P(EDGE_X, BED_Y, n + 1)]);
     g.fill();
   }
@@ -503,42 +529,55 @@ function drawTrack(g, kk) {
     g.fillStyle = `rgba(52, 52, 58, ${v})`;
     quad(g, [P(WALL_X, BED_Y, d), P(WALL_X + 9, BED_Y, d), P(WALL_X + 9, BED_Y, n + 1), P(WALL_X, BED_Y, n + 1)]);
     g.fill();
-    g.fillStyle = `rgba(0, 0, 0, ${0.55 * v})`;
-    quad(g, [P(EDGE_X, BED_Y, d), P(EDGE_X - 22, BED_Y, d), P(EDGE_X - 22, BED_Y, n + 1), P(EDGE_X, BED_Y, n + 1)]);
+    // the platform's shadow on the bed beside its edge (Nov 21, John: "make it very noticeable that they are not
+    // the same level"): deep under the lip, fading out across the bed, in hard cel steps
+    [[60, 0.35], [38, 0.5], [18, 0.8]].forEach(([w, a]) => {
+      g.fillStyle = `rgba(0, 0, 0, ${a * v})`;
+      quad(g, [P(EDGE_X, BED_Y, d), P(EDGE_X - w, BED_Y, d), P(EDGE_X - w, BED_Y, n + 1), P(EDGE_X, BED_Y, n + 1)]);
+      g.fill();
+    });
+  }
+  // (Nov 21, John: "the ground below the train tracks is all gravel, it looks like an outdoor train track; make it an
+  // actual subway track with subway floors underneath"): no ballast. A subway's track sits on a CONCRETE SLAB: smooth
+  // cast concrete with expansion joints across it every few metres, a drainage channel down the middle between the
+  // rails (a dark gutter with lit lips), a second one along the wall's kerb, and faint water stains; the sleepers are
+  // cast into it (below). Cel-shaded like the station: flat tones, ink joints.
+  const MID = (RAILS[0] + RAILS[1]) / 2;
+  for (let d = 20, n; d < TRACK_FAR; d = n) {
+    n = d * 1.12 + 6;
+    const v = dark(d);
+    if (v <= 0.02) continue;
+    g.fillStyle = `rgba(8, 8, 10, ${0.92 * v})`; // the centre drain, a gutter between the rails
+    quad(g, [P(MID - 6, BED_Y - 0.2, d), P(MID + 6, BED_Y - 0.2, d), P(MID + 6, BED_Y - 0.2, n + 1), P(MID - 6, BED_Y - 0.2, n + 1)]);
+    g.fill();
+    g.fillStyle = `rgba(150, 146, 136, ${0.55 * v})`; // its far lip, catching the light
+    quad(g, [P(MID - 7.5, BED_Y - 0.3, d), P(MID - 6, BED_Y - 0.3, d), P(MID - 6, BED_Y - 0.3, n + 1), P(MID - 7.5, BED_Y - 0.3, n + 1)]);
+    g.fill();
+    g.fillStyle = `rgba(8, 8, 10, ${0.85 * v})`; // the drain along the wall's kerb
+    quad(g, [P(WALL_X + 9, BED_Y - 0.2, d), P(WALL_X + 15, BED_Y - 0.2, d), P(WALL_X + 15, BED_Y - 0.2, n + 1), P(WALL_X + 9, BED_Y - 0.2, n + 1)]);
     g.fill();
   }
-  // the ballast: crushed stone over the whole bed, a seeded scatter of chips (lit, mid and shadow tones,
-  // each with a dark underside), sized by distance and thinned out where they'd be under a pixel
-  // (batched: every chip goes into one of five paths, one fill each, so the whole bed is a few calls; the
-  // rows thin out with distance, where a chip is a pixel)
-  let seed = 7;
-  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const TONES = ['#5E6068', '#44464D', '#34353B', '#6E7079'];
-  for (let band = 0; band < 3; band++) { // three depth bands, so the bed still darkens into the tunnel
-    const d0 = [20, 300, 900][band];
-    const d1 = [300, 900, TRACK_FAR][band];
-    const under = new Path2D();
-    const tone = TONES.map(() => new Path2D());
-    for (let d = d0; d < d1; d += Math.max(1.8, d * 0.01)) {
-      const r = (F / d) * 0.9; // a chip is about 3 cm
-      if (r < 0.35 || dark(d) <= 0.03) continue;
-      const n = Math.min(34, Math.round(20 * Math.min(1, r)));
-      for (let k = 0; k < n; k++) {
-        const X = WALL_X + 10 + rnd() * (EDGE_X - WALL_X - 30);
-        const [px, py] = P(X, BED_Y - 0.4, d + rnd() * 2.2);
-        const rr = r * (0.55 + rnd() * 0.7);
-        under.ellipse(px + rr * 0.25, py + rr * 0.3, rr, rr * 0.55, 0, 0, Math.PI * 2);
-        const t = tone[Math.floor(rnd() * 4)];
-        t.moveTo(px + rr, py);
-        t.ellipse(px, py, rr, rr * 0.55, 0, 0, Math.PI * 2);
-      }
+  // water stains: long soft darker patches along the slab (seeded, the same every visit)
+  {
+    let sd = 11;
+    const rn = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+    for (let k = 0; k < 40; k++) {
+      const d = 30 + rn() ** 1.6 * 1400; const v = dark(d);
+      if (v <= 0.05) continue;
+      const X = WALL_X + 20 + rn() * (EDGE_X - WALL_X - 40); const L = 20 + rn() * 70; const w = 6 + rn() * 14;
+      g.fillStyle = `rgba(20, 19, 18, ${0.28 * v})`;
+      quad(g, [P(X - w, BED_Y - 0.1, d), P(X + w, BED_Y - 0.1, d), P(X + w * 0.6, BED_Y - 0.1, d + L), P(X - w * 0.6, BED_Y - 0.1, d + L)]);
+      g.fill();
     }
-    g.globalAlpha = 0.95 * dark((d0 + d1) / 2 > MOUTH ? (d0 + d1) / 2 : 20);
-    g.fillStyle = '#121215';
-    g.fill(under);
-    tone.forEach((t, i) => { g.fillStyle = TONES[i]; g.fill(t); });
   }
-  g.globalAlpha = 1;
+  // expansion joints straight across the slab, every ~3.6 m
+  for (let d = 30; d < TRACK_FAR; d += 150) {
+    const v = dark(d);
+    if (v <= 0.03) continue;
+    g.strokeStyle = `rgba(6, 6, 8, ${0.8 * v})`;
+    g.lineWidth = Math.max(ink * 0.8, (F / d) * 0.5);
+    g.beginPath(); g.moveTo(...P(WALL_X + 15, BED_Y - 0.1, d)); g.lineTo(...P(EDGE_X, BED_Y - 0.1, d)); g.stroke();
+  }
   // the sleepers: heavy concrete ties every 0.6 m, a lit top, a darker face toward the camera and its end,
   // bold ink edges, a chipped corner now and then; on each, under each rail, a steel base plate held down
   // by two bolts (hex heads with a lit face) and a spring clip over the rail's foot. Close up you see every
