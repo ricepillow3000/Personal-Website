@@ -7,7 +7,7 @@ import { reducedMotion } from '../core/util.js';
 import { ransom } from '../ui/ransom.js';
 import { sfx } from '../audio/audio.js';
 import { track, shake, snapshotScreen, filmReady, filmImg } from './transitions.js';
-import { rectToQuad } from './station.js';
+import { rectToQuad } from './quad.js';
 import { artSrc } from './art.js';
 
 function scene(cls, html, label) {

@@ -8,7 +8,7 @@
    Geometry lives in a 1600×900 box; `xMidYMid slice` covers 100vw × 100vh.
    ========================================================================= */
 
-import { mountSubway, hurrySubway, subwayReady } from './subway.js';
+import { loadSubway as loadTrainCode } from './lazy.js'; // (the train's code arrives with the platform picture, title only)
 import { artSrc } from './art.js';
 import { fontsReady } from '../core/util.js';
 
@@ -352,8 +352,7 @@ export function stationReady() {
     resolve once the train can play. */
 export function sceneReady() {
   loadSceneNow();
-  hurrySubway();
-  return subwayReady();
+  return loadTrainCode().then((m) => { m.hurrySubway(); return m.subwayReady(); });
 }
 
 export function mountBackdrop(el) {
@@ -389,7 +388,7 @@ export function mountBackdrop(el) {
     img.onload = () => {
       img.classList.add('in'); // fades in once it's ready, never a half-drawn image
       if (img.parentNode.classList.contains('bd-cam')) stationIn();
-      if (img.parentNode.classList.contains('bd-cam')) mountSubway(img.parentNode, img); // trash on the floor + the PRESS START train
+      if (img.parentNode.classList.contains('bd-cam')) loadTrainCode().then((m) => m.mountSubway(img.parentNode, img)); // trash on the floor + the PRESS START train
     };
     img.onerror = () => { // a dropped connection gets one more try
       if (tries > 0) setTimeout(() => show(img, `${src}?r=1`, tries - 1), 1500);
@@ -429,8 +428,9 @@ export function mountBackdrop(el) {
   else window.addEventListener('load', later, { once: true });
 
   const frame = el.querySelector('.bd-cityframe');
+  // (fitted by the observer, which also runs before the first paint: measuring it here, while the code
+  // first runs, forced an extra style + layout pass of the whole page; Nov 21)
   new ResizeObserver(() => fitBillboard(frame)).observe(frame);
-  fitBillboard(frame);
   startTicker(frame.querySelector('.bd-billboard'));
 
   // tall screens only see a narrow slice of the wall: show its left side (the star)

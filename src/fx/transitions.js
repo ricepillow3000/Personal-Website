@@ -3,7 +3,7 @@ import { $, reducedMotion } from '../core/util.js';
 import { ransom, NAME_SEED } from '../ui/ransom.js';
 import { burst } from './impact.js';
 import { sfx, hush } from '../audio/audio.js';
-import { trainShot, preloadSubway, NOSE_PASS } from './subway.js';
+import { loadSubway } from './lazy.js'; // (the train's code: title only, already loaded by the time START is pressed)
 import { artSrc } from './art.js';
 
 /* Every big animation runs through here so ONE click / Esc can skip it. */
@@ -147,7 +147,8 @@ export function cutIn(text = '') {
     horn, then the train bursts out and roars past along the platform, braking: the camera rumbles
     and thumps, its headlights wash the track, brake sparks spray from the wheels, its wind lifts
     the dust, blows the trash and the title away, and a white star-flash cuts to the board. */
-export function tunnelWipe(swap) {
+export async function tunnelWipe(swap) {
+  const { trainShot, NOSE_PASS } = await loadSubway();
   const W = window.innerWidth;
   const H = window.innerHeight;
   // tall screens only see the platform's middle: the camera pans left to catch the track
@@ -322,12 +323,14 @@ export function snapshotScreen() {
 /* ---- the city set pieces (public/assets/film): original art generated with Google's Nano Banana
    (gemini-2.5-flash-image) to John's brief and approved by him: a low-angle look up at the towers
    against a red sky, the tower's crown, its glass facade, and the subway car. WebP, loaded while idle. */
-const FILM = { upshot: artSrc('city'), facade: 'assets/film/facade.webp', crown: 'assets/film/crown.webp', train: 'assets/film/train.webp', interior: 'assets/film/interior.webp', square: 'assets/film/square.webp' };
+/* (upshot is a getter: sizing it reads the screen, and reading the screen while the code first loads forced
+   a full style + layout pass before the page was even built, ~80 ms on a slow phone; Nov 21) */
+const FILM = { get upshot() { return artSrc('city'); }, facade: 'assets/film/facade.webp', crown: 'assets/film/crown.webp', train: 'assets/film/train.webp', interior: 'assets/film/interior.webp', square: 'assets/film/square.webp' };
 const filmCache = {};
 const decoded = {};
 export function preloadFilm() {
   if (Object.keys(filmCache).length) return;
-  preloadSubway();
+  loadSubway().then((m) => m.preloadSubway());
   Object.entries(FILM).forEach(([key, src]) => {
     const img = new Image();
     img.decoding = 'async';

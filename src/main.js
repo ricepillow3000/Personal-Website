@@ -33,7 +33,7 @@ import { createBoard, CHAPTERS, STATIONS } from './scenes/board.js';
 import { openSaves, savesOpen, savesKey } from './scenes/saves.js';
 import { toast } from './ui/toast.js';
 import { createMenu, MENU_ITEMS } from './scenes/menu.js';
-import { SECTION_RENDERERS, SECTION_TITLES, dossierMarkup, animateDossier } from './scenes/sections.js';
+import { SECTION_TITLES, loadSection, sectionModule } from './scenes/sections.js';
 import { renderQuickView } from './scenes/quickview.js';
 import { sfx, setSound, setMusicVolume, initAudio } from './audio/audio.js';
 import { unlock, refreshCounter, listMarkup, count, ACHIEVEMENTS } from './eggs/achievements.js';
@@ -109,7 +109,7 @@ installConsole();
 syncSoundButton();
 
 /* ---------------------------------------------------------------- routing */
-const VALID = new Set(['title', 'board', 'quick', ...Object.keys(SECTION_RENDERERS)]);
+const VALID = new Set(['title', 'board', 'quick', ...Object.keys(SECTION_TITLES)]);
 
 function route() {
   const raw = window.location.hash.replace(/^#\/?/, '') || 'title';
@@ -193,8 +193,20 @@ async function show(id) {
     return;
   }
   const tok = ++navSeq;
-  closeModal();
   const mode = modeOf(id);
+  /* a chapter's own code arrives the first time it is opened (it is usually already here: the chapters
+     are fetched once the page has settled, and a deep link's chapter alongside the main code) */
+  if (mode === 'page' && !sectionModule(id)) {
+    if (prev === null) $$('.screen').forEach((sc) => sc.classList.remove('active')); // (a deep link: the title never flashes while it arrives)
+    try {
+      await loadSection(id);
+    } catch {
+      if (tok === navSeq) toast('That page did not load. Check the connection and try again.', 'OFFLINE?');
+      return;
+    }
+    if (tok !== navSeq) return;
+  }
+  closeModal();
   let style = null; // which wipe this move uses; decided before the swap runs
 
   const swap = () => {
@@ -369,6 +381,10 @@ const syncMeter = initScrollMeter();
   ['pointerdown', 'keydown'].forEach((t) => window.addEventListener(t, go, { capture: true, once: true, passive: true }));
   window.addEventListener('load', () => setTimeout(go, 6000), { once: true });
 }
+// every chapter's code, fetched once the page has settled, so moving between chapters never waits for it
+window.addEventListener('load', () => (window.requestIdleCallback || setTimeout)(() => {
+  Object.keys(SECTION_TITLES).forEach((id) => loadSection(id).catch(() => {}));
+}, { timeout: 4000 }), { once: true });
 initClickFx();
 initMagnetic();
 initTilt();
@@ -596,7 +612,7 @@ function rollEpisode() {
 }
 
 function renderPage(id) {
-  const r = SECTION_RENDERERS[id](ctx);
+  const r = sectionModule(id).default(ctx);
   pageIntro = r.intro || null;
   root0Class(id);
   const root = $('#page');
@@ -639,6 +655,7 @@ async function openDossier(id, row) {
     await cutIn(`${m.bestStat} CAUGHT`);
     if (at !== navSeq || !$('#modal').hidden || menu.isOpen()) return; // the visitor moved on during the cut-in
   }
+  const { dossierMarkup, animateDossier } = sectionModule('missions'); // (only opened from MISSIONS, so it is here)
   openModal(dossierMarkup(m));
   scramble($('#modalPanel .dossier-code')); // the file code "decrypts" as it opens
   animateDossier($('#modalPanel'), () => {
