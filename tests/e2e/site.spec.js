@@ -1061,7 +1061,7 @@ test('station: the ceiling tubes flicker on their own (never two healthy ones at
   const acted = new Set();
   rows.forEach((r) => r.forEach((v, i) => v && acted.add(i)));
   expect(acted.size).toBeGreaterThan(1); // more than one tube misbehaved...
-  const TIRED = [3, 13];
+  const TIRED = [2, 9]; // (the two tired tubes, station.js)
   expect(rows.every((r) => r.filter((v, i) => v && !TIRED.includes(i)).length <= 1)).toBe(true); // ...never two healthy ones together
   await ctx.close();
 });
