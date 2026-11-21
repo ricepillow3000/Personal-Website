@@ -70,5 +70,5 @@ export function watchTitleFit() {
   window.addEventListener('hashchange', () => setTimeout(later, 50));
   document.fonts?.ready.then(later);
   new MutationObserver(later).observe(body, { attributes: true, attributeFilter: ['data-screen'] });
-  check();
+  later(); // (in the next frame, still before it is painted: measuring while the code first runs forced an extra layout; Nov 21)
 }
