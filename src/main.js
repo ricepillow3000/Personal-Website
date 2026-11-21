@@ -601,6 +601,13 @@ function renderPage(id) {
   root0Class(id);
   const root = $('#page');
   root.innerHTML = r.html + nextEpisodeMarkup(id);
+  /* The watermark lives on the screen, beside #page, never inside it: a page's jolt shakes #page (MY
+     EDGE's panels do, as each one lands), and a moving parent re-anchors a fixed child to itself, so
+     FACTS jumped ~270 px down and back while the panels landed (Nov 21: a 0.33-0.41 layout shift on a
+     deep link). Same paint order, same place, it just never moves with the jolt. */
+  root.parentElement.querySelectorAll(':scope > .pg-mark').forEach((m) => m.remove());
+  const mark = root.querySelector('.pg-mark');
+  if (mark) root.before(mark);
   const backBtn = root.querySelector('.back-btn');
   if (backBtn && CHAPTERS.includes(id)) {
     // the back button and the stop strip share one row, so the content starts sooner

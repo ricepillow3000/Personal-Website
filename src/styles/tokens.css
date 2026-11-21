@@ -6,6 +6,14 @@
 @font-face { font-family: "Bebas Fallback"; src: local("Arial"), local("Liberation Sans"), local("Arimo"), local("Helvetica"); size-adjust: 59.9%; }
 @font-face { font-family: "Bebas Fallback R"; src: local("Roboto"); size-adjust: 62.6%; }
 @font-face { font-family: "Bebas Fallback D"; src: local("DejaVu Sans"); size-adjust: 58.2%; }
+/* Anton (every big word, number and the page watermarks) got its stand-ins on Nov 21: without them
+   the swap moved the huge watermark behind each chapter (MY EDGE scored a 0.33-0.41 layout shift on
+   a deep link). Measured on the site's own capital words and digits at 100px: Anton 5078 px wide,
+   each stand-in 5077-5078; its lines are taller than any system font's (ascent 118, descent 33), so
+   the line boxes match too (151 px). font-weight covers every weight so nothing is fake-bolded wider. */
+@font-face { font-family: "Anton Fallback"; src: local("Arial"), local("Liberation Sans"), local("Arimo"), local("Helvetica"); size-adjust: 69.8%; ascent-override: 169.1%; descent-override: 47.3%; line-gap-override: 0%; font-weight: 100 900; }
+@font-face { font-family: "Anton Fallback R"; src: local("Roboto"); size-adjust: 73%; ascent-override: 161.6%; descent-override: 45.2%; line-gap-override: 0%; font-weight: 100 900; }
+@font-face { font-family: "Anton Fallback D"; src: local("DejaVu Sans"); size-adjust: 69.7%; ascent-override: 169.3%; descent-override: 47.3%; line-gap-override: 0%; font-weight: 100 900; }
 @font-face { font-family: "Elite Fallback"; src: local("Courier New"), local("Liberation Mono"), local("Cousine"), local("DejaVu Sans Mono"), local("Droid Sans Mono"), local("Menlo"), local("Courier"); size-adjust: 84.9%; }
 
 :root {
@@ -20,7 +28,7 @@
   --grey: #8A8A86;
   --grey-dark: #3B3B3B;
 
-  --f-head: "Anton", Impact, "Arial Narrow Bold", sans-serif;
+  --f-head: "Anton", "Anton Fallback", "Anton Fallback R", "Anton Fallback D", Impact, "Arial Narrow Bold", sans-serif;
   --f-menu: "Bebas Neue", "Bebas Fallback", "Bebas Fallback R", "Bebas Fallback D", "Anton", Impact, sans-serif;
   --f-mark: "Permanent Marker", "Comic Sans MS", cursive;
   --f-type: "Special Elite", "Elite Fallback", "Courier New", monospace;
