@@ -76,7 +76,7 @@ const TRASH = [
   [1150, 905, 'cup', 0.85, 0],
   [858, 664, 'ball', 0.42, 0],
   [1260, 790, 'bag', 0.7, 0],
-  [655, 687, 'news', 0.65, 9],
+  [1118, 742, 'news', 0.65, 9], // (Nov 21, the full-scene scan: it lay under a guard rail's foot, half over the platform edge; now on the open floor)
   [1060, 645, 'receipt', 0.5, -5],
 ];
 
@@ -424,16 +424,8 @@ function drawTrash(t, keep = null) {
         ctx.globalAlpha = 1;
         return;
       }
-      // standing: its lowest pixel on the spot, and a faint mirror image in the glossy tiles
-      // that starts exactly where it touches
-      if (air < 0.9) {
-        ctx.save();
-        ctx.translate(gx, gy + lift + h * 0.25 * squash);
-        ctx.rotate(-rot);
-        ctx.scale(1, -0.5 * squash);
-        piece(trash.lit, 0.12 * (1 - air) * (1 - fog));
-        ctx.restore();
-      }
+      // standing: its lowest pixel on the spot. (Nov 21, the full-scene scan: the faint mirror image that used to be
+      // drawn under it read as a ghost copy on the matt tiles; the contact shadow above grounds it on its own.)
       ctx.save();
       ctx.translate(gx, gy - lift - (h / 2) * squash);
       ctx.rotate(rot);
@@ -545,7 +537,7 @@ function drawTrack(g, kk) {
   // (Nov 21, John: "the ground below the train tracks is all gravel, it looks like an outdoor train track; make it an
   // actual subway track with subway floors underneath"): no ballast. A subway's track sits on a CONCRETE SLAB: smooth
   // cast concrete with expansion joints across it every few metres, a drainage channel down the middle between the
-  // rails (a dark gutter with lit lips), a second one along the wall's kerb, and faint water stains; the sleepers are
+  // rails (a dark gutter with lit lips), a second one along the wall's kerb; the sleepers are
   // cast into it (below). Cel-shaded like the station: flat tones, ink joints.
   const MID = (RAILS[0] + RAILS[1]) / 2;
   for (let d = 20, n; d < TRACK_FAR; d = n) {
@@ -562,19 +554,8 @@ function drawTrack(g, kk) {
     quad(g, [P(WALL_X + 9, BED_Y - 0.2, d), P(WALL_X + 15, BED_Y - 0.2, d), P(WALL_X + 15, BED_Y - 0.2, n + 1), P(WALL_X + 9, BED_Y - 0.2, n + 1)]);
     g.fill();
   }
-  // water stains: long soft darker patches along the slab (seeded, the same every visit)
-  {
-    let sd = 11;
-    const rn = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
-    for (let k = 0; k < 40; k++) {
-      const d = 30 + rn() ** 1.6 * 1400; const v = dark(d);
-      if (v <= 0.05) continue;
-      const X = WALL_X + 20 + rn() * (EDGE_X - WALL_X - 40); const L = 20 + rn() * 70; const w = 6 + rn() * 14;
-      g.fillStyle = `rgba(20, 19, 18, ${0.28 * v})`;
-      quad(g, [P(X - w, BED_Y - 0.1, d), P(X + w, BED_Y - 0.1, d), P(X + w * 0.6, BED_Y - 0.1, d + L), P(X - w * 0.6, BED_Y - 0.1, d + L)]);
-      g.fill();
-    }
-  }
+  // (Nov 21, the full-scene scan: the slab's "water stains" were hard-edged dark trapezoids that read as stray shapes;
+  // removed. The slab is plain cast concrete with its drains and joints.)
   // expansion joints straight across the slab, every ~3.6 m
   for (let d = 30; d < TRACK_FAR; d += 150) {
     const v = dark(d);

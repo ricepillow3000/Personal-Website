@@ -102,7 +102,10 @@ function lightsGlow() { // added: the bloom through the diffuser, and its light 
 /* ---- the graffiti: designed in a 76 x 230 box (pillar 2's front face, measured on the art: fully
    on screen on laptops and desktops); screens that only see the middle of the art (phones) get it on
    a pillar further in instead (place() picks, by what the screen actually shows) ---- */
-const FACES = [{ x: 1128, y: 452, w: 76, h: 156 }, { x: 1046, y: 486, w: 46, h: 104 }, { x: 997, y: 505, w: 32, h: 73 }]; // (under the lowered ceiling, above each plinth)
+// (Nov 21, the full-scene scan: the third spot was the far pillar's front, which the vending machine now stands in
+// front of, so phones had the graffiti painted ON the machine. Phones see only the art's middle (x 756 to 1075): the
+// one clear surface there is the end wall, so that is the third spot.)
+const FACES = [{ x: 1128, y: 452, w: 76, h: 156 }, { x: 1046, y: 486, w: 46, h: 104 }, { x: 888, y: 524, w: 22, h: 62 }]; // (under the lowered ceiling, above each plinth; the end wall, below the hanging signs: it stands from y 518 to 575, and the piece's own box is empty in its bottom quarter)
 /* the piece itself is painted droplet by droplet by tools/draw-graffiti.mjs (a spray can, not a font:
    hand-drawn strokes, wet cores, overspray mist, spatter, drips, a black shadow pass, a white cat),
    at 4x this 76 x 230 box so it stays crisp; here it is only hung on the pillar */
@@ -153,8 +156,8 @@ const SIGN_SPOTS = [
    further back. So all three are built in the station's own perspective and light (lit from the strip's
    side, falling off into the dark, thin ink like the art's): the LED board facing down the platform (its
    front a rectangle, its underside and the side toward the middle showing), hung on two rods from the steel
-   cross beam; behind it, on rods up into the ceiling, a yellow EXIT sign and a white sign pointing up to THE CITY (the
-   next scene), with our line's red JN tile. Our own words and layout; arrows are drawn, not characters. */
+   cross beam; behind it, on rods up into the ceiling, a white sign pointing left to THE CITY (the next scene: where the
+   train goes), with our line's red JN tile, and a yellow EXIT sign pointing right, into the station. Our own words and layout; arrows are drawn, not characters. */
 const SIGN_H = 34; // the LED board's height at depth 1 (art px): long and slim
 const depthOf = (s) => s.w / 150;
 const toVP = (pts, r) => pts.map(([x, y]) => [VP[0] + (x - VP[0]) * r, VP[1] + (y - VP[1]) * r]);
@@ -215,37 +218,40 @@ function boxSVG(x, y, w, h, flip, face, d, id) {
   g += `<line x1="${f2(x + 0.8 * d)}" y1="${f2(y + 0.6 * d)}" x2="${f2(x + w - 0.8 * d)}" y2="${f2(y + 0.6 * d)}" stroke="#C9D2DC" stroke-opacity=".28" stroke-width="${f2(0.6 * d)}"/>`;
   return g;
 }
-const arrow = (cx, cy, sz, dir, fill) => { // a drawn arrow (no arrow characters), pointing left or up
-  const a = dir === 'up'
-    ? [[0, -1], [0.75, -0.1], [0.28, -0.1], [0.28, 1], [-0.28, 1], [-0.28, -0.1], [-0.75, -0.1]]
-    : [[-1, 0], [-0.1, -0.75], [-0.1, -0.28], [1, -0.28], [1, 0.28], [-0.1, 0.28], [-0.1, 0.75]];
+const arrow = (cx, cy, sz, dir, fill) => { // a drawn arrow (no arrow characters), pointing left or right
+  const m = dir === 'right' ? -1 : 1;
+  const a = [[-1, 0], [-0.1, -0.75], [-0.1, -0.28], [1, -0.28], [1, 0.28], [-0.1, 0.28], [-0.1, 0.75]].map(([u, v]) => [u * m, v]);
   return `<polygon points="${pts(a.map(([u, v]) => [cx + u * sz, cy + v * sz]))}" fill="${fill}"/>`;
 };
 function signsSVG(bd) {
   const { d, flip } = bd;
   let back = '';
-  // the second hang, further back: a backlit yellow EXIT sign and a white sign pointing up to THE CITY
+  // the second hang, further back: a white sign pointing to THE CITY (the trains) and a backlit yellow EXIT sign
   if (d > 0.45) {
     const d2 = d * 0.6; // (further down the platform: seen just under the board, as in John's reference)
     const L = (o) => VP[0] + o * d2;
     const oa = (bd.x - VP[0]) / d; const ob = (bd.x + bd.w - VP[0]) / d; // the board's lateral span
     const top = VP[1] - 80 * d2; const hh = 23 * d2; // (1.32 m over the eye, just under the ceiling)
-    const span = (u0, u1) => { const a = flip ? 1 - u1 : u0; const b = flip ? 1 - u0 : u1; return [L(oa + (ob - oa) * a), L(oa + (ob - oa) * b)]; };
-    const [ex0, ex1] = span(0.04, 0.44); const [dx0, dx1] = span(0.5, 0.98);
-    back += rodsSVG([ex0 + (ex1 - ex0) * 0.2, ex0 + (ex1 - ex0) * 0.8, dx0 + (dx1 - dx0) * 0.2, dx0 + (dx1 - dx0) * 0.8], top, d2);
+    // (Nov 21, John: "it doesn't make sense that the exit sign is pointing to the trains and the city's pointing to
+    // the wall"): each sign now points where its thing really is, and hangs on that side. THE CITY is where the train
+    // takes you (the next scene), so it hangs on the track side and points LEFT, at the trains; EXIT hangs on the hall
+    // side and points RIGHT, away from the tracks, into the station. Same on every screen (the tracks are always left).
+    const span = (u0, u1) => [L(oa + (ob - oa) * u0), L(oa + (ob - oa) * u1)];
+    const [dx0, dx1] = span(0.02, 0.56); const [ex0, ex1] = span(0.62, 0.98);
+    back += rodsSVG([dx0 + (dx1 - dx0) * 0.2, dx0 + (dx1 - dx0) * 0.8, ex0 + (ex1 - ex0) * 0.2, ex0 + (ex1 - ex0) * 0.8], top, d2);
     const fs = (13.5 * d2).toFixed(1);
-    // EXIT: a glow round it (it is lit from inside), the yellow face, a black arrow and the word
-    back += `<rect x="${f2(ex0 - 3 * d2)}" y="${f2(top - 3 * d2)}" width="${f2(ex1 - ex0 + 6 * d2)}" height="${f2(hh + 6 * d2)}" fill="#E8B923" opacity=".22" filter="url(#slBloom)"/>`;
-    back += boxSVG(ex0, top, ex1 - ex0, hh, flip, '<stop offset="0" stop-color="#E9BE24"/><stop offset="1" stop-color="#9E7E12"/>', d2, 'ssExF');
-    back += arrow(ex0 + 8.5 * d2, top + hh / 2, 6.2 * d2, 'left', '#0B0B0B');
-    back += `<text x="${f2(ex0 + 18 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.06em">EXIT</text>`;
-    // THE CITY: white face, a red JN tile (our line), an up arrow
+    // THE CITY: white face, an arrow to the trains, a red JN tile (our line), the words
     back += `<rect x="${f2(dx0 - 2 * d2)}" y="${f2(top - 2 * d2)}" width="${f2(dx1 - dx0 + 4 * d2)}" height="${f2(hh + 4 * d2)}" fill="#DCE3EA" opacity=".12" filter="url(#slBloom)"/>`;
     back += boxSVG(dx0, top, dx1 - dx0, hh, flip, '<stop offset="0" stop-color="#E6EAEE"/><stop offset="1" stop-color="#8E959D"/>', d2, 'ssDiF');
-    back += `<rect x="${f2(dx0 + 3 * d2)}" y="${f2(top + 4 * d2)}" width="${f2(14 * d2)}" height="${f2(hh - 8 * d2)}" fill="#C8161A"/>`;
-    back += `<text x="${f2(dx0 + 10 * d2)}" y="${f2(top + hh * 0.7)}" font-size="${(9 * d2).toFixed(1)}" fill="#F5F5F0" text-anchor="middle" style="font-family:var(--f-menu)">JN</text>`;
-    back += arrow(dx0 + 24 * d2, top + hh / 2, 6 * d2, 'up', '#0B0B0B');
-    back += `<text x="${f2(dx0 + 33 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.05em">THE CITY</text>`;
+    back += arrow(dx0 + 9 * d2, top + hh / 2, 6 * d2, 'left', '#0B0B0B');
+    back += `<rect x="${f2(dx0 + 18 * d2)}" y="${f2(top + 4 * d2)}" width="${f2(14 * d2)}" height="${f2(hh - 8 * d2)}" fill="#C8161A"/>`;
+    back += `<text x="${f2(dx0 + 25 * d2)}" y="${f2(top + hh * 0.7)}" font-size="${(9 * d2).toFixed(1)}" fill="#F5F5F0" text-anchor="middle" style="font-family:var(--f-menu)">JN</text>`;
+    back += `<text x="${f2(dx0 + 36 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.05em">THE CITY</text>`;
+    // EXIT: a glow round it (it is lit from inside), the yellow face, the word and a black arrow into the station
+    back += `<rect x="${f2(ex0 - 3 * d2)}" y="${f2(top - 3 * d2)}" width="${f2(ex1 - ex0 + 6 * d2)}" height="${f2(hh + 6 * d2)}" fill="#E8B923" opacity=".22" filter="url(#slBloom)"/>`;
+    back += boxSVG(ex0, top, ex1 - ex0, hh, flip, '<stop offset="0" stop-color="#E9BE24"/><stop offset="1" stop-color="#9E7E12"/>', d2, 'ssExF');
+    back += `<text x="${f2(ex0 + 6 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.06em">EXIT</text>`;
+    back += arrow(ex1 - 9 * d2, top + hh / 2, 6.2 * d2, 'right', '#0B0B0B');
   }
   // the LED board itself, on its beam: a slim charcoal box, the screen inset in it
   back += rodsSVG([bd.x + bd.w * 0.16, bd.x + bd.w * 0.84], bd.y, d);
