@@ -165,8 +165,10 @@ body.sv-open { overflow: hidden; }
 .sv-keys { position: absolute; z-index: 3; left: var(--gutter); bottom: max(14px, env(safe-area-inset-bottom, 0px)); display: flex; gap: 14px; }
 .sv-key { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 0; background: none; color: var(--white); cursor: pointer;
   font: 400 18px/1 var(--f-menu); letter-spacing: 1px; }
-.sv-key kbd { font-size: 13px; padding: 4px 6px; border: 2px solid var(--white); background: var(--white); color: var(--black); }
-.sv-key span { padding: 3px 8px 1px; border: 2px solid var(--white); }
+/* (Nov 21: the judges read these as "flat, modern web badges": now slanted like every HUD tab, square keys, a hard red shadow) */
+.sv-key { transform: skew(var(--skew)); }
+.sv-key kbd { font-size: 13px; padding: 4px 6px; border: 2px solid var(--white); border-radius: 0; background: var(--white); color: var(--black); }
+.sv-key span { padding: 3px 8px 1px; border: 2px solid var(--white); background: var(--black); box-shadow: 3px 3px 0 var(--red); }
 .sv-key-ok { cursor: default; }
 @media (pointer: coarse) { .sv-key kbd, .sv-key-ok { display: none; } } /* (no keyboard on a phone: just BACK) */
 

@@ -223,7 +223,7 @@ export async function cityWipe(swap, label = 'SIDE QUESTS') {
   tl.set(el, { visibility: 'visible' })
     .set(stage, { transformOrigin: '0 0', x: x0, y: y0, scale: s0 }, 0)
     // a phone held upright sees one building at a time: the camera pans across the ads on the left first
-    .fromTo(stage, { x: narrow ? clamp(vw / 2 - 330 * s0, vw - SQ_W * s0, 0) : x0 }, { x: x0, duration: narrow ? 0.4 : 0.01, ease: 'power2.inOut' }, 0.02)
+    .fromTo(stage, { x: narrow ? clamp(vw / 2 - 330 * s0, vw - SQ_W * s0, 0) : x0 }, { x: x0, duration: narrow ? 0.4 : 0.01, ease: 'power3.out' }, 0.02)
     .add(() => { sfx('city'); sfx('street'); }, 0) // (a car passing, and the square's busy street life)
     .fromTo(stage, { opacity: 0 }, { opacity: 1, duration: 0.12, ease: 'power2.out' }, 0)
     // headlights and taillights streaking along the street, both ways

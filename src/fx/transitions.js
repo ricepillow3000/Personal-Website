@@ -79,8 +79,8 @@ export function slashWipe(swap) {
     .fromTo(red, { xPercent: X(-140) }, { xPercent: X(4), duration: 0.2, ease: 'expo.in' }, 0)
     .fromTo(black, { xPercent: X(-120) }, { xPercent: 0, duration: 0.22, ease: 'expo.in' }, 0.04)
     .fromTo(star, { x: X(-0.7) * window.innerWidth, y: window.innerHeight * 0.18, rotation: 0, scale: 0.6 },
-      { x: X(0.75) * window.innerWidth, y: -window.innerHeight * 0.12, rotation: X(720), scale: 1.25, duration: 0.5, ease: 'power2.inOut' }, 0.02)
-    .fromTo(white, { xPercent: X(-150) }, { xPercent: X(150), duration: 0.24, ease: 'power2.inOut' }, 0.12)
+      { x: X(0.75) * window.innerWidth, y: -window.innerHeight * 0.12, rotation: X(720), scale: 1.25, duration: 0.5, ease: 'power4.inOut' }, 0.02) // (steep: a whip, not a glide)
+    .fromTo(white, { xPercent: X(-150) }, { xPercent: X(150), duration: 0.24, ease: 'power4.inOut' }, 0.12)
     .add(() => {
       if (old) gsap.set(old, { clearProps: 'transform' });
       swap();
@@ -460,6 +460,7 @@ export async function riseWipe(swap, label = 'THE PLAN') {
   await filmReady(['upshot', 'crown', 'facade'], 900);
   const set = citySet(label || 'THE PLAN', '<div class="fall-half whole"></div>');
   const { el, H, TH, city, sky, tower, lines, sign } = set;
+  el.classList.add('rising'); // (the title leans the way this shot looks: up)
   const whole = el.querySelector('.fall-half.whole');
   const snap = snapshotScreen();
   whole.appendChild(snap.frag);
@@ -503,7 +504,7 @@ export async function trainWipe(swap, label = '') {
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `<div class="ns-cam">
       <div class="ns-out"><div class="ns-lights">${'<i></i>'.repeat(9)}</div>
-        <div class="ns-station"><i class="ns-tiles"></i><i class="ns-stripe"></i><div class="ns-sign"><small>NEXT STOP</small><span class="ransom"></span></div><i class="ns-pillar"></i><i class="ns-pillar p2"></i></div></div>
+        <div class="ns-station"><i class="ns-tiles"></i><i class="ns-stripe"></i><div class="ns-sign"><small>NEXT STOP</small><span class="ransom"></span></div><i class="ns-pillar"></i><i class="ns-pillar p2"></i></div></div><i class="ns-glass"></i>
     </div><div class="fall-flash"></div>${LETTERBOX}`;
   ransom(el.querySelector('.ns-sign span'), label, label.length + 3);
   const q = (sel) => el.querySelector(sel);

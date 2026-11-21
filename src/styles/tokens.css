@@ -56,5 +56,6 @@
      viewport-fit=cover: Nov 19, John: "a really big red border blocks a lot of it") */
   --gutter: max(clamp(16px, 3.5vw, 48px), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   --ease-pop: cubic-bezier(.2, 1.5, .4, 1);
+  --ease-snap: cubic-bezier(.2, .8, .2, 1); /* off at once, a decisive stop: used in place of the floaty ease-in-out (Nov 21) */
   color-scheme: dark;
 }
