@@ -193,29 +193,50 @@ const CEIL_U = 106; // the lowered ceiling, 1.75 m over the eye, in art px at de
 const f2 = (n) => n.toFixed(1);
 const pts = (q) => q.map(([x, y]) => `${f2(x)},${f2(y)}`).join(' ');
 const INK = '#060607';
-/* two rods from a sign's top up to the beam's underside, with a plate and two bolts where they meet it */
-function rodsSVG(xs, top, d) {
+/* (Nov 21, John: "the sign is a little out of place, doesn't really look like it is part of the train station...
+   full, drawn out designs that match our current design"). The signs are now built from the station's own stuff:
+   WARM steel (the pillar bases' dark warm grey, not the cool charcoal they had), lit from above by the warm tubes
+   (a cream line along every top edge, the faces darker toward the bottom where dust gathers), and fully fitted
+   out like real platform signage: framed faces held by corner screws, the LED housing in three bolted modules with
+   the station's yellow line along its lower lip and the LEDs' amber on it, a junction box on top and a conduit
+   clipped up the rod into the ceiling. */
+const STEEL = { rod: '#4B463C', lit: '#B9AC8E', plate: '#36322B', bolt: '#978D78', side: '#454036', under: '#12110F', frame: '#24221D', rim: '#F3DFB4' };
+/* two rods from a sign's top up into the ceiling, each with a plate and two bolts where it meets it; lit: which
+   side of the rod faces the light strip (-1 left, 1 right) */
+function rodsSVG(xs, top, d, lit = -1) {
   const by = VP[1] - CEIL_U * d; // the ceiling at this depth
   let g = '';
   xs.forEach((x) => {
-    g += `<rect x="${f2(x - 0.9 * d)}" y="${f2(by)}" width="${f2(1.8 * d)}" height="${f2(top - by)}" fill="#3A3D42" stroke="${INK}" stroke-width="${f2(0.45 * d)}"/>`;
-    g += `<polygon points="${pts([[x - 5.5 * d, by - 0.6 * d], [x + 5.5 * d, by - 0.6 * d], [x + 5 * d, by + 2.2 * d], [x - 5 * d, by + 2.2 * d]])}" fill="#2C2F34" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
-    [-1, 1].forEach((q) => { g += `<circle cx="${f2(x + q * 3.2 * d)}" cy="${f2(by + 0.8 * d)}" r="${f2(1 * d)}" fill="#6E757E" stroke="${INK}" stroke-width="${f2(0.35 * d)}"/>`; });
+    g += `<rect x="${f2(x - 0.9 * d)}" y="${f2(by)}" width="${f2(1.8 * d)}" height="${f2(top - by)}" fill="${STEEL.rod}" stroke="${INK}" stroke-width="${f2(0.45 * d)}"/>`;
+    g += `<line x1="${f2(x + lit * 0.45 * d)}" y1="${f2(by + 2.6 * d)}" x2="${f2(x + lit * 0.45 * d)}" y2="${f2(top - 0.6 * d)}" stroke="${STEEL.lit}" stroke-opacity=".7" stroke-width="${f2(0.4 * d)}"/>`;
+    g += `<polygon points="${pts([[x - 5.5 * d, by - 0.6 * d], [x + 5.5 * d, by - 0.6 * d], [x + 5 * d, by + 2.2 * d], [x - 5 * d, by + 2.2 * d]])}" fill="${STEEL.plate}" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
+    [-1, 1].forEach((q) => { g += `<circle cx="${f2(x + q * 3.2 * d)}" cy="${f2(by + 0.8 * d)}" r="${f2(1 * d)}" fill="${STEEL.bolt}" stroke="${INK}" stroke-width="${f2(0.35 * d)}"/>`; });
+    // the collar where the rod meets the sign
+    g += `<rect x="${f2(x - 1.9 * d)}" y="${f2(top - 1.6 * d)}" width="${f2(3.8 * d)}" height="${f2(1.6 * d)}" fill="${STEEL.plate}" stroke="${INK}" stroke-width="${f2(0.4 * d)}"/>`;
   });
   return g;
 }
 /* a sign box facing down the platform: its front rectangle, the underside and the side toward the middle
-   (the box recedes toward the vanishing point), lit from the strip's side */
-function boxSVG(x, y, w, h, flip, face, d, id) {
+   (the box recedes toward the vanishing point), lit from above by the tubes. o.frame: a dark steel frame round
+   the face, that thick (art px at depth 1), with a screw in each corner */
+function boxSVG(x, y, w, h, flip, face, d, id, o = {}) {
   const fr = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
   const bk = toVP(fr, 0.968);
   const sideI = flip ? [1, 2] : [0, 3]; // the side edge toward the middle
-  let g = `<polygon points="${pts([fr[3], fr[2], bk[2], bk[3]])}" fill="#0F1012" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
-  g += `<polygon points="${pts([fr[sideI[0]], fr[sideI[1]], bk[sideI[1]], bk[sideI[0]]])}" fill="#3B3E44" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
+  let g = `<polygon points="${pts([fr[3], fr[2], bk[2], bk[3]])}" fill="${STEEL.under}" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
+  g += `<polygon points="${pts([fr[sideI[0]], fr[sideI[1]], bk[sideI[1]], bk[sideI[0]]])}" fill="${STEEL.side}" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
   const lx = flip ? x + w : x; const dx = flip ? x : x + w; // lit edge -> dark edge
-  g += `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${f2(lx)}" y1="0" x2="${f2(dx)}" y2="0">${face}</linearGradient></defs>`;
+  g += `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${f2(lx)}" y1="0" x2="${f2(dx)}" y2="0">${face}</linearGradient>`
+    + `<linearGradient id="${id}V" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset=".5" stop-color="#000" stop-opacity=".04"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient></defs>`;
   g += `<rect x="${f2(x)}" y="${f2(y)}" width="${f2(w)}" height="${f2(h)}" fill="url(#${id})" stroke="${INK}" stroke-width="${f2(0.7 * d)}"/>`;
-  g += `<line x1="${f2(x + 0.8 * d)}" y1="${f2(y + 0.6 * d)}" x2="${f2(x + w - 0.8 * d)}" y2="${f2(y + 0.6 * d)}" stroke="#C9D2DC" stroke-opacity=".28" stroke-width="${f2(0.6 * d)}"/>`;
+  g += `<rect x="${f2(x)}" y="${f2(y)}" width="${f2(w)}" height="${f2(h)}" fill="url(#${id}V)"/>`; // dust and shade low down
+  if (o.frame) {
+    const t = o.frame * d;
+    g += `<rect x="${f2(x + t / 2)}" y="${f2(y + t / 2)}" width="${f2(w - t)}" height="${f2(h - t)}" fill="none" stroke="${STEEL.frame}" stroke-width="${f2(t)}"/>`;
+    g += `<rect x="${f2(x + t)}" y="${f2(y + t)}" width="${f2(w - 2 * t)}" height="${f2(h - 2 * t)}" fill="none" stroke="${INK}" stroke-width="${f2(0.4 * d)}"/>`;
+    [[x + t / 2, y + t / 2], [x + w - t / 2, y + t / 2], [x + w - t / 2, y + h - t / 2], [x + t / 2, y + h - t / 2]].forEach(([cx, cy]) => { g += `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${f2(t * 0.26)}" fill="${STEEL.bolt}"/>`; });
+  }
+  g += `<line x1="${f2(x + 0.8 * d)}" y1="${f2(y + 0.6 * d)}" x2="${f2(x + w - 0.8 * d)}" y2="${f2(y + 0.6 * d)}" stroke="${STEEL.rim}" stroke-opacity=".5" stroke-width="${f2(0.6 * d)}"/>`; // the tubes on its top edge
   return g;
 }
 const arrow = (cx, cy, sz, dir, fill) => { // a drawn arrow (no arrow characters), pointing left or right
@@ -238,26 +259,49 @@ function signsSVG(bd) {
     // side and points RIGHT, away from the tracks, into the station. Same on every screen (the tracks are always left).
     const span = (u0, u1) => [L(oa + (ob - oa) * u0), L(oa + (ob - oa) * u1)];
     const [dx0, dx1] = span(0.02, 0.56); const [ex0, ex1] = span(0.62, 0.98);
-    back += rodsSVG([dx0 + (dx1 - dx0) * 0.2, dx0 + (dx1 - dx0) * 0.8, ex0 + (ex1 - ex0) * 0.2, ex0 + (ex1 - ex0) * 0.8], top, d2);
+    back += rodsSVG([dx0 + (dx1 - dx0) * 0.2, dx0 + (dx1 - dx0) * 0.8, ex0 + (ex1 - ex0) * 0.2, ex0 + (ex1 - ex0) * 0.8], top, d2, flip ? 1 : -1);
     const fs = (13.5 * d2).toFixed(1);
     // THE CITY: white face, an arrow to the trains, a red JN tile (our line), the words
-    back += `<rect x="${f2(dx0 - 2 * d2)}" y="${f2(top - 2 * d2)}" width="${f2(dx1 - dx0 + 4 * d2)}" height="${f2(hh + 4 * d2)}" fill="#DCE3EA" opacity=".12" filter="url(#slBloom)"/>`;
-    back += boxSVG(dx0, top, dx1 - dx0, hh, flip, '<stop offset="0" stop-color="#E6EAEE"/><stop offset="1" stop-color="#8E959D"/>', d2, 'ssDiF');
+    back += `<rect x="${f2(dx0 - 2 * d2)}" y="${f2(top - 2 * d2)}" width="${f2(dx1 - dx0 + 4 * d2)}" height="${f2(hh + 4 * d2)}" fill="#EDE0C0" opacity=".12" filter="url(#slBloom)"/>`;
+    back += boxSVG(dx0, top, dx1 - dx0, hh, flip, '<stop offset="0" stop-color="#EDE6D2"/><stop offset="1" stop-color="#958C78"/>', d2, 'ssDiF', { frame: 1.7 });
     back += arrow(dx0 + 9 * d2, top + hh / 2, 6 * d2, 'left', '#0B0B0B');
     back += `<rect x="${f2(dx0 + 18 * d2)}" y="${f2(top + 4 * d2)}" width="${f2(14 * d2)}" height="${f2(hh - 8 * d2)}" fill="#C8161A"/>`;
     back += `<text x="${f2(dx0 + 25 * d2)}" y="${f2(top + hh * 0.7)}" font-size="${(9 * d2).toFixed(1)}" fill="#F5F5F0" text-anchor="middle" style="font-family:var(--f-menu)">JN</text>`;
     back += `<text x="${f2(dx0 + 36 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.05em">THE CITY</text>`;
     // EXIT: a glow round it (it is lit from inside), the yellow face, the word and a black arrow into the station
     back += `<rect x="${f2(ex0 - 3 * d2)}" y="${f2(top - 3 * d2)}" width="${f2(ex1 - ex0 + 6 * d2)}" height="${f2(hh + 6 * d2)}" fill="#E8B923" opacity=".22" filter="url(#slBloom)"/>`;
-    back += boxSVG(ex0, top, ex1 - ex0, hh, flip, '<stop offset="0" stop-color="#E9BE24"/><stop offset="1" stop-color="#9E7E12"/>', d2, 'ssExF');
+    back += boxSVG(ex0, top, ex1 - ex0, hh, flip, '<stop offset="0" stop-color="#EBBD22"/><stop offset="1" stop-color="#9C7A12"/>', d2, 'ssExF', { frame: 1.7 });
     back += `<text x="${f2(ex0 + 6 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.06em">EXIT</text>`;
     back += arrow(ex1 - 9 * d2, top + hh / 2, 6.2 * d2, 'right', '#0B0B0B');
   }
-  // the LED board itself, on its beam: a slim charcoal box, the screen inset in it
-  back += rodsSVG([bd.x + bd.w * 0.16, bd.x + bd.w * 0.84], bd.y, d);
-  back += boxSVG(bd.x, bd.y, bd.w, bd.h, flip, '<stop offset="0" stop-color="#3C3F45"/><stop offset=".6" stop-color="#202226"/><stop offset="1" stop-color="#141517"/>', d, 'ssBdF');
+  // the LED board itself: a slim warm-steel housing in three bolted modules, the screen inset in it
+  const lit = flip ? 1 : -1;
+  const rodX = [bd.x + bd.w * 0.16, bd.x + bd.w * 0.84];
+  const far = flip ? rodX[0] : rodX[1]; // the rod away from the light strip carries the power
+  back += rodsSVG(rodX, bd.y, d, lit);
+  // its power: a conduit clipped up that rod into the ceiling, from a junction box on the housing's top
+  const cx = far - lit * 2.3 * d; const cTop = VP[1] - CEIL_U * d + 2.2 * d;
+  back += `<rect x="${f2(cx - 0.55 * d)}" y="${f2(cTop)}" width="${f2(1.1 * d)}" height="${f2(bd.y - cTop - 3 * d)}" fill="#1B1A17" stroke="${INK}" stroke-width="${f2(0.3 * d)}"/>`;
+  [0.3, 0.7].forEach((t) => { const y = cTop + (bd.y - cTop) * t; back += `<rect x="${f2(Math.min(cx, far) - 1.2 * d)}" y="${f2(y)}" width="${f2(Math.abs(cx - far) + 2.4 * d)}" height="${f2(1.1 * d)}" fill="${STEEL.bolt}" stroke="${INK}" stroke-width="${f2(0.3 * d)}"/>`; });
+  back += `<rect x="${f2(cx - 2.6 * d)}" y="${f2(bd.y - 3.4 * d)}" width="${f2(5.2 * d)}" height="${f2(3.4 * d)}" fill="${STEEL.plate}" stroke="${INK}" stroke-width="${f2(0.45 * d)}"/>`;
+  back += `<line x1="${f2(cx - 2 * d)}" y1="${f2(bd.y - 2.8 * d)}" x2="${f2(cx + 2 * d)}" y2="${f2(bd.y - 2.8 * d)}" stroke="${STEEL.rim}" stroke-opacity=".45" stroke-width="${f2(0.4 * d)}"/>`;
+  back += boxSVG(bd.x, bd.y, bd.w, bd.h, flip, '<stop offset="0" stop-color="#4C473D"/><stop offset=".6" stop-color="#2B2823"/><stop offset="1" stop-color="#1B1A16"/>', d, 'ssBdF');
   const [q0, , q2] = bd.quad;
+  const bz = q0[0] - bd.x; // the housing's frame round the screen
+  // module joints across the frame (above and below the screen), and a screw in each corner and by each joint
+  [1 / 3, 2 / 3].forEach((t) => {
+    const x = bd.x + bd.w * t;
+    [[bd.y + 0.5 * d, q0[1]], [q2[1], bd.y + bd.h - 0.5 * d]].forEach(([y0, y1]) => { back += `<line x1="${f2(x)}" y1="${f2(y0)}" x2="${f2(x)}" y2="${f2(y1)}" stroke="${INK}" stroke-width="${f2(0.45 * d)}"/>`; });
+  });
+  [0, 1 / 3, 2 / 3, 1].forEach((t, i) => {
+    const xs = i === 0 ? [bd.x + bz / 2] : i === 3 ? [bd.x + bd.w - bz / 2] : [bd.x + bd.w * t - 1.5 * d, bd.x + bd.w * t + 1.5 * d];
+    xs.forEach((x) => [bd.y + bz / 2, bd.y + bd.h - bz / 2].forEach((y) => { back += `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(0.55 * d)}" fill="${STEEL.bolt}" stroke="${INK}" stroke-width="${f2(0.2 * d)}"/>`; }));
+  });
+  // the station's yellow line along the housing's lower lip (the wall band's colour), under the screws' row
+  back += `<rect x="${f2(bd.x + 0.5 * d)}" y="${f2(bd.y + bd.h - 1.15 * d)}" width="${f2(bd.w - d)}" height="${f2(0.75 * d)}" fill="#C79A1C"/>`;
   back += `<rect x="${f2(q0[0])}" y="${f2(q0[1])}" width="${f2(q2[0] - q0[0])}" height="${f2(q2[1] - q0[1])}" fill="#08080A" stroke="${INK}" stroke-width="${f2(0.5 * d)}"/>`;
+  // the LEDs' amber on the frame's inner lip under the screen
+  back += `<line x1="${f2(q0[0] + d)}" y1="${f2(q2[1] + 0.45 * d)}" x2="${f2(q2[0] - d)}" y2="${f2(q2[1] + 0.45 * d)}" stroke="#FFB23E" stroke-opacity=".3" stroke-width="${f2(0.5 * d)}"/>`;
   return back;
 }
 const SIGN_LINE = 'LET US START THE GAME';
@@ -339,41 +383,73 @@ const RAIL_RUNS = [[9.2, 10.9], [14.6, 16.3], [20.4, 22.1], [27.2, 28.9], [35.6,
    bent-tube frame, navy steel, its top corners ROUNDED down into the end posts, a bottom rail just above the floor
    on two small feet, and five evenly spaced vertical bars from the bottom rail up into the top rail; 1.1 m tall. */
 function railsSVG() {
+  /* (Nov 21, John: "focus on the hand guardrails to ensure they are fully drawn out designs"). Same rail as before
+     (one bent tube, five bars, a bottom rail), now finished like a real one: every tube has a lit side and a shaded
+     side, the bars are welded into the rails with small collars, each post stands on a round flange bolted to the
+     floor, the paint is scuffed to bare steel low on the posts where feet and bags hit it, and its shadow lies on
+     the floor with soft ends. */
   const F = 1040; const EY = 1.6;
   const P = (X, h, Z) => [VP[0] + (F * X) / Z, VP[1] - (F * (h - EY)) / Z];
   const line = (q) => q.map(([x, y]) => `${f2(x)},${f2(y)}`).join(' ');
-  const navy = '#34405C'; const lit = '#7F8DAA';
+  const navy = '#34405C'; const lit = '#8E9BB6'; const deep = '#1E2638'; const bare = '#A7A294';
   const TOP = 1.1; const LOW = 0.16; const R = 0.2;
-  let g = '';
+  const tubeLine = (q, w, inkw) => `<polyline points="${line(q)}" fill="none" stroke="${INK}" stroke-width="${f2(w + inkw * 2)}" stroke-linejoin="round" stroke-linecap="round"/><polyline points="${line(q)}" fill="none" stroke="${navy}" stroke-width="${f2(w)}" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const shift = (q, dx, dy = 0) => q.map(([x, y]) => [x + dx, y + dy]);
+  let g = '<defs><linearGradient id="grSh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset=".18" stop-color="#000" stop-opacity=".34"/><stop offset=".82" stop-color="#000" stop-opacity=".34"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient></defs>';
   RAIL_RUNS.forEach(([z0, z1]) => {
     const zm = (z0 + z1) / 2; const px = F / zm; // px per metre here
     const tube = 0.042 * px; const thin = 0.026 * px; const inkw = Math.max(0.5, 0.012 * px);
-    // its shadow on the floor
-    g += `<polygon points="${line([P(RAIL_X - 0.03, 0, z0), P(RAIL_X - 0.03, 0, z1), P(RAIL_X + 0.18, 0, z1), P(RAIL_X + 0.18, 0, z0)])}" fill="#000" opacity=".3"/>`;
+    const fine = px > 34; // (near enough for the small parts; far down the platform they would be specks)
+    // its shadow on the floor, toward the platform (the tubes over the track side light it), soft at both ends
+    const sh = [P(RAIL_X + 0.02, 0, z1 + 0.12), P(RAIL_X + 0.02, 0, z0 - 0.12), P(RAIL_X + 0.2, 0, z0 - 0.12), P(RAIL_X + 0.2, 0, z1 + 0.12)];
+    g += `<polygon points="${line(sh)}" fill="url(#grSh)"/>`;
+    // the flanges first: a round plate on the floor under each post, two bolts, an ink edge
+    [z1, z0].forEach((z) => {
+      const [cx, cy] = P(RAIL_X, 0.012, z); const rx = 0.085 * px; const ry = rx * 0.34;
+      g += `<ellipse cx="${f2(cx)}" cy="${f2(cy + ry * 0.5)}" rx="${f2(rx)}" ry="${f2(ry)}" fill="${INK}"/>`; // its thickness
+      g += `<ellipse cx="${f2(cx)}" cy="${f2(cy)}" rx="${f2(rx)}" ry="${f2(ry)}" fill="${deep}" stroke="${INK}" stroke-width="${f2(inkw)}"/>`;
+      if (fine) [-1, 1].forEach((q) => { g += `<ellipse cx="${f2(cx + q * rx * 0.66)}" cy="${f2(cy)}" rx="${f2(rx * 0.14)}" ry="${f2(ry * 0.3)}" fill="${bare}" stroke="${INK}" stroke-width="${f2(inkw * 0.5)}"/>`; });
+    });
     // the frame: far post up, round corner, top rail, round corner, near post down (one bent tube)
     const fr = [];
-    fr.push([z1, 0.03]);
+    fr.push([z1, 0.02]);
     for (let k = 0; k <= 8; k++) { const t = (Math.PI / 2) * (k / 8); fr.push([z1 - R + R * Math.cos(t), TOP - R + R * Math.sin(t)]); }
     for (let k = 0; k <= 8; k++) { const t = Math.PI / 2 + (Math.PI / 2) * (k / 8); fr.push([z0 + R + R * Math.cos(t), TOP - R + R * Math.sin(t)]); }
-    fr.push([z0, 0.03]);
+    fr.push([z0, 0.02]);
     const frP = fr.map(([z, h]) => P(RAIL_X, h, z));
     // bars and the bottom rail first (under the frame)
     const n = 6; // (Nov 21, John: "only 5 bars"): five bars, evenly spaced, from the bottom rail up into the top rail
     for (let k = 1; k < n; k++) {
-      const z = z1 - ((z1 - z0) * k) / n; const [a1, a2] = [P(RAIL_X, LOW, z), P(RAIL_X, TOP, z)];
-      g += `<polyline points="${line([a1, a2])}" fill="none" stroke="${INK}" stroke-width="${f2(thin + inkw * 2)}"/>`;
-      g += `<polyline points="${line([a1, a2])}" fill="none" stroke="${navy}" stroke-width="${f2(thin)}"/>`;
+      const z = z1 - ((z1 - z0) * k) / n; const bar = [P(RAIL_X, LOW, z), P(RAIL_X, TOP, z)];
+      g += tubeLine(bar, thin, inkw);
+      g += `<polyline points="${line(shift(bar, thin * 0.24))}" fill="none" stroke="${lit}" stroke-opacity=".6" stroke-width="${f2(thin * 0.26)}"/>`;
+      g += `<polyline points="${line(shift(bar, -thin * 0.3))}" fill="none" stroke="${deep}" stroke-opacity=".8" stroke-width="${f2(thin * 0.24)}"/>`;
     }
     const low = [P(RAIL_X, LOW, z1), P(RAIL_X, LOW, z0)];
-    g += `<polyline points="${line(low)}" fill="none" stroke="${INK}" stroke-width="${f2(tube + inkw * 2)}"/><polyline points="${line(low)}" fill="none" stroke="${navy}" stroke-width="${f2(tube)}"/>`;
-    g += `<polyline points="${line(frP)}" fill="none" stroke="${INK}" stroke-width="${f2(tube + inkw * 2)}" stroke-linejoin="round"/>`;
-    g += `<polyline points="${line(frP)}" fill="none" stroke="${navy}" stroke-width="${f2(tube)}" stroke-linejoin="round"/>`;
-    // the tube catches the ceiling light along its top
+    g += tubeLine(low, tube, inkw);
+    g += `<polyline points="${line(shift(low, 0, -tube * 0.24))}" fill="none" stroke="${lit}" stroke-opacity=".6" stroke-width="${f2(tube * 0.26)}"/>`;
+    g += `<polyline points="${line(shift(low, 0, tube * 0.3))}" fill="none" stroke="${deep}" stroke-opacity=".8" stroke-width="${f2(tube * 0.24)}"/>`;
+    if (fine) { // the weld collar where each bar stands on the bottom rail
+      for (let k = 1; k < n; k++) {
+        const z = z1 - ((z1 - z0) * k) / n; const [cx, cy] = P(RAIL_X, LOW + 0.028, z);
+        g += `<ellipse cx="${f2(cx)}" cy="${f2(cy)}" rx="${f2(thin * 0.85)}" ry="${f2(thin * 0.42)}" fill="${navy}" stroke="${INK}" stroke-width="${f2(inkw * 0.7)}"/>`;
+      }
+    }
+    g += tubeLine(frP, tube, inkw);
+    // the tube catches the ceiling light along its top and down the side of each post, and is shaded on the other
     const hiP = fr.map(([z, h]) => P(RAIL_X, h + 0.012, z)).slice(1, -1);
-    g += `<polyline points="${line(hiP)}" fill="none" stroke="${lit}" stroke-opacity=".7" stroke-width="${f2(tube * 0.32)}" stroke-linejoin="round"/>`;
-    // the feet: small plates bolted to the floor under each post
+    g += `<polyline points="${line(hiP)}" fill="none" stroke="${lit}" stroke-opacity=".75" stroke-width="${f2(tube * 0.32)}" stroke-linejoin="round"/>`;
     [z1, z0].forEach((z) => {
-      g += `<polygon points="${line([P(RAIL_X - 0.06, 0.015, z - 0.05), P(RAIL_X - 0.06, 0.015, z + 0.05), P(RAIL_X + 0.06, 0.015, z + 0.05), P(RAIL_X + 0.06, 0.015, z - 0.05)])}" fill="#1C2333" stroke="${INK}" stroke-width="${f2(inkw)}"/>`;
+      const post = [P(RAIL_X, 0.2, z), P(RAIL_X, TOP - R, z)];
+      g += `<polyline points="${line(shift(post, tube * 0.24))}" fill="none" stroke="${lit}" stroke-opacity=".6" stroke-width="${f2(tube * 0.24)}"/>`;
+      g += `<polyline points="${line(shift(post, -tube * 0.3))}" fill="none" stroke="${deep}" stroke-opacity=".8" stroke-width="${f2(tube * 0.22)}"/>`;
+      // the collar at its foot, and the paint scuffed to bare steel just above it
+      const [cx, cy] = P(RAIL_X, 0.04, z);
+      g += `<ellipse cx="${f2(cx)}" cy="${f2(cy)}" rx="${f2(tube * 0.9)}" ry="${f2(tube * 0.4)}" fill="${navy}" stroke="${INK}" stroke-width="${f2(inkw * 0.8)}"/>`;
+      if (fine) {
+        g += `<polyline points="${line(shift([P(RAIL_X, 0.09, z), P(RAIL_X, 0.15, z)], tube * 0.1))}" fill="none" stroke="${bare}" stroke-opacity=".7" stroke-width="${f2(tube * 0.3)}" stroke-linecap="round"/>`;
+        g += `<polyline points="${line(shift([P(RAIL_X, 0.2, z), P(RAIL_X, 0.23, z)], -tube * 0.16))}" fill="none" stroke="${bare}" stroke-opacity=".55" stroke-width="${f2(tube * 0.22)}" stroke-linecap="round"/>`;
+      }
     });
   });
   return g;
