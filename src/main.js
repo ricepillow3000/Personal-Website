@@ -483,7 +483,32 @@ function updateGuide(id) {
   // a small corner chip, only while there is more page below and the visitor has paused (never
   // over content while they scroll); it bows out once the NEXT STOP card is on screen
   let epVisible = false;
-  const show = () => { guide.hidden = epVisible || screen !== 'page' || pageId !== id; };
+  // (Nov 21 evaluation: the chip sat over whatever the visitor had stopped to read, a skill's level meter, a fact's
+  // last line. When its label would cover the page's words it shrinks to just its arrow in the corner, and if even
+  // that would, it stays away until the next pause.)
+  const covers = () => {
+    const r = guide.getBoundingClientRect(); const page = $('#page');
+    if (!page || !r.width) return false;
+    const hit = (q) => q.width && q.height && q.left < r.right - 2 && q.right > r.left + 2 && q.top < r.bottom - 2 && q.bottom > r.top + 2;
+    for (const el of page.querySelectorAll('*')) {
+      const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+      if (!own && !el.matches('i, img, svg, b')) continue;
+      const q = el.getBoundingClientRect();
+      if (q.bottom < 0 || q.top > innerHeight) continue;
+      if (hit(q)) {
+        if (own) { const rg = document.createRange(); rg.selectNodeContents(el); if (![...rg.getClientRects()].some(hit)) continue; } // (the words themselves, not their box's empty end)
+        return true;
+      }
+    }
+    return false;
+  };
+  const show = () => {
+    guide.classList.remove('mini');
+    if (epVisible || screen !== 'page' || pageId !== id) { guide.hidden = true; return; }
+    guide.style.visibility = 'hidden'; guide.hidden = false; // (measured in place before it is seen)
+    if (covers()) { guide.classList.add('mini'); if (covers()) guide.hidden = true; }
+    guide.style.visibility = '';
+  };
   guideObs = new IntersectionObserver(([e]) => { epVisible = e.isIntersecting; show(); }, { root: sc, threshold: 0.35 });
   guideObs.observe(ep);
   guideScroll = () => {
