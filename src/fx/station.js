@@ -105,7 +105,11 @@ const FACES = [{ x: 1128, y: 262, w: 76, h: 230 }, { x: 1046, y: 382, w: 46, h: 
    hand-drawn strokes, wet cores, overspray mist, spatter, drips, a black shadow pass, a white cat),
    at 4x this 76 x 230 box so it stays crisp; here it is only hung on the pillar */
 const graffiti = () => '<image class="gf" href="assets/film/graffiti.webp" width="76" height="230" preserveAspectRatio="none" decoding="async"/>';
-const faceTransform = (f) => { const k = Math.min(f.w / 76, f.h / 230); return `translate(${f.x + (f.w - 76 * k) / 2} ${f.y}) scale(${k.toFixed(3)})`; };
+const faceTransform = (f, top = f.y) => { // (top: start lower on the face, e.g. under the top bar; it then shrinks to fit, bottom kept)
+  const t = Math.max(f.y, Math.min(top, f.y + f.h * 0.45));
+  const k = Math.min(f.w / 76, (f.y + f.h - t) / 230);
+  return `translate(${(f.x + (f.w - 76 * k) / 2).toFixed(1)} ${(f.y + f.h - 230 * k).toFixed(1)}) scale(${k.toFixed(3)})`;
+};
 
 const svg = (cls, defs, body) => `<svg class="st ${cls}" viewBox="0 0 1600 914" preserveAspectRatio="none" aria-hidden="true"><defs>${defs}</defs>${body}</svg>`;
 
@@ -305,10 +309,12 @@ export function mountStation(box, before) {
       const right = (box.offsetWidth * 0.94 - ox) / k; // the art's x at the visible right edge (the box overhangs 6%)
       // (a margin for the camera's tilt and slow push, which crop a little more)
       const face = FACES.find((f) => f.x + f.w + 40 < right) || FACES[FACES.length - 1];
-      if (gfAt.dataset.face !== String(FACES.indexOf(face))) {
-        gfAt.dataset.face = String(FACES.indexOf(face));
-        gfAt.setAttribute('transform', faceTransform(face));
-      }
+      // (Nov 21, John's phone held sideways: the top bar covered TAKE. The art's y just under the top bar: the box
+      // overhangs the screen by 6%, and a margin for the camera's tilt and push)
+      const bar = document.querySelector('.hud-tr')?.getBoundingClientRect();
+      const under = bar && bar.width ? (bar.bottom + box.offsetHeight * 0.06 / 1.12 - oy) / k + 26 : 0;
+      const tf = faceTransform(face, under);
+      if (gfAt.getAttribute('transform') !== tf) gfAt.setAttribute('transform', tf);
     },
   };
 }

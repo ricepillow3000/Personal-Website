@@ -253,8 +253,8 @@ body.reduce-motion .mn-burst { animation: none; }
 .wipe { position: fixed; inset: 0; z-index: 90; pointer-events: none; visibility: hidden; }
 .wipe > div { position: absolute; top: -10%; bottom: -10%; left: -30%; width: 160%; }
 .wipe-black { background: var(--black) repeating-linear-gradient(100deg, transparent 0 46px, rgba(245, 245, 240, .07) 46px 50px); clip-path: polygon(18% 0, 100% 0, 82% 100%, 0 100%); }
-.wipe-red { background: var(--red); clip-path: polygon(14% 0, 100% 0, 86% 100%, 0 100%); }
-.wipe-white { background: var(--white); clip-path: polygon(46% 0, 50% 0, 44% 100%, 41% 100%); }
+.wipe-red { background: var(--black) linear-gradient(var(--red), var(--red)); clip-path: polygon(14% 0, 100% 0, 86% 100%, 0 100%); }
+.wipe-white { background: var(--black) linear-gradient(var(--white), var(--white)); clip-path: polygon(46% 0, 50% 0, 44% 100%, 41% 100%); }
 .wipe > div { will-change: transform; }
 .wipe.rev .wipe-black, .wipe.rev .wipe-red, .wipe.rev .wipe-white { scale: -1 1; }
 .wipe > .wipe-star { left: 50%; top: 50%; bottom: auto; width: 170px; height: 170px; margin: -85px 0 0 -85px; background: var(--yellow);
@@ -965,6 +965,13 @@ body[data-mode="page"] .screen-page { padding-bottom: 120px; } /* nothing import
 @media (max-width: 760px) { .guide { font-size: 13px; } }
 /* the stop strip sits right under the fixed back button, close to the title */
 .stop-strip { margin: 4px 0 30px; } /* (room under the line for your station's name) */
+/* the line and its strip reach as far up and down as the names and the dagger do (Nov 21, John, chapter 4 on his
+   phone, again: after a scroll the names and the dagger's handle were cut along the top of the 40px line). Padding
+   cancelled by negative margins: nothing moves, but every box from the stop up to the strip now covers what it
+   draws, so the browser repaints all of it. The padding lets taps through to what is under it; the tickets keep theirs. */
+.ss-line { padding-top: 130px; padding-bottom: 130px; margin-top: -130px; margin-bottom: -130px; height: 300px; pointer-events: none; }
+.stop-strip { padding-top: 130px; padding-bottom: 130px; margin-top: -126px; margin-bottom: -100px; pointer-events: none; }
+.stop-strip .ss-dot { pointer-events: auto; }
 /* MENU no longer shouts: the guided ride leads now, and the pulse ring crossed the label */
 .hud-btn.menu-hot { animation: none; }
 .hud-btn.menu-hot::after { display: none; }
