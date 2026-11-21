@@ -19,24 +19,26 @@
 
 const NS = 'http://www.w3.org/2000/svg';
 // the panels, measured on the art: [x, y] corners (centre strip), or a slanted bar [x1, y1, x2, y2, width]
+// (Nov 21, the roof lowered to 3.35 m: John, "make the subway station roof lower"): the tubes are on the new
+// ceiling, 1.75 m over the eye, every 4.05 m along the strip (each 2.9 m long), plus one over the back of the platform
 const PANELS = [
-  [[824, 0], [874, 0], [873, 94], [832, 94]],
-  [[836, 127], [873, 126], [873, 189], [841, 190]],
-  [[844, 211], [873, 211], [873, 252], [847, 252]],
-  [[849, 267], [873, 267], [873, 295], [851, 295]],
-  [[852, 307], [873, 307], [873, 327], [854, 327]],
-  [[855, 336], [872, 336], [872, 352], [856, 351]],
-  [[857, 359], [872, 359], [872, 371], [857, 370]],
-  [[858, 377], [872, 377], [872, 386], [859, 386]],
-  [[860, 391], [871, 391], [872, 399], [860, 400]],
-  [[860, 404], [871, 404], [871, 410], [861, 410]],
-  [[862, 415], [871, 415], [872, 420], [862, 420]],
-  [[862, 424], [871, 424], [871, 428], [862, 428]],
-  [1268, 178, 1331, 124, 13],
-  [1207, 240, 1268, 205, 11],
-  [1092, 352, 1109, 333, 9],
+  [[735, 75], [859, 75], [864, 278], [793, 278]],
+  [[804, 318], [865, 318], [866, 379], [822, 379]],
+  [[826, 396], [867, 396], [867, 425], [835, 425]],
+  [[838, 434], [867, 434], [868, 452], [842, 452]],
+  [[844, 457], [868, 457], [868, 469], [847, 469]],
+  [[848, 472], [868, 472], [868, 481], [851, 481]],
+  [[852, 483], [869, 483], [869, 489], [853, 489]],
+  [[854, 491], [869, 491], [869, 496], [855, 496]],
+  [[856, 498], [869, 498], [869, 502], [857, 502]],
+  [[857, 503], [869, 503], [869, 506], [858, 506]],
+  [[858, 507], [869, 507], [869, 509], [859, 509]],
+  [[859, 510], [869, 510], [869, 513], [860, 513]],
+  [[860, 513], [869, 513], [869, 515], [861, 515]],
+  [[861, 516], [869, 516], [869, 517], [861, 517]],
+  [[1254, 434], [1286, 434], [1222, 452], [1195, 452]]
 ];
-const TIRED = new Set([3, 13]); // two old tubes that act up more often
+const TIRED = new Set([2, 9]); // two old tubes that act up more often
 const shape = (p, grow = 0) => {
   if (Array.isArray(p[0])) {
     const cx = p.reduce((a, q) => a + q[0], 0) / 4;
@@ -64,20 +66,20 @@ function lightsDim() { // multiplied: puts out the glow painted round a tube tha
    at y ~690 under the far tubes and runs off the bottom under the near ones). The small right tube (14)
    lights the patch at (1101, 860). When a tube goes off (or dims), its stretch of reflection is covered
    with the floor's own tone, soft-edged, in the same group as the tube, so the two can never disagree. */
-const MIRROR = 1.15;
-const REFLECT = { 14: [1101, 860, 21, 62] }; // the right patch: cx, cy, rx, ry (measured)
+const MIRROR = 2.83; // (ceiling 1.75 m over the eye, the eye 1.6 m over the floor: (1.75 + 3.2) / 1.75)
+const REFLECT = { 14: [1240, 845, 22, 40] }; // the right patch: cx, cy, rx, ry (measured)
 function reflection(p, i) {
   if (REFLECT[i]) { const [cx, cy, rx, ry] = REFLECT[i]; return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#slFloor)"/>`; }
   if (!Array.isArray(p[0])) return ''; // (the two near slanted tubes reflect off the bottom of the screen)
   const top = p[0][1];
   const bot = p[2][1];
-  const y1 = 540 + (540 - bot) * MIRROR;
-  const y2 = 540 + (540 - top) * MIRROR;
+  const y1 = 548 + (548 - bot) * MIRROR;
+  const y2 = 548 + (548 - top) * MIRROR;
   if (y1 > 940) return ''; // (the nearest tubes reflect below the screen)
   const cy = (y1 + y2) / 2;
   const ry = (y2 - y1) / 2 + 16; // (the gloss blurs each one into its neighbours: they overlap)
-  const rx = 10 + (cy - 540) * 0.06; // the streak narrows toward the tunnel
-  return `<ellipse cx="868" cy="${cy.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="url(#slFloor)"/>`;
+ const rx = 10 + (cy - 548) * 0.06; // the streak narrows toward the tunnel
+  return `<ellipse cx="${centre(p)[0].toFixed(1)}" cy="${cy.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="url(#slFloor)"/>`;
 }
 function lightsBody() { // normal: the dull diffuser of a tube that is off, and its reflection gone from the floor
   return PANELS.map((p, i) => {
@@ -100,7 +102,7 @@ function lightsGlow() { // added: the bloom through the diffuser, and its light 
 /* ---- the graffiti: designed in a 76 x 230 box (pillar 2's front face, measured on the art: fully
    on screen on laptops and desktops); screens that only see the middle of the art (phones) get it on
    a pillar further in instead (place() picks, by what the screen actually shows) ---- */
-const FACES = [{ x: 1128, y: 262, w: 76, h: 230 }, { x: 1046, y: 382, w: 46, h: 124 }, { x: 997, y: 398, w: 32, h: 112 }];
+const FACES = [{ x: 1128, y: 452, w: 76, h: 156 }, { x: 1046, y: 486, w: 46, h: 104 }, { x: 997, y: 505, w: 32, h: 73 }]; // (under the lowered ceiling, above each plinth)
 /* the piece itself is painted droplet by droplet by tools/draw-graffiti.mjs (a spray can, not a font:
    hand-drawn strokes, wet cores, overspray mist, spatter, drips, a black shadow pass, a white cat),
    at 4x this 76 x 230 box so it stays crisp; here it is only hung on the pillar */
@@ -132,15 +134,15 @@ const VP = [870, 548];
    strip (phones on their side crop the ceiling there). The first spot wholly on screen and clear of the
    title's name, the calendar, the contact card and the top bar wins; none fits, no board. */
 const SIGN_SPOTS = [
-  { x: 900, y: 214, w: 150 }, { x: 896, y: 262, w: 122 },
-  { x: 686, y: 204, w: 150 }, { x: 716, y: 258, w: 122 },
+  { x: 900, y: 455, w: 150 }, { x: 896, y: 472, w: 122 },
+  { x: 686, y: 455, w: 150 }, { x: 716, y: 472, w: 122 },
   /* then smaller boards further back, for phones held upright (Nov 19, John: "add back the train sign
      hanging from the roof at the back... part of the movie"). Each one keeps the station's perspective:
      at scale sc (1 = the first spot) it hangs at the same real height, so its top sits at
      548 - 334 sc, its rods reach the same ceiling (60 sc long) and it is 150 sc wide; it may sit over
      either side of the platform (o = its left edge from the vanishing point at full size) */
   ...[0.8, 0.7, 0.62, 0.55, 0.5, 0.45, 0.41, 0.37, 0.34].flatMap((sc) => [30, 120, 200, -184, -260]
-    .map((o) => ({ x: Math.round(VP[0] + o * sc), y: Math.round(VP[1] - 334 * sc), w: Math.round(150 * sc) }))),
+    .map((o) => ({ x: Math.round(VP[0] + o * sc), y: Math.round(VP[1] - 93 * sc), w: Math.round(150 * sc) }))),
 ];
 /* THE SIGNS, AS A REAL PLATFORM HAS THEM (Nov 21, John, with a reference shot of a Tokyo platform's signs:
    "the textures don't really match the subway background... look at the sign mainly: the exit sign, the
@@ -164,7 +166,7 @@ function boardAt(s) {
   const y = s.y + 8 * d; const h = SIGN_H * d;
   const bz = 3.2 * d;
   const quad = [[x + bz, y + bz], [x + w - bz, y + bz], [x + w - bz, y + h - bz], [x + bz, y + h - bz]];
-  const beamY = VP[1] - 380 * d; // the beam's underside over it
+  const beamY = VP[1] - CEIL_U * d; // the ceiling over it
   return { x, y, w, h, d, flip, quad, box: { l: x, r: x + w, t: beamY, b: y + h * 1.25 } };
 }
 /* a CSS matrix3d that maps the rectangle (0,0)-(w,h) onto the quad p (TL TR BR BL) */
@@ -179,46 +181,20 @@ export function rectToQuad(w, h, p) {
   const d = y1 - y0 + g * y1; const e = y3 - y0 + hh * y3; const f = y0;
   return `matrix3d(${[a / w, d / w, 0, g / w, b / h, e / h, 0, hh / h, 0, 0, 1, 0, c, f, 0, 1].map((n) => +n.toFixed(6)).join(',')})`;
 }
-/* ---- bolted into the roof (Nov 21, John: "make the train station sign look like it is bolted in a part of the
-   roof, still kind of looks out of place"). Signs hang from STEEL CROSS BEAMS that are part of the station: a
-   box beam across the ceiling at the sign's depth, from the light strip's housing to the wall over the
-   platform (in this one-point view a cross beam is level on screen, like the ceiling's own joints). Its front
-   face catches the strip's glow, its underside takes the rods: a plate and two bolts each. (A first try ran
-   two strut rails toward the vanishing point: they read as two poles.) Depth d: a ceiling point at depth d
-   sits at y = 548 - 394 d, x = 870 + o d. ---- */
-const WALL_O = { right: 421, left: -600, stripR: 12, stripL: -44 }; // the ceiling's edges at depth 1 (the pillars' wall; the light strip's sides, measured on the art)
+/* ---- hung from the roof (Nov 21, John: "the sign is literally just floating in air... connected to the ceiling...
+   part of the subway"; and "make the subway station roof lower"). The station's ceiling is now low and lit (the art
+   is rebuilt with a panelled ceiling 1.75 m over the eye, see DESIGN.md), so every sign hangs on two short steel rods
+   straight up into that ceiling, each ending in a plate with two bolts; the earlier cross beam (needed while the
+   ceiling was lost in the dark, 6.5 m up) is gone. In art px at depth d, the ceiling is at y = 548 - 106 d. ---- */
+const CEIL_U = 106; // the lowered ceiling, 1.75 m over the eye, in art px at depth 1 (60.6 px per m)
 const f2 = (n) => n.toFixed(1);
 const pts = (q) => q.map(([x, y]) => `${f2(x)},${f2(y)}`).join(' ');
 const INK = '#060607';
-function beamSVG(d, flip, id) {
-  const P = (o, dd, hgt) => [VP[0] + o * dd, VP[1] - hgt * dd];
-  const sn = 1.062 * d; const sf = 0.958 * d; const HB = 380; const HC = 394;
-  const [o1, o2] = flip ? [WALL_O.left, WALL_O.stripL] : [WALL_O.stripR, WALL_O.right];
-  const lw = f2(0.7 * d);
-  const eo = flip ? o2 : o1; // its end at the strip: that face looks toward the middle, so you see it
-  const ex = P(eo, sn, HB)[0]; const fx = P(flip ? o1 : o2, sn, HB)[0];
-  const grad = (gid, a, b) => `<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="${f2(ex)}" y1="0" x2="${f2(fx)}" y2="0"><stop offset="0" stop-color="${a}"/><stop offset=".55" stop-color="${b}"/><stop offset="1" stop-color="#0C0C0E"/></linearGradient>`;
-  let g = `<defs>${grad(`${id}U`, '#2E3034', '#17181B')}${grad(`${id}F`, '#4A4D52', '#202125')}</defs>`;
-  g += `<polygon points="${pts([P(o1, sn, HB), P(o2, sn, HB), P(o2, sf, HB), P(o1, sf, HB)])}" fill="url(#${id}U)" stroke="${INK}" stroke-width="${lw}" stroke-linejoin="round"/>`;
-  g += `<polygon points="${pts([P(o1, sn, HC), P(o2, sn, HC), P(o2, sn, HB), P(o1, sn, HB)])}" fill="url(#${id}F)" stroke="${INK}" stroke-width="${lw}" stroke-linejoin="round"/>`;
-  g += `<polygon points="${pts([P(eo, sn, HC), P(eo, sn, HB), P(eo, sf, HB), P(eo, sf, HC)])}" fill="#55595F" stroke="${INK}" stroke-width="${lw}" stroke-linejoin="round"/>`;
-  const near = P(eo, sn, HB);
-  [[0.45, 0.22], [0.22, 0.45]].forEach(([op, len]) => {
-    const fr = P(eo + (flip ? -1 : 1) * (o2 - o1) * len, sn, HB);
-    g += `<line x1="${f2(near[0])}" y1="${f2(near[1] - 0.9 * d)}" x2="${f2(fr[0])}" y2="${f2(fr[1] - 0.9 * d)}" stroke="#AEB9C6" stroke-opacity="${op}" stroke-width="${f2(1.3 * d)}"/>`;
-  });
-  for (let o = Math.min(o1, o2) + 22; o < Math.max(o1, o2) - 10; o += 46) {
-    const [x, y] = P(o, sn, (HC + HB) / 2);
-    g += `<circle cx="${f2(x)}" cy="${f2(y)}" r="${(1.5 * d).toFixed(2)}" fill="#7E8690" fill-opacity="${Math.max(0.15, 1 - Math.abs(o - eo) / Math.abs(o2 - o1)).toFixed(2)}" stroke="${INK}" stroke-width="${(0.4 * d).toFixed(2)}"/>`;
-  }
-  return g;
-}
 /* two rods from a sign's top up to the beam's underside, with a plate and two bolts where they meet it */
-function rodsSVG(xs, top, d, ceiling = false) {
-  const by = VP[1] - (ceiling ? 394 : 380) * d; // the beam's underside (or the ceiling) at this depth
+function rodsSVG(xs, top, d) {
+  const by = VP[1] - CEIL_U * d; // the ceiling at this depth
   let g = '';
   xs.forEach((x) => {
-    if (ceiling) { g += `<rect x="${f2(x - 0.8 * d)}" y="${f2(by)}" width="${f2(1.6 * d)}" height="${f2(top - by)}" fill="#33363B" stroke="${INK}" stroke-width="${f2(0.4 * d)}"/>`; return; }
     g += `<rect x="${f2(x - 0.9 * d)}" y="${f2(by)}" width="${f2(1.8 * d)}" height="${f2(top - by)}" fill="#3A3D42" stroke="${INK}" stroke-width="${f2(0.45 * d)}"/>`;
     g += `<polygon points="${pts([[x - 5.5 * d, by - 0.6 * d], [x + 5.5 * d, by - 0.6 * d], [x + 5 * d, by + 2.2 * d], [x - 5 * d, by + 2.2 * d]])}" fill="#2C2F34" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
     [-1, 1].forEach((q) => { g += `<circle cx="${f2(x + q * 3.2 * d)}" cy="${f2(by + 0.8 * d)}" r="${f2(1 * d)}" fill="#6E757E" stroke="${INK}" stroke-width="${f2(0.35 * d)}"/>`; });
@@ -250,14 +226,13 @@ function signsSVG(bd) {
   let back = '';
   // the second hang, further back: a backlit yellow EXIT sign and a white sign pointing up to THE CITY
   if (d > 0.45) {
-    const d2 = d * 0.8;
+    const d2 = d * 0.6; // (further down the platform: seen just under the board, as in John's reference)
     const L = (o) => VP[0] + o * d2;
     const oa = (bd.x - VP[0]) / d; const ob = (bd.x + bd.w - VP[0]) / d; // the board's lateral span
-    const top = VP[1] - 316 * d2; const hh = 23 * d2;
+    const top = VP[1] - 80 * d2; const hh = 23 * d2; // (1.32 m over the eye, just under the ceiling)
     const span = (u0, u1) => { const a = flip ? 1 - u1 : u0; const b = flip ? 1 - u0 : u1; return [L(oa + (ob - oa) * a), L(oa + (ob - oa) * b)]; };
     const [ex0, ex1] = span(0.04, 0.44); const [dx0, dx1] = span(0.5, 0.98);
-    // (no second beam: their rods rise to the ceiling behind the LED board, which hides where they meet it)
-    back += rodsSVG([ex0 + (ex1 - ex0) * 0.2, ex0 + (ex1 - ex0) * 0.8, dx0 + (dx1 - dx0) * 0.2, dx0 + (dx1 - dx0) * 0.8], top, d2, true);
+    back += rodsSVG([ex0 + (ex1 - ex0) * 0.2, ex0 + (ex1 - ex0) * 0.8, dx0 + (dx1 - dx0) * 0.2, dx0 + (dx1 - dx0) * 0.8], top, d2);
     const fs = (13.5 * d2).toFixed(1);
     // EXIT: a glow round it (it is lit from inside), the yellow face, a black arrow and the word
     back += `<rect x="${f2(ex0 - 3 * d2)}" y="${f2(top - 3 * d2)}" width="${f2(ex1 - ex0 + 6 * d2)}" height="${f2(hh + 6 * d2)}" fill="#E8B923" opacity=".22" filter="url(#slBloom)"/>`;
@@ -273,7 +248,6 @@ function signsSVG(bd) {
     back += `<text x="${f2(dx0 + 33 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.05em">THE CITY</text>`;
   }
   // the LED board itself, on its beam: a slim charcoal box, the screen inset in it
-  back += beamSVG(d, flip, 'ssB1');
   back += rodsSVG([bd.x + bd.w * 0.16, bd.x + bd.w * 0.84], bd.y, d);
   back += boxSVG(bd.x, bd.y, bd.w, bd.h, flip, '<stop offset="0" stop-color="#3C3F45"/><stop offset=".6" stop-color="#202226"/><stop offset="1" stop-color="#141517"/>', d, 'ssBdF');
   const [q0, , q2] = bd.quad;
