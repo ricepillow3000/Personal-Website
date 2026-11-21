@@ -24,7 +24,13 @@ const VP = { x: 870, y: 548 };
 const F = 1000; // at depth F, 1 world unit = 1 art pixel
 const EDGE_X = -88.7; // the platform's edge (its coping), at platform level: measured on the art
 const SIDE_X = -97; // the train's platform-side wall: a hand's width off the edge
-const ROOF = -62;
+/* (Nov 21, John: the tunnel "looks too skinny for the train to come out of"). The train was TALLER than the station: its
+   side stood 62 over the eye and its nose was drawn stretched 9% past its own picture, to 70, while the ceiling John
+   had lowered is 59 over the eye, so the roof poked through the ceiling all along the platform and filled the tunnel's
+   whole height. A real subway car is ~3.6 m over the rail: the side's roof is now 50 over the eye (3.6 m over the
+   rail), the nose is drawn at its picture's own shape (its dome 57), and a car is as much shorter as it is lower, so
+   the art keeps its proportions. It now clears the ceiling, and the tunnel's top edge, by a hand. */
+const ROOF = -50;
 const SKIRT = 54; // platform level (the car's floor and the bottom of its body)
 const WIDE = 100; // the train's width
 const LEN = 5200; // the whole train
@@ -33,7 +39,13 @@ const RAILS = [SIDE_X - 27, SIDE_X - 73]; // near rail, far rail: standard gauge
 const TIE_Y = 75; // the sleepers' top (cast into the slab: they stand only a little proud of it)
 const BED_Y = 77; // the track bed
 const WALL_X = -273; // where the bed meets the far wall (measured on the art)
-const MOUTH = 1730; // the tunnel mouth: where the track enters the arch in the art
+/* (Nov 21, John: "the hole where the train comes out looks too skinny for the train"). The picture's tunnel opening is
+   61.2 m down the line (1985 here), but the train used to finish fading in 7.5 m nearer (1730), so by the time it was
+   fully lit it was already drawn bigger than the opening it had "come out of". Now it is whole AT the opening (where
+   it is 50 px wide in a 78 px mouth) and sinks into the dark within 5.5 m behind it. */
+const MOUTH = 1985; // the tunnel mouth: the portal in the art (17 art px per metre there)
+const FADE = 185; // past the mouth the train and the track are lost in the tunnel's dark within this far
+const TUN_X = -243; // the tunnel's own wall (7.2 m out; the station's is WALL_X): the bed inside stops at it
 const START = 3430; // where the nose is when the shot opens (deep in the dark tunnel)
 /* How it moves (Nov 19, John: "I want it to feel real"). It used to blast through at a constant 3600
    units a second (the car is 116 units, about 3.6 m, tall: that was ~400 km/h, gone in 0.7 s).
@@ -445,7 +457,7 @@ function drawTrash(t, keep = null) {
    the camera (a hard thump, not a buzz), its air wall shoves the camera as the nose passes,
    the steel is cel-shaded with station lights sliding along it (src/fx/sidegl.js), it is
    mirrored in the glossy floor, and a dark gap grounds it against the platform edge. */
-const CAR = 620; // one car, in world units (about 3.5 door bays of the art)
+const CAR = 556; // one car, in world units (about 3.5 door bays of the art; shorter with the lower roof: the art keeps its shape)
 const PASS_D = 40; // a wheel set "passes the camera" at this depth
 const AXLES = [];
 for (let c = 0; c < 5; c++) for (const b of [90, CAR - 90]) for (const a of [-32, 32]) AXLES.push(c * CAR + b + a);
@@ -497,6 +509,8 @@ function pitClip(g) {
   g.lineTo(ax, Math.max(ay, by) + 4000);
   g.lineTo(bx - 4000, Math.max(ay, by) + 4000);
   g.lineTo(bx, by);
+  g.lineTo(...P(WALL_X, BED_Y, MOUTH)); // the station's wall, to the portal
+  g.lineTo(...P(TUN_X, BED_Y, MOUTH)); // the jamb's foot: inside, the bed runs only as far as the tunnel's own wall
   g.closePath();
   g.clip();
 }
@@ -506,7 +520,7 @@ const quad = (g, pts) => {
   for (let i = 1; i < pts.length; i++) g.lineTo(...pts[i]);
   g.closePath();
 };
-const TRACK_FAR = MOUTH + 420; // past here it is lost in the tunnel's dark
+const TRACK_FAR = MOUTH + FADE; // past here it is lost in the tunnel's dark
 function drawTrack(g, kk) {
   g.save();
   pitClip(g);
@@ -1016,7 +1030,7 @@ function prepFallback() {
 /* ---------------------------------------------------------------- the train */
 const sx = (X, d) => VP.x + (X * F) / d;
 const sy = (Y, d) => VP.y + (Y * F) / d;
-const dark = (d) => Math.max(0, Math.min(1, 1 - (d - MOUTH) / 420)); // fades into the tunnel's dark
+const dark = (d) => Math.max(0, Math.min(1, 1 - (d - MOUTH) / FADE)); // fades into the tunnel's dark
 
 /* The car-side art is 2770px wide for sharpness, but the train never covers more than ~900 art
    pixels of height, and drawing hundreds of slices a frame from the full file is slow on phones.
@@ -1066,7 +1080,7 @@ function sideQuad(lead, alpha, tex, { mat = 0, refl = 0 } = {}) {
   const tw = img.naturalWidth || img.width;
   const th = img.naturalHeight || img.height;
   const near = Math.max(lead, 18);
-  const far = Math.min(lead + LEN, MOUTH + 430); // past MOUTH + 420 it has faded into the tunnel's dark
+  const far = Math.min(lead + LEN, MOUTH + FADE + 10); // past MOUTH + FADE it has faded into the tunnel's dark
   if (far <= near) return true;
   const m = ctx.getTransform(); // art space -> canvas pixels
   const P = (Y, d) => {
@@ -1187,7 +1201,7 @@ function noseRect(d) {
   const by = bounce();
   const l = sx(SIDE_X - WIDE, d);
   const r = sx(SIDE_X, d);
-  const t = sy(ROOF - 8 + by, d);
+  const t = sy(ROOF - 7 + by, d); // (the nose's dome: 115 tall for 100 wide, the picture's own 1.17 within 2%)
   return { l, t, w: r - l, h: sy(SKIRT + 4 + by, d) - t };
 }
 
@@ -1314,7 +1328,7 @@ function brakeSparks(t, lead, power) {
   ctx.lineCap = 'round';
   AXLES.forEach((s, ai) => {
     const d = lead + s; // this wheel set's depth
-    if (d < 22 || d > MOUTH + 380) return;
+    if (d < 22 || d > MOUTH + FADE) return;
     const vis = dark(d);
     for (let j = 0; j < 6; j++) {
       const seed = ai * 13 + j * 7;

@@ -53,7 +53,7 @@ vec4 smear(vec2 sv) {
   return a * 0.2;
 }
 void main() {
-  float dark = clamp(1.0 - (vD - uMouth) / 420.0, 0.0, 1.0);
+  float dark = clamp(1.0 - (vD - uMouth) / 185.0, 0.0, 1.0); // (185: FADE in subway.js, keep the two the same)
   vec4 c = smear(vSV); // REPEAT wraps the car; mipmaps keep the far end calm
   if (uMat > 0.5 && c.a > 0.0) {
     /* Weight (Nov 19, John: "it looks like a cutout, make it feel heavy, like an actual subway train").
