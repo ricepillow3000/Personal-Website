@@ -163,15 +163,15 @@ const SQ_SCREENS = [ // [id, TL, TR, BR, BL] in the picture's own px, and the ad
   ['jn', [480, 328], [537, 332], [535, 388], [480, 388]],
 ];
 const SQ_ADS = {
-  main: '<span class="sq-on">NOW SHOWING</span><span class="sq-label ransom" data-label></span><i class="sq-slash"></i>',
-  time: '<b>LOOK</b><b class="sq-big">CLOSER</b>',
+  main: '<div class="sq-bar"><div class="sq-bar-run"><span>NOW SHOWING</span><span>NOW SHOWING</span><span>NOW SHOWING</span><span>NOW SHOWING</span></div></div><span class="sq-label ransom" data-label></span><i class="sq-slash"></i>',
+  time: '<b class="sq-look">LOOK</b><b class="sq-big">CLOSER</b><i class="sq-eye"></i>',
   name: '<b class="sq-wanted">WANTED</b><b class="sq-john">JOHN</b><b class="sq-ng">NGUYEN</b>',
   star: '<i class="sq-starmark"></i>',
-  proof: '<b>STEAL</b><b><em>THE SHOW</em></b>',
-  motto: '<b>BREAK THE</b><b class="sq-red">ROUTINE</b>',
+  proof: '<div class="sq-tick"><b>STEAL <em>THE SHOW</em> ★ </b><b>STEAL <em>THE SHOW</em> ★ </b></div>',
+  motto: '<b>BREAK THE</b><b class="sq-red" data-t="ROUTINE">ROUTINE</b>',
   stripes: '<i class="sq-run"></i>',
   checks: '<b class="sq-sm">NEW</b><b class="sq-big">?</b><b class="sq-sm">LEAD</b>',
-  jn: '<b class="sq-big">JN</b>',
+  jn: '<b class="sq-big">JN</b><i class="sq-sweep"></i>',
 };
 const SQ_FS = { main: 1, time: 1.45, name: 0.9, star: 1, proof: 1.15, motto: 1.25, stripes: 1, checks: 1.75, jn: 1 }; // (text size per screen)
 const sqGrow = (q, k) => { // the quad grown about its centre (overscan, hidden under the bezel)
@@ -226,22 +226,24 @@ export async function cityWipe(swap, label = 'SIDE QUESTS') {
     .add(() => sfx('city'), 0)
     .fromTo(stage, { opacity: 0 }, { opacity: 1, duration: 0.12, ease: 'power2.out' }, 0)
     // headlights and taillights streaking along the street, both ways
-    .fromTo(trails, { x: (i) => (i % 2 ? -400 : SQ_W + 100) }, { x: (i) => (i % 2 ? SQ_W + 100 : -400), duration: 0.6, ease: 'none', stagger: 0.04 }, 0)
+    .fromTo(trails, { x: (i) => (i % 2 ? -400 : SQ_W + 100) }, { x: (i) => (i % 2 ? SQ_W + 100 : -400), duration: 0.6, ease: 'none', stagger: 0.04, repeat: 2 }, 0)
     // the screens switch on, one after another, the big one last (a stepped flicker, like LED panels)
     // (the small ads first, quickly, so a phone's pan finds them lit; the big screen last, the beat before the push)
     .fromTo([...scrs].slice(1), { opacity: 0 }, { opacity: 1, duration: 0.08, ease: 'steps(3)', stagger: 0.018 }, 0.02)
     .fromTo([...glows].slice(1), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.08, ease: 'steps(3)', stagger: 0.018 }, 0.02)
     .fromTo([scrs[0], glows[0]], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.12, ease: 'steps(4)' }, 0.22)
     .add(() => sfx('buzz'), 0.2)
-    // the camera pushes into SIDE QUESTS until it fills the frame
-    .to(stage, { x: x1, y: y1, scale: s1, duration: 0.36, ease: 'power3.in' }, 0.46)
-    .fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.06 }, 0.78)
+    // a beat to read the square, then the camera drifts in, slowly at first, so SIDE QUESTS can be read the
+    // whole way (Nov 21, John: "make the zoom in to the big ad slower so users can read it"), and only
+    // speeds up at the very end, into the flash
+    .to(stage, { x: x1, y: y1, scale: s1, duration: 1.05, ease: 'power2.in' }, 0.8)
+    .fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.07 }, 1.8)
     .add(() => {
       swap();
       sfx('thwack', 0.7);
-    }, 0.82)
-    .set(stage, { opacity: 0 }, 0.82)
-    .to(flash, { opacity: 0, duration: 0.22, ease: 'power2.out' }, 0.84);
+    }, 1.85)
+    .set(stage, { opacity: 0 }, 1.85)
+    .to(flash, { opacity: 0, duration: 0.22, ease: 'power2.out' }, 1.87);
   return track(tl);
 }
 
