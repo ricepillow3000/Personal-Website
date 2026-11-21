@@ -475,7 +475,7 @@ b, strong { font-weight: 700; }
 body[data-mode="board"] .hud-tl .hud-cal, body[data-mode="page"] .hud-tl .hud-cal { display: none; }
 body[data-mode="board"] .hud-tl .hud-meta { display: grid; }
 /* ---- the contact plate (Nov 19): LinkedIn, GitHub and email at the very top of every screen ----
-   One slanted black plate, same height and shadow as the HUD buttons, red slashes between the links.
+   One slanted black plate, same height and shadow as the HUD buttons, the links set apart by space.
    LinkedIn is the #1 action, so it sits on red. Words show on wide screens; icons carry it on phones. */
 .hud-contact { display: flex; align-items: stretch; background: var(--black); transform: skew(var(--skew)); box-shadow: 4px 4px 0 var(--white); }
 .hc-link {
@@ -485,9 +485,9 @@ body[data-mode="board"] .hud-tl .hud-meta { display: grid; }
   color: var(--white); background: var(--hc-bg); text-decoration: none; transition: background .12s, color .12s;
 }
 .hc-in { --hc-bg: var(--red-ink); }
-.hc-link + .hc-link::before { content: ""; position: absolute; left: -1px; top: 20%; bottom: 20%; width: 2px; background: var(--red); transform: skew(-14deg); }
+/* (Nov 21, John: the red slashes between the links clashed with LinkedIn's red block; removed, the links are set apart by space alone) */
+.hc-link + .hc-link { margin-left: 4px; }
 .hc-link:hover, .hc-link:focus-visible { --hc-bg: var(--white); color: var(--black); }
-.hc-link:hover::before, .hc-link:focus-visible::before, .hc-link:hover + .hc-link::before, .hc-link:focus-visible + .hc-link::before { opacity: 0; }
 .hc-link:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; z-index: 1; }
 .hc-link svg { flex: none; width: 18px; height: 18px; transform: skew(calc(var(--skew) * -1)); } /* icons stand up straight inside the slant */
 .hc-ink { fill: var(--hc-bg); }
