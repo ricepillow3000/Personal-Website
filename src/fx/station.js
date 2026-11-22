@@ -160,8 +160,9 @@ const SIGN_SPOTS = [
    further back. So all three are built in the station's own perspective and light (lit from the strip's
    side, falling off into the dark, thin ink like the art's): the LED board facing down the platform (its
    front a rectangle, its underside and the side toward the middle showing), hung on two rods from the steel
-   cross beam; behind it, on rods up into the ceiling, a white sign pointing left to THE CITY (the next scene: where the
-   train goes), with our line's red JN tile, and a yellow EXIT sign pointing right, into the station. Our own words and layout; arrows are drawn, not characters. */
+   cross beam; and one more, its own sign on its own rods (see cityAt): a white sign pointing left to THE CITY (the next
+   scene: where the train goes), with our line's red JN tile. (The yellow EXIT sign of Nov 21 was taken down on Nov 22:
+   John wanted two signs, not three.) Our own words and layout; arrows are drawn, not characters. */
 const SIGN_H = 34; // the LED board's height at depth 1 (art px): long and slim
 const depthOf = (s) => s.w / 150;
 const toVP = (pts, r) => pts.map(([x, y]) => [VP[0] + (x - VP[0]) * r, VP[1] + (y - VP[1]) * r]);
@@ -253,36 +254,39 @@ const arrow = (cx, cy, sz, dir, fill) => { // a drawn arrow (no arrow characters
   const a = [[-1, 0], [-0.1, -0.75], [-0.1, -0.28], [1, -0.28], [1, 0.28], [-0.1, 0.28], [-0.1, 0.75]].map(([u, v]) => [u * m, v]);
   return `<polygon points="${pts(a.map(([u, v]) => [cx + u * sz, cy + v * sz]))}" fill="${fill}"/>`;
 };
-function signsSVG(bd) {
+/* THE CITY SIGN IS ITS OWN SIGN (Nov 22, John: "remove the exit sign so we can have a total of 2 signs... only the city and
+   the main sign. And for the city sign, try to make it its own separate sign. It kind of looks like they're connected
+   together... Separate them. A big sign and the smaller sign, which is the city pointing to the train").
+   Why they read as one: the second hang (THE CITY and EXIT) was laid out on the big board's own lateral span, further down
+   the platform, so on screen the two small signs sat exactly under the board, edge to edge with it, like a lower row of the
+   same unit. Now there are two signs. EXIT is gone. THE CITY hangs on its own two rods beside the board, on the side toward
+   the track (so its arrow points at the trains with nothing in between), a little further down the platform: about half the
+   board's height and under half its length, with clear air between them. Its place (art px) for a board: */
+function cityAt(bd) {
+  const { d, flip } = bd;
+  const d2 = d * 0.75; // (a little further down the platform than the board: smaller, lower, plainly another sign)
+  const oa = (bd.x - VP[0]) / d; const ob = (bd.x + bd.w - VP[0]) / d; // the board's lateral span at full size
+  // beside the board, on the track's side of it (the track is always on the left; a board over the track side has it on its right)
+  const [o0, o1] = flip ? [ob + 22, ob + 102] : [oa - 102, oa - 22];
+  const x0 = VP[0] + o0 * d2; const x1 = VP[0] + o1 * d2;
+  const top = VP[1] - 80 * d2; const hh = 23 * d2; // (1.32 m over the eye, just under the ceiling)
+  return { d2, x0, x1, top, hh, box: { l: x0 - 3 * d2, r: x1 + 3 * d2, t: top - 4 * d2, b: top + hh + 4 * d2 } };
+}
+function signsSVG(bd, city = true) { // city: false where THE CITY has no clear room of its own on this screen (the board hangs alone)
   const { d, flip } = bd;
   let back = '';
-  // the second hang, further back: a white sign pointing to THE CITY (the trains) and a backlit yellow EXIT sign
-  if (d > 0.45) {
-    const d2 = d * 0.6; // (further down the platform: seen just under the board, as in John's reference)
-    const L = (o) => VP[0] + o * d2;
-    const oa = (bd.x - VP[0]) / d; const ob = (bd.x + bd.w - VP[0]) / d; // the board's lateral span
-    const top = VP[1] - 80 * d2; const hh = 23 * d2; // (1.32 m over the eye, just under the ceiling)
-    // (Nov 21, John: "it doesn't make sense that the exit sign is pointing to the trains and the city's pointing to
-    // the wall"): each sign now points where its thing really is, and hangs on that side. THE CITY is where the train
-    // takes you (the next scene), so it hangs on the track side and points LEFT, at the trains; EXIT hangs on the hall
-    // side and points RIGHT, away from the tracks, into the station. Same on every screen (the tracks are always left).
-    const span = (u0, u1) => [L(oa + (ob - oa) * u0), L(oa + (ob - oa) * u1)];
-    const [dx0, dx1] = span(0.02, 0.56); const [ex0, ex1] = span(0.62, 0.98);
+  // the second sign, on its own hangers: a white sign pointing to THE CITY (where the train takes you: the next scene)
+  if (city && d > 0.45) {
+    const { d2, x0: dx0, x1: dx1, top, hh } = cityAt(bd);
     back += rodsSVG([dx0 + (dx1 - dx0) * 0.2, dx0 + (dx1 - dx0) * 0.8], top, d2, flip ? 1 : -1);
-    back += rodsSVG([ex0 + (ex1 - ex0) * 0.2, ex0 + (ex1 - ex0) * 0.8], top, d2, flip ? 1 : -1, '#E8B923'); // (EXIT is lit from inside: its yellow on its own hangers)
     const fs = (13.5 * d2).toFixed(1);
-    // THE CITY: white face, an arrow to the trains, a red JN tile (our line), the words
+    // white face, an arrow to the trains, a red JN tile (our line), the words
     back += `<rect x="${f2(dx0 - 2 * d2)}" y="${f2(top - 2 * d2)}" width="${f2(dx1 - dx0 + 4 * d2)}" height="${f2(hh + 4 * d2)}" fill="#EDE0C0" opacity=".12" filter="url(#slBloom)"/>`;
     back += boxSVG(dx0, top, dx1 - dx0, hh, flip, '<stop offset="0" stop-color="#EDE6D2"/><stop offset="1" stop-color="#958C78"/>', d2, 'ssDiF', { frame: 1.7 });
     back += arrow(dx0 + 9 * d2, top + hh / 2, 6 * d2, 'left', '#0B0B0B');
     back += `<rect x="${f2(dx0 + 18 * d2)}" y="${f2(top + 4 * d2)}" width="${f2(14 * d2)}" height="${f2(hh - 8 * d2)}" fill="#C8161A"/>`;
     back += `<text x="${f2(dx0 + 25 * d2)}" y="${f2(top + hh * 0.7)}" font-size="${(9 * d2).toFixed(1)}" fill="#F5F5F0" text-anchor="middle" style="font-family:var(--f-menu)">JN</text>`;
     back += `<text x="${f2(dx0 + 36 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.05em">THE CITY</text>`;
-    // EXIT: a glow round it (it is lit from inside), the yellow face, the word and a black arrow into the station
-    back += `<rect x="${f2(ex0 - 3 * d2)}" y="${f2(top - 3 * d2)}" width="${f2(ex1 - ex0 + 6 * d2)}" height="${f2(hh + 6 * d2)}" fill="#E8B923" opacity=".22" filter="url(#slBloom)"/>`;
-    back += boxSVG(ex0, top, ex1 - ex0, hh, flip, '<stop offset="0" stop-color="#EBBD22"/><stop offset="1" stop-color="#9C7A12"/>', d2, 'ssExF', { frame: 1.7 });
-    back += `<text x="${f2(ex0 + 6 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.06em">EXIT</text>`;
-    back += arrow(ex1 - 9 * d2, top + hh / 2, 6.2 * d2, 'right', '#0B0B0B');
   }
   // the LED board itself: a slim warm-steel housing in three bolted modules, the screen inset in it
   const lit = flip ? 1 : -1;
@@ -348,11 +352,11 @@ let signHeld = false;
 export function holdSign(on) { signHeld = Boolean(on); }
 const titleAtRest = () => !signHeld && document.body.dataset.mode === 'title' && !document.body.classList.contains('sv-open');
 /* what the board must keep clear of (their boxes on screen, measured on resize and as the title settles) */
-const SIGN_KEEP_CLEAR = '#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr'; // (the name's letters, not its full-width line)
+const SIGN_KEEP_CLEAR = '#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr, #titleRole, #titleHook > span, #pressStart'; // (Nov 22: the role line, the hook and the button were not on this list, so the board could be hung behind them; it was only hidden while the hook's box was see-through) // (the name's letters, not its full-width line)
 let clearOf = [];
 function measureClear() {
   if (!titleAtRest()) return;
-  clearOf = [...document.querySelectorAll(SIGN_KEEP_CLEAR)].filter((el) => getComputedStyle(el).visibility !== 'hidden').map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+  clearOf = [...document.querySelectorAll(SIGN_KEEP_CLEAR)].filter((el) => getComputedStyle(el).visibility !== 'hidden').map((el) => { const r = el.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height, slab: el.id === 'titleRole', late: el.id === 'titleRole' || el.id === 'pressStart' || Boolean(el.closest('#titleHook')) }; }).filter((r) => r.width > 0 && r.height > 0);
 }
 /* art px -> screen px from the layer's real box on screen (it sits inside the camera's slow push-in) */
 /* art px -> screen px, measured: the layer sits inside the camera's tilt (-3deg) and push-in, so its box on
@@ -370,18 +374,32 @@ function artToScreen(wrap) {
   const o = at([0, 0]); const ex = at([1600, 0]); const ey = at([0, 914]);
   return ([x, y]) => [o[0] + ((ex[0] - o[0]) * x) / 1600 + ((ey[0] - o[0]) * y) / 914, o[1] + ((ex[1] - o[1]) * x) / 1600 + ((ey[1] - o[1]) * y) / 914];
 }
+/* How strictly the board keeps clear, tried in order until a spot is found (Nov 22). John wants the board SEEN: a title
+   that leaves it no perfectly clear spot must not make it vanish.
+   1: clear of everything, with air round it.  2: it may sit against the role slab's top edge (its rods and the slab's empty
+   skewed corner overlap by up to 12 px; never the words).  3: the old rule from before the role line, hook and button were
+   on the list (clear of the name, calendar, card and top bar; it may tuck behind the others, as it always did on small phones). */
+let signFit = 0; // (which rule hung it: the tests and the layout checks read it from the sign's data-fit)
 function pickSpot(wrap) {
   const pad = window.innerWidth < 600 ? 10 : 22; // (room for the rest of the push-in; less on a phone, where the boards are small)
   const W = window.innerWidth;
   const H = window.innerHeight;
   const map = artToScreen(wrap);
-  return SIGN_SPOTS.find((s) => {
+  const boxes = SIGN_SPOTS.map((s) => {
     const { box } = boardAt(s);
     const pts = [[box.l, box.t], [box.r, box.t], [box.r, box.b], [box.l, box.b]].map(map);
-    const r = { l: Math.min(...pts.map((q) => q[0])), r: Math.max(...pts.map((q) => q[0])), t: Math.min(...pts.map((q) => q[1])), b: Math.max(...pts.map((q) => q[1])) };
-    if (r.l < 6 || r.t < 6 || r.r > W - 6 || r.b > H * 0.6) return false;
-    return !clearOf.some((o) => r.l < o.right + pad && r.r > o.left - pad && r.t < o.bottom + pad && r.b > o.top - pad);
-  }) || null;
+    return { s, r: { l: Math.min(...pts.map((q) => q[0])), r: Math.max(...pts.map((q) => q[0])), t: Math.min(...pts.map((q) => q[1])), b: Math.max(...pts.map((q) => q[1])) } };
+  }).filter(({ r }) => !(r.l < 6 || r.t < 6 || r.r > W - 6 || r.b > H * 0.6));
+  for (const level of [1, 2, 3]) {
+    const hit = boxes.find(({ r }) => !clearOf.some((o) => {
+      if (level === 3 && o.late) return false;
+      const p = level >= 2 && o.slab ? -12 : pad;
+      return r.l < o.right + p && r.r > o.left - p && r.t < o.bottom + p && r.b > o.top - p;
+    }));
+    if (hit) { signFit = level; return hit.s; }
+  }
+  signFit = 0;
+  return null;
 }
 /* the bottom row's clock: the visitor's own time, 12-hour, checked every second (it only writes when the
    minute turns) and at once when the page comes back into view */
@@ -532,9 +550,17 @@ export function mountStation(box, before) {
     if (s === spot) return;
     spot = s;
     sign.hidden = !s;
+    sign.dataset.fit = String(signFit);
     if (!s) return;
     const bd = boardAt(s);
-    signsEl.innerHTML = signsSVG(bd);
+    /* THE CITY hangs beside the board, toward the track, only where it has clear room of its own on this screen; else the
+       board hangs alone. (Its other side was tried for screens with no room: it landed half behind the board's corner and
+       against the TAKE YOUR TIME pillar, the "connected" look again. A sign that points at the trains belongs on their side.) */
+    const cb = cityAt(bd).box; const map = artToScreen(wrap);
+    const cp = [[cb.l, cb.t], [cb.r, cb.t], [cb.r, cb.b], [cb.l, cb.b]].map(map);
+    const cr = { l: Math.min(...cp.map((q) => q[0])), r: Math.max(...cp.map((q) => q[0])), t: Math.min(...cp.map((q) => q[1])), b: Math.max(...cp.map((q) => q[1])) };
+    const cityFits = cr.l > 6 && cr.r < window.innerWidth - 6 && cr.t > 6 && !clearOf.some((o) => cr.l < o.right + 6 && cr.r > o.left - 6 && cr.t < o.bottom + 6 && cr.b > o.top - 6);
+    signsEl.innerHTML = signsSVG(bd, cityFits);
     const [p0, p1, p2, p3] = bd.quad; // the text box, the screen's own size (art px), mapped onto its corners
     const sw = (Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) + Math.hypot(p2[0] - p3[0], p2[1] - p3[1])) / 2;
     const sh = (Math.hypot(p3[0] - p0[0], p3[1] - p0[1]) + Math.hypot(p2[0] - p1[0], p2[1] - p1[1])) / 2;

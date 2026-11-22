@@ -3,7 +3,18 @@
 .title-block { position: relative; z-index: 2; max-width: 760px; }
 .title-codename { font-size: clamp(22px, 3vw, 34px); margin: 18px 0 10px; }
 .title-role { display: table; margin: 0 0 12px; padding: 2px 12px; font-family: var(--f-menu); font-size: clamp(16px, 1.6vw, 20px); letter-spacing: 1.5px; text-transform: uppercase; color: var(--yellow); background: var(--black); transform: skew(var(--skew)); box-shadow: 4px 4px 0 var(--white); }
-.title-hook { display: inline-block; margin: 0 0 26px; max-width: 560px; padding: 6px 12px; background: var(--black); font-family: var(--f-type); font-size: clamp(15px, 1.6vw, 19px); transform: rotate(-1deg); }
+/* the role line is two short rows on every screen (Nov 22: as one row it was 493 to 613px long and reached the departure board
+   on a sideways phone; it was already two rows on upright phones): who, then the proof */
+.title-role .tr-sep { display: none; }
+.title-role .tr-proof { display: block; }
+.title-hook { display: block; width: fit-content; margin: 0 0 26px; max-width: 20em; /* (two short lines at every size: as one line it is a strip as long as the old box) */ padding: 6px 0; font-family: var(--f-type); font-size: clamp(15px, 1.6vw, 19px); line-height: 1.5; transform: rotate(-1deg); }
+/* THE HOOK'S BLACK HUGS ITS WORDS (Nov 22, John, with a sideways-phone screenshot: "the box... it's blocking the train station
+   sign... find the root cause"). Root cause: the line is balanced into two short lines (text-wrap: balance) but its box was an
+   inline-block that takes its full max-width whenever the text wraps, so the box was 561px wide for 297px of words: a slab of
+   empty black lying over the station (and, once the box was made solid so the star and rails stop running under the words,
+   over the departure board). The black is now on the words themselves, line by line (an inline span, cloned per line), so
+   it is exactly as long as each line, at every size and however the line wraps. */
+.title-hook > span { padding: 6px 12px; background: var(--black); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .press-start {
   display: block; border: 0; background: var(--white); color: var(--black);
   font-family: var(--f-head); font-size: clamp(32px, 4.2vw, 54px); letter-spacing: 3px; line-height: 1.15;
@@ -198,8 +209,6 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
   .screen-page { padding-top: 112px; }
   .back-btn { top: 70px; font-size: 17px; }
   .quick-bar { top: 58px; flex-wrap: nowrap; gap: 10px; }
-  .title-role .tr-sep { display: none; }
-  .title-role .tr-proof { display: block; }
   .quick-bar .btn { white-space: nowrap; }
   #screen-quick { padding-top: 116px; }
 

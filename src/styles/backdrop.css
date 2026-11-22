@@ -118,7 +118,7 @@ body[data-mode="title"] .bd-cam img.in ~ .st-wrap { opacity: 1; } /* (title only
 .st-wrap .st { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .st-dim { mix-blend-mode: multiply; }
 .st-glow { mix-blend-mode: screen; }
-/* the platform signs (station.js): the LED board, the EXIT and THE CITY signs and their beams are drawn in
+/* the platform signs (station.js): the LED board, THE CITY sign beside it and their hangers are drawn in
    art px (.ss-signs); the LED row is HTML on a plane scaled like the art (--k = CSS px per art px), mapped
    onto the board's screen */
 .ss { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease-out; }

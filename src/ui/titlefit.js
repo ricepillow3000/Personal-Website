@@ -53,7 +53,11 @@ export function watchTitleFit() {
     queued = 0;
     if (body.dataset.screen !== 'title' || !scr.offsetWidth) return;
     const ps = parts();
-    const off = ps.some((p) => near(p, box(card, scr)));
+    /* (Nov 22: on a phone held sideways the card always steps aside for the small plate in the top bar. It did so until the
+       title's text was narrowed to clear the departure board; with the room that gave it, it came back and covered a third
+       of the station.) */
+    const sideways = window.matchMedia('(max-height: 520px) and (min-width: 560px)').matches;
+    const off = sideways || ps.some((p) => near(p, box(card, scr)));
     if (off !== body.classList.contains('cc-off')) body.classList.toggle('cc-off', off);
     const stepped = STEPS.some((c) => body.classList.contains(c));
     if (!stepped && !hits(ps)) return;

@@ -81,7 +81,7 @@ let lastFocus = null;
 
 document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotion === true);
 ransom($('#titleName'), resume.first, NAME_SEED);
-$('#titleHook').textContent = resume.titleHook || resume.hook;
+$('#titleHook').innerHTML = `<span>${esc(resume.titleHook || resume.hook)}</span>`; // (the span carries the black: it hugs each line of words, see .title-hook)
 // who + proof in the first 10 seconds (two clean lines on phones)
 $('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">GSU '29 · 2 live apps · 727/728 checks</span>`;
 /* the contact plate at the top of every screen (Nov 19, career advisor at GSU's Codex meetup:

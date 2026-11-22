@@ -1320,7 +1320,15 @@ test('departure board: a 3D box in the station\'s perspective; LET US START THE 
     const [ib, sb] = await Promise.all([scr.boundingBox(), sign.locator('.ss-screen').boundingBox()]);
     expect(Math.abs(sb.x - ib.x)).toBeLessThan(3); expect(Math.abs(sb.x + sb.width - ib.x - ib.width)).toBeLessThan(3);
     expect(Math.abs(sb.y - ib.y)).toBeLessThan(3); expect(sb.width / sb.height).toBeGreaterThan(4); // (long and slim)
-    if (w === 1440) await expect(sign.locator('.ss-signs text')).toContainText(['JN', 'THE CITY', 'EXIT']); // the signs behind it (THE CITY toward the trains, EXIT into the station)
+    if (w === 1440) { // two signs, not three: the board, and THE CITY as its own sign beside it (no EXIT)
+      await expect(sign.locator('.ss-signs text')).toHaveText(['JN', 'THE CITY']);
+      const gap = await page.evaluate(() => { // clear air between the two: the city sign's box does not meet the board's
+        const b = document.querySelector('.ss-screen').getBoundingClientRect();
+        const c = [...document.querySelectorAll('.ss-signs text')].find((e) => e.textContent === 'THE CITY').getBoundingClientRect();
+        return { apart: c.right < b.left - 4 || c.left > b.right + 4, narrower: c.width < b.width * 0.5 };
+      });
+      expect(gap).toEqual({ apart: true, narrower: true });
+    }
     await expect(sign.locator('.ss-run span')).toHaveText(['LET US START', 'THE GAME', 'LET US START']); // the line, in pages that fit the window whole
     await expect(sign.locator('.ss-code')).toHaveText('JN');
     const shown = (await sign.locator('.ss-time').innerText()).replace(/\s+/g, '');
