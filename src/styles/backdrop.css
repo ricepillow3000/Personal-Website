@@ -131,10 +131,11 @@ body[data-mode="title"] .bd-cam img.in ~ .st-wrap { opacity: 1; } /* (title only
 /* the LED dots: a fixed grid of dark gaps over each row, so the text sliding under it lights the dots */
 .ss-row::after { content: ''; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(circle, transparent 0 .05em, rgba(5, 5, 6, .92) .08em) 0 0 / .16em .16em; }
-.ss-run { display: flex; width: max-content; will-change: transform; animation: ssRun 9s linear infinite; }
-.ss-run span { padding-right: 3em; font-family: var(--f-menu); font-size: 1.32em; letter-spacing: .06em; line-height: 1; white-space: nowrap;
+/* the message in pages, each as wide as the window: a page slides in from the right, stops whole, slides out */
+.ss-run { display: flex; width: 300%; will-change: transform; animation: ssRun 9s cubic-bezier(.45, 0, .2, 1) infinite; }
+.ss-run span { flex: 0 0 33.3334%; overflow: hidden; font-family: var(--f-menu); font-size: 1.32em; letter-spacing: .06em; line-height: 1; white-space: nowrap;
   color: #FFC83A; text-shadow: 0 0 .3em rgba(255, 170, 30, .85); }
-@keyframes ssRun { from { transform: translateX(0); } to { transform: translateX(-50%); } } /* right to left, seamless */
+@keyframes ssRun { 0%, 38% { transform: translateX(0); } 50%, 88% { transform: translateX(-33.3334%); } 100% { transform: translateX(-66.6667%); } } /* right to left; the third page is the first again, so the loop is seamless */
 .ss-row > b { flex: none;  font-family: var(--f-menu); font-weight: 400; font-size: 1.32em; letter-spacing: .1em; line-height: 1; }
 .ss-time { color: #4BEA74; text-shadow: 0 0 .3em rgba(60, 230, 110, .8); font-variant-numeric: tabular-nums; }
 .ss-ap { font-size: .62em; margin-left: .3em; letter-spacing: .08em; }

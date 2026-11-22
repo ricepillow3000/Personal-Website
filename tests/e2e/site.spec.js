@@ -1278,16 +1278,20 @@ test('departure board: a 3D box in the station\'s perspective; LET US START THE 
     expect(Math.abs(sb.x - ib.x)).toBeLessThan(3); expect(Math.abs(sb.x + sb.width - ib.x - ib.width)).toBeLessThan(3);
     expect(Math.abs(sb.y - ib.y)).toBeLessThan(3); expect(sb.width / sb.height).toBeGreaterThan(4); // (long and slim)
     if (w === 1440) await expect(sign.locator('.ss-signs text')).toContainText(['JN', 'THE CITY', 'EXIT']); // the signs behind it (THE CITY toward the trains, EXIT into the station)
-    await expect(sign.locator('.ss-run span').first()).toHaveText('LET US START THE GAME');
+    await expect(sign.locator('.ss-run span')).toHaveText(['LET US START', 'THE GAME', 'LET US START']); // the line, in pages that fit the window whole
     await expect(sign.locator('.ss-code')).toHaveText('JN');
     const shown = (await sign.locator('.ss-time').innerText()).replace(/\s+/g, '');
     // the visitor's time now, or a minute ago (the sign updates once a second, so a read right at the turn of a minute can lag)
     const want = await page.evaluate(() => [0, 60000].map((ms) => { const d = new Date(Date.now() - ms); const hr = d.getHours(); return `${hr % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}${hr < 12 ? 'AM' : 'PM'}`; }));
     expect(want).toContain(shown);
-    const x = () => sign.locator('.ss-run').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).m41);
-    const a = await x();
-    await page.waitForTimeout(500);
-    expect(await x()).toBeLessThan(a); // right to left
+    // the pages move right to left: read the run's place while a page holds, then mid-slide (the animation's own clock, so no waiting)
+    const [held, sliding, next] = await sign.locator('.ss-run').evaluate((e) => {
+      const an = e.getAnimations()[0]; const at = (f) => { an.currentTime = f * 9000; return new DOMMatrix(getComputedStyle(e).transform).m41; };
+      const r = [at(0.2), at(0.44), at(0.7)]; an.currentTime = 0; return r;
+    });
+    expect(held).toBe(0); // the first page stands whole
+    expect(sliding).toBeLessThan(held - 2); // right to left
+    expect(next).toBeLessThan(sliding - 2); // the next page has come in, and stands
     const hits = await page.evaluate(() => {
       const b = document.querySelector('.ss-screen').getBoundingClientRect();
       return [...document.querySelectorAll('#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr, #pressStart, #titleHook')]
