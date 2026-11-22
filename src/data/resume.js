@@ -12,6 +12,13 @@ export const resume = {
   // the title screen tells the story; the board keeps the job line above
   titleHook: 'Resumes are boring. So I directed AI agents to make mine a game.', // (Nov 22: shortened from "...directed a crew of AI agents to turn mine into a game." so its box stays small on the station)
   status: 'Status: open to opportunities',
+  // why this site exists, told as a work story (from DESIGN.md: the problem, the 10-second skim, the scrapped portrait, the agent crew)
+  siteStory: [
+    ['SETUP', 'Persona 5 has been impactful in my life. Its hero is treated as guilty before he can speak, and I know that frustration of being judged unfairly. A paper resume gets judged in seconds too, so I built mine as a game you play first.'], // (Nov 22, John's own reason)
+    ['TENSION', 'A recruiter skims for about ten seconds. The fun could never hide the facts, so every number is one tap away, with a plain one-page version for anyone in a hurry.'],
+    ['PIVOT', 'The first plan had an AI-drawn portrait of me as the guide. I scrapped it and let the work do the talking.'],
+    ['LESSON', 'Directing AI agents is its own skill. They wrote the code. I set the plan, checked every step and threw out what was not good enough.']
+  ],
   school: 'GSU · Class of 2029',
   location: 'Atlanta Metropolitan Area',
 
@@ -49,6 +56,14 @@ export const resume = {
       dates: 'Jun 2026 — Sep 2026', // (Nov 22, John: "I finished in September 2026"; it said Present)
       stack: ['Python', 'JavaScript', 'Docker'],
       brief: 'How much could a portfolio lose in a bad year? 10,000 simulated years answer it.',
+      // the work story (Nov 22, John: "make our website sound like it's telling a story... why I made my projects"): setup, tension,
+      // pivot, lesson. Every beat comes from the project's own repo (hero.py STORY, README, PROGRESS.md), nothing invented.
+      story: [
+        ['SETUP', 'My dad kept asking one question. Which stock can I actually rely on and hold for years? A lot of people ask the same thing.'],
+        ['TENSION', 'Nobody can promise that answer, and a risk tool that guesses is worse than none. Every number had to come from live data, checked a second way.'],
+        ['PIVOT', 'Steady stocks were only half the plan. People also want what grows fastest, so each high-flyer got a steady anchor carrying the same share of the risk.'],
+        ['LESSON', 'A student project can meet a trading desk’s bar if every number is tested twice. The live audit passed 727 of 728 checks.']
+      ],
       objectives: [
         'Designed and launched a public web app that estimates how much a portfolio of stocks, ETFs, FX or futures could lose in a bad year.',
         'Runs 10,000 simulated years on live data from Yahoo Finance.',
@@ -75,6 +90,13 @@ export const resume = {
       dates: 'Sep 2026 — Present',
       stack: ['Python', 'Flask', 'JavaScript', 'CI/CD'],
       brief: 'Finds the broken cells in your spreadsheet and explains them in plain English.',
+      // the work story: from the repo (README, CLAUDE.md, docs/SYSTEMS-MAP.md)
+      story: [
+        ['SETUP', 'The longer I spent in Excel, the more boring it got. I did not want to keep worrying whether past data went in right or wrong. I wanted to look forward, so I built a checker that finds the broken cells and says why in plain English.'], // (Nov 22, John's own reason)
+        ['TENSION', 'A checker that cries wolf gets switched off. On 30 real public tables it raised 5,022 serious false alarms.'],
+        ['PIVOT', 'I traced them to “NA” codes and blank cells that were never errors, and taught it the difference. Down to 710, and it still caught every planted error.'],
+        ['LESSON', 'Test on data you have never seen. Blind tests on unseen tables found bugs my own tests missed, and it now catches 199 of 201.']
+      ],
       objectives: [
         'Built and launched a Windows Excel add-in with 21 data checks, plain-language explanations for flagged cells, and suggested fixes, powered by a Python Flask REST API and a JavaScript (Office.js) task pane.',
         'Detected 199 of 201 planted errors across 42 unseen test sheets.',

@@ -289,10 +289,14 @@ function size() {
      phone sideways"): sideways, the track and the litter fill the bottom of a phone's screen, and at
      1.5x they looked soft on a 3x iPhone. Now up to 2x (1.5x on phones with 3 GB of memory or less) */
   const mem = navigator.deviceMemory;
-  const dpr = Math.min(window.devicePixelRatio || 1, mem && mem <= 3 ? 1.5 : 2);
   const w = box.offsetWidth;
   const h = box.offsetHeight;
   if (!w || !h) return;
+  /* (Nov 22, zoom safety) and never more than a pixel budget per canvas: the platform layer, its top layer, the GPU side
+     and the fallback are each this size, so on a tablet at 2x they were four 5.7-megapixel canvases (90 MB) and on a
+     retina laptop four of 11 (180 MB). Touch screens get 3.2 megapixels each, desktops 8; a phone at 2x is under it. */
+  const budget = window.matchMedia('(pointer: coarse)').matches ? 3.2e6 : 8e6;
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, mem && mem <= 3 ? 1.5 : 2, Math.sqrt(budget / (w * h))));
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
     cv.width = cvTop.width = Math.round(w * dpr);
     cv.height = cvTop.height = Math.round(h * dpr);
