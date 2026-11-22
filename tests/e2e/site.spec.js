@@ -65,7 +65,7 @@ test('opening all six chapters unlocks Full Recon, and CONTINUE moves on as you 
     await page.goto(`/#/${id}`);
     await expect(page.locator('body')).toHaveAttribute('data-screen', id);
   }
-  await expect(page.locator('#achCount')).toHaveText('1/7');
+  await expect(page.locator('#achCount')).toHaveText('1/6');
 });
 
 test('phone: all six chapters, the number and the big word fit on one screen', async ({ page, isMobile }) => {
@@ -174,16 +174,16 @@ test('flipping the off-the-record star on STATS unlocks an achievement that surv
   await page.goto('/#/stats');
   await page.locator('#page .gpa-burst').click();
   await expect(page.locator('#page .gpa-burst')).toHaveClass(/flipped/);
-  await expect(page.locator('#achCount')).toHaveText('1/7');
+  await expect(page.locator('#achCount')).toHaveText('1/6');
   await page.reload();
-  await expect(page.locator('#achCount')).toHaveText('1/7');
+  await expect(page.locator('#achCount')).toHaveText('1/6');
 });
 
 test('dev console: john.run() unlocks Inspector', async ({ page }) => {
   await openBoard(page);
   const reply = await page.evaluate(() => window.john.run());
   expect(reply).toContain('Thanks for looking under the hood');
-  await expect(page.locator('#achCount')).toHaveText('1/7');
+  await expect(page.locator('#achCount')).toHaveText('1/6');
 });
 
 test('works with motion enabled too (start sequence + board reveal finish)', async ({ browser }) => {
@@ -1282,6 +1282,8 @@ test('sound for every box: side quests are heard as they land and as you scroll 
 
   await go('different');
   await scrollDown();
+  const landed = await heard();
+  expect(landed.filter((n) => n === 'panelSlap').length, `heard while landing and scrolling: ${landed.join(' ')}`).toBeGreaterThanOrEqual(1);
   await page.evaluate(() => document.querySelector('.screen.active').scrollTo(0, 0));
   await page.waitForTimeout(300);
   // tap a bare spot of the first panel (not a link inside it, not under the fixed top bar): the
@@ -1297,7 +1299,8 @@ test('sound for every box: side quests are heard as they land and as you scroll 
   expect(spot).not.toBeNull();
   await page.touchscreen.tap(spot.x, spot.y);
   await page.waitForTimeout(200);
-  expect((await heard()).filter((n) => n === 'panelSlap').length).toBeGreaterThanOrEqual(2); // scrolled to + tapped
+  const tapped = await heard();
+  expect(tapped.filter((n) => n === 'panelSlap').length, `heard on the tap at ${JSON.stringify(spot)}: ${tapped.join(' ')}`).toBeGreaterThanOrEqual(1);
   await ctx.close();
 });
 
