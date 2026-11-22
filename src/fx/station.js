@@ -21,7 +21,7 @@ const NS = 'http://www.w3.org/2000/svg';
 // the panels, measured on the art: [x, y] corners (centre strip), or a slanted bar [x1, y1, x2, y2, width]
 // (Nov 21, the roof lowered to 3.35 m: John, "make the subway station roof lower"): the tubes are on the new
 // ceiling, 1.75 m over the eye, every 4.05 m along the strip (each 2.9 m long), plus one over the back of the platform
-const PANELS = [
+export const PANELS = [
   [[735, 75], [859, 75], [864, 278], [793, 278]],
   [[804, 318], [865, 318], [866, 379], [822, 379]],
   [[826, 396], [867, 396], [867, 425], [835, 425]],
@@ -256,37 +256,54 @@ const arrow = (cx, cy, sz, dir, fill) => { // a drawn arrow (no arrow characters
 };
 /* THE CITY SIGN IS ITS OWN SIGN (Nov 22, John: "remove the exit sign so we can have a total of 2 signs... only the city and
    the main sign. And for the city sign, try to make it its own separate sign. It kind of looks like they're connected
-   together... Separate them. A big sign and the smaller sign, which is the city pointing to the train").
-   Why they read as one: the second hang (THE CITY and EXIT) was laid out on the big board's own lateral span, further down
-   the platform, so on screen the two small signs sat exactly under the board, edge to edge with it, like a lower row of the
-   same unit. Now there are two signs. EXIT is gone. THE CITY hangs on its own two rods beside the board, on the side toward
-   the track (so its arrow points at the trains with nothing in between), a little further down the platform: about half the
-   board's height and under half its length, with clear air between them. Its place (art px) for a board: */
+   together... Separate them. A big sign and the smaller sign, which is the city pointing to the train"; then, the same day:
+   "right now it looks like one sign or three signs that is fit into one... it doesn't look cramped. Try to make it
+   Japanese style, Persona 5 style in our design... find the root cause of why it looks weird... make sure the city sign is
+   not on top of the lights").
+   Why it looked weird, three causes: (1) ONE SPAN: the second hang (THE CITY and EXIT) was laid out on the big board's own
+   lateral span, further down the platform, so on screen the small signs sat exactly under the board, edge to edge with it,
+   a lower row of the same unit. (2) ON THE LIGHTS: moved out from under the board, it was still hung by the board's
+   position, and that put it across the ceiling's light strip (the tubes run 2 to 30 units left of the vanishing point):
+   a pale sign in front of a row of lamps, glare behind it, its edge lost. (3) A BADGE, NOT A SIGN: a white box with a small
+   arrow, a tile and words in a row is a web label; nothing in it says platform sign.
+   Now: two signs, one each side of the light strip, hung at the same depth and height like a pair on one platform. The big
+   LED board on the hall side; THE CITY on the track side, over the platform's edge half (so it clears the train, whose
+   side runs 174 units out), its right end 8 units short of the tubes and their glow at every depth. It is placed by the
+   STATION (fixed lateral lines), not by the board. Its face is a Japanese platform direction sign in our red, black and
+   white: a red block at the track end with the white arrow (cut on our slant), the line's roundel (a red ring, JN), the
+   destination in heavy caps, and the line's red band along the bottom, the way a running-in board carries its line colour. */
+const CITY_O = [-142, -38]; // its lateral span at depth 1, art px from the vanishing point (the tubes: -30 to -2; the platform's edge: -160)
 function cityAt(bd) {
-  const { d, flip } = bd;
-  const d2 = d * 0.75; // (a little further down the platform than the board: smaller, lower, plainly another sign)
-  const oa = (bd.x - VP[0]) / d; const ob = (bd.x + bd.w - VP[0]) / d; // the board's lateral span at full size
-  // beside the board, on the track's side of it (the track is always on the left; a board over the track side has it on its right)
-  const [o0, o1] = flip ? [ob + 22, ob + 102] : [oa - 102, oa - 22];
-  const x0 = VP[0] + o0 * d2; const x1 = VP[0] + o1 * d2;
-  const top = VP[1] - 80 * d2; const hh = 23 * d2; // (1.32 m over the eye, just under the ceiling)
-  return { d2, x0, x1, top, hh, box: { l: x0 - 3 * d2, r: x1 + 3 * d2, t: top - 4 * d2, b: top + hh + 4 * d2 } };
+  const { d } = bd;
+  const x0 = VP[0] + CITY_O[0] * d; const x1 = VP[0] + CITY_O[1] * d;
+  const top = VP[1] - 82 * d; const hh = 28 * d; // (its top a little under the board's: hung from the same ceiling)
+  return { x0, x1, top, hh, box: { l: x0 - 3 * d, r: x1 + 3 * d, t: VP[1] - CEIL_U * d, b: top + hh + 4 * d } };
 }
 function signsSVG(bd, city = true) { // city: false where THE CITY has no clear room of its own on this screen (the board hangs alone)
   const { d, flip } = bd;
   let back = '';
-  // the second sign, on its own hangers: a white sign pointing to THE CITY (where the train takes you: the next scene)
-  if (city && d > 0.45) {
-    const { d2, x0: dx0, x1: dx1, top, hh } = cityAt(bd);
-    back += rodsSVG([dx0 + (dx1 - dx0) * 0.2, dx0 + (dx1 - dx0) * 0.8], top, d2, flip ? 1 : -1);
-    const fs = (13.5 * d2).toFixed(1);
-    // white face, an arrow to the trains, a red JN tile (our line), the words
-    back += `<rect x="${f2(dx0 - 2 * d2)}" y="${f2(top - 2 * d2)}" width="${f2(dx1 - dx0 + 4 * d2)}" height="${f2(hh + 4 * d2)}" fill="#EDE0C0" opacity=".12" filter="url(#slBloom)"/>`;
-    back += boxSVG(dx0, top, dx1 - dx0, hh, flip, '<stop offset="0" stop-color="#EDE6D2"/><stop offset="1" stop-color="#958C78"/>', d2, 'ssDiF', { frame: 1.7 });
-    back += arrow(dx0 + 9 * d2, top + hh / 2, 6 * d2, 'left', '#0B0B0B');
-    back += `<rect x="${f2(dx0 + 18 * d2)}" y="${f2(top + 4 * d2)}" width="${f2(14 * d2)}" height="${f2(hh - 8 * d2)}" fill="#C8161A"/>`;
-    back += `<text x="${f2(dx0 + 25 * d2)}" y="${f2(top + hh * 0.7)}" font-size="${(9 * d2).toFixed(1)}" fill="#F5F5F0" text-anchor="middle" style="font-family:var(--f-menu)">JN</text>`;
-    back += `<text x="${f2(dx0 + 36 * d2)}" y="${f2(top + hh * 0.76)}" font-size="${fs}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.05em">THE CITY</text>`;
+  if (city) {
+    const { x0, x1, top, hh } = cityAt(bd);
+    const w = x1 - x0;
+    back += rodsSVG([x0 + w * 0.2, x0 + w * 0.8], top, d, 1); // (lit from its right: the strip is on that side of it)
+    back += `<rect x="${f2(x0 - 2 * d)}" y="${f2(top - 2 * d)}" width="${f2(w + 4 * d)}" height="${f2(hh + 4 * d)}" fill="#EDE0C0" opacity=".1" filter="url(#slBloom)"/>`;
+    back += boxSVG(x0, top, w, hh, true, '<stop offset="0" stop-color="#F0EADA"/><stop offset="1" stop-color="#A39A86"/>', d, 'ssDiF', { frame: 1.5 });
+    const m = 3.2 * d; // the frame's width: everything sits inside it
+    const band = 3.6 * d; // the line's red band along the bottom
+    const cy0 = top + m; const ch = hh - 2 * m - band - 1 * d; // the row the block, the roundel and the words stand in
+    // the line band (its track end cut on our slant), and a thin ink line over it
+    back += `<polygon points="${pts([[x0 + m, top + hh - m - band], [x1 - m, top + hh - m - band], [x1 - m, top + hh - m], [x0 + m, top + hh - m]])}" fill="#C8161A"/>`;
+    back += `<line x1="${f2(x0 + m)}" y1="${f2(top + hh - m - band)}" x2="${f2(x1 - m)}" y2="${f2(top + hh - m - band)}" stroke="${INK}" stroke-width="${f2(0.35 * d)}"/>`;
+    // the red block at the track end, its inner edge on our slant, the white arrow pointing at the trains
+    const bw = ch * 1.25;
+    back += `<polygon points="${pts([[x0 + m, cy0], [x0 + m + bw + ch * 0.21, cy0], [x0 + m + bw, cy0 + ch], [x0 + m, cy0 + ch]])}" fill="#C8161A" stroke="${INK}" stroke-width="${f2(0.35 * d)}" stroke-linejoin="round"/>`;
+    back += arrow(x0 + m + bw * 0.5, cy0 + ch / 2, ch * 0.4, 'left', '#F5F5F0');
+    // the line's roundel: a red ring on white, JN in it
+    const rr = ch * 0.5; const rx = x0 + m + bw + ch * 0.21 + rr + 2.2 * d;
+    back += `<circle cx="${f2(rx)}" cy="${f2(cy0 + ch / 2)}" r="${f2(rr - 0.8 * d)}" fill="#F5F5F0" stroke="#C8161A" stroke-width="${f2(1.6 * d)}"/>`;
+    back += `<text x="${f2(rx)}" y="${f2(cy0 + ch / 2 + rr * 0.3)}" font-size="${(rr * 0.9).toFixed(1)}" fill="#0B0B0B" text-anchor="middle" style="font-family:var(--f-head)">JN</text>`;
+    // the destination
+    back += `<text x="${f2(rx + rr + 2.6 * d)}" y="${f2(cy0 + ch * 0.86)}" font-size="${(ch * 1.02).toFixed(1)}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.04em">THE CITY</text>`;
   }
   // the LED board itself: a slim warm-steel housing in three bolted modules, the screen inset in it
   const lit = flip ? 1 : -1;
@@ -553,13 +570,12 @@ export function mountStation(box, before) {
     sign.dataset.fit = String(signFit);
     if (!s) return;
     const bd = boardAt(s);
-    /* THE CITY hangs beside the board, toward the track, only where it has clear room of its own on this screen; else the
-       board hangs alone. (Its other side was tried for screens with no room: it landed half behind the board's corner and
-       against the TAKE YOUR TIME pillar, the "connected" look again. A sign that points at the trains belongs on their side.) */
+    /* THE CITY hangs on the track side of the light strip where it has clear room of its own on this screen and the board
+       is on the hall side (a board big enough to read: depth over 0.45); else the board hangs alone. */
     const cb = cityAt(bd).box; const map = artToScreen(wrap);
     const cp = [[cb.l, cb.t], [cb.r, cb.t], [cb.r, cb.b], [cb.l, cb.b]].map(map);
     const cr = { l: Math.min(...cp.map((q) => q[0])), r: Math.max(...cp.map((q) => q[0])), t: Math.min(...cp.map((q) => q[1])), b: Math.max(...cp.map((q) => q[1])) };
-    const cityFits = cr.l > 6 && cr.r < window.innerWidth - 6 && cr.t > 6 && !clearOf.some((o) => cr.l < o.right + 6 && cr.r > o.left - 6 && cr.t < o.bottom + 6 && cr.b > o.top - 6);
+    const cityFits = !bd.flip && bd.d > 0.45 && cr.l > 6 && cr.r < window.innerWidth - 6 && cr.t > 6 && !clearOf.some((o) => cr.l < o.right + 6 && cr.r > o.left - 6 && cr.t < o.bottom + 6 && cr.b > o.top - 6);
     signsEl.innerHTML = signsSVG(bd, cityFits);
     const [p0, p1, p2, p3] = bd.quad; // the text box, the screen's own size (art px), mapped onto its corners
     const sw = (Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) + Math.hypot(p2[0] - p3[0], p2[1] - p3[1])) / 2;

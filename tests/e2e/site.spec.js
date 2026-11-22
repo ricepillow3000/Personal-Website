@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { inflateSync } from 'node:zlib';
+import { PANELS } from '../../src/fx/station.js'; // (the ceiling lamps' places in the station picture: the signs must hang clear of them)
 
 /* Any US-style phone number, e.g. (555) 123-4567, 555-123-4567, 555.123.4567. No real digits live in this repo. */
 const PHONE = /\(?\b\d{3}\)?[\s.-]*\d{3}[\s.-]\d{4}\b/;
@@ -1325,9 +1326,17 @@ test('departure board: a 3D box in the station\'s perspective; LET US START THE 
       const gap = await page.evaluate(() => { // clear air between the two: the city sign's box does not meet the board's
         const b = document.querySelector('.ss-screen').getBoundingClientRect();
         const c = [...document.querySelectorAll('.ss-signs text')].find((e) => e.textContent === 'THE CITY').getBoundingClientRect();
-        return { apart: c.right < b.left - 4 || c.left > b.right + 4, narrower: c.width < b.width * 0.5 };
+        const el = document.querySelector('.ss-signs rect[fill="url(#ssDiF)"]'); // THE CITY sign's whole face
+        const face = el.getBoundingClientRect();
+        const art = ['x', 'y', 'width', 'height'].map((k) => Number(el.getAttribute(k))); // the same face in the station picture's own px
+        return { apart: c.right < b.left - 4 || c.left > b.right + 4, narrower: c.width < b.width * 0.5, trackSide: face.right < b.left, art };
       });
-      expect(gap).toEqual({ apart: true, narrower: true });
+      // never across the ceiling lights: its face meets none of the lamp panels (the picture's own coordinates), with 3 px of air
+      const [ax, ay, aw, ah] = gap.art; delete gap.art;
+      const lamps = PANELS.map((p) => (Array.isArray(p[0]) ? p : [[p[0], p[1]], [p[2], p[3]]])).map((q) => ({ l: Math.min(...q.map((v) => v[0])), r: Math.max(...q.map((v) => v[0])), t: Math.min(...q.map((v) => v[1])), b: Math.max(...q.map((v) => v[1])) }));
+      gap.lamps = lamps.length > 5;
+      gap.onLights = lamps.some((r) => ax < r.r + 3 && ax + aw > r.l - 3 && ay < r.b + 3 && ay + ah > r.t - 3);
+      expect(gap).toEqual({ apart: true, narrower: true, lamps: true, onLights: false, trackSide: true }); // (its own sign, on the track's side, never across the ceiling lights)
     }
     await expect(sign.locator('.ss-run span')).toHaveText(['LET US START', 'THE GAME', 'LET US START']); // the line, in pages that fit the window whole
     await expect(sign.locator('.ss-code')).toHaveText('JN');
