@@ -138,6 +138,13 @@ body.reduce-motion #soundBtn.sound-call :is(.snd-x, .snd-ping) { animation: none
 @keyframes wiggle { 25% { transform: skew(var(--skew)) rotate(-12deg) scale(1.15); } 75% { transform: skew(var(--skew)) rotate(10deg) scale(1.15); } }
 body[data-screen="title"] #menuBtn, body[data-screen="title"] #achBtn { display: none; }
 
+/* the one legal line (Nov 22, launch prep): small and quiet, at the foot of SETTINGS and Quick View */
+.legal { max-width: 72ch; margin: 28px 0 0; font: 600 13px/1.5 var(--f-plain); color: rgba(245, 245, 240, .72); }
+.legal a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.paper .legal { margin: 18px 0 0; color: #555; }
+.skip-chip { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 9999; min-height: 44px; padding: 4px 16px;
+  border: 0; font: 400 18px/1 var(--f-menu); letter-spacing: .1em; background: var(--black); color: var(--white); box-shadow: 3px 3px 0 var(--red); transform: skew(var(--skew)); cursor: pointer; }
+.skip-chip:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
 .keyhints { /* a solid HUD tab, so it never reads as text lying on the page; it slides away once you scroll */
   position: fixed; right: var(--gutter); bottom: 12px; z-index: 39; pointer-events: none;
   display: flex; gap: 14px; font-family: var(--f-menu); font-size: 17px; letter-spacing: 1px;
@@ -878,6 +885,8 @@ body[data-mode="page"] .hud-tl { display: none; }
 /* passed: black with a red cut where the dagger was */
 .ss-dot.seen::before { background: var(--black); }
 .ss-dot.seen .ss-num { color: var(--white); }
+/* a bigger invisible finger target than the small phone tickets (launch QA: 20px tickets, 30px apart) */
+.ss-num::after { content: ""; position: absolute; inset: -9px -6px; }
 .ss-dot.seen::after { content: ""; position: absolute; right: 4%; top: 2%; width: 30%; height: 2.5px; background: var(--red); rotate: -60deg; transform-origin: 100% 50%; } /* the cut the dagger left */
 /* here: a bigger red ticket, white number, a white edge */
 .ss-dot.now { --t: 48px; width: 48px; height: 42px; rotate: 4deg; z-index: 2;
