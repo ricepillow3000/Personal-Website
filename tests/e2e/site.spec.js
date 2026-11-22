@@ -1559,6 +1559,26 @@ test('zoom is safe: a pinch zoom on a phone, a tablet or a laptop never reloads 
   }
 });
 
+test('opened inside an app (Instagram, LinkedIn, the Claude app...), the turn-your-phone screen says so and offers OPEN IN BROWSER; in Safari it does not', async ({ browser }) => {
+  const phone = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
+  for (const [ua, inApp] of [
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 330.0.0.0', true],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148', true],
+    ['Mozilla/5.0 (Linux; Android 14; Pixel 7 Build/UQ1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/125.0 Mobile Safari/537.36 LinkedInApp', true],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1', false],
+  ]) {
+    const ctx = await browser.newContext({ ...phone, userAgent: ua });
+    const page = await ctx.newPage();
+    await page.goto('/?rotate');
+    await expect(page.locator('.rot')).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('.rot-open')).toHaveCount(inApp ? 1 : 0);
+    await expect(page.locator('.rot-body-text')).toContainText(inApp ? 'inside an app' : 'Hold it sideways');
+    await page.locator('.rot-ok').click(); // GOT IT always lets anyone carry on upright
+    await expect(page.locator('.rot')).toHaveCount(0, { timeout: 3000 });
+    await ctx.close();
+  }
+});
+
 test('no emojis anywhere: no emoji-capable character in the site (phones draw them as emoji tiles), and outbound links use the drawn arrow', async ({ page }) => {
   const files = [];
   const walk = (d) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) walk(p); else if (/\.(js|css|html)$/.test(f)) files.push(p); } };
