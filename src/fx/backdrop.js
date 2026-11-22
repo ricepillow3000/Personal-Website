@@ -205,14 +205,15 @@ function billboardLayer() {
      own words count instead. (The words stay in the DOM for the tests and the ticker.) */
   return `<svg class="bd-billboard" viewBox="0 0 1600 679" preserveAspectRatio="none" aria-hidden="true">
   <defs>
-    <pattern id="bbLed" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle cx="1.6" cy="1.6" r="1.4" fill="#fff"/></pattern>
+    <!-- (Nov 22, the outside judges: the name read as "JOIN", YOUR as "VOUR", "fuzzy". At a 3.2 pitch a letter stroke was two diodes wide and the tight glow, 2.4 wide and laid twice, fogged them into one soft bar. A finer diode (2.4) draws each stroke three wide and the tight glow is half as wide, so the letters stay a crisp dot matrix; the wide red spill is as it was.) -->
+    <pattern id="bbLed" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><circle cx="1.2" cy="1.2" r="1.05" fill="#fff"/></pattern>
     ${RINGS_USED.map(([n]) => { const b = ringBox(n); return `<mask id="bbText-${n}" maskUnits="userSpaceOnUse" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></mask>`; }).join('')}
     <!-- real LED light (Nov 19, John: "amplify it, make it actually look like billboard lights"): a
          tight white glow round every lit dot, a wide red-pink light spilling onto the screen around
          the letters, and the dots themselves a little warm, like LEDs behind a red face -->
     <filter id="bbGlow" x="-40%" y="-40%" width="180%" height="180%">
       <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 .93 0 0 0  0 0 .9 0 0  0 0 0 1 0" result="led"/>
-      <feGaussianBlur in="led" stdDeviation="2.4" result="b"/>
+      <feGaussianBlur in="led" stdDeviation="1.3" result="b"/>
       <feGaussianBlur in="led" stdDeviation="9" result="wide"/>
       <feColorMatrix in="wide" type="matrix" values="0 0 0 0 1  0 0 0 0 .32  0 0 0 0 .4  0 0 0 2.2 0" result="spill"/>
       <feMerge><feMergeNode in="spill"/><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="led"/></feMerge>

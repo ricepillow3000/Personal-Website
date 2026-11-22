@@ -392,7 +392,11 @@ function drawTrash(t, keep = null) {
     ctx.scale(1, flat ? fs * 0.5 : 0.22);
     const r = w * (flat ? 0.56 : 0.55) * (1 + air * 0.9); // (off the floor its shadow spreads and thins out fast: under a long
     const sh = ctx.createRadialGradient(0, 0, 0, 0, 0, r); //  row of tubes a lifted thing hardly has one. It used to stay a dark oval.)
-    sh.addColorStop(0, `rgba(0,0,0,${(flat ? 0.56 : 0.74) * (1 - air) ** 3 * grounded})`); sh.addColorStop(0.55, `rgba(0,0,0,${(flat ? 0.2 : 0.3) * (1 - air) ** 3 * grounded})`);
+    /* (Nov 22, the outside judge: the paper ball "hovers with nothing under it". A sheet's shadow still goes the moment the wind
+       takes it (edge-on it read as a puddle), but a SOLID piece, the ball or the bag, keeps a faint spread-out shadow on the
+       tiles below it, so it reads as thrown into the air over this floor and not as pasted on the picture.) */
+    const down = flat ? (1 - air) ** 3 * grounded : Math.max((1 - air) ** 3, 0.45);
+    sh.addColorStop(0, `rgba(0,0,0,${(flat ? 0.56 : 0.74) * down})`); sh.addColorStop(0.55, `rgba(0,0,0,${(flat ? 0.2 : 0.3) * down})`);
     sh.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = sh;
     ctx.fillRect(-r, -r, r * 2, r * 2);
@@ -426,7 +430,7 @@ function drawTrash(t, keep = null) {
       if (air < 0.9) {
         ctx.save();
         ctx.translate(gx, gy);
-        ctx.fillStyle = `rgba(0, 0, 0, ${0.55 * (1 - air) ** 3 * grounded})`;
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.55 * (1 - air) ** 3})`; // (a solid piece's contact line follows its height alone: it came back to the floor with no shadow at all)
         ctx.beginPath();
         ctx.ellipse(0, 0, foot * 0.5, Math.max(1.2, foot * 0.06), 0, 0, Math.PI * 2);
         ctx.fill();

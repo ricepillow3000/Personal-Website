@@ -24,7 +24,8 @@ export function ransom(el, text, seed = 7) {
     [...word].forEach((ch) => {
       const l = document.createElement('span');
       let f = Math.floor(rnd() * 5);
-      if (f === 2 && /[A4]/i.test(ch)) f = 0; // the marker font's A reads as a 4 ("ST4TS")
+      if (f === 2 && /[A4N0]/i.test(ch)) f = 0; // the marker font's A reads as a 4 ("ST4TS"); its N is a blob that does not read as an N (JOHN's last tile, Nov 22)
+      if (f === 3 && ch === '0') f = 0; // the typewriter's 0 is a rough ring beside a solid 1 (THE PLAN's 01 counter, Nov 22)
       l.className = `rl f${f} ${COLORS[Math.floor(rnd() * COLORS.length)]}`;
       l.style.setProperty('--r', `${(rnd() * 24 - 12).toFixed(1)}deg`);
       l.style.setProperty('--y', `${(rnd() * 0.16 - 0.08).toFixed(2)}em`);
