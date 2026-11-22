@@ -46,7 +46,7 @@ export const resume = {
       target: 'Meliona',
       grade: 'S',
       status: 'LIVE',
-      dates: 'Jun 2026 — Present',
+      dates: 'Jun 2026 — Sep 2026', // (Nov 22, John: "I finished in September 2026"; it said Present)
       stack: ['Python', 'JavaScript', 'Docker'],
       brief: 'How much could a portfolio lose in a bad year? 10,000 simulated years answer it.',
       objectives: [
