@@ -130,18 +130,18 @@ body[data-mode="title"] .bd-cam img.in ~ .st-wrap { opacity: 1; } /* (title only
 .ss-win { flex: 1; min-width: 0; overflow: hidden; } /* (the line scrolls between the clock and JN) */
 /* the LED dots: a fixed grid of dark gaps over each row, so the text sliding under it lights the dots */
 .ss-row::after { content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(circle, transparent 0 .05em, rgba(5, 5, 6, .92) .08em) 0 0 / .16em .16em; }
+  background: radial-gradient(circle, transparent 0 .055em, rgba(5, 5, 6, .6) .08em) 0 0 / .16em .16em; } /* (Nov 22: the gaps were near black (.92) and a letter's stroke is about one diode wide at this size, so the grid cut strokes into loose dots, "garbled... half-formed letters" to both outside judges. The gaps are see-through now: the letters stay whole and the grid reads as the board's texture.) */
 /* the message in pages, each as wide as the window: a page slides in from the right, stops whole, slides out */
 .ss-run { display: flex; width: 300%; will-change: transform; animation: ssRun 9s cubic-bezier(.45, 0, .2, 1) infinite; }
-.ss-run span { flex: 0 0 33.3334%; overflow: hidden; font-family: var(--f-menu); font-size: 1.32em; letter-spacing: .06em; line-height: 1; white-space: nowrap;
-  color: #FFC83A; text-shadow: 0 0 .3em rgba(255, 170, 30, .85); }
+.ss-run span { flex: 0 0 33.3334%; box-sizing: border-box; padding: 0 .14em; /* (each page starts a hair inside its own width: the next page's first letter and its glow showed as a faint tick at the window's edge) */ overflow: hidden; font-family: var(--f-menu); font-size: 1.32em; letter-spacing: .06em; line-height: 1; white-space: nowrap;
+  color: #FFC83A; text-shadow: 0 0 .14em rgba(255, 170, 30, .8); } /* (the glow is under one diode pitch wide: a wider one fogged the strokes together) */
 @keyframes ssRun { 0%, 38% { transform: translateX(0); } 50%, 88% { transform: translateX(-33.3334%); } 100% { transform: translateX(-66.6667%); } } /* right to left; the third page is the first again, so the loop is seamless */
 .ss-row > b { flex: none;  font-family: var(--f-menu); font-weight: 400; font-size: 1.32em; letter-spacing: .1em; line-height: 1; }
-.ss-time { color: #4BEA74; text-shadow: 0 0 .3em rgba(60, 230, 110, .8); font-variant-numeric: tabular-nums; }
+.ss-time { color: #4BEA74; text-shadow: 0 0 .14em rgba(60, 230, 110, .75); font-variant-numeric: tabular-nums; }
 .ss-ap { font-size: .62em; margin-left: .3em; letter-spacing: .08em; }
 .ss-colon { animation: ssBlink 1s steps(2) infinite; }
 @keyframes ssBlink { 50% { opacity: .15; } }
-.ss-code { color: #FF3B3B; text-shadow: 0 0 .3em rgba(255, 40, 40, .85); }
+.ss-code { color: #FF3B3B; text-shadow: 0 0 .14em rgba(255, 40, 40, .8); }
 @media (prefers-reduced-motion: reduce) { .ss-run, .ss-colon { animation: none; } }
 body.reduce-motion .ss-run, body.reduce-motion .ss-colon { animation: none; }
 /* (phones held upright show it too since Nov 19: a smaller board further back, wherever it fits) */

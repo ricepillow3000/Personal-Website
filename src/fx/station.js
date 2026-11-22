@@ -202,30 +202,13 @@ const INK = '#060607';
    full, drawn out designs that match our current design"). The signs are now built from the station's own stuff:
    WARM steel (the pillar bases' dark warm grey, not the cool charcoal they had), lit from above by the warm tubes
    (a cream line along every top edge, the faces darker toward the bottom where dust gathers), and fully fitted
-   out like real platform signage: framed faces held by corner screws, the LED housing in three bolted modules with
-   the station's yellow line along its lower lip and the LEDs' amber on it, a junction box on top and a conduit
+   out like real platform signage: framed faces held by corner screws, the LED housing with
+   the station's yellow line set into its lower lip and the LEDs' amber on it (the module joints, the junction box and the conduit
+   of this first version were taken off in the Nov 22 detail pass: the judges read them as a ladder of stray parts), a conduit
    clipped up the rod into the ceiling. */
 const STEEL = { rod: '#4B463C', lit: '#B9AC8E', plate: '#36322B', bolt: '#978D78', side: '#454036', under: '#12110F', frame: '#24221D', rim: '#F3DFB4' };
 /* two rods from a sign's top up into the ceiling, each with a plate and two bolts where it meets it; lit: which
    side of the rod faces the light strip (-1 left, 1 right) */
-function rodsSVG(xs, top, d, lit = -1, glow = '') {
-  const by = VP[1] - CEIL_U * d; // the ceiling at this depth
-  let g = '';
-  xs.forEach((x) => {
-    g += `<rect x="${f2(x - 0.9 * d)}" y="${f2(by)}" width="${f2(1.8 * d)}" height="${f2(top - by)}" fill="${STEEL.rod}" stroke="${INK}" stroke-width="${f2(0.45 * d)}"/>`;
-    g += `<line x1="${f2(x + lit * 0.45 * d)}" y1="${f2(by + 2.6 * d)}" x2="${f2(x + lit * 0.45 * d)}" y2="${f2(top - 0.6 * d)}" stroke="${STEEL.lit}" stroke-opacity=".7" stroke-width="${f2(0.4 * d)}"/>`;
-    // the plate's shadow on the ceiling, thrown away from the light strip, then the plate
-    g += `<polygon points="${pts([[x - 5.5 * d - lit * 2.6 * d, by - 0.6 * d], [x + 5.5 * d - lit * 2.6 * d, by - 0.6 * d], [x + 5 * d - lit * 2.2 * d, by + 3.4 * d], [x - 5 * d - lit * 2.2 * d, by + 3.4 * d]])}" fill="#020203" fill-opacity=".62"/>`;
-    g += `<polygon points="${pts([[x - 5.5 * d, by - 0.6 * d], [x + 5.5 * d, by - 0.6 * d], [x + 5 * d, by + 2.2 * d], [x - 5 * d, by + 2.2 * d]])}" fill="${STEEL.plate}" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
-    g += `<line x1="${f2(x - 4.6 * d)}" y1="${f2(by + 1.9 * d)}" x2="${f2(x + 4.6 * d)}" y2="${f2(by + 1.9 * d)}" stroke="${STEEL.lit}" stroke-opacity=".45" stroke-width="${f2(0.35 * d)}"/>`; // the tubes on its lower lip
-    [-1, 1].forEach((q) => { g += `<circle cx="${f2(x + q * 3.2 * d)}" cy="${f2(by + 0.8 * d)}" r="${f2(1 * d)}" fill="${STEEL.bolt}" stroke="${INK}" stroke-width="${f2(0.35 * d)}"/>`; });
-    // the collar where the rod meets the sign
-    g += `<rect x="${f2(x - 1.9 * d)}" y="${f2(top - 1.6 * d)}" width="${f2(3.8 * d)}" height="${f2(1.6 * d)}" fill="${STEEL.plate}" stroke="${INK}" stroke-width="${f2(0.4 * d)}"/>`;
-    // a lit sign throws its own colour up onto its hangers: on the collar, and fading a little way up the rod
-    if (glow) g += `<rect x="${f2(x - 1.5 * d)}" y="${f2(top - 1.25 * d)}" width="${f2(3 * d)}" height="${f2(0.9 * d)}" fill="${glow}" fill-opacity=".5"/><rect x="${f2(x - 0.7 * d)}" y="${f2(top - 5.2 * d)}" width="${f2(1.4 * d)}" height="${f2(3.6 * d)}" fill="${glow}" fill-opacity=".2"/>`;
-  });
-  return g;
-}
 /* a sign box facing down the platform: its front rectangle, the underside and the side toward the middle
    (the box recedes toward the vanishing point), lit from above by the tubes. o.frame: a dark steel frame round
    the face, that thick (art px at depth 1), with a screw in each corner */
@@ -244,7 +227,7 @@ function boxSVG(x, y, w, h, flip, face, d, id, o = {}) {
     const t = o.frame * d;
     g += `<rect x="${f2(x + t / 2)}" y="${f2(y + t / 2)}" width="${f2(w - t)}" height="${f2(h - t)}" fill="none" stroke="${STEEL.frame}" stroke-width="${f2(t)}"/>`;
     g += `<rect x="${f2(x + t)}" y="${f2(y + t)}" width="${f2(w - 2 * t)}" height="${f2(h - 2 * t)}" fill="none" stroke="${INK}" stroke-width="${f2(0.4 * d)}"/>`;
-    [[x + t / 2, y + t / 2], [x + w - t / 2, y + t / 2], [x + w - t / 2, y + h - t / 2], [x + t / 2, y + h - t / 2]].forEach(([cx, cy]) => { g += `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${f2(t * 0.26)}" fill="${STEEL.bolt}"/>`; });
+    if (!o.plain) [[x + t / 2, y + t / 2], [x + w - t / 2, y + t / 2], [x + w - t / 2, y + h - t / 2], [x + t / 2, y + h - t / 2]].forEach(([cx, cy]) => { g += `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${f2(t * 0.26)}" fill="${STEEL.bolt}"/>`; }); // (plain: the sign's finish draws its own screws, big enough to read)
   }
   g += `<line x1="${f2(x + 0.8 * d)}" y1="${f2(y + 0.6 * d)}" x2="${f2(x + w - 0.8 * d)}" y2="${f2(y + 0.6 * d)}" stroke="${STEEL.rim}" stroke-opacity=".5" stroke-width="${f2(0.6 * d)}"/>`; // the tubes on its top edge
   return g;
@@ -280,12 +263,12 @@ const arrow = (cx, cy, sz, dir, fill) => { // a drawn arrow (no arrow characters
    from the vanishing point up and left at 90 up per 174 across (the far cars sit along it), the light strip runs steeply up
    (106 up per 2 to 30 across). A sign hung at mid height on the track side lay ACROSS the roof line: in front of the far
    end of the train. The clear ceiling is the wedge between those two lines, and it is high: so THE CITY hangs right under
-   the ceiling (its top 104 of the ceiling's 106), its left end 114 out and its bottom 82 up (0.72 up per across, well over
+   the ceiling (its top 101 of the ceiling's 106 (room for real mounts: at 104 the judges read them as floating)), its left end 114 out and its bottom 79 up (0.69 up per across, well over
    the roof line's 0.52), its right end 40 out (the lamps' edge at that height is 29). It hangs nearer the camera than the
    board (1.4 times its depth), so it is big enough to read up there: still the smaller sign, never across the lamps, the
    train or the track, at every screen size, because the wedge is the same at every depth. */
 const CITY_O = [-114, -40]; // its lateral span at depth 1, art px from the vanishing point
-const CITY_TOP = 104; const CITY_H = 22; // its top and height (the ceiling is CEIL_U = 106 up)
+const CITY_TOP = 101; const CITY_H = 22; // its top and height (the ceiling is CEIL_U = 106 up). 101, not 104 (Nov 22, the detail pass): at 104 it hung 2 units under the ceiling, no room to draw a rod, and both outside judges read its mounts as "floating... no suspension rods"; 5 units shows two short rods. Its lowest corner is still 0.69 up per across, well over the train's 0.52.
 const CITY_NEAR = 1.4; // how much nearer than the board it hangs
 function cityAt(bd) {
   const d = bd.d * CITY_NEAR;
@@ -293,62 +276,99 @@ function cityAt(bd) {
   const top = VP[1] - CITY_TOP * d; const hh = CITY_H * d;
   return { d, x0, x1, top, hh, box: { l: x0 - 3 * d, r: x1 + 3 * d, t: VP[1] - CEIL_U * d, b: top + hh + 4 * d } };
 }
+/* HOW A SIGN HANGS, DRAWN OUT (Nov 22, John: "improve it with details, textures... no hallucinated parts... fully drawn out
+   ... as if it was an anime"; both outside judges, asked twice each, on the two signs: the hangers were "vague black lumps
+   with white dots... floating", the board's far rod had "ladder-like extra crossbars and a small floating block", there
+   were "random dots" and "accidental dashes" on the frames, the roundel was "uneven, the JN cramped", the bands and the
+   yellow trim "stop abruptly / run past the casing").
+   Root cause, one for all of them: detail drawn SMALLER than the picture can show. A bolt 0.4 px across, a clip 1 px tall,
+   a ring whose stroke is a third of a pixel on one side: at the size a visitor sees them they are not small parts, they
+   are specks, and specks read as mistakes. Rule: on these signs nothing is drawn under about 0.6 of a unit, every part
+   is a closed shape with an ink line, and a part that cannot be drawn that big is left out.
+   A mount: a steel plate bolted flat to the ceiling (its shadow thrown away from the light strip), a stem down from it,
+   and a clamp that grips the sign's top edge over its frame, two bolts on its face. Both mounts of a sign are the same. */
+function mountSVG(x, top, d, lit, stemW = 3) {
+  const by = VP[1] - CEIL_U * d; // the ceiling at this depth
+  const ct = top - 1.1 * d; // the clamp's top (it laps over the sign's top edge)
+  let g = `<polygon points="${pts([[x - 7 * d - lit * 2.4 * d, by - 3 * d], [x + 7 * d - lit * 2.4 * d, by - 3 * d], [x + 6 * d - lit * 2 * d, by + 0.8 * d], [x - 6 * d - lit * 2 * d, by + 0.8 * d]])}" fill="#020203" fill-opacity=".55"/>`;
+  g += `<polygon points="${pts([[x - 7 * d, by - 3 * d], [x + 7 * d, by - 3 * d], [x + 6 * d, by - 0.4 * d], [x - 6 * d, by - 0.4 * d]])}" fill="${STEEL.plate}" stroke="${INK}" stroke-width="${f2(0.6 * d)}" stroke-linejoin="round"/>`;
+  g += `<line x1="${f2(x - 5.6 * d)}" y1="${f2(by - 0.75 * d)}" x2="${f2(x + 5.6 * d)}" y2="${f2(by - 0.75 * d)}" stroke="${STEEL.lit}" stroke-opacity=".5" stroke-width="${f2(0.45 * d)}"/>`; // the tubes on its lower lip
+  [-1, 1].forEach((q) => { g += `<circle cx="${f2(x + q * 4.2 * d)}" cy="${f2(by - 1.75 * d)}" r="${f2(0.85 * d)}" fill="${STEEL.bolt}" stroke="${INK}" stroke-width="${f2(0.35 * d)}"/>`; });
+  if (ct - (by - 0.4 * d) > 0.3 * d) { // the stem (a rod where the sign hangs low, a stub where it hangs close under the ceiling)
+    g += `<rect x="${f2(x - stemW / 2 * d)}" y="${f2(by - 0.4 * d)}" width="${f2(stemW * d)}" height="${f2(ct - by + 0.4 * d)}" fill="${STEEL.rod}" stroke="${INK}" stroke-width="${f2(0.45 * d)}"/>`;
+    g += `<line x1="${f2(x + lit * stemW * 0.26 * d)}" y1="${f2(by + 0.2 * d)}" x2="${f2(x + lit * stemW * 0.26 * d)}" y2="${f2(ct - 0.2 * d)}" stroke="${STEEL.lit}" stroke-opacity=".7" stroke-width="${f2(0.45 * d)}"/>`;
+  }
+  return g;
+}
+const clampSVG = (x, top, d, lit, glow = '', tongue = false) => { // drawn over the sign: its jaw on the top edge
+  // (tongue: where the sign hangs close under the ceiling the jaw is the plate's own tongue, narrower, one bolt: two bolted
+  //  plates one over the other read as the same bracket drawn twice)
+  const hw = tongue ? 2.5 : 3.6;
+  let g = `<rect x="${f2(x - hw * d)}" y="${f2(top - 1.1 * d)}" width="${f2(2 * hw * d)}" height="${f2(2.7 * d)}" fill="${STEEL.plate}" stroke="${INK}" stroke-width="${f2(0.5 * d)}" stroke-linejoin="round"/>`;
+  g += `<line x1="${f2(x - (hw - 0.5) * d)}" y1="${f2(top - 0.6 * d)}" x2="${f2(x + (hw - 0.5) * d)}" y2="${f2(top - 0.6 * d)}" stroke="${STEEL.rim}" stroke-opacity=".45" stroke-width="${f2(0.45 * d)}"/>`;
+  if (glow) g += `<rect x="${f2(x - 3.1 * d)}" y="${f2(top + 0.5 * d)}" width="${f2(6.2 * d)}" height="${f2(0.8 * d)}" fill="${glow}" fill-opacity=".4"/>`; // (a lit sign's own colour on its clamp)
+  (tongue ? [0] : [-1, 1]).forEach((q) => { g += `<circle cx="${f2(x + q * 1.9 * d)}" cy="${f2(top + 0.45 * d)}" r="${f2(0.7 * d)}" fill="${STEEL.bolt}" stroke="${INK}" stroke-width="${f2(0.3 * d)}"/>`; });
+  return g;
+};
+/* a housing's finish, drawn over boxSVG's box: a screw in each corner of the frame (big enough to be a screw), the light
+   strip's edge on the end that faces it, the seam where the face plate meets the body along the underside */
+function finishSVG(x, y, w, h, d, flip, fr) {
+  let g = '';
+  const ex = flip ? x + w : x; // the end toward the light strip
+  g += `<line x1="${f2(ex)}" y1="${f2(y + 0.5 * d)}" x2="${f2(ex)}" y2="${f2(y + h - 0.5 * d)}" stroke="${STEEL.rim}" stroke-opacity=".6" stroke-width="${f2(0.6 * d)}"/>`;
+  const [u0, u1] = toVP([[x, y + h], [x + w, y + h]], 0.984); // half way back along the underside
+  g += `<line x1="${f2(u0[0])}" y1="${f2(u0[1])}" x2="${f2(u1[0])}" y2="${f2(u1[1])}" stroke="${STEEL.frame}" stroke-width="${f2(0.5 * d)}"/>`;
+  [[x + fr, y + fr], [x + w - fr, y + fr], [x + w - fr, y + h - fr], [x + fr, y + h - fr]].forEach(([cx, cy]) => {
+    g += `<circle cx="${f2(cx)}" cy="${f2(cy)}" r="${f2(0.75 * d)}" fill="${STEEL.bolt}" stroke="${INK}" stroke-width="${f2(0.3 * d)}"/>`;
+  });
+  return g;
+}
 function signsSVG(bd, city = true) { // city: false where THE CITY has no clear room of its own on this screen (the board hangs alone)
   let back = '';
   if (city) {
     const { d, x0, x1, top, hh } = cityAt(bd); // (its own depth: nearer than the board)
     const w = x1 - x0;
-    back += rodsSVG([x0 + w * 0.2, x0 + w * 0.8], top, d, 1); // (lit from its right: the strip is on that side of it)
+    const mx = [x0 + w * 0.22, x0 + w * 0.78];
+    mx.forEach((x) => { back += mountSVG(x, top, d, 1, 3.4); }); // (lit from its right: the strip is on that side of it)
     back += `<rect x="${f2(x0 - 2 * d)}" y="${f2(top - 2 * d)}" width="${f2(w + 4 * d)}" height="${f2(hh + 4 * d)}" fill="#EDE0C0" opacity=".1" filter="url(#slBloom)"/>`;
-    back += boxSVG(x0, top, w, hh, true, '<stop offset="0" stop-color="#F0EADA"/><stop offset="1" stop-color="#A39A86"/>', d, 'ssDiF', { frame: 1.5 });
-    const m = 3.2 * d; // the frame's width: everything sits inside it
-    const band = 3.6 * d; // the line's red band along the bottom
-    const cy0 = top + m; const ch = hh - 2 * m - band - 1 * d; // the row the block, the roundel and the words stand in
-    // the line band (its track end cut on our slant), and a thin ink line over it
-    back += `<polygon points="${pts([[x0 + m, top + hh - m - band], [x1 - m, top + hh - m - band], [x1 - m, top + hh - m], [x0 + m, top + hh - m]])}" fill="#C8161A"/>`;
-    back += `<line x1="${f2(x0 + m)}" y1="${f2(top + hh - m - band)}" x2="${f2(x1 - m)}" y2="${f2(top + hh - m - band)}" stroke="${INK}" stroke-width="${f2(0.35 * d)}"/>`;
+    back += boxSVG(x0, top, w, hh, true, '<stop offset="0" stop-color="#F0EADA"/><stop offset="1" stop-color="#A39A86"/>', d, 'ssDiF', { frame: 1.5, plain: true });
+    const m = 2.5 * d; // the frame and a hair of the face: everything stands inside this, the same on every side
+    const band = 3.4 * d; // the line's red band along the bottom, from the frame to the frame
+    const cy0 = top + m + 0.4 * d; const ch = hh - 2 * m - band - 1.5 * d; // the row the block, the roundel and the words stand in
+    back += `<rect x="${f2(x0 + m)}" y="${f2(top + hh - m - band)}" width="${f2(w - 2 * m)}" height="${f2(band)}" fill="#C8161A" stroke="${INK}" stroke-width="${f2(0.35 * d)}"/>`;
     // the red block at the track end, its inner edge on our slant, the white arrow pointing at the trains
-    const bw = ch * 1.25;
-    back += `<polygon points="${pts([[x0 + m, cy0], [x0 + m + bw + ch * 0.21, cy0], [x0 + m + bw, cy0 + ch], [x0 + m, cy0 + ch]])}" fill="#C8161A" stroke="${INK}" stroke-width="${f2(0.35 * d)}" stroke-linejoin="round"/>`;
-    back += arrow(x0 + m + bw * 0.5, cy0 + ch / 2, ch * 0.4, 'left', '#F5F5F0');
-    // the line's roundel: a red ring on white, JN in it
-    const rr = ch * 0.5; const rx = x0 + m + bw + ch * 0.21 + rr + 2.2 * d;
-    back += `<circle cx="${f2(rx)}" cy="${f2(cy0 + ch / 2)}" r="${f2(rr - 0.8 * d)}" fill="#F5F5F0" stroke="#C8161A" stroke-width="${f2(1.6 * d)}"/>`;
-    back += `<text x="${f2(rx)}" y="${f2(cy0 + ch / 2 + rr * 0.3)}" font-size="${(rr * 0.9).toFixed(1)}" fill="#0B0B0B" text-anchor="middle" style="font-family:var(--f-head)">JN</text>`;
+    const bw = ch * 1.15; const sl = ch * 0.21;
+    back += `<polygon points="${pts([[x0 + m, cy0], [x0 + m + bw + sl, cy0], [x0 + m + bw, cy0 + ch], [x0 + m, cy0 + ch]])}" fill="#C8161A" stroke="${INK}" stroke-width="${f2(0.35 * d)}" stroke-linejoin="round"/>`;
+    back += arrow(x0 + m + (bw + sl / 2) * 0.5, cy0 + ch / 2, ch * 0.36, 'left', '#F5F5F0');
+    // the line's roundel: a white disc in a red ring (two whole circles, so the ring is the same width all round), JN in it
+    const rr = ch * 0.5; const rx = x0 + m + bw + sl + rr + 1.6 * d; const ry = cy0 + ch / 2;
+    back += `<circle cx="${f2(rx)}" cy="${f2(ry)}" r="${f2(rr)}" fill="#C8161A" stroke="${INK}" stroke-width="${f2(0.3 * d)}"/><circle cx="${f2(rx)}" cy="${f2(ry)}" r="${f2(rr * 0.76)}" fill="#F5F5F0"/>`;
+    back += `<text x="${f2(rx)}" y="${f2(ry + rr * 0.4)}" font-size="${(rr * 1.12).toFixed(1)}" fill="#0B0B0B" text-anchor="middle" style="font-family:var(--f-menu);letter-spacing:.02em">JN</text>`; // (as big as the disc holds: on a phone it was too small to be letters)
     // the destination
-    back += `<text x="${f2(rx + rr + 2.6 * d)}" y="${f2(cy0 + ch * 0.86)}" font-size="${(ch * 1.02).toFixed(1)}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.04em">THE CITY</text>`;
+    // (sized so the words end a clear margin short of the frame: 2.85 units of width per unit of type, measured)
+    back += `<text x="${f2(rx + rr + 1.8 * d)}" y="${f2(cy0 + ch * 0.865)}" font-size="${(ch * 1.0).toFixed(1)}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.04em">THE CITY</text>`;
+    back += finishSVG(x0, top, w, hh, d, true, 1.25 * d);
+    mx.forEach((x) => { back += clampSVG(x, top, d, 1, '', true); });
   }
   const { d, flip } = bd;
-  // the LED board itself: a slim warm-steel housing in three bolted modules, the screen inset in it
+  // the LED board itself: a slim warm-steel housing, the screen inset in it, on two mounts that match
   const lit = flip ? 1 : -1;
   const rodX = [bd.x + bd.w * 0.16, bd.x + bd.w * 0.84];
-  const far = flip ? rodX[0] : rodX[1]; // the rod away from the light strip carries the power
-  back += rodsSVG(rodX, bd.y, d, lit, '#FFB23E'); // (the LEDs' amber on the board's own hangers)
-  // the LEDs' light spilling round the housing onto the dark ceiling behind it (faint: the board is small and dim)
+  rodX.forEach((x) => { back += mountSVG(x, bd.y, d, lit, 1.8); });
+  // the LEDs' amber a little way up each rod, and their light spilling round the housing onto the dark ceiling behind it
+  rodX.forEach((x) => { back += `<rect x="${f2(x - 0.7 * d)}" y="${f2(bd.y - 5.4 * d)}" width="${f2(1.4 * d)}" height="${f2(3.8 * d)}" fill="#FFB23E" fill-opacity=".2"/>`; });
   back += `<rect x="${f2(bd.x + bd.w * 0.08)}" y="${f2(bd.y - 1.5 * d)}" width="${f2(bd.w * 0.84)}" height="${f2(bd.h + 3 * d)}" fill="#FFB23E" opacity=".1" filter="url(#slBloom)"/>`;
-  // its power: a conduit clipped up that rod into the ceiling, from a junction box on the housing's top
-  const cx = far - lit * 2.3 * d; const cTop = VP[1] - CEIL_U * d + 2.2 * d;
-  back += `<rect x="${f2(cx - 0.55 * d)}" y="${f2(cTop)}" width="${f2(1.1 * d)}" height="${f2(bd.y - cTop - 3 * d)}" fill="#1B1A17" stroke="${INK}" stroke-width="${f2(0.3 * d)}"/>`;
-  [0.3, 0.7].forEach((t) => { const y = cTop + (bd.y - cTop) * t; back += `<rect x="${f2(Math.min(cx, far) - 1.2 * d)}" y="${f2(y)}" width="${f2(Math.abs(cx - far) + 2.4 * d)}" height="${f2(1.1 * d)}" fill="${STEEL.bolt}" stroke="${INK}" stroke-width="${f2(0.3 * d)}"/>`; });
-  back += `<rect x="${f2(cx - 2.6 * d)}" y="${f2(bd.y - 3.4 * d)}" width="${f2(5.2 * d)}" height="${f2(3.4 * d)}" fill="${STEEL.plate}" stroke="${INK}" stroke-width="${f2(0.45 * d)}"/>`;
-  back += `<line x1="${f2(cx - 2 * d)}" y1="${f2(bd.y - 2.8 * d)}" x2="${f2(cx + 2 * d)}" y2="${f2(bd.y - 2.8 * d)}" stroke="${STEEL.rim}" stroke-opacity=".45" stroke-width="${f2(0.4 * d)}"/>`;
   back += boxSVG(bd.x, bd.y, bd.w, bd.h, flip, '<stop offset="0" stop-color="#4C473D"/><stop offset=".6" stop-color="#2B2823"/><stop offset="1" stop-color="#1B1A16"/>', d, 'ssBdF');
   const [q0, , q2] = bd.quad;
   const bz = q0[0] - bd.x; // the housing's frame round the screen
-  // module joints across the frame (above and below the screen), and a screw in each corner and by each joint
-  [1 / 3, 2 / 3].forEach((t) => {
-    const x = bd.x + bd.w * t;
-    [[bd.y + 0.5 * d, q0[1]], [q2[1], bd.y + bd.h - 0.5 * d]].forEach(([y0, y1]) => { back += `<line x1="${f2(x)}" y1="${f2(y0)}" x2="${f2(x)}" y2="${f2(y1)}" stroke="${INK}" stroke-width="${f2(0.45 * d)}"/>`; });
-  });
-  [0, 1 / 3, 2 / 3, 1].forEach((t, i) => {
-    const xs = i === 0 ? [bd.x + bz / 2] : i === 3 ? [bd.x + bd.w - bz / 2] : [bd.x + bd.w * t - 1.5 * d, bd.x + bd.w * t + 1.5 * d];
-    xs.forEach((x) => [bd.y + bz / 2, bd.y + bd.h - bz / 2].forEach((y) => { back += `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(0.55 * d)}" fill="${STEEL.bolt}" stroke="${INK}" stroke-width="${f2(0.2 * d)}"/>`; }));
-  });
-  // the station's yellow line along the housing's lower lip (the wall band's colour), under the screws' row
-  back += `<rect x="${f2(bd.x + 0.5 * d)}" y="${f2(bd.y + bd.h - 1.15 * d)}" width="${f2(bd.w - d)}" height="${f2(0.75 * d)}" fill="#C79A1C"/>`;
+  // the station's yellow line, set into the housing's lower lip between the screen's two ends (the wall band's colour)
+  const ly = q2[1] + (bd.y + bd.h - q2[1]) * 0.5;
+  back += `<rect x="${f2(q0[0])}" y="${f2(ly - 0.45 * d)}" width="${f2(q2[0] - q0[0])}" height="${f2(0.9 * d)}" fill="#C79A1C" stroke="${INK}" stroke-width="${f2(0.25 * d)}"/>`;
   back += `<rect x="${f2(q0[0])}" y="${f2(q0[1])}" width="${f2(q2[0] - q0[0])}" height="${f2(q2[1] - q0[1])}" fill="#08080A" stroke="${INK}" stroke-width="${f2(0.5 * d)}"/>`;
   // the LEDs' amber on the frame's inner lip under the screen
   back += `<line x1="${f2(q0[0] + d)}" y1="${f2(q2[1] + 0.45 * d)}" x2="${f2(q2[0] - d)}" y2="${f2(q2[1] + 0.45 * d)}" stroke="#FFB23E" stroke-opacity=".3" stroke-width="${f2(0.5 * d)}"/>`;
+  back += finishSVG(bd.x, bd.y, bd.w, bd.h, d, flip, bz / 2);
+  rodX.forEach((x) => { back += clampSVG(x, bd.y, d, lit, '#FFB23E'); });
   return back;
 }
 const SIGN_LINE = 'LET US START THE GAME';

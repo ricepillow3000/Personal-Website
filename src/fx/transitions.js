@@ -3,7 +3,7 @@ import { $, reducedMotion } from '../core/util.js';
 import { ransom, NAME_SEED } from '../ui/ransom.js';
 import { burst } from './impact.js';
 import { sfx, hush } from '../audio/audio.js';
-import { trainShot, preloadSubway, NOSE_PASS } from './subway.js';
+import { trainShot, preloadSubway, NOSE_PASS, BURST, SHOT_END, shotSound } from './subway.js';
 import { artSrc } from './art.js';
 
 /* Every big animation runs through here so ONE click / Esc can skip it. */
@@ -169,10 +169,13 @@ export function tunnelWipe(swap) {
   const card = screen.querySelector('.cc'); // the CONNECT card goes with the wind too
   const cal = document.querySelector('#hudDate .hud-cal'); // and the calendar sticker
   const clock = { t: 0 };
-  // the train brakes in (Nov 19, "feel real"): the nose passes the camera at NOSE_PASS (~1.2 s), then
-  // the first car rolls by for about half a second before the cut
-  const SWAP = NOSE_PASS + 0.56;
-  const P = NOSE_PASS - 0.74; // the wind and the paper move with the nose (they were timed for 0.74 s)
+  // THE BURST (Nov 22, John: "pop out impactfully... faster... longer... a surprise", see subway.js): half a second of a
+  // still station, the nose breaks out of the tunnel at BURST and is at the camera at NOSE_PASS, then seven cars storm past,
+  // braking, until the cut at SHOT_END
+  const SWAP = SHOT_END;
+  // the blast of air out of the tunnel takes the title: it leaves as the train breaks out, so the nose never has to come
+  // through it (timed to the nose's pass, as before, it was still on screen when the train reached the camera: 0.43 s is too short)
+  const B = BURST + 0.06;
   const wall = [...document.querySelectorAll('#backdrop .bd-graffiti, #backdrop .bd-shards')]; // the poster, the arrow, the glass
   const posters = wall.map((l) => l.firstElementChild);
   const blown = [];
@@ -193,7 +196,7 @@ export function tunnelWipe(swap) {
   });
   tl.set(el, { visibility: 'visible' });
   barsIn(tl, bars);
-  tl.add(() => sfx('tunnel', { pass: NOSE_PASS, cut: SWAP }), 0)
+  tl.add(() => sfx('tunnel', shotSound()), 0)
     .to(clock, {
       t: SWAP,
       duration: SWAP,
@@ -209,18 +212,18 @@ export function tunnelWipe(swap) {
         screen.style.translate = `${(m.x * 0.6).toFixed(1)}px ${(m.y * 0.6).toFixed(1)}px`;
       },
     }, 0)
-    // the headlights come out of the tunnel: the title steps back and dims, so you watch the train
-    // arrive (it used to sit on top of it until the nose was already at the camera)
-    .to([title, card].filter(Boolean), { opacity: 0.38, scale: 0.97, duration: 0.45, ease: 'power2.out' }, 0.45)
-    .to(wall, { opacity: 0.4, duration: 0.45, ease: 'power2.out' }, 0.45)
+    // the still beat before the burst: the title steps back and dims at once, so the eye is on the dark tunnel when the
+    // train breaks out of it (it used to dim as the headlights appeared: at this speed that is too late to be seen)
+    .to([title, card].filter(Boolean), { opacity: 0.38, scale: 0.97, duration: 0.3, ease: 'power2.out' }, 0.08)
+    .to(wall, { opacity: 0.4, duration: 0.3, ease: 'power2.out' }, 0.08)
     // its wind takes the title with it, and rips the posters off the wall
-    .to(title, { x: -W * 0.75, y: H * 0.15, rotation: -26, skewX: 16, autoAlpha: 0, duration: 0.42, ease: 'power3.in' }, 0.6 + P)
-    .to(card, { x: -W * 0.9, y: -H * 0.05, rotation: -40, skewX: 12, autoAlpha: 0, duration: 0.45, ease: 'power3.in' }, 0.64 + P)
-    .to([cal].filter(Boolean), { x: -W * 0.4, y: -H * 0.2, rotation: -30, autoAlpha: 0, duration: 0.4, ease: 'power3.in' }, 0.66 + P)
+    .to(title, { x: -W * 0.75, y: H * 0.15, rotation: -26, skewX: 16, autoAlpha: 0, duration: 0.3, ease: 'power2.in' }, B)
+    .to(card, { x: -W * 0.9, y: -H * 0.05, rotation: -40, skewX: 12, autoAlpha: 0, duration: 0.32, ease: 'power2.in' }, B + 0.04)
+    .to([cal].filter(Boolean), { x: -W * 0.4, y: -H * 0.2, rotation: -30, autoAlpha: 0, duration: 0.3, ease: 'power2.in' }, B + 0.06)
     .add(() => posters.forEach((p, i) => blown.push(p.animate(
       [{ translate: '0 0', rotate: '0deg', opacity: 1 }, { translate: `${-W * (0.9 + i * 0.3)}px ${H * (0.1 - i * 0.12)}px`, rotate: `${-34 + i * 50}deg`, opacity: 0 }],
-      { duration: 480, delay: i * 60, easing: 'cubic-bezier(.55,0,.9,.5)', fill: 'forwards' }
-    ))), 0.66 + P)
+      { duration: 380, delay: i * 50, easing: 'cubic-bezier(.55,0,.9,.5)', fill: 'forwards' }
+    ))), B + 0.06)
     // the cut: white star-flash, swap, clear
     .fromTo(flash, { scale: 0, rotation: -40, opacity: 1 }, { scale: 3.2, rotation: 0, duration: 0.2, ease: 'power3.in' }, SWAP - 0.2)
     .add(() => {

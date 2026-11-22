@@ -33,7 +33,7 @@ const SIDE_X = -97; // the train's platform-side wall: a hand's width off the ed
 const ROOF = -50;
 const SKIRT = 54; // platform level (the car's floor and the bottom of its body)
 const WIDE = 100; // the train's width
-const LEN = 5200; // the whole train
+const LEN = 7600; // the whole train: twelve cars (5200, eight, until Nov 22: at the burst's speed more than seven cars stream past before the cut, and the eye must never reach its tail)
 const RAIL_Y = 72; // the rails' heads, on the slab's sleepers
 const RAILS = [SIDE_X - 27, SIDE_X - 73]; // near rail, far rail: standard gauge, centred under the car
 const TIE_Y = 75; // the sleepers' top (cast into the slab: they stand only a little proud of it)
@@ -46,7 +46,7 @@ const WALL_X = -273; // where the bed meets the far wall (measured on the art)
 const MOUTH = 1985; // the tunnel mouth: the portal in the art (17 art px per metre there)
 const FADE = 185; // past the mouth the train and the track are lost in the tunnel's dark within this far
 const TUN_X = -243; // the tunnel's own wall (7.2 m out; the station's is WALL_X): the bed inside stops at it
-const START = 3430; // where the nose is when the shot opens (deep in the dark tunnel)
+const START = 4800; // where the nose is when the shot opens (deep in the dark tunnel: far enough that the station holds still for half a second first)
 /* How it moves (Nov 19, John: "I want it to feel real"). It used to blast through at a constant 3600
    units a second (the car is 116 units, about 3.6 m, tall: that was ~400 km/h, gone in 0.7 s).
    Now it arrives like a real train: out of the tunnel fast, braking hard, so the nose passes the
@@ -57,9 +57,18 @@ const START = 3430; // where the nose is when the shot opens (deep in the dark t
    for a third of a second, it reaches the tunnel's mouth at ~0.6 s and the nose passes the camera at ~1.5 s, so the
    eye has time to read the train, its light on the station and the station's light on it. Sounds, wind and the
    paper all follow NOSE_PASS, so they stay in step. */
-const V0 = 3000; // world units a second, deep in the tunnel
-const BRAKE = 1000; // units a second, per second
-const CRAWL = 700; // it keeps rolling past (the cut comes first)
+/* THE BURST (Nov 22, John: "make the train pop out impactfully with a lot of impact and impactful train sounds. Make it
+   faster and make it longer. That way it gives the user a surprise"). This reverses "slower" above: his new words win.
+   A surprise needs a still moment and then a hit, so the shot is now three beats:
+   (1) STILL, 0 to ~0.5 s: the station holds its breath. Nothing moves but a glow growing in the tunnel and a low rumble.
+   (2) THE BURST, ~0.53 s: the nose breaks out of the mouth at 4900 units a second (it used to roll out at 2470) and is at
+       the camera 0.43 s later (it took 0.98), still doing 4200: the camera is kicked as it breaks out and shoved as it passes.
+   (3) THE PASS, ~1.65 s more: the train is longer (LEN: twelve cars) and seven of them storm past, braking all the way
+       (1700 a second, each second), so the streak of steel resolves into a readable train again before the cut (SHOT_END).
+   Everything that follows the train (sound, wind, paper, the litter) is timed from BURST and NOSE_PASS, never from a number. */
+const V0 = 5800; // world units a second, deep in the tunnel
+const BRAKE = 1700; // units a second, per second
+const CRAWL = 1500; // it keeps rolling past (the cut comes first)
 const T_CRAWL = (V0 - CRAWL) / BRAKE;
 const D_CRAWL = V0 * T_CRAWL - 0.5 * BRAKE * T_CRAWL * T_CRAWL;
 export const speedAt = (t) => (t < T_CRAWL ? V0 - BRAKE * t : CRAWL);
@@ -474,16 +483,30 @@ const CAR = 4 * BAY; // one car: four door bays (18.7 m), so the gangways fall o
 const PASS_D = 40; // a wheel set "passes the camera" at this depth
 const AXLES = [];
 // (the leading bogie sits right behind the skirt: its first wheels stand under the nose art's two feet)
-for (let c = 0; c < 5; c++) for (const b of [c ? 90 : 48, CAR - 90]) for (const a of [-32, 32]) AXLES.push(c * CAR + b + a);
-export const NOSE_PASS = timeAt(PASS_D); // when the nose passes the camera (~0.95 s, braking)
+for (let c = 0; c < Math.ceil(LEN / CAR); c++) for (const b of [c ? 90 : 48, CAR - 90]) for (const a of [-32, 32]) AXLES.push(c * CAR + b + a);
+export const NOSE_PASS = timeAt(PASS_D); // when the nose passes the camera (~0.95 s, still storming)
+export const BURST = timeAt(MOUTH); // when the nose breaks out of the tunnel's mouth (~0.53 s)
+export const SHOT_END = NOSE_PASS + 1.65; // the cut: seven cars have stormed past and the train has braked to a third of its speed
+/* when each wheel set passes the camera, and how hard it lands. At the burst's speed the axles go by a dozen and more a
+   second: every one at full weight would add up to a buzz three times as strong as a single thump (and "never a random
+   buzz" is the rule), so a wheel set's jolt is weighed by the time the train gives it: light and close together while it
+   storms past, each one a full heavy thump again as it brakes. */
+const AXLE_HIT = AXLES.map((s) => { const at = timeAt(PASS_D - s); return [at, Math.max(0.22, Math.min(1, 1100 / speedAt(at)))]; });
 /** the hard thumps of the wheel sets near the camera: a damped jolt per axle */
 function jolts(t) {
   let j = 0;
-  for (const s of AXLES) {
-    const u = t - timeAt(PASS_D - s); // axle s passes the camera when the nose is s beyond it
-    if (u >= 0 && u < 0.25) j += Math.exp(-u * 20) * Math.cos(u * 48);
+  for (const [at, w] of AXLE_HIT) {
+    const u = t - at; // axle s passes the camera when the nose is s beyond it
+    if (u >= 0 && u < 0.25) j += w * Math.exp(-u * 20) * Math.cos(u * 48);
   }
   return j;
+}
+/** For the sound: when the train breaks out, passes and is cut, and when each bogie (a pair of wheel sets) hammers past
+    the camera, with how hard (seconds from the start of the shot). */
+export function shotSound() {
+  const wheels = [];
+  for (let i = 0; i < AXLE_HIT.length; i += 2) { const [at, w] = AXLE_HIT[i]; if (at < SHOT_END + 0.1) wheels.push([+at.toFixed(3), +w.toFixed(2)]); }
+  return { burst: BURST, pass: NOSE_PASS, cut: SHOT_END, wheels };
 }
 /** the car body bouncing on its springs (world units, + is down), and kicked by each joint */
 function bounce() {
@@ -494,12 +517,21 @@ function bounce() {
 /** Camera motion for time t: a low rumble that swells as the train comes (smooth, not random
     jitter: heavy things shake slow and deep), a thump per wheel set, and the air wall's shove. */
 export function cameraMotion(t, near) {
-  const swell = 1 + 2 * Math.min(1, t / 0.5) + 5 * near;
+  // (the burst: the station is still, a faint tremble, until just before the nose breaks out; then the rumble is on at once,
+  // and it eases as the train brakes: a heavy thing shakes the ground by how fast it is going)
+  const out = Math.max(0, Math.min(1, (t - (BURST - 0.1)) / 0.1));
+  const going = 0.45 + 0.55 * Math.min(1, speedAt(t) / speedAt(NOSE_PASS));
+  const swell = 0.3 + (2.7 * out + 5 * near) * going;
   const ry = Math.sin(t * 46) * 0.55 + Math.sin(t * 74.8 + 1.1) * 0.3 + Math.sin(t * 107.4 + 2.3) * 0.15;
   const rx = Math.sin(t * 39.3 + 0.7) * 0.6 + Math.sin(t * 66.1 + 1.9) * 0.4;
   const j = jolts(t);
   const push = Math.exp(-(((t - NOSE_PASS) / 0.07) ** 2)); // the air wall, centered on the nose
-  return { x: rx * swell + j * 3.5 - push * 10, y: ry * swell + j * 11, s: 1 + 0.018 * push };
+  // the kick as it breaks out of the tunnel: one hard knock that rings down in a fifth of a second (a damped wave, the
+  // same shape as a wheel set's thump, twice the weight), and the camera punched in a touch by the blast of air
+  const b = t - BURST;
+  const kick = b >= 0 && b < 0.4 ? Math.exp(-b * 15) * Math.cos(b * 44) : 0;
+  const punch = b >= 0 ? Math.exp(-b * 9) : 0;
+  return { x: rx * swell + j * 3.5 - push * 14 - kick * 7, y: ry * swell + j * 11 + kick * 17, s: 1 + 0.024 * push + 0.012 * punch };
 }
 
 /* ---------------------------------------------------------------- the track and the running gear
@@ -1144,6 +1176,11 @@ function dropGPU() {
    the windows and doors smear along the car instead of sliding past razor-sharp like a poster
    (opened up from 1/60 when the red/white echoes were removed: the blur now carries the speed) */
 const SHUTTER = 1 / 1200; // almost no shutter, the way drawn animation moves (cels do not blur): the car stays a DRAWING as it passes (1/40 until Nov 21: at the slower arrival that much blur buried the art, and the sharp ink lines over a blurred fill read as double images)
+/* (Nov 22, the burst.) That holds while the eye can follow the car. Storming out of the tunnel it moves most of a door
+   bay between two frames: drawn razor-sharp it would not look fast, it would STROBE (the windows seem to jump back and
+   forth, the wagon-wheel effect). So the shutter opens with the speed: a real streak of steel and light while it bursts
+   past (1/50 s above 4200 units a second), closing as it brakes, and by 2000 a second it is the clean drawing again. */
+const shutterAt = (v) => { const k = Math.max(0, Math.min(1, (v - 2000) / 2200)); return SHUTTER + (1 / 50 - SHUTTER) * k * k * (3 - 2 * k); };
 /* the GPU gets the full-resolution car art (1828px tall), except on low-memory phones */
 const sideTexFor = (tex) => (tex === sideCopy && side?.naturalWidth && sharpArt() ? side : tex);
 function sideQuad(lead, alpha, tex, { mat = 0, refl = 0 } = {}) {
@@ -1163,7 +1200,7 @@ function sideQuad(lead, alpha, tex, { mat = 0, refl = 0 } = {}) {
   const top = refl ? 2 * SKIRT - (ROOF + by) : ROOF + by;
   const bot = refl ? SKIRT - by : SKIRT + by;
   return sideGL.quad(img, [[...P(top, near), near, near - lead, 0], [...P(bot, near), near, near - lead, 1], [...P(top, far), far, far - lead, 0], [...P(bot, far), far, far - lead, 1]],
-    { period: ((SKIRT - ROOF) * tw) / th, alpha, mouth: MOUTH, mat, refl, blur: state ? speedAt(state.t) * SHUTTER : 0, car: CAR });
+    { period: ((SKIRT - ROOF) * tw) / th, alpha, mouth: MOUTH, mat, refl, blur: state ? speedAt(state.t) * shutterAt(speedAt(state.t)) : 0, car: CAR });
 }
 
 function trainSide(lead, kk, alpha = 1, tex = sideArt(), { mat = 0, refl = 0 } = {}) {
@@ -1597,7 +1634,12 @@ function dust(t, lead) {
    jump from frame to frame (the nose's own motion blur; the side blurs on the GPU, see SHUTTER) */
 function noseSmear(t, img, power) {
   if (power <= 0.02 || !img) return;
-  for (let j = 4; j >= 1; j--) trainNose(leadAt(Math.max(0, t - j * 0.012)), img, 0.16 * power);
+  // (Nov 22, the burst: at 4200 units a second the four copies stood a nose-width apart as it reached the camera, a row of
+  // ghost trains instead of a blur. Closer copies (6 ms apart, six of them), and none at all once the nose is close: there
+  // it crosses the frame in two frames and the side's own streak carries the speed.)
+  const close = Math.max(0, Math.min(1, (leadAt(t) - 260) / 520));
+  if (close <= 0.02) return;
+  for (let j = 6; j >= 1; j--) trainNose(leadAt(Math.max(0, t - j * 0.006)), img, 0.11 * power * close);
 }
 
 function draw() {
@@ -1656,7 +1698,9 @@ function draw() {
   if (safe('nose', () => { trainNose(lead, heavy, 1); return true; }) !== true && img) safe('nose-plain', () => trainNose(lead, img, 1));
   safe('trash', () => drawTrash(t, (d) => d < lead));
   safe('dust', () => dust(t, lead));
-  safe('lights', () => headlights(lead, 1 + Math.max(0, 1 - lead / MOUTH) * 1.6, Math.min(1, t / 0.3))); // the lights fade up with the horn
+  // (the burst: as the nose breaks out of the dark its lamps flare for a tenth of a second, the eye's own dazzle, and settle)
+  const flare = 1 + 1.5 * Math.exp(-(((t - BURST - 0.03) / 0.08) ** 2));
+  safe('lights', () => headlights(lead, (1 + Math.max(0, 1 - lead / MOUTH) * 1.6) * flare, Math.min(1, t / 0.3))); // the lights fade up with the horn
   ctx = under;
 }
 
@@ -1674,8 +1718,9 @@ export function trainShot({ panTo = null } = {}) {
     trash: TRASH.map(([x, y, , , , seed], n) => { const i = seed ?? n; return {
       at: null,
       when: timeAt(depthOf(y) + 140), // the nose reaches it (a bit early: the air pushes first)
-      push: (x < 780 ? -0.45 : 1) * (260 + ((i * 53) % 220)), // (the pieces by the platform's edge are thrown AWAY from the track by the air the nose shoves aside: sliding toward it, a sheet went through a guard rail's post)
-      lift: 300 + ((i * 71) % 380),
+      push: (x < 780 ? -0.45 : 1) * (350 + ((i * 53) % 290)), // (a third harder since the burst, Nov 22: the train is going three times as fast)
+      // // (the pieces by the platform's edge are thrown AWAY from the track by the air the nose shoves aside: sliding toward it, a sheet went through a guard rail's post)
+      lift: 380 + ((i * 71) % 460),
       spin: (i % 2 ? 1 : -1) * (5 + (i % 4) * 2.5),
       flip: 9 + (i % 3) * 5,
     }; }),
