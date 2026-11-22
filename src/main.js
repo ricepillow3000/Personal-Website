@@ -20,6 +20,7 @@ import { $, $$, esc, reducedMotion, fontsReady } from './core/util.js';
 import { menuTeasers } from './data/script.js';
 import { mountBackdrop, sceneReady } from './fx/backdrop.js';
 import { holdSign } from './fx/station.js';
+import { initZoom, onZoom, isZoomed } from './core/zoom.js';
 import { initClickFx, burst } from './fx/impact.js';
 import { initMagnetic, initTilt, initScrollMeter, slamOnScroll, scramble, rollIn } from './fx/kinetic.js';
 import { initTooltips } from './ui/tooltip.js';
@@ -337,7 +338,7 @@ async function startFile(i) {
   renderStartLabel();
   const btn = $('#pressStart');
   unlock('first-words');
-  if (!reducedMotion()) {
+  if (!reducedMotion() && !isZoomed()) { // (zoomed in, the shot goes straight to its end: there is no train to wait for)
     let late = false;
     const wait = sceneReady();
     const t = setTimeout(() => { late = true; btn.classList.add('boarding'); btn.setAttribute('aria-busy', 'true'); }, 120);
@@ -838,6 +839,8 @@ function syncSoundButton() {
 /* sound is on by default: the visitor's first tap, click or key starts it (browsers allow audio only
    after one), leaving the page pauses it and coming back resumes it (audio.js initAudio) */
 initAudio();
+initZoom(); // (a pinch zoom puts the page in its still state: src/core/zoom.js)
+onZoom((z) => { if (z) skipCurrent(); }); // (a film shot is a full-screen layer moving every frame: under a zoom it goes straight to its end)
 initFullscreen();
 
 $('#soundBtn').addEventListener('click', () => toggleSound());

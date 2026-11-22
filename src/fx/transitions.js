@@ -5,6 +5,7 @@ import { burst } from './impact.js';
 import { sfx, hush } from '../audio/audio.js';
 import { trainShot, preloadSubway, NOSE_PASS, BURST, SHOT_END, shotSound } from './subway.js';
 import { artSrc } from './art.js';
+import { isZoomed } from '../core/zoom.js';
 
 /* Every big animation runs through here so ONE click / Esc can skip it. */
 let current = null;
@@ -29,6 +30,7 @@ export function track(tl) {
       resolve();
     });
     if (tl.progress() === 1) resolve();
+    else if (isZoomed()) Promise.resolve().then(() => { if (tl.progress() < 1) { hush(); tl.progress(1); } }); // (started under a pinch zoom: it goes straight to its end, see src/core/zoom.js; a zoom during a shot does the same from main.js)
   });
 }
 

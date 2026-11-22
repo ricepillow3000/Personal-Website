@@ -53,6 +53,14 @@
 .dossier-sub { font-weight: 700; margin: 0 0 4px; }
 .dossier-stack { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 18px; padding: 0; list-style: none; }
 .dossier-stack li { border: 2px solid var(--black); padding: 0 8px; font-weight: 800; font-size: 13px; }
+/* THE STORY: four beats, each a slanted label and one or two sentences (setup, tension, pivot, lesson) */
+.story { margin: 0 0 22px; }
+.story-beats { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; line-height: 1.5; }
+.story-beats li { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: start; }
+.story-beats b { justify-self: start; font-family: var(--f-menu); font-weight: 400; font-size: 15px; letter-spacing: 1.5px; line-height: 1.5; padding: 0 8px;
+  background: var(--red-ink); color: var(--white); transform: skew(var(--skew)); box-shadow: 3px 3px 0 var(--black); }
+.story-beats li:nth-child(3) b { background: var(--black); box-shadow: 3px 3px 0 var(--red); } /* the pivot: the turn in the story */
+@media (max-width: 560px) { .story-beats li { grid-template-columns: 1fr; gap: 4px; } }
 .dossier-cols { display: grid; grid-template-columns: 1.45fr 1fr; gap: 26px; }
 .dossier h3 { display: inline-block; font-family: var(--f-menu); font-size: 22px; letter-spacing: 2px; font-weight: 400; background: var(--black); color: var(--white); padding: 0 12px; margin: 0 0 10px; transform: skew(var(--skew)); }
 .dossier ul.obj { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; line-height: 1.5; counter-reset: obj; }

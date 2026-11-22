@@ -10,6 +10,7 @@
 
 import { mountSubway, hurrySubway, subwayReady } from './subway.js';
 import { artSrc } from './art.js';
+import { isZoomed } from '../core/zoom.js';
 
 const C = { black: '#050505', red: '#D80000', red2: '#E60012', white: '#FFFFFF', blood: '#7A0008' };
 const VB = '0 0 1600 900';
@@ -330,6 +331,7 @@ function startTicker(svg) {
   const frame = (now) => {
     requestAnimationFrame(frame);
     if (document.body.dataset.mode === 'title') return; // the city isn't shown on the title
+    if (isZoomed()) return; // (pinch-zoomed: the crawl holds still, see src/core/zoom.js)
     /* nor before its picture has arrived: the billboard fades in with it (.bd-city img.in ~), and
        moving invisible letters cost a layout every frame while THE PLAN's entrance was playing */
     if (!art.classList.contains('in')) return;

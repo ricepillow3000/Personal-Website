@@ -13,6 +13,15 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 button { font: inherit; color: inherit; cursor: pointer; }
+/* PINCH-ZOOMED: THE PAGE HOLDS STILL (Nov 22, John: zooming in on a phone restarted the page; see src/core/zoom.js).
+   Every animation pauses where it is and nothing keeps its own moving layer, so the page falls back into the browser's
+   tiled page layer, drawn only where the visitor looks, at the zoom's sharpness. The backdrop's parallax layers drop their
+   3D transform (a shift of a few px). Zooming back out takes the class away and everything carries on. Zoom stays on. */
+html.zoomed *, html.zoomed *::before, html.zoomed *::after { animation-play-state: paused !important; will-change: auto !important; }
+html.zoomed :is(.bd-layer, .bd-drift) { transform: none !important; }
+/* (the backdrop's slow loops are taken off, not only paused: a paused animation still holds its own moving layer, measured
+   in Chromium; they start again from their first frame when the zoom is let go: the drift, the camera push, the spin) */
+html.zoomed .backdrop, html.zoomed .backdrop *, html.zoomed .backdrop *::before, html.zoomed .backdrop *::after { animation: none !important; }
 a { color: inherit; }
 kbd {
   font-family: var(--f-body); font-size: .72em; font-weight: 800; line-height: 1;

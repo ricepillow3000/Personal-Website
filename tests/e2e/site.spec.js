@@ -1500,6 +1500,65 @@ test('departure board: it is hung on the resting title only. Through SAVE DATA a
   await ctx.close();
 });
 
+test('zoom is safe: a pinch zoom on a phone, a tablet or a laptop never reloads the page; it holds the page still (no moving layers, the film goes to its end) and everything carries on when the zoom is let go', async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone', 'it makes its own phone, tablet and laptop');
+  test.setTimeout(120000);
+  /* Nov 22, John: "when on my phone and I zoom in, that artifact automatically restarts or says that it cannot reach".
+     A page the browser kills for memory reloads. Measured in Chromium: on a 3x phone THE PLAN held 18 big layers promoted
+     for motion, 3.4 GB if drawn whole at x3. Budget now: while zoomed, no big layer of the backdrop is promoted for motion. */
+  const moving = async (page, cdp) => { // the big layers promoted for motion, and their area if drawn whole at this zoom (MB)
+    let layers = []; const got = new Promise((r) => cdp.once('LayerTree.layerTreeDidChange', (e) => { layers = e.layers || []; r(); }));
+    await page.evaluate(() => { document.body.style.outline = document.body.style.outline ? '' : '0 solid transparent'; });
+    await Promise.race([got, page.waitForTimeout(2000)]);
+    const { w, h, dpr, z } = await page.evaluate(() => ({ w: innerWidth, h: innerHeight, dpr: devicePixelRatio, z: visualViewport.scale }));
+    let n = 0; let mb = 0;
+    for (const l of layers.filter((x) => x.drawsContent && !x.invisible && x.width * x.height >= w * h * 0.5)) {
+      const r = (await cdp.send('LayerTree.compositingReasons', { layerId: l.layerId }).catch(() => ({}))).compositingReasonIds || [];
+      if (r.some((x) => /nimation|illChange|3D/.test(x))) { n++; mb += (l.width * l.height * dpr * dpr * z * z * 4) / 1048576; }
+    }
+    return { n, mb: Math.round(mb) };
+  };
+  for (const [name, opts] of [
+    ['phone', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }],
+    ['tablet', { viewport: { width: 820, height: 1180 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }],
+    ['laptop at 200%', { viewport: { width: 720, height: 450 }, deviceScaleFactor: 2 }], // (a browser zoom: a smaller window at twice the pixels; a trackpad pinch on top of it)
+  ]) {
+    const ctx = await browser.newContext({ ...opts, reducedMotion: 'no-preference' });
+    const page = await ctx.newPage();
+    let loads = 0; const errors = []; let crashed = false;
+    page.on('load', () => loads++); page.on('pageerror', (e) => errors.push(e.message)); page.on('crash', () => { crashed = true; });
+    await page.goto('/');
+    await page.waitForSelector('#pressStart');
+    await page.waitForTimeout(3500);
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('LayerTree.enable');
+    const zoom = async (z) => { await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: z }); await page.waitForTimeout(400); };
+    const running = () => page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running' && a.constructor.name === 'CSSAnimation').length);
+    // the title, zoomed in: still, no moving layer
+    await zoom(3);
+    await expect(page.locator('html')).toHaveClass(/\bzoomed\b/);
+    expect(await running(page)).toBe(0);
+    expect(await moving(page, cdp), `${name}: moving layers on the zoomed title`).toEqual({ n: 0, mb: 0 });
+    // a file played while zoomed: the train shot goes straight to its end, THE PLAN is there at once
+    await page.evaluate(() => document.getElementById('pressStart').click());
+    await page.waitForTimeout(900);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 2500 });
+    // (the station fades out and is hidden 0.7 s after its fade: under load that ends later, so wait for it, up to 4 s)
+    await expect.poll(() => moving(page, cdp), { message: `${name}: moving layers on zoomed THE PLAN`, timeout: 4000 }).toEqual({ n: 0, mb: 0 });
+    // let go of the zoom: the page moves again (its loops carry on), and the hidden station has left the compositor
+    await zoom(1);
+    await expect(page.locator('html')).not.toHaveClass(/\bzoomed\b/);
+    await expect.poll(() => running(page)).toBeGreaterThan(0);
+    expect(await page.evaluate(() => getComputedStyle(document.querySelector('.bd-subway')).visibility)).toBe('hidden');
+    // the canvases are held to a pixel budget (touch screens 3.2 megapixels each, desktops 8)
+    const px = await page.evaluate(() => Math.max(...[...document.querySelectorAll('.bd-cam canvas')].map((c) => c.width * c.height)));
+    expect(px).toBeLessThanOrEqual(opts.isMobile ? 3.2e6 : 8e6);
+    expect({ loads, errors, crashed }, name).toEqual({ loads: 1, errors: [], crashed: false });
+    await ctx.close();
+  }
+});
+
 test('no emojis anywhere: no emoji-capable character in the site (phones draw them as emoji tiles), and outbound links use the drawn arrow', async ({ page }) => {
   const files = [];
   const walk = (d) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) walk(p); else if (/\.(js|css|html)$/.test(f)) files.push(p); } };

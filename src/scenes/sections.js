@@ -38,7 +38,7 @@ function missions(ctx) {
   const list = reorder(resume.missions, ctx.company?.order?.missions);
   return {
     title: 'MISSIONS',
-    html: `${watermark('TARGETS')}${back}${head('MISSIONS', 'Two live apps. Pick a target to open its file.')}
+    html: `${watermark('TARGETS')}${back}${head('MISSIONS', 'Two problems I set out to solve. Open a file for the whole story.')}
       <ul class="wanted">${list
         .map(
           (m, i) => `<li class="wanted-slot" style="--tilt:${i % 2 ? 2.4 : -2.8}deg;--d:${i * -1.3}s">
@@ -61,6 +61,9 @@ function missions(ctx) {
   };
 }
 
+/* a work story in four beats (setup, tension, pivot, lesson): a hiring manager wants the bets, where it broke and what was learned */
+const storyList = (beats) => `<ol class="story-beats">${beats.map(([k, t]) => `<li><b>${esc(k)}</b><span>${esc(t)}</span></li>`).join('')}</ol>`;
+
 export function dossierMarkup(m) {
   return `<div class="dossier" data-id="${m.id}">
     <button class="modal-x" type="button" data-close aria-label="Close">✕</button>
@@ -75,6 +78,7 @@ export function dossierMarkup(m) {
       <a class="btn" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}" data-clear="${m.id}">Code on GitHub ${EXT}</a>
     </div>
     <p class="dossier-hint">${isCleared(m.id) ? 'Case cleared. Thanks for checking it out.' : 'Visit the live app or the code to clear this case.'}</p>
+    ${m.story ? `<section class="story" aria-label="The story"><h3>THE STORY</h3>${storyList(m.story)}</section>` : ''}
     <div class="dossier-cols">
       <div><h3>OBJECTIVES</h3><ul class="obj">${m.objectives.map((o) => `<li>${esc(o)}</li>`).join('')}</ul></div>
       <div><h3>LOOT</h3><ul class="loot">${m.loot.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
@@ -214,7 +218,7 @@ function skills(ctx) {
 function different() {
   return {
     title: 'MY EDGE',
-    html: `${watermark('FACTS')}${back}${head('MY EDGE', 'What makes me different. Four facts, no pitch.')}
+    html: `${watermark('FACTS')}${back}${head('MY EDGE', 'Where it all adds up. Four facts, no pitch.')}
       <div class="comic">${resume.different
         .map((d, i) => `<article class="panel panel-${i}" data-nav tabindex="0"><span class="panel-num" aria-hidden="true">${i + 1}</span><h3>${esc(d.title)}</h3><p>${mark(d.fact)}</p></article>`)
         .join('')}</div>`,
@@ -242,7 +246,7 @@ function stats() {
   const gpa = Number(e.gpa) || 0;
   return {
     title: 'STATS',
-    html: `${watermark('PROFILE')}${back}${head('STATS', 'The person behind the projects.')}
+    html: `${watermark('PROFILE')}${back}${head('STATS', 'Who I am, and why this site exists.')}
       <section class="idcard" data-in>
         <button class="gpa-burst" type="button" aria-label="Off the record. Press to flip for a secret stat." aria-pressed="false"><span class="gb-front"><b>???</b><small>OFF RECORD</small></span><span class="gb-back"><b>MAX</b><small>BEE FEAR</small></span></button>
         <div class="id-band"><span>ID · ${esc(resume.name.toUpperCase())}</span><span>${esc(resume.location)}</span></div>
@@ -260,6 +264,7 @@ function stats() {
           </div>
         </div>
       </section>
+      <section class="story story-site" data-in aria-label="Why this site"><h3>WHY THIS SITE</h3>${storyList(resume.siteStory)}</section>
       <ul class="traits">${resume.funFacts.map((f, i) => `<li class="trait t${i}" data-in><i class="ff-star" aria-hidden="true"></i>${esc(f)}</li>`).join('')}</ul>
       <blockquote class="motto-strip" data-in>“${esc(resume.motto.text)}”<cite>— ${esc(resume.motto.by)}</cite></blockquote>`,
     intro(root) {
