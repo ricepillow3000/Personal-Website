@@ -330,11 +330,28 @@ const signHTML = () => `<div class="ss" hidden>
     <b class="ss-code">JN</b>
   </div></div></div>
 </div>`;
+/* THE BOARD IS HUNG ON THE RESTING TITLE AND NOWHERE ELSE (Nov 22, John: "when I opened it in browser, I didn't see the train
+   sign, and then when I... clicked my data save and was about to be transitioned with the train coming in, I see the train
+   sign, but it's obstructing the path of the train, which wasn't there to begin with... find the root cause").
+   Root cause: the board picks its place by measuring the title's furniture (name, calendar, card, top bar) and taking the
+   first spot clear of it, and it was allowed to do that whenever the body's mode said 'title'. But the mode says 'title'
+   all through SAVE DATA and the whole train shot. So (1) every time the body's class changed during the shot (the save
+   screen closing, a key press), it measured again with the camera panning and the title's furniture blown away, found
+   nothing to keep clear of, and jumped to the first spot in its list, out in the open over the track; and (2) a visitor
+   who tapped PRESS START before the board had lit up (it waits for the fonts and the title to settle, 2 to 4 s after the
+   page opens, longer on a phone) had no board on the title at all, and got its FIRST placement in the middle of the shot.
+   Now the board decides only while the title is at rest: the title's mode, no save screen over it, no start under way.
+   holdSign(true) is called the moment a file is played and the train shot holds it too; it lets go when the shot ends or
+   the visitor leaves the title. A board that was up stays exactly where it was for the shot; a board that was not up
+   stays out until the visitor is back on the title. */
+let signHeld = false;
+export function holdSign(on) { signHeld = Boolean(on); }
+const titleAtRest = () => !signHeld && document.body.dataset.mode === 'title' && !document.body.classList.contains('sv-open');
 /* what the board must keep clear of (their boxes on screen, measured on resize and as the title settles) */
 const SIGN_KEEP_CLEAR = '#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr'; // (the name's letters, not its full-width line)
 let clearOf = [];
 function measureClear() {
-  if (document.body.dataset.mode !== 'title') return;
+  if (!titleAtRest()) return;
   clearOf = [...document.querySelectorAll(SIGN_KEEP_CLEAR)].filter((el) => getComputedStyle(el).visibility !== 'hidden').map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
 }
 /* art px -> screen px from the layer's real box on screen (it sits inside the camera's slow push-in) */
@@ -510,8 +527,8 @@ export function mountStation(box, before) {
   let spot;
   let placedOnce = false;
   const hang = () => {
-    if (!placedOnce || !ready) return;
-    const s = document.body.dataset.mode === 'title' || !spot ? pickSpot(wrap) : spot; // (it never moves mid-shot)
+    if (!placedOnce || !ready || !titleAtRest()) return; // (it never moves, and never first appears, away from the resting title)
+    const s = pickSpot(wrap);
     if (s === spot) return;
     spot = s;
     sign.hidden = !s;
@@ -523,7 +540,7 @@ export function mountStation(box, before) {
     const sh = (Math.hypot(p3[0] - p0[0], p3[1] - p0[1]) + Math.hypot(p2[0] - p1[0], p2[1] - p1[1])) / 2;
     Object.assign(screen.style, { width: `${sw.toFixed(2)}px`, height: `${sh.toFixed(2)}px`, fontSize: `${(s.w * 0.072).toFixed(2)}px`, transform: rectToQuad(sw, sh, bd.quad) });
   };
-  const remeasure = () => { if (!ready || document.body.dataset.mode !== 'title') return; measureClear(); spot = undefined; hang(); }; // (decided on the title only)
+  const remeasure = () => { if (!ready || !titleAtRest()) return; measureClear(); spot = undefined; hang(); }; // (decided on the resting title only)
   // it decides once the title has settled (its fonts in, the fit guard done), then fades in; after that
   // it only moves when the screen changes size or the fit guard rearranges the title (body classes)
   let ready = false;
@@ -538,7 +555,8 @@ export function mountStation(box, before) {
   window.addEventListener('resize', later, { passive: true });
   const nameEl = document.getElementById('titleName');
   if (nameEl && window.ResizeObserver) new ResizeObserver(later).observe(nameEl); // (and again if the name's box changes)
-  new MutationObserver(later).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  // (the mode is watched too: leaving the title lets go of a hold, and coming back to it decides again)
+  new MutationObserver(() => { if (document.body.dataset.mode !== 'title') signHeld = false; later(); }).observe(document.body, { attributes: true, attributeFilter: ['class', 'data-mode'] });
   box.insertBefore(wrap, before);
   // the guardrails, on their own layer above the train (appended last: over its canvases)
   const front = document.createElement('div');

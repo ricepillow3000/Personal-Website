@@ -915,6 +915,49 @@ test('sound: leaving the page pauses it and coming back resumes it, with no togg
   void state;
 });
 
+test('sound: an engine that does not come back is replaced (an iPhone gets a new one on the first tap after returning; anywhere, one whose resume never takes is rebuilt on the next tap; sound switched off and on after being away always gets a new one)', async ({ page, browser }, testInfo) => {
+  const hide = (p, h) => p.evaluate((h) => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h }); document.dispatchEvent(new Event('visibilitychange')); }, h);
+  const gen = (p) => p.evaluate(() => window.__acGen || 0);
+  const state = (p) => p.evaluate(() => window.__acState?.());
+  // 1) an iPhone: the app is left and reopened. The old engine is not trusted; the first tap builds a new one and it runs
+  const ctx = await browser.newContext({ ...testInfo.project.use, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1' });
+  const ip = await ctx.newPage();
+  await ip.goto('/');
+  await ip.locator('.title-hook').click();
+  await expect.poll(() => state(ip)).toBe('running');
+  expect(await gen(ip)).toBe(1);
+  await hide(ip, true); await ip.waitForTimeout(250); await hide(ip, false); await ip.waitForTimeout(250);
+  expect(await gen(ip)).toBe(1); // nothing is rebuilt without a tap (a phone would not let it start)
+  await ip.locator('.title-hook').click();
+  await expect.poll(() => gen(ip)).toBe(2);
+  await expect.poll(() => state(ip)).toBe('running');
+  await expect(ip.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'true');
+  await ctx.close();
+  // 2) any device: the engine's resume never takes after a return (it stays asleep). It is found out and the next tap builds a new one
+  await page.goto('/');
+  await page.locator('.title-hook').click();
+  await expect.poll(() => state(page)).toBe('running');
+  expect(await gen(page)).toBe(1);
+  await page.evaluate(() => { window.__resume = AudioContext.prototype.resume; AudioContext.prototype.resume = () => new Promise(() => {}); });
+  await hide(page, true); await page.waitForTimeout(250); await hide(page, false);
+  await page.waitForTimeout(800); // (the check runs 450 ms after the return)
+  expect(await state(page)).not.toBe('running');
+  await page.evaluate(() => { AudioContext.prototype.resume = window.__resume; });
+  await page.locator('.title-hook').click();
+  await expect.poll(() => gen(page)).toBe(2);
+  await expect.poll(() => state(page)).toBe('running');
+  // 3) a healthy return keeps its engine (the music carries on where it was); switching the sound off and on after being away gets a new one
+  await hide(page, true); await page.waitForTimeout(250); await hide(page, false); await page.waitForTimeout(800);
+  expect(await gen(page)).toBe(2);
+  expect(await state(page)).toBe('running');
+  await page.locator('#soundBtn').click();
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'false');
+  await page.locator('#soundBtn').click();
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => gen(page)).toBe(3);
+  await expect.poll(() => state(page)).toBe('running');
+});
+
 test('tower lights: every aviation light blinks on its own random beat (never all together); all steady on with reduced motion', async ({ page, browser }) => {
   await openBoard(page); // reduced motion (this context)
   const states = () => page.locator('.bd-avfix .av').evaluateAll((els) => els.map((e) => e.classList.contains('lit')));
@@ -1377,6 +1420,52 @@ test('SAVE DATA really saves: five new games fill five files (each its own progr
   await page.keyboard.press('Escape');
   await expect(page.locator('#pressStart')).toHaveText('PRESS START'); // nothing saved any more
   expect(errors).toEqual([]);
+});
+
+test('departure board: it is hung on the resting title only. Through SAVE DATA and the train shot it keeps the exact place it had; a visitor who starts before it has lit up never sees it appear mid-shot', async ({ browser }, testInfo) => {
+  const sign = (page) => page.evaluate(() => { const s = document.querySelector('.ss'); return s ? { hidden: s.hidden, tf: s.querySelector('.ss-screen').style.transform } : null; });
+  // the board's state at every look while the train shot is on screen, recorded by the page itself (20 looks a second: the
+  // test runner's own clock is too coarse when the whole suite runs at once)
+  const watch = (page) => page.evaluate(() => { window.__looks = []; setInterval(() => { const s = document.querySelector('.ss'); window.__looks.push({ shot: Boolean(document.querySelector('.fall.tunnel')) && document.body.dataset.mode === 'title', hidden: s ? s.hidden : true, tf: s ? s.querySelector('.ss-screen').style.transform : '' }); }, 50); });
+  const shots = async (page) => {
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 30000 });
+    return (await page.evaluate(() => window.__looks)).filter((l) => l.shot);
+  };
+  const phone = testInfo.project.name === 'phone';
+  const open = () => browser.newContext({ reducedMotion: 'no-preference', ...(phone ? { viewport: { width: 390, height: 664 }, isMobile: true, hasTouch: true } : { viewport: { width: 1280, height: 800 } }) });
+  // 1) the board is up on the title: it stays exactly there through SAVE DATA and the shot (the camera pans on a phone)
+  let ctx = await open(); let page = await ctx.newPage();
+  await page.goto('/');
+  await expect(page.locator('.ss.in')).toBeAttached({ timeout: 15000 });
+  await page.waitForTimeout(600);
+  const before = await sign(page);
+  expect(before.hidden).toBe(false);
+  await page.evaluate(() => document.getElementById('pressStart').click());
+  await page.waitForTimeout(1200);
+  expect((await sign(page)).tf).toBe(before.tf);
+  await watch(page);
+  await page.keyboard.press('Enter'); // play the picked file: the train comes
+  const seen = await shots(page);
+  expect(seen.length).toBeGreaterThan(3);
+  for (const s of seen) { expect(s.hidden).toBe(false); expect(s.tf).toBe(before.tf); }
+  await ctx.close();
+  // 2) a visitor who taps before the board has lit up: it is not on the title, and it never shows up during the shot
+  ctx = await open(); page = await ctx.newPage();
+  await page.goto('/');
+  await page.waitForSelector('#pressStart');
+  expect(await page.locator('.ss.in').count()).toBe(0); // (it waits for the fonts and the title to settle)
+  await page.evaluate(() => document.getElementById('pressStart').click());
+  await page.waitForTimeout(700);
+  await watch(page);
+  await page.keyboard.press('Enter');
+  const late = await shots(page);
+  expect(late.length).toBeGreaterThan(3);
+  for (const s of late) expect(s.hidden).toBe(true);
+  // 3) back on the title later, at rest, it is hung again
+  await page.evaluate(() => { location.hash = '#/'; });
+  await expect.poll(() => page.evaluate(() => document.body.dataset.mode), { timeout: 10000 }).toBe('title');
+  await expect.poll(async () => (await sign(page))?.hidden, { timeout: 10000 }).toBe(false);
+  await ctx.close();
 });
 
 test('no emojis anywhere: no emoji-capable character in the site (phones draw them as emoji tiles), and outbound links use the drawn arrow', async ({ page }) => {
