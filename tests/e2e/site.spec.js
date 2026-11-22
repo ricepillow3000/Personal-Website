@@ -977,10 +977,10 @@ test('heavy train: the camera moves like a heavy train (steady rumble + wheel-se
   const { cameraMotion, NOSE_PASS } = await import('../../src/fx/subway.js');
   const near = (t) => (t < NOSE_PASS - 0.27 ? 0 : Math.min(1, (t - (NOSE_PASS - 0.27)) / 0.27));
   const ys = [];
-  for (let t = 0; t <= 1.25; t += 1 / 60) ys.push(cameraMotion(t, near(t)).y);
+  for (let t = 0; t <= NOSE_PASS + 0.3; t += 1 / 60) ys.push(cameraMotion(t, near(t)).y); // (the whole arrival, however long it takes: slower since Nov 21)
   expect(cameraMotion(0.9, 1)).toEqual(cameraMotion(0.9, 1));
   const early = Math.max(...ys.slice(0, 30).map(Math.abs)); // still in the tunnel
-  const late = Math.max(...ys.slice(44).map(Math.abs)); // the wheel sets pass the camera
+  const late = Math.max(...ys.slice(Math.round((NOSE_PASS - 0.2) * 60)).map(Math.abs)); // the wheel sets pass the camera
   const jump = ys.slice(1).reduce((a, y, i) => a + Math.abs(y - ys[i]), 0) / (ys.length - 1);
   expect(late).toBeGreaterThan(early * 2); // it builds to the thumps as the train arrives
   expect(late).toBeLessThan(30); // strong, never jarring
