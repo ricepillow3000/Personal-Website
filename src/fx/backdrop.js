@@ -283,7 +283,13 @@ function startTicker(svg) {
       th += ring.widths[i];
       const cos = Math.cos(t);
       // (Nov 21: only what changed is written: a letter round the back was set hidden again every frame)
-      if (cos <= 0.04) { if (c._v !== 0) { c.style.visibility = 'hidden'; c._v = 0; } return; }
+      /* (Nov 22: a letter turned almost edge-on was squashed to a sliver one or two LED dots wide, which read as a garbled
+         glyph at the drum's edge. It now comes round the curve out of the dark: unlit while it is still edge-on, at full light
+         as soon as it is a few dots wide.) */
+      if (cos <= 0.14) { if (c._v !== 0) { c.style.visibility = 'hidden'; c._v = 0; } return; }
+      const k = Math.min(1, (cos - 0.14) / 0.18);
+      const op = (Math.round(k * k * (3 - 2 * k) * 20) / 20).toFixed(2);
+      if (c._op !== op) { c.setAttribute('opacity', op); c._op = op; }
       const { cx, R, t0, ta, b0, ba } = ring.g;
       const x = cx + R * Math.sin(t);
       const y = (t0 + b0) / 2 + ((ta + ba) / 2) * (1 - cos);

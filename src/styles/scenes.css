@@ -3,7 +3,7 @@
 .title-block { position: relative; z-index: 2; max-width: 760px; }
 .title-codename { font-size: clamp(22px, 3vw, 34px); margin: 18px 0 10px; }
 .title-role { display: table; margin: 0 0 12px; padding: 2px 12px; font-family: var(--f-menu); font-size: clamp(16px, 1.6vw, 20px); letter-spacing: 1.5px; text-transform: uppercase; color: var(--yellow); background: var(--black); transform: skew(var(--skew)); box-shadow: 4px 4px 0 var(--white); }
-.title-hook { display: inline-block; margin: 0 0 26px; max-width: 560px; padding: 6px 12px; background: rgba(5, 5, 5, .82); font-family: var(--f-type); font-size: clamp(15px, 1.6vw, 19px); transform: rotate(-1deg); }
+.title-hook { display: inline-block; margin: 0 0 26px; max-width: 560px; padding: 6px 12px; background: var(--black); font-family: var(--f-type); font-size: clamp(15px, 1.6vw, 19px); transform: rotate(-1deg); }
 .press-start {
   display: block; border: 0; background: var(--white); color: var(--black);
   font-family: var(--f-head); font-size: clamp(32px, 4.2vw, 54px); letter-spacing: 3px; line-height: 1.15;
@@ -15,6 +15,7 @@
 .quick-link {
   display: inline-block; margin-top: 22px; padding: 6px 0; font-weight: 700; font-size: 17px;
   text-underline-offset: 4px; text-shadow: 1px 1px 0 var(--black);
+  background: var(--black); box-shadow: -8px 0 0 var(--black), 8px 0 0 var(--black); /* (solid behind the words: the wall's star outline struck through them) */
 }
 
 /* ===================== CONVERSATION ===================== */
@@ -133,7 +134,15 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 .sys .btn { box-shadow: 4px 4px 0 var(--red); }
 .toggle { border: 3px solid var(--black); background: var(--white); color: var(--black); font-family: var(--f-menu); font-size: 20px; letter-spacing: 1px; padding: 2px 16px; transform: skew(var(--skew)); min-width: 86px; }
 .toggle[aria-pressed="true"] { background: var(--black); color: var(--yellow); }
-.sys input[type=range] { accent-color: var(--red); width: 160px; }
+/* the volume slider in the sheet's own shapes: the same slant, ink edge and hard shadow as the ON/OFF switches
+   (a browser's default round knob on a grey pill was the one soft, unstyled thing on the page) */
+.sys input[type=range] { -webkit-appearance: none; appearance: none; width: 160px; height: 28px; margin: 0 4px 0 0; padding: 0; background: none; cursor: pointer; transform: skew(var(--skew)); accent-color: var(--red); }
+.sys input[type=range]::-webkit-slider-runnable-track { box-sizing: border-box; height: 16px; border: 3px solid var(--black); background: linear-gradient(90deg, var(--red) var(--fill, 50%), var(--white) 0); }
+.sys input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 28px; margin-top: -9px; border: 0; border-radius: 0; background: var(--black); box-shadow: 3px 3px 0 var(--red); }
+.sys input[type=range]::-moz-range-track { box-sizing: border-box; height: 16px; border: 3px solid var(--black); background: var(--white); }
+.sys input[type=range]::-moz-range-progress { height: 10px; background: var(--red); }
+.sys input[type=range]::-moz-range-thumb { width: 14px; height: 28px; border: 0; border-radius: 0; background: var(--black); box-shadow: 3px 3px 0 var(--red); }
+.sys input[type=range]:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
 .ach-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .ach-list li { display: flex; gap: 12px; align-items: center; border: 3px solid var(--black); padding: 8px 12px; transform: skew(-4deg); background: var(--white); color: var(--black); }
 .ach-list li.got { background: var(--yellow); }

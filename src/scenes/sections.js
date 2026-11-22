@@ -391,7 +391,13 @@ function system() {
           <p>Most sounds are synthesized live. These are real recordings, free under Creative Commons:</p>
           <ul>${SOUND_CREDITS.map((c) => `<li><b>${esc(c.what)}</b> · <a href="${esc(c.source)}" target="_blank" rel="noopener">${esc(c.pack)}</a> by ${c.authorUrl ? `<a href="${esc(c.authorUrl)}" target="_blank" rel="noopener">${esc(c.author)}</a>` : esc(c.author)} · <a href="${esc(c.licenseUrl)}" target="_blank" rel="noopener">${esc(c.license)}</a>${c.changes ? ` · ${esc(c.changes)}` : ''}</li>`).join('')}</ul>
         </section>
-      </div>`
+      </div>`,
+    after(root) {
+      // the slider's red runs as far as its knob (the track is drawn by the page, not the browser)
+      const vol = root.querySelector('#musicVol');
+      const fill = () => vol.style.setProperty('--fill', `${Math.round(Number(vol.value) * 100)}%`);
+      if (vol) { fill(); vol.addEventListener('input', fill); }
+    }
   };
 }
 

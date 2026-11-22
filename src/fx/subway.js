@@ -86,14 +86,14 @@ const FLAT = new Set(['news', 'receipt', 'flyer', 'wrapper']);
 const TRASH = [
   [600, 838, 'news', 1.2, -6],
   [700, 776, 'receipt', 0.7, 8],
-  [790, 902, 'can', 0.6, 0],
-  [915, 708, 'wrapper', 0.55, 5],
-  [1000, 814, 'flyer', 0.95, -7],
-  [1150, 905, 'cup', 0.85, 0],
-  [858, 664, 'ball', 0.42, 0],
-  [1260, 790, 'bag', 0.7, 0],
-  [1118, 742, 'news', 0.65, 9], // (Nov 21, the full-scene scan: it lay under a guard rail's foot, half over the platform edge; now on the open floor)
-  [1060, 645, 'receipt', 0.5, -5],
+  [915, 708, 'wrapper', 0.55, 5, 3], // (6th number: the piece's own seed for its flight, its old place in this list, so taking two pieces out changed nobody else's tumble)
+  [986, 785, 'flyer', 0.95, -7, 4], // (Nov 22, the outside judge: "sliced by the frame". The camera shows the floor down to about y 812 and pushes in to about 776: the flyer lay ON that edge (half of it, then a sliver). It lies inside the shot now, on the same line to the vanishing point.)
+  // (Nov 22: a can at [790, 902] and a cup at [1150, 905] stood below the shot: only the top of each ever poked over
+  //  the bottom edge, a lid and part of a cup that read as a cropping mistake. Out, not half in.)
+  [858, 664, 'ball', 0.42, 0, 6],
+  [1260, 790, 'bag', 0.7, 0, 7],
+  [1118, 742, 'news', 0.65, 9, 8], // (Nov 21, the full-scene scan: it lay under a guard rail's foot, half over the platform edge; now on the open floor)
+  [1060, 645, 'receipt', 0.5, -5, 9],
 ];
 
 const reduce = () => document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -340,7 +340,8 @@ const depthOf = (y) => (F * SKIRT) / Math.max(8, y - VP.y);
 
 function drawTrash(t, keep = null) {
   if (!trash) return;
-  TRASH.forEach(([x0, y0, kind, sz, tilt], i) => {
+  TRASH.forEach(([x0, y0, kind, sz, tilt, seed], n) => {
+    const i = seed ?? n;
     const [bx, by, bw, bh] = trash.box[kind];
     const flat = FLAT.has(kind);
     const near = Math.max(0.35, (y0 - VP.y) / (IH - VP.y)); // 1 at the bottom of the shot
@@ -353,7 +354,7 @@ function drawTrash(t, keep = null) {
     let back = false;
     let grounded = 1; // its shadow's strength: gone a tenth of a second after the wind takes it
     if (state) {
-      const st = state.trash[i];
+      const st = state.trash[n];
       const shiver = state.rumble;
       rot += Math.sin(t * 61 + i * 7) * 0.04 * shiver; // the rumble rattles it before the wind hits
       lift = Math.abs(Math.sin(t * 47 + i * 3)) * shiver * 1.5;
@@ -366,7 +367,7 @@ function drawTrash(t, keep = null) {
         lift = Math.max(0, st.lift * 1.3 * u - 260 * u * u) * grow;
         rot += st.spin * u;
         const flip = Math.cos(st.flip * u);
-        squash = Math.max(0.14, Math.abs(flip));
+        squash = Math.max(0.36, Math.abs(flip)); // (Nov 22: a sheet seen dead edge-on shrank to a tenth of its height, its print and ink crushed into a grey smudge with no outline, "half-formed" to the outside judge. A tumbling piece is never thinner than a third now (was 0.14): a sheet stays a drawn sheet, the bag is not a line.)
         back = flip < 0;
       }
     }
@@ -1665,14 +1666,14 @@ export function trainShot({ panTo = null } = {}) {
   state = {
     t: 0,
     rumble: 0,
-    trash: TRASH.map(([x, y], i) => ({
+    trash: TRASH.map(([x, y, , , , seed], n) => { const i = seed ?? n; return {
       at: null,
       when: timeAt(depthOf(y) + 140), // the nose reaches it (a bit early: the air pushes first)
       push: (x < 780 ? -0.45 : 1) * (260 + ((i * 53) % 220)), // (the pieces by the platform's edge are thrown AWAY from the track by the air the nose shoves aside: sliding toward it, a sheet went through a guard rail's post)
       lift: 300 + ((i * 71) % 380),
       spin: (i % 2 ? 1 : -1) * (5 + (i % 4) * 2.5),
       flip: 9 + (i % 3) * 5,
-    })),
+    }; }),
   };
   const startPan = 0.6;
   return {

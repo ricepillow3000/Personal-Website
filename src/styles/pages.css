@@ -82,7 +82,10 @@
 .panel-1 h3 { background: var(--white); color: var(--black); }
 .panel-2 { background: var(--yellow); color: var(--black); clip-path: polygon(0 8%, 100% 0, 100% 100%, 0 100%); }
 .panel-2 h3 { background: var(--red); color: var(--white); }
-.panel-3 { background: #161616; color: var(--white); border: 3px solid var(--white); clip-path: polygon(0 0, 100% 6%, 100% 100%, 3% 100%); }
+.panel-3 { background: #161616; color: var(--white); padding: 37px 31px 31px; clip-path: polygon(0 0, 100% 6%, 100% 100%, 3% 100%); }
+/* its white line follows the cut shape on all four sides (a plain border was sliced away by the clip along the top and the left) */
+.panel-3::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--white);
+  clip-path: polygon(evenodd, 0 0, 100% 6%, 100% 100%, 3% 100%, 0 0, 3.4px 3.2px, calc(3% + 3.2px) calc(100% - 3px), calc(100% - 3px) calc(100% - 3px), calc(100% - 3px) calc(6% + 3px), 3.4px 3.2px); }
 .panel-3 h3 { background: var(--yellow); color: var(--black); }
 .panel-3 .hl, .panel-1 .hl { box-shadow: 2px 2px 0 var(--black); }
 
@@ -214,6 +217,7 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
 /* the off-the-record starburst lives on the ID card (it moved here from the old board) */
 .idcard { position: relative; }
 .idcard .gpa-burst { position: absolute; top: 54px; right: 18px; }
+.idcard .gpa-burst small { margin-top: 2px; } .idcard .gpa-burst b { translate: 0 -3px; } /* (the small line sat on the feet of the big one) */
 /* (Nov 21, whole-site pass: on a phone held sideways the sticker sat ON the end of the school's name, "Georgia State
    Universi"). The name keeps clear of the sticker: it wraps to a second line before it can run under it. */
 .idcard .id-info h3 { max-width: calc(100% - 120px); }
