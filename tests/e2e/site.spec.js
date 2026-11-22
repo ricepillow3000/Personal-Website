@@ -48,7 +48,7 @@ test('THE PLAN: pointing at a chapter picks it (number, preview stickers, big wo
   await page.locator('.pl-item[data-ch="missions"]').hover();
   await expect(page.locator('#board .pl-item.on')).toHaveAttribute('data-ch', 'missions');
   await expect(page.locator('#board .cn-no .sr-only')).toHaveText('02');
-  await expect(page.locator('#board .cmd-loot')).toContainText('727 of 728 checks');
+  await expect(page.locator('#board .cmd-loot')).toContainText('Meliona'); // (it names what is inside, never repeats a stat)
   await expect(page.locator('#board .plan-continue')).toHaveAttribute('href', '#/missions');
   await expect(page.locator('#board .pcn-kicker')).toHaveText('JUMP AHEAD');
   await page.mouse.move(5, 5);

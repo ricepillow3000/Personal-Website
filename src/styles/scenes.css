@@ -178,7 +178,7 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 .bts p { max-width: 70ch; }
 
 /* ===================== QUICK VIEW ===================== */
-#screen-quick { background: var(--black); padding-top: 76px; }
+#screen-quick { background: var(--black); padding-top: 76px; --f-body: var(--f-plain); } /* (the one-pager stays plain: ATS and a fast read) */
 .quick-bar { position: fixed; top: 14px; left: var(--gutter); z-index: 41; display: flex; gap: 14px; flex-wrap: wrap; }
 .paper { max-width: 900px; margin: 0 auto; background: var(--white); color: #151515; box-shadow: 12px 12px 0 var(--red); font-size: 15px; line-height: 1.5; }
 .paper header { background: var(--red); color: var(--white); padding: 26px 36px 30px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 24px), 0 100%); } /* (a fixed 24px slant: as 16% of a tall phone header it cut through the GitHub link, Nov 21 evaluation) */
