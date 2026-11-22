@@ -1284,7 +1284,19 @@ test('sound for every box: side quests are heard as they land and as you scroll 
   await scrollDown();
   await page.evaluate(() => document.querySelector('.screen.active').scrollTo(0, 0));
   await page.waitForTimeout(300);
-  await page.locator('.panel').first().tap();
+  // tap a bare spot of the first panel (not a link inside it, not under the fixed top bar): the
+  // panel's center moves with the real web fonts, which CI loads and this sandbox does not
+  const spot = await page.evaluate(() => {
+    const el = document.querySelector('#page .panel'); const r = el.getBoundingClientRect();
+    for (let y = r.top + 6; y < Math.min(r.bottom, innerHeight) - 4; y += 6) for (let x = r.left + 6; x < r.right - 4; x += 12) {
+      const t = document.elementFromPoint(x, y);
+      if (t && el.contains(t) && !t.closest('a, button, [role="button"]')) return { x, y };
+    }
+    return null;
+  });
+  expect(spot).not.toBeNull();
+  await page.touchscreen.tap(spot.x, spot.y);
+  await page.waitForTimeout(200);
   expect((await heard()).filter((n) => n === 'panelSlap').length).toBeGreaterThanOrEqual(2); // scrolled to + tapped
   await ctx.close();
 });
