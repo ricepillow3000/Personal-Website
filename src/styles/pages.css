@@ -33,6 +33,10 @@
   clip-path: polygon(0 1.2%, 100% 0, 99% 99%, 1.5% 100%);
   transition: translate .18s var(--ease-pop), scale .18s var(--ease-pop), box-shadow .18s;
 }
+/* its ink line follows the cut shape on all four sides (Nov 22: the border was sliced away by the card's own clip down the right
+   side and at the bottom left, so the black header ran wider than the white body and the paper ended with no edge) */
+.poster::before { content: ""; position: absolute; inset: -5px; z-index: 1; pointer-events: none; background: var(--black);
+  clip-path: polygon(evenodd, 0 1.2%, 100% 0, 99% 99%, 1.5% 100%, 0 1.2%, 5px calc(1.2% + 5px), calc(1.5% + 5px) calc(100% - 5px), calc(99% - 5px) calc(99% - 5px), calc(100% - 5px) 5px, 5px calc(1.2% + 5px)); }
 .poster::after { /* halftone corner */
   content: ""; position: absolute; right: 0; bottom: 0; width: 46%; height: 40%; pointer-events: none;
   background: radial-gradient(circle, rgba(229, 25, 28, .28) 30%, transparent 32%) 0 0 / 12px 12px;
@@ -142,6 +146,10 @@
 }
 .stop.left .stop-card { grid-column: 1; grid-row: 1; rotate: -1.4deg; clip-path: polygon(0 0, 100% 3%, 98% 100%, 0 97%); }
 .stop.right .stop-card { grid-column: 3; grid-row: 1; rotate: 1.2deg; clip-path: polygon(2% 2%, 100% 0, 100% 100%, 0 97%); }
+/* each card's ink line follows its cut shape on all four sides (Nov 22: the 4px border was sliced away by the clip along the slanted sides) */
+.stop-card::after { content: ""; position: absolute; inset: -4px; pointer-events: none; background: var(--black); }
+.stop.left .stop-card::after { clip-path: polygon(evenodd, 0 0, 100% 3%, 98% 100%, 0 97%, 0 0, 4px 4px, 4px calc(97% - 4px), calc(98% - 4px) calc(100% - 4px), calc(100% - 4px) calc(3% + 4px), 4px 4px); }
+.stop.right .stop-card::after { clip-path: polygon(evenodd, 2% 2%, 100% 0, 100% 100%, 0 97%, 2% 2%, calc(2% + 4px) calc(2% + 4px), 4px calc(97% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 4px, calc(2% + 4px) calc(2% + 4px)); }
 .stop:hover .stop-card, .stop:focus-visible .stop-card { rotate: 0deg; scale: 1.03; }
 .stop-head { display: grid; gap: 4px; margin-bottom: 8px; padding-right: 96px; }
 .stop-title { font-family: var(--f-head); font-size: 26px; line-height: 1.05; text-transform: uppercase; }

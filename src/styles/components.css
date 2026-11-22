@@ -188,6 +188,7 @@ body.reduce-motion .mn-burst { animation: none; }
   filter: drop-shadow(.05em 0 0 var(--black)) drop-shadow(-.05em 0 0 var(--black)) drop-shadow(0 .05em 0 var(--black)) drop-shadow(0 -.05em 0 var(--black)) drop-shadow(.06em .07em 0 var(--black));
 }
 .stair-item .si-text .ct.box, .mn-big .ct.box { background: var(--black); color: var(--white); box-shadow: none; }
+.mn-big .ct:not(.box) { background: var(--black); } /* (Nov 22: the giant name lies on the turning burst. Under a letter with no box the outline alone left pockets where a white ray showed through as stray ticks and corners beside the letter; every letter stands on black now, so the name is one solid card) */
 /* the picked word: every letter on its own paper tile, the first one red, a small teal flag after it */
 .stair-item.on { --sc: 1.14; transform: rotate(-9deg) scale(var(--sc)); }
 .stair-item.on .si-text { animation: jolt .22s ease-out; }
@@ -795,6 +796,7 @@ body[data-mode="title"] .scroll-meter { display: none; }
 .sq-proof { background: var(--black); gap: .2em; } .sq-proof b { font-size: 1.5em; } .sq-g-proof { --c: 255, 225, 26; opacity: .5; }
 .sq-motto { background: var(--white); color: var(--black); gap: .05em; } .sq-motto b { font-size: 1.35em; text-shadow: none; } .sq-motto .sq-red { color: var(--white); background: var(--red); padding: 0 .2em; font-size: 1.7em; }
 .sq-g-motto { --c: 245, 245, 240; opacity: .55; }
+.sq-scr.sq-motto::after { opacity: .45; } /* (Nov 22: on the white screen the dark gaps between the diodes were as heavy as the type, and ROUTINE, white on its red block, was hatched out and unreadable. The gaps are lighter here: a lit white panel swallows them, the letters come through whole.) */
 .sq-stripes { background: var(--black); } .sq-run { position: absolute; inset: -50% -50%; background: repeating-linear-gradient(-45deg, var(--red) 0 .8em, var(--black) .8em 1.6em); animation: sq-run .6s linear infinite; }
 @keyframes sq-run { to { translate: 2.26em 0; } }
 .sq-g-stripes { --c: 229, 25, 28; opacity: .6; }
