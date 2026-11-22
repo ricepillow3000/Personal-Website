@@ -43,6 +43,10 @@ import { armBee } from './eggs/bee.js';
 import { installConsole } from './eggs/console.js';
 import { bindInput, bindGamepad } from './input/input.js';
 
+/* The Google Fonts sheet arrives as media="print" so it never blocks the first paint, then is switched
+   on here (it used to be an inline onload, which the Content-Security-Policy blocks). */
+{ const gf = document.getElementById('gfonts'); if (gf) gf.media = 'all'; }
+
 /* ---------------------------------------------------------------- setup */
 const company = readCompany();
 const ctx = { company };
@@ -998,6 +1002,14 @@ window.addEventListener('keydown', (e) => {
   menu.isOpen() ? menu.close() : menu.open();
 });
 bindGamepad(handle, () => unlock('player-2'));
+
+/* copy the email on any email link (Nov 22, launch prep): a visitor with no mail app set up still gets the address */
+document.addEventListener('click', (e) => {
+  const a = e.target.closest?.('a[href^="mailto:"]');
+  if (!a || a === hudEmail || a.id === 'ccEmail') return; // (those two copy on their own, above)
+  const addr = a.getAttribute('href').slice(7).split('?')[0];
+  navigator.clipboard?.writeText(addr).then(() => toast(addr, 'EMAIL COPIED'), () => {});
+});
 
 /* ---------------------------------------------------------------- analytics (cookie-free, optional) */
 function track(name) {

@@ -184,8 +184,8 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 .paper header { background: var(--red); color: var(--white); padding: 26px 36px 30px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 24px), 0 100%); } /* (a fixed 24px slant: as 16% of a tall phone header it cut through the GitHub link, Nov 21 evaluation) */
 .paper header .ransom { font-size: clamp(38px, 6vw, 60px); }
 .paper .q-hook { margin: 12px 0 0; font-weight: 700; font-size: 16px; max-width: 64ch; }
-.paper .q-contact { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; font-size: 14px; font-weight: 600; }
-.paper .q-contact a { color: var(--white); }
+.paper .q-contact { display: flex; flex-wrap: wrap; gap: 0 18px; margin-top: 8px; font-size: 14px; font-weight: 600; }
+.paper .q-contact a { color: var(--white); padding-block: 3px; } /* (24px+ tall finger targets, launch QA) */
 .paper-body { display: grid; grid-template-columns: 1fr 2fr; gap: 28px; padding: 14px 36px 34px; }
 .paper h2 {
   display: inline-block; font-family: var(--f-menu); font-size: 24px; letter-spacing: 2px; font-weight: 400;
