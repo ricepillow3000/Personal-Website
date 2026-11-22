@@ -189,7 +189,12 @@ export async function cityWipe(swap, label = 'SIDE QUESTS') {
     const [w, h] = sqSize(g);
     return { id, q, g, w, h, tf: rectToQuad(w, h, g) };
   });
-  const scr = screens.map((s) => `<div class="sq-scr sq-${s.id}" style="width:${s.w.toFixed(1)}px;height:${s.h.toFixed(1)}px;font-size:${((Math.min(s.w, s.h * 1.6) / 10) * SQ_FS[s.id]).toFixed(2)}px;transform:${s.tf}">${SQ_ADS[s.id]}</div>`).join('');
+  /* a finer diode pitch on the two dark screens that carry small type (Nov 22): at the 3px pitch every screen had, their letters
+     were only a few diodes wide and broke into shapes that read as misspelt words (NGUYEN as NOUYEN, NEW and LEAD as
+     specks). The other screens keep 3px (a finer grid on the tall red one and on the white one turned to a plaid moire in perspective; on a black screen the gaps do not show). */
+  const SQ_LED = { name: 2.2, checks: 2 };
+  const led = (s) => (SQ_LED[s.id] || 3).toFixed(1);
+  const scr = screens.map((s) => `<div class="sq-scr sq-${s.id}" style="--led:${led(s)}px;width:${s.w.toFixed(1)}px;height:${s.h.toFixed(1)}px;font-size:${((Math.min(s.w, s.h * 1.6) / 10) * SQ_FS[s.id]).toFixed(2)}px;transform:${s.tf}">${SQ_ADS[s.id]}</div>`).join('');
   const glow = screens.map((s) => `<i class="sq-glow sq-g-${s.id}" style="width:${s.w.toFixed(1)}px;height:${s.h.toFixed(1)}px;transform:${s.tf}"></i>`).join('');
   const el = scene('citylife sqr', `<div class="sq-stage">${scr}<span class="sq-art"></span>${glow}<div class="cl-trails">${'<i></i>'.repeat(8)}</div></div><i class="cl-flash"></i>`, label);
   const stage = el.querySelector('.sq-stage');

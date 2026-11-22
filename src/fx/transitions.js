@@ -533,6 +533,11 @@ export async function trainWipe(swap, label = '') {
   const ox = free * fx;
   const oy = (bh - AH * k) * 0.46;
   gsap.set(sign, { left: ox + PX * k, top: oy + PY * k, scale: Math.min(1, (241 * k * 0.9) / sign.offsetWidth, (107 * k * 0.86) / sign.offsetHeight) });
+  /* The platform's pillars stop behind the car's wall, by the car's own measure (Nov 22). Placed by the screen's width, the
+     first one came to rest half inside the door's window, which read as a window in two tones; they still pass every window
+     as the station glides in. (Art x 225: the wall between the door and the big window; 1000: the wall right of it.) */
+  gsap.set(q('.ns-pillar:not(.p2)'), { left: ox + 225 * k, right: 'auto' });
+  gsap.set(q('.ns-pillar.p2'), { left: ox + 1000 * k, right: 'auto' });
 
   const tl = gsap.timeline({ onComplete: () => el.remove() });
   tl.set(el, { visibility: 'visible' });
