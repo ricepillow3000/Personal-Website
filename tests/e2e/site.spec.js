@@ -1281,9 +1281,12 @@ test('sound for every box: side quests are heard as they land and as you scroll 
   expect((await heard()).filter((n) => n === 'skillUp').length).toBe(3); // the first row (picked already) answers too
 
   await go('different');
+  // only panels that start below the fold land on scroll (the ones on screen come in with the page);
+  // with every web font loaded (CI) they can all fit on the first screen
+  const waiting = await page.locator('#page .panel.slam-wait').count();
   await scrollDown();
   const landed = await heard();
-  expect(landed.filter((n) => n === 'panelSlap').length, `heard while landing and scrolling: ${landed.join(' ')}`).toBeGreaterThanOrEqual(1);
+  if (waiting) expect(landed.filter((n) => n === 'panelSlap').length, `heard while landing and scrolling: ${landed.join(' ')}`).toBeGreaterThanOrEqual(1);
   await page.evaluate(() => document.querySelector('.screen.active').scrollTo(0, 0));
   await page.waitForTimeout(300);
   // tap a bare spot of the first panel (not a link inside it, not under the fixed top bar): the
