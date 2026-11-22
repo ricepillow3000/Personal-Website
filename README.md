@@ -7,7 +7,7 @@ An original, game-style portfolio with a street-art look. Press start and you la
 connecting every skill to the project that proves it. Hover (or tap) a skill to light its strings. Every recruiter shortcut still works: a one-page
 **Quick View** and the **standard PDF** are always one click (or the `Q` key) away.
 
-Live: https://ricepillow3000.github.io/ · One-pager: https://ricepillow3000.github.io/#/quick
+Live: https://jnguyen-ai-engineer.vercel.app/ · One-pager: https://jnguyen-ai-engineer.vercel.app/#/quick (also mirrored at https://ricepillow3000.github.io/)
 
 ## Design rules
 All design rules, decisions and lessons live in [`DESIGN.md`](DESIGN.md). Read it before changing anything visual, motion, sound or on-screen copy ([`CLAUDE.md`](CLAUDE.md) makes this mandatory for Claude Code).
@@ -24,7 +24,7 @@ The PDF download is `public/assets/John_Nguyen_Resume.pdf` — replace that one 
 Never put a phone number in the site files; a test fails the build if one appears.
 
 ## Personal links for applications
-`https://ricepillow3000.github.io/?company=Google` pins a note for that company on the board and
+`https://jnguyen-ai-engineer.vercel.app/?company=Google` pins a note for that company on the board and
 reorders skills and projects for it. Unknown names still get the greeting. Combine with a
 deep link: `/?company=Google#/missions`.
 
