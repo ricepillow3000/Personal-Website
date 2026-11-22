@@ -15,8 +15,8 @@ export const resume = {
   // why this site exists, told as a work story (from DESIGN.md: the problem, the 10-second skim, the scrapped portrait, the agent crew)
   siteStory: [
     ['SETUP', 'Persona 5 has been impactful in my life. Its hero is treated as guilty before he can speak, and I know that frustration of being judged unfairly. A paper resume gets judged in seconds too, so I built mine as a game you play first.'], // (Nov 22, John's own reason)
-    ['TENSION', 'A recruiter skims for about ten seconds. The fun could never hide the facts, so every number is one tap away, with a plain one-page version for anyone in a hurry.'],
-    ['PIVOT', 'The first plan had an AI-drawn portrait of me as the guide. I scrapped it and let the work do the talking.'],
+    ['TENSION', 'I kept hearing that the job market waiting for me was doomed. That fear was loud, and for a while it got to me.'], // (Nov 22, John: "a victim of fearmongering about my future job market")
+    ['PIVOT', 'I put all of it behind me and bet everything on what I love, AI. Every project on this site came out of that bet.'], // (John: "put that all behind me and focus everything into my interest, which is AI. And bet everything on it")
     ['LESSON', 'Directing AI agents is its own skill. They wrote the code. I set the plan, checked every step and threw out what was not good enough.']
   ],
   school: 'GSU · Class of 2029',
