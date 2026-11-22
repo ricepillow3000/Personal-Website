@@ -272,18 +272,31 @@ const arrow = (cx, cy, sz, dir, fill) => { // a drawn arrow (no arrow characters
    STATION (fixed lateral lines), not by the board. Its face is a Japanese platform direction sign in our red, black and
    white: a red block at the track end with the white arrow (cut on our slant), the line's roundel (a red ring, JN), the
    destination in heavy caps, and the line's red band along the bottom, the way a running-in board carries its line colour. */
-const CITY_O = [-142, -38]; // its lateral span at depth 1, art px from the vanishing point (the tubes: -30 to -2; the platform's edge: -160)
+/* WHERE IT HANGS: THE ONE CLEAR WEDGE OF CEILING (Nov 22, John, on the picture of the train arriving: "it looks like the sign
+   is obstructing the train and the train track. Try to make it where it's not obstructing lights and not obstructing the
+   train track... that way both signs are visible").
+   Root cause: I had cleared the lamps and the train's SIDE, but only on the floor plan. On screen everything on a straight
+   line down the platform runs to the vanishing point, so each thing owns a wedge of the picture: the train's roof line runs
+   from the vanishing point up and left at 90 up per 174 across (the far cars sit along it), the light strip runs steeply up
+   (106 up per 2 to 30 across). A sign hung at mid height on the track side lay ACROSS the roof line: in front of the far
+   end of the train. The clear ceiling is the wedge between those two lines, and it is high: so THE CITY hangs right under
+   the ceiling (its top 104 of the ceiling's 106), its left end 114 out and its bottom 82 up (0.72 up per across, well over
+   the roof line's 0.52), its right end 40 out (the lamps' edge at that height is 29). It hangs nearer the camera than the
+   board (1.4 times its depth), so it is big enough to read up there: still the smaller sign, never across the lamps, the
+   train or the track, at every screen size, because the wedge is the same at every depth. */
+const CITY_O = [-114, -40]; // its lateral span at depth 1, art px from the vanishing point
+const CITY_TOP = 104; const CITY_H = 22; // its top and height (the ceiling is CEIL_U = 106 up)
+const CITY_NEAR = 1.4; // how much nearer than the board it hangs
 function cityAt(bd) {
-  const { d } = bd;
+  const d = bd.d * CITY_NEAR;
   const x0 = VP[0] + CITY_O[0] * d; const x1 = VP[0] + CITY_O[1] * d;
-  const top = VP[1] - 82 * d; const hh = 28 * d; // (its top a little under the board's: hung from the same ceiling)
-  return { x0, x1, top, hh, box: { l: x0 - 3 * d, r: x1 + 3 * d, t: VP[1] - CEIL_U * d, b: top + hh + 4 * d } };
+  const top = VP[1] - CITY_TOP * d; const hh = CITY_H * d;
+  return { d, x0, x1, top, hh, box: { l: x0 - 3 * d, r: x1 + 3 * d, t: VP[1] - CEIL_U * d, b: top + hh + 4 * d } };
 }
 function signsSVG(bd, city = true) { // city: false where THE CITY has no clear room of its own on this screen (the board hangs alone)
-  const { d, flip } = bd;
   let back = '';
   if (city) {
-    const { x0, x1, top, hh } = cityAt(bd);
+    const { d, x0, x1, top, hh } = cityAt(bd); // (its own depth: nearer than the board)
     const w = x1 - x0;
     back += rodsSVG([x0 + w * 0.2, x0 + w * 0.8], top, d, 1); // (lit from its right: the strip is on that side of it)
     back += `<rect x="${f2(x0 - 2 * d)}" y="${f2(top - 2 * d)}" width="${f2(w + 4 * d)}" height="${f2(hh + 4 * d)}" fill="#EDE0C0" opacity=".1" filter="url(#slBloom)"/>`;
@@ -305,6 +318,7 @@ function signsSVG(bd, city = true) { // city: false where THE CITY has no clear 
     // the destination
     back += `<text x="${f2(rx + rr + 2.6 * d)}" y="${f2(cy0 + ch * 0.86)}" font-size="${(ch * 1.02).toFixed(1)}" fill="#0B0B0B" style="font-family:var(--f-menu);letter-spacing:.04em">THE CITY</text>`;
   }
+  const { d, flip } = bd;
   // the LED board itself: a slim warm-steel housing in three bolted modules, the screen inset in it
   const lit = flip ? 1 : -1;
   const rodX = [bd.x + bd.w * 0.16, bd.x + bd.w * 0.84];

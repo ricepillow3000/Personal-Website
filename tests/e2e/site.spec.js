@@ -1336,7 +1336,10 @@ test('departure board: a 3D box in the station\'s perspective; LET US START THE 
       const lamps = PANELS.map((p) => (Array.isArray(p[0]) ? p : [[p[0], p[1]], [p[2], p[3]]])).map((q) => ({ l: Math.min(...q.map((v) => v[0])), r: Math.max(...q.map((v) => v[0])), t: Math.min(...q.map((v) => v[1])), b: Math.max(...q.map((v) => v[1])) }));
       gap.lamps = lamps.length > 5;
       gap.onLights = lamps.some((r) => ax < r.r + 3 && ax + aw > r.l - 3 && ay < r.b + 3 && ay + ah > r.t - 3);
-      expect(gap).toEqual({ apart: true, narrower: true, lamps: true, onLights: false, trackSide: true }); // (its own sign, on the track's side, never across the ceiling lights)
+      // never across the train or the track: the train's roof line runs from the vanishing point (870, 548) up and left at
+      // 90 up per 174 across; the sign's lowest, leftmost corner stays well above it (so no car, near or far, is behind the sign)
+      gap.overTrain = (548 - (ay + ah)) / (870 - ax) > 0.62;
+      expect(gap).toEqual({ apart: true, narrower: true, lamps: true, onLights: false, trackSide: true, overTrain: true }); // (its own sign, on the track's side, never across the ceiling lights)
     }
     await expect(sign.locator('.ss-run span')).toHaveText(['LET US START', 'THE GAME', 'LET US START']); // the line, in pages that fit the window whole
     await expect(sign.locator('.ss-code')).toHaveText('JN');
