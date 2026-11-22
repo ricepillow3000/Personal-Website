@@ -71,6 +71,10 @@ export function watchTitleFit() {
   const ro = new ResizeObserver(later);
   [block, card, cal].forEach((el) => ro.observe(el));
   window.addEventListener('resize', later);
+  // (a turned phone can report its new size late: measure again as the turn settles)
+  const settle = () => { later(); [250, 700, 1500].forEach((ms) => setTimeout(later, ms)); };
+  window.addEventListener('orientationchange', settle);
+  window.visualViewport?.addEventListener('resize', settle);
   window.addEventListener('hashchange', () => setTimeout(later, 50));
   document.fonts?.ready.then(later);
   new MutationObserver(later).observe(body, { attributes: true, attributeFilter: ['data-screen'] });

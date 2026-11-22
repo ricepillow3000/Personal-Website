@@ -1092,6 +1092,10 @@ body.cc-off .cc { visibility: hidden; pointer-events: none; } /* stays in the la
 body[data-screen="title"].cal-small .hud-tl { transform: rotate(-4deg) scale(.8); }
 body[data-screen="title"].cal-tiny .hud-cal :is(.cal-tod, .cal-week, .cal-wx) { display: none; } /* then just the date and the sky */
 body[data-screen="title"].cal-off .hud-cal { display: none; } /* no room at all (a phone on its side) */
+/* (Nov 22, John, a screenshot from Chrome on his iPhone held sideways: the date sticker lay over JOHN and the role line.) A phone on
+   its side never has room for the sticker beside the title; the fit guard measured that and hid it, but only if it measured after
+   the turn had settled, and some phone browsers report the new size late. So the rule is in the styles themselves, at once. */
+@media (max-height: 520px) and (min-width: 560px) and (pointer: coarse) { body[data-screen="title"] .hud-cal { display: none; } }
 @media (max-width: 760px) {
   .cc { top: 64px; width: 190px; filter: drop-shadow(3px 4px 0 rgba(245, 245, 240, .9)); }
   .cc-head { padding: 9px 60px 10px 12px; margin-right: 6px; }
