@@ -9,7 +9,7 @@
 
 import { createSideRenderer } from './sidegl.js';
 import { sharpArt } from './art.js';
-import { mountStation } from './station.js';
+import { mountStation, holdSign } from './station.js';
 
 const IW = 1600;
 const IH = 914;
@@ -1667,6 +1667,7 @@ function draw() {
 export const trainArtLoaded = () => Boolean(side?.complete && side.naturalWidth && nose?.complete && nose.naturalWidth);
 export function trainShot({ panTo = null } = {}) {
   if (!ctx || reduce() || !trainArtLoaded()) return null;
+  holdSign(true); // (the departure board keeps the place it has, or stays out, for the whole shot: see station.js)
   state = {
     t: 0,
     rumble: 0,
@@ -1700,6 +1701,7 @@ export function trainShot({ panTo = null } = {}) {
       return lead > MOUTH ? 0 : Math.min(1, 1 - (lead - 40) / (MOUTH - 40));
     },
     end() {
+      holdSign(false);
       state = null;
       pan = null;
       if (art) art.style.objectPosition = '';

@@ -19,6 +19,7 @@ import { initFullscreen } from './ui/fullscreen.js';
 import { $, $$, esc, reducedMotion, fontsReady } from './core/util.js';
 import { menuTeasers } from './data/script.js';
 import { mountBackdrop, sceneReady } from './fx/backdrop.js';
+import { holdSign } from './fx/station.js';
 import { initClickFx, burst } from './fx/impact.js';
 import { initMagnetic, initTilt, initScrollMeter, slamOnScroll, scramble, rollIn } from './fx/kinetic.js';
 import { initTooltips } from './ui/tooltip.js';
@@ -327,6 +328,7 @@ $('#pressStart').addEventListener('click', () => {
 async function startFile(i) {
   if (starting) return;
   starting = true;
+  holdSign(true); // (a file is being played: from here to the end of the train shot the departure board does not move or first appear, see station.js)
   switchingFile = true;
   store.useSlot(i);
   switchingFile = false;

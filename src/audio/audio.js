@@ -22,7 +22,9 @@ function ensure() {
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return null;
   try { ac = new AC({ latencyHint: 'balanced' }); } catch { ac = new AC(); } // (a little more buffer: no crackle over Bluetooth when the phone is busy)
-  ac.onstatechange = () => { if (ac.state !== 'running' && !document.hidden && enabled()) armUnlock(); }; // (iOS 'interrupted' by a call, Siri...)
+  window.__acGen = (window.__acGen || 0) + 1; // (how many engines this page has built; the tests read it)
+  window.__acState = () => ac?.state;
+  ac.onstatechange = () => { if (!ac) return; if (ac.state === 'interrupted') stale = true; if (ac.state !== 'running' && !document.hidden && enabled()) armUnlock(); }; // (iOS takes the audio away for a call, Siri, another app: 'interrupted'. Such an engine may never come back, so the next tap builds a new one, see rebuild)
   master = ac.createGain();
   master.gain.value = 0.9;
   // safety limiter: fast transients (a whip crack lasts 12 ms) slip past the slower glue
@@ -1159,7 +1161,7 @@ export function sfx(name, arg) {
   if (!enabled()) return;
   if (!ac && !activated()) return; // no audio engine (and no sound downloads) before the visitor's first tap or key
   if (!ensure()) return;
-  if (ac.state === 'suspended') ac.resume();
+  if (ac.state !== 'running') ac.resume().catch(() => {}); // ('suspended', or iOS's own 'interrupted')
   // the same sound twice within 35 ms is never meant (a fast sweep across a list): stacking it
   // only smears into a stutter, so the second one is dropped
   if (ac.currentTime - (lastAt[name] ?? -1) < (name === 'hover' ? 0.015 : 0.035)) return; // hovers may overlap: rapid moves stay snappy
@@ -1224,6 +1226,9 @@ export function setSound(on) {
   store.setSetting('sound', on);
   store.setSetting('soundChosen', true);
   if (on) {
+    /* switching the sound on is the visitor asking for sound NOW: if the engine has been away (the page was hidden since it
+       was built) or is not running, it gets a new one inside this very click, never a resume() that may not take */
+    if (ac && (stale || wasHidden || ac.state !== 'running')) rebuild();
     ensure();
     ac?.resume().catch(() => {});
     startMusic();
@@ -1243,13 +1248,53 @@ export function setSound(on) {
    and if the phone needs another tap first (iOS after a call or a lock), the next tap does it. */
 const activated = () => !navigator.userActivation || navigator.userActivation.hasBeenActive;
 export const audioLive = () => Boolean(ac && ac.state === 'running');
+/* ---------- an engine that does not come back (Nov 22, John: "on phone, when I use the app and then I swiped out of it to do
+   other things and I come back, noise doesn't work, even if I toggle the sound on and off").
+   Root cause: the fix above trusted the old engine. Everything it did on the way back (the resume on return, the resume on
+   the next tap, the toggle) called resume() on the SAME AudioContext, and the toggle only stopped and restarted the music on
+   it. On an iPhone the system takes the audio away when the app is left (the context goes 'interrupted', a state the code
+   did not even ask about: sfx() only resumed a 'suspended' one), and a context left that way can stay dead for good: resume()
+   never settles, or it says 'running' with a clock that stands still, and then no call on that object ever makes a sound
+   again. Nothing ever built a new one, so nothing the visitor could do short of reloading brought the sound back.
+   Now: an engine that has been away is not trusted. (1) On an iPhone or iPad every return marks it stale. (2) Everywhere,
+   the return is checked: 450 ms later the engine must be 'running' AND its clock must have moved, or it is stale.
+   (3) A stale engine is thrown away and a new one is built inside the visitor's next tap, click or key (where a phone
+   allows sound to start), and the music starts again on it. (4) Switching the sound on by hand always gets a new engine
+   if the page was ever hidden. The recordings are kept (a decoded sound works in any engine), so nothing downloads twice. */
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let stale = false; // the engine may be dead: the next gesture builds a new one
+let wasHidden = false; // the page has been hidden since this engine was built
+function rebuild() {
+  const old = ac;
+  stale = false; wasHidden = false;
+  if (!old) return;
+  stopMusic();
+  live.clear();
+  Object.keys(lastAt).forEach((k) => delete lastAt[k]); // (those times were on the old engine's clock)
+  old.onstatechange = null;
+  ac = null; master = null; sfxBus = null; musicBus = null; duck = null;
+  try { old.close().catch(() => {}); } catch { /* already closed */ }
+  ensure();
+}
+/** Is the engine really running? Its state must say so and its clock must be moving. If not, it is stale. */
+function probe() {
+  const a = ac;
+  if (!a) return;
+  const t0 = a.currentTime;
+  setTimeout(() => {
+    if (a !== ac || document.hidden || !enabled()) return;
+    if (a.state !== 'running' || a.currentTime <= t0) { stale = true; armUnlock(); }
+  }, 450);
+}
 const UNLOCK = ['pointerup', 'click', 'touchend', 'keydown'];
 let unlockArmed = false;
 function onUnlock(e) {
   if (e.type === 'keydown' && e.key === 'Escape') return; // Escape doesn't let a page start audio
   if (!enabled()) { disarm(); return; }
+  if (stale) rebuild(); // a new engine, built inside this gesture
   if (!ensure()) return;
-  ac.resume().then(() => { if (ac.state === 'running') disarm(); }, () => {});
+  const a = ac;
+  a.resume().then(() => { if (a === ac && a.state === 'running' && !stale) disarm(); }, () => {});
   startMusic();
 }
 function disarm() {
@@ -1263,8 +1308,9 @@ function armUnlock() {
 }
 function wake() {
   if (!ac || !enabled()) return;
-  ac.resume().then(() => { if (ac.state !== 'running') armUnlock(); }, () => armUnlock());
-  setTimeout(() => { if (ac.state !== 'running') armUnlock(); }, 400);
+  if (IOS) { stale = true; armUnlock(); return; } // (an iPhone's engine is not asked to carry on: the next tap builds a new one)
+  ac.resume().catch(() => {});
+  probe();
   startMusic();
 }
 /** Boot: with sound on, the first gesture starts it; leaving pauses it, coming back resumes it. */
@@ -1272,7 +1318,7 @@ export function initAudio() {
   if (enabled()) armUnlock();
   document.addEventListener('visibilitychange', () => {
     if (!ac) return;
-    if (document.hidden) ac.suspend().catch(() => {});
+    if (document.hidden) { wasHidden = true; ac.suspend().catch(() => {}); }
     else wake();
   });
   window.addEventListener('pageshow', (e) => { if (e.persisted) wake(); }); // back from the browser's page cache
