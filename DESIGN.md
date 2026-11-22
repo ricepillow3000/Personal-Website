@@ -294,7 +294,7 @@ With `?company=X`: "To the team at X," and a note on THE PLAN "Wait, someone fro
 ## 11. Game systems (keep them working)
 
 - **CLEARED** only after link → leave → return, and only a REAL visit counts: the page was hidden, or the window was away 1.5s+ (Nov 18: a phone's blur/focus on the tap itself stamped it before the link opened). Saved progress in localStorage (`jn-resume-v1`), validated on load. Returning visitors see CONTINUE.
-- **Achievements (7):** First Words, Case File, Full Recon (light every string), BEE!! (random fly-by after 30-90s, click/tap to catch), Off the Record (flip the GPA star), Inspector (`john.run()` in the console), Player 2 (gamepad). All 7 unlock the behind-the-scenes card.
+- **Achievements (6, every one reachable with only a mouse, keyboard or finger; Player 2 for a gamepad was dropped Nov 22, John: "some ppl dont have controllers"):** First Words, Case File, Full Recon (light every string), BEE!! (random fly-by after 30-90s, click/tap to catch), Off the Record (flip the GPA star), Inspector (`john.run()` in the console). All 6 unlock the behind-the-scenes card.
 - Controls: mouse/touch, Tab/arrows/WASD, Enter, Esc/Backspace, number keys 1-6 jump to menu pages (on the board 1-2 open the case files), Q Quick View, F flip, M mute, Ctrl/⌘+K menu, gamepad.
 - `?company=` is sanitized and escaped (text only).
 

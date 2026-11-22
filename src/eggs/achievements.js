@@ -10,13 +10,14 @@ export const ACHIEVEMENTS = [
   { id: 'full-recon', name: 'Full Recon', hint: 'Open all six chapters.' },
   { id: 'bee', name: 'BEE!!', hint: 'Something small and buzzing passes by. Be quick.' },
   { id: 'off-record', name: 'Off the Record', hint: 'That GPA star has a flip side.' },
-  { id: 'inspector', name: 'Inspector', hint: 'Developers know where to look.' },
-  { id: 'player-2', name: 'Player 2', hint: 'Bring your own controller.' }
+  { id: 'inspector', name: 'Inspector', hint: 'Developers know where to look.' }
 ];
+/* (Player 2, "use a gamepad", was dropped Nov 22, John: "some ppl dont have controllers... make it just 6
+   and people can complete the game without external devices". A controller still drives the site.) */
 
 
 export function count() {
-  return store.get().achievements.length;
+  return store.get().achievements.filter((id) => ACHIEVEMENTS.some((a) => a.id === id)).length; // (an old save may still hold player-2)
 }
 
 export function allFound() {

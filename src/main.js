@@ -803,7 +803,7 @@ $('#achBtn').addEventListener('click', () => {
     <header class="dossier-head"><p class="dossier-code">SECRETS · ${count()}/${ACHIEVEMENTS.length} FOUND</p>
     <h2 class="dossier-title ransom" id="modalTitle" data-ransom="ACHIEVEMENTS">ACHIEVEMENTS</h2></header>
     ${listMarkup()}
-    <p class="dossier-hint">All 7 unlock the director's cut, how my AI crew built this.</p></div>`);
+    <p class="dossier-hint">All 6 unlock the director's cut, how my AI crew built this.</p></div>`);
 });
 
 /* PROGRESS chip: a real button that shows what is left and how each item counts. */
@@ -1001,7 +1001,7 @@ window.addEventListener('keydown', (e) => {
   if (!$('#modal').hidden) closeModal();
   menu.isOpen() ? menu.close() : menu.open();
 });
-bindGamepad(handle, () => unlock('player-2'));
+bindGamepad(handle, () => {}); // (a controller works, but earns nothing: every secret is reachable without one)
 
 /* copy the email on any email link (Nov 22, launch prep): a visitor with no mail app set up still gets the address */
 document.addEventListener('click', (e) => {
