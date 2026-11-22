@@ -84,7 +84,7 @@ document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotio
 ransom($('#titleName'), resume.first, NAME_SEED);
 $('#titleHook').innerHTML = `<span>${esc(resume.titleHook || resume.hook)}</span>`; // (the span carries the black: it hugs each line of words, see .title-hook)
 // who + proof in the first 10 seconds (two clean lines on phones)
-$('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">GSU '29 · 2 live apps · 727/728 checks</span>`;
+$('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">2 live apps · 2,000+ tests</span>`;
 /* the contact plate at the top of every screen (Nov 19, career advisor at GSU's Codex meetup:
    "make LinkedIn, GitHub and email easy to see, at the very top") */
 // and on the title, the same three in the red CONNECT card (the plate steps aside there)

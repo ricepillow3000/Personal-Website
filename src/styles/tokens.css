@@ -48,7 +48,8 @@
   --f-mark: "Permanent Marker", "Comic Sans MS", cursive;
   --f-type: "Special Elite", "Elite Fallback", "Courier New", monospace;
   --f-serif: Georgia, "Times New Roman", serif;
-  --f-body: "Barlow Semi Condensed", "Arial Narrow", "Body Fallback", "Body Fallback R", "Body Fallback D", system-ui, -apple-system, sans-serif;
+  /* body text (Nov 22, John: "do this font", a frame of Optima Nova Black, "for all body of text... the headers... a different, more bolder approach"). Optima Nova is a paid Monotype face; its closest free match, Alegreya Sans ExtraBold (flared, calligraphic strokes, heavy), is used. Quick View keeps the plain face (--f-plain). */
+  --f-body: "Alegreya Sans", "Barlow Semi Condensed", "Arial Narrow", "Body Fallback", "Body Fallback R", "Body Fallback D", system-ui, -apple-system, sans-serif;
   --f-ui: "Barlow Condensed", "Barlow Fallback", "Barlow Fallback R", "Barlow Fallback D", "Bebas Neue", "Arial Narrow", sans-serif; /* bold italic labels */
 
   --skew: -12deg;

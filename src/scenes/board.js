@@ -38,7 +38,6 @@ export function nextChapter() {
 const ZIG = [0.35, 1.6, 0.6, 2.2, 1.1, 2.7]; // the stack zigzags down (em of indent), never a straight column
 
 function planMarkup(ctx) {
-  const e = resume.education;
   const note = ctx.company
     ? `<p class="plan-note"><b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you.</p>`
     : '';
@@ -49,14 +48,9 @@ function planMarkup(ctx) {
         <h1 class="ransom" id="boardName"></h1>
         <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
       </div>
-      <p class="plan-role">${esc(resume.role)}<span class="plan-status"> · GSU ${esc(e.grad.replace('Class of ', "'").replace(/^'20/, "'"))} · ${esc(resume.status)}</span></p>
+      <p class="plan-role">${esc(resume.role)}</p>
       </div>
       <div class="plan-side">
-      <ul class="plan-proof" aria-label="At a glance">
-        <li class="pp pp0"><b>2</b> live apps</li>
-        <li class="pp pp1"><b>2,000+</b> tests</li>
-        <li class="pp pp2"><b>${esc(e.gpa)}</b> GPA</li>
-      </ul>
       </div>
       ${note}
     </header>

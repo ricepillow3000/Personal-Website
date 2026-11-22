@@ -259,7 +259,7 @@ function stats() {
           <div class="id-info">
             <h3>${esc(e.school)}</h3>
             <p>${esc(e.degree)}<br>Concentration: <b>${esc(e.concentration)}</b></p>
-            <div class="id-chips"><span>DEAN’S LIST ×2</span><span>${esc(e.grad.toUpperCase())}</span><span>${esc(e.dates)}</span></div>
+            <div class="id-chips"><span>${esc(e.grad.toUpperCase())}</span><span>${esc(e.dates)}</span></div>
             <p class="id-honors">${esc(e.honors)}</p>
           </div>
         </div>
@@ -337,8 +337,7 @@ function contact() {
         <div class="ccard-face ccard-front" aria-hidden="true"><div class="ccard-emblem"></div></div>
         <div class="ccard-face ccard-back">
           <span class="ccard-name">${esc(resume.name)}</span>
-          <span class="ccard-role">${esc(resume.role)} · ${esc(resume.education.school)}, ${esc(resume.education.grad)}</span>
-          <span class="ccard-line">${esc(resume.location)} · ${esc(resume.status)}</span>
+          <span class="ccard-role">${esc(resume.role)}</span>
         </div>
       </div></div>
       <div class="contact-btns" data-in>
