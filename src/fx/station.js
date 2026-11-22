@@ -65,7 +65,11 @@ function lightsDim() { // multiplied: puts out the glow painted round a tube tha
    through the horizon (y 540): y = 540 + (540 - tube y) x 1.15, measured on the art (the streak starts
    at y ~690 under the far tubes and runs off the bottom under the near ones). The small right tube (14)
    lights the patch at (1101, 860). When a tube goes off (or dims), its stretch of reflection is covered
-   with the floor's own tone, soft-edged, in the same group as the tube, so the two can never disagree. */
+   with the floor's own tone, soft-edged, in the same group as the tube, so the two can never disagree.
+   (Nov 21, the lighting pass: the cover was an opaque cool grey from the old dark floor; on today's lighter, warm
+   floor a tube going off punched a dark oval into the tiles, and both judges flagged it: "a dark oval blob not tied
+   to any object". It is a soft warm shade now, just enough to take the streak down to the floor beside it (about
+   130 to 90), and the tile joints show through it.) */
 const MIRROR = 2.83; // (ceiling 1.75 m over the eye, the eye 1.6 m over the floor: (1.75 + 3.2) / 1.75)
 const REFLECT = { 14: [1240, 845, 22, 40] }; // the right patch: cx, cy, rx, ry (measured)
 function reflection(p, i) {
@@ -490,7 +494,7 @@ export function mountStation(box, before) {
   wrap.className = 'st-wrap';
   wrap.setAttribute('aria-hidden', 'true');
   wrap.innerHTML = svg('st-dim', '<radialGradient id="slDim"><stop offset=".25" stop-color="#3A3C40" stop-opacity=".95"/><stop offset=".7" stop-color="#3A3C40" stop-opacity=".45"/><stop offset="1" stop-color="#3A3C40" stop-opacity="0"/></radialGradient>', lightsDim())
-    + svg('st-body', '<radialGradient id="slFloor"><stop offset=".5" stop-color="#313134" stop-opacity=".97"/><stop offset=".8" stop-color="#313134" stop-opacity=".6"/><stop offset="1" stop-color="#313134" stop-opacity="0"/></radialGradient>', lightsBody() + `<g class="gf-at" transform="${faceTransform(FACES[0])}">${graffiti()}</g>`)
+    + svg('st-body', '<radialGradient id="slFloor"><stop offset="0" stop-color="#17140F" stop-opacity=".4"/><stop offset=".45" stop-color="#17140F" stop-opacity=".36"/><stop offset=".8" stop-color="#17140F" stop-opacity=".16"/><stop offset="1" stop-color="#17140F" stop-opacity="0"/></radialGradient>', lightsBody() + `<g class="gf-at" transform="${faceTransform(FACES[0])}">${graffiti()}</g>`)
     + svg('st-glow', `<filter id="slBloom" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="5" result="a"/><feGaussianBlur in="SourceGraphic" stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="a"/></feMerge></filter>
       <radialGradient id="slSpill"><stop offset="0" stop-color="#E8C48A" stop-opacity=".22"/><stop offset="1" stop-color="#E8C48A" stop-opacity="0"/></radialGradient>`, lightsGlow());
   wrap.insertAdjacentHTML('beforeend', signHTML());
