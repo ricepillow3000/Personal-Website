@@ -10,7 +10,7 @@ export const resume = {
   role: 'AI Solutions Engineer in training',
   hook: "I direct AI agents to build software, then test it like it's going to production.",
   // the title screen tells the story; the board keeps the job line above
-  titleHook: 'Resumes are boring. So I directed a crew of AI agents to turn mine into a game.',
+  titleHook: 'Resumes are boring. So I directed AI agents to make mine a game.', // (Nov 22: shortened from "...directed a crew of AI agents to turn mine into a game." so its box stays small on the station)
   status: 'Status: open to opportunities',
   school: 'GSU · Class of 2029',
   location: 'Atlanta Metropolitan Area',
