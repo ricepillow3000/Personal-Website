@@ -391,7 +391,7 @@ function drawTrash(t, keep = null) {
     ctx.scale(1, flat ? fs * 0.5 : 0.22);
     const r = w * (flat ? 0.56 : 0.55) * (1 + air * 0.9); // (off the floor its shadow spreads and thins out fast: under a long
     const sh = ctx.createRadialGradient(0, 0, 0, 0, 0, r); //  row of tubes a lifted thing hardly has one. It used to stay a dark oval.)
-    sh.addColorStop(0, `rgba(0,0,0,${(flat ? 0.4 : 0.62) * (1 - air) ** 3 * grounded})`);
+    sh.addColorStop(0, `rgba(0,0,0,${(flat ? 0.56 : 0.74) * (1 - air) ** 3 * grounded})`); sh.addColorStop(0.55, `rgba(0,0,0,${(flat ? 0.2 : 0.3) * (1 - air) ** 3 * grounded})`);
     sh.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = sh;
     ctx.fillRect(-r, -r, r * 2, r * 2);

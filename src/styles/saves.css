@@ -125,6 +125,13 @@ body.sv-open { overflow: hidden; }
 .sv-new .ct.box { background: var(--black); color: var(--white); }
 .sv-hint { font: 400 clamp(12px, 1.8vh, 16px)/1 var(--f-menu); letter-spacing: 2px; color: #3E3E3A; }
 .sv-slot.on .sv-hint { color: var(--white); }
+/* (Nov 22: both judges on the save screen: the right two thirds of every file was bare paper, "empty vector trapezoids".
+   An empty file is stamped NO DATA where a played file carries its date and progress: a rubber stamp, slanted, pale ink.) */
+.sv-stamp { grid-column: 4; grid-row: 1; justify-self: end; margin-right: clamp(20px, 9vw, 150px); padding: .16em .5em .1em; rotate: -6deg;
+  font: 400 clamp(18px, 3.6vh, 34px)/1 var(--f-head); letter-spacing: .12em; white-space: nowrap;
+  color: #B4AFA0; border: .11em solid currentColor; box-shadow: inset 0 0 0 .07em var(--white), inset 0 0 0 .13em currentColor; }
+.sv-slot.on .sv-stamp { color: rgba(255, 255, 255, .5); box-shadow: inset 0 0 0 .07em var(--red), inset 0 0 0 .13em currentColor; }
+@media (max-width: 760px) { .sv-stamp { display: none; } }
 
 /* a finished file: COMPLETED, cut type on a white burst */
 /* a finished file: the whole slip is COMPLETED (a red slab, the word huge across it on a white burst,

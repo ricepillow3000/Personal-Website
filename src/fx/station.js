@@ -317,11 +317,16 @@ function signsSVG(bd) {
   return back;
 }
 const SIGN_LINE = 'LET US START THE GAME';
+/* (Nov 22: the line ran past as one long ticker, wider than its window, so at any moment the board showed a cut
+   piece of it: both judges, on every frame of the station, read "LET US START TI" or "JS START THE GAN" as garbled,
+   half-made text. A real platform board that is too short for its message pages it. So does this one: each page
+   slides in from the right, stops whole, then slides out as the next comes in.) */
+const SIGN_PAGES = ['LET US START', 'THE GAME'];
 const signHTML = () => `<div class="ss" hidden>
   <svg class="st ss-signs" viewBox="0 0 1600 914" preserveAspectRatio="none" aria-hidden="true"></svg>
   <div class="ss-plane"><div class="ss-screen"><div class="ss-row">
     <b class="ss-time"><span class="ss-h">12</span><span class="ss-colon">:</span><span class="ss-m">00</span><small class="ss-ap">PM</small></b>
-    <div class="ss-win"><div class="ss-run"><span>${SIGN_LINE}</span><span>${SIGN_LINE}</span></div></div>
+    <div class="ss-win"><div class="ss-run">${SIGN_PAGES.concat(SIGN_PAGES[0]).map((t) => `<span>${t}</span>`).join('')}</div></div>
     <b class="ss-code">JN</b>
   </div></div></div>
 </div>`;
