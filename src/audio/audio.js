@@ -543,6 +543,39 @@ function screech(bus, at, dur, gain) {
     o.stop(at + dur + 0.05);
   });
 }
+/* the train before it is seen: a rumble far down the tunnel that grows through the still beat, jumps as the train breaks
+   out, holds while it passes and sinks as it brakes; over it, faintly, the rails singing (steel carrying the wheels' noise
+   ahead of the train), cut off the moment it arrives */
+function farRumble(bus, at, burst, pass, cut) {
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(50, at);
+  lp.frequency.exponentialRampToValueAtTime(130, at + burst);
+  lp.frequency.exponentialRampToValueAtTime(260, at + pass);
+  lp.frequency.exponentialRampToValueAtTime(120, at + cut + 0.4);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0008, at);
+  g.gain.exponentialRampToValueAtTime(0.45, at + Math.max(0.05, burst - 0.03));
+  g.gain.exponentialRampToValueAtTime(1.15, at + burst + 0.05);
+  g.gain.setValueAtTime(1.15, at + pass + 0.3);
+  g.gain.exponentialRampToValueAtTime(0.6, at + cut);
+  g.gain.exponentialRampToValueAtTime(0.0008, at + cut + 0.45);
+  loopBuf(brownBuf, at, at + cut + 0.5).connect(lp).connect(g).connect(bus);
+  const sing = ac.createGain();
+  sing.gain.setValueAtTime(0.0008, at);
+  sing.gain.exponentialRampToValueAtTime(0.011, at + Math.max(0.1, burst - 0.02));
+  sing.gain.exponentialRampToValueAtTime(0.0008, at + burst + 0.06);
+  sing.connect(bus);
+  [2140, 2810].forEach((f, i) => {
+    const o = ac.createOscillator();
+    o.frequency.setValueAtTime(f, at);
+    o.frequency.linearRampToValueAtTime(f * 1.04, at + burst);
+    lfo(at, at + burst + 0.1, 9 + i * 4, 18, o.frequency);
+    o.connect(sing);
+    o.start(at);
+    o.stop(at + burst + 0.12);
+  });
+}
 /* one wheel crossing a rail joint: a dull metal clack with a low thump */
 function clack(bus, at, v) {
   noise(bus, { at, dur: 0.05, type: 'bandpass', freq: 1300, q: 1.4, gain: 0.5 * v });
@@ -730,19 +763,19 @@ const VOICES = {
     tone(bus, { at: at + 0.98, dur: 0.24, from: 1319, to: 1319, type: 'sine', gain: 0.1 }); // ding
     tone(bus, { at: at + 1.16, dur: 0.36, from: 1047, to: 1047, type: 'sine', gain: 0.1 }); // dong
   },
-  // PRESS START: a rumble deep in the tunnel, the horn, wheels hammering the rail joints faster and
-  // louder, the horn's pitch dropping as it passes, the blast of air and the paper flying
-  // (pass: when the nose passes the camera; the train brakes in, so this is ~1.2 s, see subway.js)
-  tunnel: (bus, at, v, { pass = 0.74 } = {}) => {
-    const d = pass - 0.74; // everything after the first rumble moves with the nose
-    rails(bus, at, 1.3 + d, { gapFrom: 0.3, gapTo: 0.07, vFrom: 0.3, vTo: 1, gain: 1.0, rumble: 0.85, punch: true }); // the track: loud and punchy
-    // one long horn: faint as the headlights appear, loudest as the nose passes us, then gone
-    trainHorn(bus, at + 0.02, 1.5 + d, 0.15, { fadeIn: 0.3, peak: pass, drop: HORN_DOPPLER }); // lower so the wheels are heard
+  // PRESS START, the burst (Nov 22, see VOICES.tunnel): a still beat with a rumble far down the tunnel, then the train breaks
+  // out: the horn, the blast of air, wheels hammering the rail joints fast and slowing as it brakes, the brakes biting at the end
+  // (burst: when the nose breaks out of the tunnel; pass: when it passes the camera; cut: the cut to the board; see subway.js)
+  tunnel: (bus, at, v, { burst = 0.53, pass = 0.95, cut = 2.6 } = {}) => {
+    farRumble(bus, at, burst, pass, cut);
+    rails(bus, at + burst, cut - burst + 0.3, { gapFrom: 0.07, gapTo: 0.2, vFrom: 1, vTo: 0.6, gain: 1.0, rumble: 0.5, punch: true }); // the track: loud and punchy
+    // one long horn: a breath of it in the tunnel, a blast as the train breaks out, loudest as the nose passes us, then gone
+    trainHorn(bus, at + burst - 0.2, 1.7, 0.16, { fadeIn: 0.2, peak: pass - burst + 0.2, drop: HORN_DOPPLER });
     // the wall of air the train shoves out of the tunnel ahead of itself, then its wake
-    airRoar(bus, at + 0.2 + d, 0.6, { from: 160, to: 1600, gain: 1.1 }); // pulled back so the wheels cut through
-    airRoar(bus, at + pass + 0.04, 0.6, { from: 1800, to: 300, gain: 1.0, up: false });
-    rattle(bus, at + 0.3, 1.0 + d, { gain: 0.16, from: 0.4, to: 1.6 }); // the cars shaking as they storm past
-    screech(bus, at + 0.4, 0.5 + d, 0.05); // the brakes biting as it comes out of the tunnel
+    airRoar(bus, at + burst - 0.06, 0.45, { from: 200, to: 2000, gain: 1.1 });
+    airRoar(bus, at + pass + 0.04, 0.7, { from: 1800, to: 300, gain: 1.0, up: false });
+    rattle(bus, at + burst, cut - burst, { gain: 0.16, from: 1.6, to: 0.5 }); // the cars shaking as they storm past
+    screech(bus, at + cut - 1.0, 1.1, 0.05); // the brakes biting as it slows
     flutter(bus, at + pass - 0.14, 0.45, 0.14);
   },
   // THE DROP: the wind roars louder as you fall, and the busy street below rushes up at you
@@ -1113,20 +1146,46 @@ Object.assign(VOICES, {
     [784, 1047, 1319].forEach((f, i) => tone(bus, { at: at + 0.14 + i * 0.05, dur: 0.1, from: f, to: f, type: 'triangle', gain: 0.22 }));
     tone(bus, { at: at + 0.29, dur: 0.46, from: 1568, to: 1568, type: 'triangle', gain: 0.2 });
   },
-  /* PRESS START: a real tram storming past the mic (steel wheels slamming the rail joints, motor,
-     air), its loudest crash on the frame the nose passes the camera; under it, the recorded brakes
-     squealing as the train brakes in (Nov 19, "feel real"). The horn and the paper flying stay
-     synthesized (no recorded horn passed). Faded out under the cut to the board.
-     { pass, cut }: when the nose passes and when the cut comes (seconds after the start). */
-  tunnel: (bus, at, v, { pass = 0.74, cut = 1.25 } = {}) => {
+  /* PRESS START, THE BURST (Nov 22, John: "make the train pop out impactfully with a lot of impact and impactful train
+     sounds. Make it faster and make it longer. That way it gives the user a surprise"). Sound makes a surprise out of a
+     quiet moment and a hit, so the voice is three beats, each on the picture's own frames (subway.js shotSound):
+     (1) STILL, until `burst`: almost nothing. A rumble far down the tunnel, growing, and the rails starting to sing.
+     (2) THE BURST: on the frame the nose breaks out of the mouth, the real metro horn blasts (a breath of it in the tunnel
+         first, then full, its pitch only ever falling as it goes by), a deep boom and the wall of air the train shoves out
+         of the tunnel; the real tram's pass comes up from under it, its loudest wheel crash on the frame the nose passes
+         the camera (`pass`), and the wake of air after it.
+     (3) THE PASS, to `cut`: seven cars. A second take of the tram's pass, slower and lower, carries on under the first; a
+         steel hit lands for every bogie as it passes the camera (`wheels`: the same times the camera is jolted), close
+         together and light while it storms, heavier and further apart as it brakes; the recorded brakes squeal up to the
+         cut; paper in the wind. Everything fades under the cut to the board.
+     The same recordings as before (no new downloads); the horn and the paper stay synthesized until the clips load. */
+  tunnel: (bus, at, v, { burst = 0.53, pass = 0.95, cut = 2.6, wheels = [] } = {}) => {
     const s0 = pass - CLIP_HIT['train-pass']; // the clip's own start, relative to at
-    if (!clip(bus, 'train-pass', at + pass, { gain: TRAIN.pass, env: [[0, 1], [cut - s0, 1], [cut + 0.45 - s0, 0]] })) return SYNTH.tunnel(bus, at, v, { pass });
-    clip(bus, 'train-brake', at + Math.max(0, pass - 0.9), { gain: TRAIN.brake * 0.55, env: [[0, 0], [0.35, 1], [cut + 0.45 - Math.max(0, pass - 0.9), 0]] }); // squeal peaks just after the nose
-    // the horn: a real metro car horn (won 2 of 3 listening rounds over the pass alone); synthesized until it loads
-    if (!clip(bus, 'train-horn', at + 0.02, { gain: TRAIN.horn, align: false, env: [[0, 0.5], [pass - 0.04, 1], [cut - 0.05, 0.5], [cut + 0.35, 0]] })) {
-      trainHorn(bus, at + 0.02, 1.5 + (pass - 0.74), 0.1, { fadeIn: 0.3, peak: pass, drop: HORN_DOPPLER });
+    // the first take: a murmur while the station is still, up at once as the train breaks out, its crash on the nose
+    if (!clip(bus, 'train-pass', at + pass, { gain: TRAIN.pass * 0.95, env: [[0, 0.06], [Math.max(0.02, burst - s0 - 0.05), 0.16], [Math.max(0.05, burst - s0 + 0.09), 1], [1.6, 1], [2.02, 0]] })) return SYNTH.tunnel(bus, at, v, { burst, pass, cut });
+    // the second take, slower and lower (the cars still coming as it brakes), its own crash a second after the nose
+    const p2 = pass + 0.95; const s2 = p2 - CLIP_HIT['train-pass'] / 0.9;
+    clip(bus, 'train-pass', at + p2, { gain: TRAIN.pass * 0.8, rate: 0.9, env: [[0, 0], [0.45, 1], [Math.max(0.5, cut - s2), 0.9], [cut + 0.45 - s2, 0]] });
+    farRumble(bus, at, burst, pass, cut);
+    // the horn: the real metro car horn. A breath of it down the tunnel, the blast as it breaks out, falling away after the nose
+    const h0 = burst - 0.2;
+    if (!clip(bus, 'train-horn', at + h0, { gain: TRAIN.horn * 1.3, align: false, rate: 1.03, rateTo: 0.93, env: [[0, 0], [0.14, 0.12], [0.26, 1], [pass - h0 + 0.2, 1], [1.4, 0.3], [1.72, 0]] })) {
+      trainHorn(bus, at + h0, 1.7, 0.16, { fadeIn: 0.2, peak: pass - h0, drop: HORN_DOPPLER });
     }
+    // the hit as it breaks out: a deep boom, and the air it shoves out of the tunnel; then its wake as the nose goes by
+    clip(bus, 'land-boom', at + burst, { gain: 0.42, lowpass: 600 }); // (only its deep part: the hit is felt, the horn and the steel are heard)
+    airRoar(bus, at + burst - 0.06, 0.42, { from: 220, to: 1800, gain: 0.7 });
+    airRoar(bus, at + pass + 0.03, 0.8, { from: 1700, to: 280, gain: 0.8, up: false });
+    // a steel hit for every bogie passing the camera (two wheel sets: ka-chunk), on the frames the camera is jolted
+    wheels.forEach(([tw, w]) => {
+      const vol = 0.07 + 0.17 * w; // light in the storm, a full thump as it brakes
+      railHit(bus, at + tw, vol, 0.25);
+      railHit(bus, at + tw + Math.min(0.07, 0.058 * w), vol * 0.8, 0.25);
+    });
+    // the brakes: the recorded squeal, swelling to its peak just before the cut
+    clip(bus, 'train-brake', at + cut - 1.45, { gain: TRAIN.brake * 0.5, env: [[0, 0], [0.5, 0.7], [1.2, 1], [1.9, 0]] });
     flutter(bus, at + pass - 0.14, 0.45, 0.14);
+    flutter(bus, at + pass + 0.55, 0.6, 0.07);
   },
   /* NEXT STOP: a real train braking into a station (wheels grinding, the brake squeal swelling as
      the station stops in the windows), then the two-note station chime (a PA tone, synthesized) */
@@ -1171,12 +1230,12 @@ export function sfx(name, arg) {
     if (duck.gain.cancelAndHoldAtTime) duck.gain.cancelAndHoldAtTime(t); // hold where it is: a jump here was a click in the music
     else { duck.gain.cancelScheduledValues(t); duck.gain.setValueAtTime(duck.gain.value, t); }
     duck.gain.setTargetAtTime(name === 'hover' || name === 'hoverBig' ? 0.8 : 0.5, t, 0.012);
-    duck.gain.setTargetAtTime(1, t + (name === 'tunnel' || name === 'train' ? 1.4 : 0.22), 0.25);
+    duck.gain.setTargetAtTime(1, t + (name === 'tunnel' ? (arg?.cut ?? 1.4) : name === 'train' ? 1.4 : 0.22), 0.25); // (the train shot: the music stays under it until the cut)
   }
   const g = ac.createGain(); // each sound gets its own fader, so a skipped shot can be hushed
   g.connect(sfxBus);
   live.add(g);
-  setTimeout(() => live.delete(g), 2500);
+  setTimeout(() => live.delete(g), name === 'tunnel' ? 4200 : 2500); // (the train shot runs 2.6 s and fades for half a second more: a skip near its end must still find it)
   VOICES[name]?.(g, ac.currentTime, 1, arg);
   window.__sfxLog?.push(name); // (tests set this array to hear what played)
 }
