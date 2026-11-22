@@ -468,7 +468,8 @@ const SIDE_OFF = 0.15; // the side starts on a plain panel of the art (the same 
 const CAR = 4 * BAY; // one car: four door bays (18.7 m), so the gangways fall on the art's plain panels
 const PASS_D = 40; // a wheel set "passes the camera" at this depth
 const AXLES = [];
-for (let c = 0; c < 5; c++) for (const b of [90, CAR - 90]) for (const a of [-32, 32]) AXLES.push(c * CAR + b + a);
+// (the leading bogie sits right behind the skirt: its first wheels stand under the nose art's two feet)
+for (let c = 0; c < 5; c++) for (const b of [c ? 90 : 48, CAR - 90]) for (const a of [-32, 32]) AXLES.push(c * CAR + b + a);
 export const NOSE_PASS = timeAt(PASS_D); // when the nose passes the camera (~0.95 s, braking)
 /** the hard thumps of the wheel sets near the camera: a damped jolt per axle */
 function jolts(t) {
@@ -849,9 +850,70 @@ function stampTrack(kk) {
   under.restore();
 }
 
-/* The running gear, seen through the gap: the bogie frames and the wheels riding the near rail. The
-   car's side (drawn above this) hides their tops, the platform hides their bottoms, so what shows is
-   what you see from a real platform: a dark gap with steel wheels rolling on the rail. */
+/* The running gear: every wheel set is a real solid standing on the rails (a tyre, a face, a hub, an axle between the
+   two wheels), drawn before the car so the car's side and its nose cover what they would cover. Through the gap by
+   the platform you see the near wheels and the bogie frames from above; under the nose you see the leading wheel set
+   from the front, right under the two feet the nose art itself draws below its skirt.
+   (Nov 22, John, with a close-up of the nose's underside: "the textures and the dimensions are not matching up to the
+   train... no hallucinated art... make sure it looks fully drawn out". What was there: a second coupler, an
+   "underframe" slab and a "rail guard" bar on two posts, all flat quads drawn UNDER a nose whose art already has its
+   own coupler, underframe and skirt; lit grey, they read as loose boxes floating over the track. All of it is gone.
+   What a train has under its skirt is its leading wheel set, so that is what is drawn: two wheels 0.77 m across on
+   the two rails (the art's feet sit over them to the centimetre), the far one's flange hanging inside its rail, the
+   axle between them; steel in the car's own shade, the art's ink weight round every part.) */
+const WHEEL_R = 13; // 0.77 m across
+const WHEEL_W = 2.7; // half the tyre's width
+const INK = 'rgba(5, 6, 9, 0.96)';
+const hull = (pts) => { // the outline of a set of points (a solid's silhouette)
+  const p = pts.slice().sort((u, v) => u[0] - v[0] || u[1] - v[1]);
+  const cr = (o, u, v) => (u[0] - o[0]) * (v[1] - o[1]) - (u[1] - o[1]) * (v[0] - o[0]);
+  const half = (list) => { const h = []; for (const q of list) { while (h.length > 1 && cr(h[h.length - 2], h[h.length - 1], q) <= 0) h.pop(); h.push(q); } h.pop(); return h; };
+  return half(p).concat(half(p.reverse()));
+};
+const ring = (X, cy, dc, r, a0 = 0, a1 = Math.PI * 2, n = 28) => Array.from({ length: n + 1 }, (_, i) => { const th = a0 + ((a1 - a0) * i) / n; return P(X, cy + Math.sin(th) * r, dc + Math.cos(th) * r); });
+const path = (pts, close = true) => { ctx.beginPath(); pts.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); if (close) ctx.closePath(); };
+/** one wheel on rail rx at depth dc: `lt` is how much of the station's light is on it, `flange` puts the flange on the side we see */
+function wheel(rx, dc, lt, flange) {
+  const R = WHEEL_R;
+  const cy = RAIL_Y - 0.9 - R; // it stands on the rail's head
+  const lw = Math.max(0.55, (F / dc) * 0.3); // the nose art's own line weight
+  const tone = (r, g, b) => `rgb(${Math.round(r * lt)}, ${Math.round(g * lt)}, ${Math.round(b * lt)})`;
+  const xf = rx + WHEEL_W; // the face turned to the platform (the camera stands on it)
+  const xb = rx - WHEEL_W;
+  const rf = flange ? R + 1.3 : R;
+  const face = ring(xf, cy, dc, rf);
+  ctx.lineJoin = 'round';
+  // the tyre: the whole solid's outline, in polished steel that sits in the car's shade
+  path(hull(face.concat(ring(xb, cy, dc, R))));
+  ctx.fillStyle = tone(33, 40, 52); ctx.fill();
+  ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
+  // the running band the rail keeps bright, round the front of the tyre
+  const a0 = Math.PI * 0.52; const a1 = Math.PI * 1.46;
+  path(ring(rx + 1.5, cy, dc, R, a0, a1, 16).concat(ring(rx - 0.5, cy, dc, R, a1, a0, 16)));
+  ctx.fillStyle = tone(70, 81, 99); ctx.fill();
+  // its face: the tyre's rim, the dished web, the hub
+  path(face); ctx.fillStyle = tone(28, 34, 45); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.stroke();
+  path(ring(xf, cy, dc, R * 0.8)); ctx.fillStyle = tone(15, 19, 26); ctx.fill(); ctx.lineWidth = lw * 0.7; ctx.stroke();
+  path(ring(xf, cy, dc, R * 0.8, Math.PI * 0.62, Math.PI * 1.3, 12), false); // the light that gets under the skirt, on the web's front edge
+  ctx.strokeStyle = tone(58, 68, 85); ctx.lineWidth = lw * 0.8; ctx.stroke();
+  path(ring(xf, cy, dc, R * 0.3)); ctx.fillStyle = tone(34, 41, 54); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw * 0.7; ctx.stroke();
+  path(ring(xf, cy, dc, R * 0.11, 0, Math.PI * 2, 10)); ctx.fillStyle = tone(12, 14, 19); ctx.fill();
+}
+/** a whole wheel set seen from the front: the far wheel, the axle, the near wheel */
+function wheelSet(dc, lt) {
+  const cy = RAIL_Y - 0.9 - WHEEL_R;
+  const r = 2.7;
+  wheel(RAILS[1], dc, lt, true);
+  const x0 = RAILS[1] + WHEEL_W; const x1 = RAILS[0] - WHEEL_W;
+  const top = sy(cy - r, dc); const bot = sy(cy + r, dc);
+  const g = ctx.createLinearGradient(0, top, 0, bot); // a round bar: lit along its top, dark underneath
+  const c = (v, al) => `rgb(${Math.round(v[0] * al)}, ${Math.round(v[1] * al)}, ${Math.round(v[2] * al)})`;
+  g.addColorStop(0, c([28, 34, 45], lt)); g.addColorStop(0.2, c([58, 68, 85], lt)); g.addColorStop(0.5, c([26, 32, 42], lt)); g.addColorStop(1, c([9, 11, 15], lt));
+  quad(ctx, [P(x0, cy - r, dc), P(x1, cy - r, dc), P(x1, cy + r, dc), P(x0, cy + r, dc)]);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.strokeStyle = INK; ctx.lineWidth = Math.max(0.55, (F / dc) * 0.3); ctx.stroke();
+  wheel(RAILS[0], dc, lt, false);
+}
 function runningGear(lead) {
   const by = bounce();
   ctx.save();
@@ -864,66 +926,30 @@ function runningGear(lead) {
     quad(ctx, [P(SIDE_X, SKIRT, near), P(SIDE_X - WIDE, BED_Y, near), P(SIDE_X - WIDE, BED_Y, far), P(SIDE_X, SKIRT, far)]);
     ctx.fill();
   }
-  const wx = RAILS[0] + 3; // the near wheels' outer faces
-  AXLES.forEach((s, i) => {
-    const d = lead + s;
-    if (d < 22 || d > TRACK_FAR) return;
-    const v = dark(d);
-    // the bogie's side frame between its two axles (drawn once per bogie, at its first axle)
-    if (i % 2 === 0) {
+  const fx = SIDE_X - 5; // the bogies' side frames hang just inside the car's side
+  for (let i = AXLES.length - 1; i >= 0; i--) { // far to near, so the nearer covers the farther
+    const d = lead + AXLES[i];
+    if (d - WHEEL_R < 12 || d > TRACK_FAR) continue;
+    const lt = 0.1 + 0.9 * dark(d); // in the tunnel it is in the dark like the rest of the car
+    ctx.globalAlpha = seen(d);
+    if (i < 2) wheelSet(d, lt); // the leading bogie: both wheels and the axle show under the nose
+    else wheel(RAILS[0], d, lt, false);
+    if (i % 2 === 0) { // the bogie's side frame between its two axles (once per bogie, over its wheels: it is nearer)
       const e = d + 64;
-      ctx.globalAlpha = v;
-      ctx.fillStyle = '#34363C';
-      quad(ctx, [P(SIDE_X - 5, SKIRT + 1 + by * 0.3, d - 12), P(SIDE_X - 5, SKIRT + 1 + by * 0.3, e + 12), P(SIDE_X - 5, SKIRT + 10, e + 8), P(SIDE_X - 5, SKIRT + 10, d - 8)]);
-      ctx.fill();
-      ctx.fillStyle = '#7A7D86'; // its springs catch a little light
-      [d + 14, e - 14].forEach((q) => { quad(ctx, [P(SIDE_X - 5, SKIRT + 2, q - 3), P(SIDE_X - 5, SKIRT + 2, q + 3), P(SIDE_X - 5, SKIRT + 8, q + 3), P(SIDE_X - 5, SKIRT + 8, q - 3)]); ctx.fill(); });
+      const lw = Math.max(0.5, (F / d) * 0.26);
+      const tone = (r, g, b) => `rgb(${Math.round(r * lt)}, ${Math.round(g * lt)}, ${Math.round(b * lt)})`;
+      const y0 = SKIRT + 1 + by * 0.3;
+      quad(ctx, [P(fx, y0, d - 12), P(fx, y0, e + 12), P(fx, SKIRT + 10, e + 8), P(fx, SKIRT + 10, d - 8)]);
+      ctx.fillStyle = tone(27, 32, 42); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke();
+      [d + 14, e - 14].forEach((q) => { // its two springs: coils, dark steel with a lit turn each
+        quad(ctx, [P(fx, SKIRT + 2.4, q - 3.4), P(fx, SKIRT + 2.4, q + 3.4), P(fx, SKIRT + 8.6, q + 3.4), P(fx, SKIRT + 8.6, q - 3.4)]);
+        ctx.fillStyle = tone(48, 56, 72); ctx.fill(); ctx.lineWidth = lw * 0.8; ctx.stroke();
+        ctx.strokeStyle = tone(98, 110, 130); ctx.lineWidth = lw * 0.7;
+        [3.9, 5.5, 7.1].forEach((y) => { ctx.beginPath(); ctx.moveTo(...P(fx, SKIRT + y, q - 3.1)); ctx.lineTo(...P(fx, SKIRT + y, q + 3.1)); ctx.stroke(); });
+        ctx.strokeStyle = INK;
+      });
     }
-    // the wheel: a steel disc standing on the rail, its rim a little brighter
-    ctx.globalAlpha = v;
-    ctx.beginPath();
-    for (let a = 0; a <= 16; a++) {
-      const th = (a / 16) * Math.PI * 2;
-      const [x, y] = P(wx, RAIL_Y - 8 + Math.sin(th) * 8, d + Math.cos(th) * 8);
-      if (a) ctx.lineTo(x, y); else ctx.moveTo(x, y);
-    }
-    ctx.fillStyle = '#2A2C31';
-    ctx.fill();
-    ctx.strokeStyle = '#9DA1AA';
-    ctx.lineWidth = Math.max(0.6, (F / d) * 0.6);
-    ctx.stroke();
-  });
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
-
-/* the front of the running gear under the nose: the underframe, the coupler, the guard bar over the
-   rails and the first wheels standing on them (the nose art ends at the car's floor) */
-function noseGear(d) {
-  if (d < 22) return;
-  const v = seen(d);
-  const L = SIDE_X - WIDE;
-  /* (Nov 21, the scan: "unfinished, floating flat grey bars under the train front lacking line art"). The gear under the
-     nose was four flat quads. Drawn now like the rest: dark steel in the car's own shade, an ink line round every
-     part, a thin light along each top edge: the underframe, the coupler in its pocket, the rail guard hung on two
-     brackets, the leading wheels on the rails. */
-  const lw = Math.max(0.5, (F / d) * 0.22);
-  const part = (pts, fill) => { ctx.fillStyle = fill; quad(ctx, pts); ctx.fill(); ctx.strokeStyle = 'rgba(5, 5, 7, 0.95)'; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke(); };
-  const lit = (x0, x1, y, dd, h = 0.7) => { ctx.fillStyle = 'rgba(150, 156, 170, 0.75)'; quad(ctx, [P(x0, y, dd), P(x1, y, dd), P(x1, y + h, dd), P(x0, y + h, dd)]); ctx.fill(); };
-  ctx.save();
-  pitClip(ctx);
-  ctx.globalAlpha = v;
-  part([P(L + 6, SKIRT + 3, d + 2), P(SIDE_X - 6, SKIRT + 3, d + 2), P(SIDE_X - 10, SKIRT + 10, d + 6), P(L + 10, SKIRT + 10, d + 6)], '#15161A'); // the underframe, in the car's own shade
-  RAILS.forEach((rx) => { // the leading wheels: dark discs edge on, a rim of light on the tread
-    part([P(rx - 0.4, RAIL_Y - 17, d + 10), P(rx + 4, RAIL_Y - 17, d + 10), P(rx + 4, RAIL_Y, d + 10), P(rx - 0.4, RAIL_Y, d + 10)], '#1D1F24');
-    lit(rx - 0.4, rx + 0.6, RAIL_Y - 16, d + 10, 15);
-  });
-  [L + 24, SIDE_X - 27].forEach((x) => part([P(x, SKIRT + 9, d + 1), P(x + 3, SKIRT + 9, d + 1), P(x + 3, RAIL_Y - 5.6, d + 1), P(x, RAIL_Y - 5.6, d + 1)], '#1A1B20')); // the guard's brackets
-  part([P(L + 14, RAIL_Y - 6, d + 1), P(SIDE_X - 14, RAIL_Y - 6, d + 1), P(SIDE_X - 14, RAIL_Y - 2.4, d + 1), P(L + 14, RAIL_Y - 2.4, d + 1)], '#26282E'); // the rail guard, just over the rails
-  lit(L + 14.6, SIDE_X - 14.6, RAIL_Y - 5.7, d + 1);
-  part([P(SIDE_X - 57, SKIRT + 2.5, d - 4), P(SIDE_X - 43, SKIRT + 2.5, d - 4), P(SIDE_X - 43, SKIRT + 9.5, d - 4), P(SIDE_X - 57, SKIRT + 9.5, d - 4)], '#33363D'); // the coupler
-  lit(SIDE_X - 56.4, SIDE_X - 43.6, SKIRT + 2.9, d - 4, 0.9);
-  ctx.fillStyle = '#0B0B0E'; quad(ctx, [P(SIDE_X - 53, SKIRT + 5, d - 4), P(SIDE_X - 47, SKIRT + 5, d - 4), P(SIDE_X - 47, SKIRT + 8, d - 4), P(SIDE_X - 53, SKIRT + 8, d - 4)]); ctx.fill(); // its mouth
+  }
   ctx.globalAlpha = 1;
   ctx.restore();
 }
@@ -1373,6 +1399,16 @@ function trainNose(d, img, alpha) {
   const unlit = 1 - dark(d); // inside the tunnel: the body in the dark, its lit windows still glowing
   const sh = unlit > 0.01 ? noseShade() : null;
   ctx.globalAlpha = alpha * seen(d);
+  /* the body's corner behind the skirt: the nose art's lower body is drawn 4 to 9 units narrower than the car (a real
+     car tucks in under its windows), and the car's side is a flat wall, so beside the skirt there was a see-through
+     slot down to the track, right where the nose meets the side. It is the end of the side wall: steel in the shade. */
+  if (alpha >= 1) {
+    const by = bounce(); const lt = 0.12 + 0.88 * dark(d);
+    quad(ctx, [P(SIDE_X - 12, 29 + by, d), P(SIDE_X, 29 + by, d), P(SIDE_X, SKIRT + by, d), P(SIDE_X - 12, SKIRT + by, d)]);
+    ctx.fillStyle = `rgb(${Math.round(20 * lt)}, ${Math.round(25 * lt)}, ${Math.round(34 * lt)})`; ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = Math.max(0.55, (F / d) * 0.3);
+    ctx.beginPath(); ctx.moveTo(...P(SIDE_X - 12, SKIRT + by, d)); ctx.lineTo(...P(SIDE_X, SKIRT + by, d)); ctx.stroke();
+  }
   if (sh) {
     // darkened first, on a scratch sheet, THEN faded as one thing (two layers faded separately left it half lit)
     const k = Math.abs(ctx.getTransform().a) || 1;
@@ -1402,8 +1438,13 @@ function headlights(d, glow, alpha = 1) {
     const y = n.t + n.h * 0.74;
     const r = Math.max(10, n.w * 0.32) * glow;
     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    // (Nov 22: a lamp's glow falls off fast. It ran at a third strength out to a quarter of its reach and then in a
+    // straight line to nothing, so close up the two glows together fogged the whole lower nose to one pale grey: the
+    // skirt, the coupler and everything under them lost their ink and their shade, "flat grey boxes".)
     g.addColorStop(0, 'rgba(255,252,236,0.95)');
-    g.addColorStop(0.25, 'rgba(255,240,200,0.35)');
+    g.addColorStop(0.1, 'rgba(255,244,214,0.5)');
+    g.addColorStop(0.24, 'rgba(255,240,200,0.17)');
+    g.addColorStop(0.5, 'rgba(255,240,200,0.045)');
     g.addColorStop(1, 'rgba(255,240,200,0)');
     ctx.fillStyle = g;
     ctx.fillRect(x - r, y - r, r * 2, r * 2);
@@ -1605,7 +1646,6 @@ function draw() {
   // the car; against the nose it goes by depth (in front of it only once it is nearer)
   safe('trash', () => drawTrash(t, (d) => d >= lead));
   safe('sparks', () => brakeSparks(t, lead, Math.min(1, speedAt(t) / 2400) * (t < T_CRAWL ? 1 : 0.3)));
-  safe('nosegear', () => noseGear(lead));
   const heavy = safe('heavynose', () => heavyNose()) || img;
   safe('smear', () => noseSmear(t, heavy, fx * Math.max(0, Math.min(1, (speedAt(t) - 2300) / 700)))); // (only at real speed: slower, the echoes read as a double image)
   if (safe('nose', () => { trainNose(lead, heavy, 1); return true; }) !== true && img) safe('nose-plain', () => trainNose(lead, img, 1));
