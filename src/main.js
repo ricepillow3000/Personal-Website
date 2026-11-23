@@ -86,6 +86,16 @@ let lastFocus = null;
 
 document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotion === true);
 ransom($('#titleName'), resume.first, NAME_SEED);
+/* Inspector's second door (Nov 23, John: "i want to be where recruiters and devs can finish it"):
+   developers type john.run() in the console, everyone else taps the name on the title 5 times */
+{
+  let taps = 0, timer = 0;
+  $('#titleName').addEventListener('click', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => { taps = 0; }, 2500);
+    if (++taps >= 5) { taps = 0; unlock('inspector'); }
+  });
+}
 $('#titleHook').innerHTML = `<span>${esc(resume.titleHook || resume.hook)}</span>`; // (the span carries the black: it hugs each line of words, see .title-hook)
 // who + proof in the first 10 seconds (two clean lines on phones)
 $('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">2 live apps · 2,000+ tests</span>`;

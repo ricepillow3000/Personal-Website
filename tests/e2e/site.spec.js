@@ -186,6 +186,14 @@ test('dev console: john.run() unlocks Inspector', async ({ page }) => {
   await expect(page.locator('#achCount')).toHaveText('1/6');
 });
 
+test('non-developers: tapping the title name 5 times unlocks Inspector', async ({ page }) => {
+  await page.goto('/');
+  const name = page.locator('#titleName');
+  await expect(name).toBeVisible();
+  for (let i = 0; i < 5; i++) await name.click();
+  await expect(page.locator('#achCount')).toHaveText('1/6');
+});
+
 test('works with motion enabled too (start sequence + board reveal finish)', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
