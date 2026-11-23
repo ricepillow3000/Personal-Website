@@ -1174,3 +1174,10 @@ body[data-screen="title"].cal-off .hud-cal { display: none; } /* no room at all 
 @keyframes mnSlash { from { transform: scaleY(0); } to { transform: none; } }
 @keyframes mnSide { from { transform: translateX(120px) rotate(12deg); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes mnTease { from { transform: scale(.3) rotate(-12deg); } to { transform: none; } }
+
+/* the director's cut is waiting (Nov 23): the SECRETS button turns yellow and breathes until opened */
+#achBtn.ach-ready { background: #FFE11A; color: #0B0B0B; animation: achReady 1.6s ease-in-out infinite; }
+@keyframes achReady { 50% { transform: scale(1.08); } }
+.reduce-motion #achBtn.ach-ready { animation: none; }
+@media (prefers-reduced-motion: reduce) { #achBtn.ach-ready { animation: none; } }
+.ach-cut { margin: 16px 0 0; }
