@@ -43,6 +43,7 @@ const MELODY = [
 ];
 // ----------------------
 
+const LOOP = 256; // 16 bars of 16ths: the whole song, then it loops
 const AHEAD = 0.35; // seconds scheduled ahead (a busy moment, like the train, never leaves a gap)
 const LEVEL = 0.6; // the loop's own level: it sits under the site's sound effects
 const midi = (n) => 440 * 2 ** ((n - 69) / 12);
@@ -346,10 +347,11 @@ export function createMusic(ac, dest) {
     timer = setInterval(tick, 25);
   };
   return {
-    /** start (or restart) the loop, fading in */
-    start() {
+    /** start the loop, fading in, from 16th number `from` (0 = the top; a visitor coming back carries on
+        where they left, Nov 23, John: "when you go back, the music restarts straight from zero") */
+    start(from = 0) {
       if (timer) return;
-      n = 0;
+      n = Math.max(0, Math.floor(from)) % LOOP;
       next = ac.currentTime + 0.08;
       out.gain.cancelScheduledValues(ac.currentTime);
       out.gain.setValueAtTime(0.0001, ac.currentTime);
@@ -357,6 +359,10 @@ export function createMusic(ac, dest) {
       timer = setInterval(tick, 25);
       tick();
       document.addEventListener('visibilitychange', vis);
+    },
+    /** the 16th being heard right now (the scheduler runs a little ahead of the ear) */
+    position() {
+      return ((n - Math.ceil(Math.max(0, next - ac.currentTime) / six)) % LOOP + LOOP) % LOOP;
     },
     /** fade out and free everything */
     stop() {

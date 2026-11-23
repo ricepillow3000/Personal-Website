@@ -1023,6 +1023,42 @@ test('sound: an engine that does not come back is replaced (an iPhone gets a new
   await expect.poll(() => state(page)).toBe('running');
 });
 
+test('sound: leaving fades the mix to silence first (no buzz), and coming back the music carries on from where it was, even on a new engine or after a reload', async ({ browser }, testInfo) => {
+  const hide = (p, h) => p.evaluate((h) => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h }); document.dispatchEvent(new Event('visibilitychange')); }, h);
+  const pos = (p) => p.evaluate(() => window.__musicPos?.() ?? null);
+  const gain = (p) => p.evaluate(() => window.__masterGain?.() ?? null);
+  const gen = (p) => p.evaluate(() => window.__acGen || 0);
+  // an iPhone (the hardest case: every return gets a brand new engine)
+  const ctx = await browser.newContext({ ...testInfo.project.use, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1' });
+  const p = await ctx.newPage();
+  await p.goto('/');
+  await p.locator('.title-hook').click();
+  await expect.poll(() => pos(p), { timeout: 15000 }).toBeGreaterThan(12); // the song is a few beats in
+  // 1) a link that leaves (LinkedIn, in a new tab): the mix fades out before the page goes; nothing left, so it comes back
+  const [tab] = await Promise.all([ctx.waitForEvent('page'), p.locator('#ccLinkedIn').click()]);
+  await tab.close();
+  await expect.poll(() => gain(p), { timeout: 1000 }).toBeLessThan(0.05);
+  await expect.poll(() => gain(p), { timeout: 4000 }).toBeGreaterThan(0.8);
+  // 2) swiping away: silent before the pause; back, and the next tap's new engine carries the song on from its place
+  const before = await pos(p);
+  await hide(p, true);
+  await p.waitForTimeout(150);
+  expect(await gain(p)).toBeLessThan(0.05);
+  await p.waitForTimeout(300);
+  await hide(p, false);
+  await p.locator('.title-hook').click();
+  await expect.poll(() => gen(p)).toBe(2);
+  await expect.poll(() => pos(p), { timeout: 8000 }).not.toBeNull();
+  expect(await pos(p)).toBeGreaterThanOrEqual(before - 1); // not back to the top (0)
+  // 3) a page that reloads on return (a redirect, the browser dropping it) carries on too
+  const beforeReload = await pos(p);
+  await p.reload();
+  await p.locator('.title-hook').click();
+  await expect.poll(() => pos(p), { timeout: 15000 }).not.toBeNull();
+  expect(await pos(p)).toBeGreaterThanOrEqual(beforeReload - 1);
+  await ctx.close();
+});
+
 test('tower lights: every aviation light blinks on its own random beat (never all together); all steady on with reduced motion', async ({ page, browser }) => {
   await openBoard(page); // reduced motion (this context)
   const states = () => page.locator('.bd-avfix .av').evaluateAll((els) => els.map((e) => e.classList.contains('lit')));

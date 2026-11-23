@@ -24,6 +24,8 @@ function ensure() {
   try { ac = new AC({ latencyHint: 'balanced' }); } catch { ac = new AC(); } // (a little more buffer: no crackle over Bluetooth when the phone is busy)
   window.__acGen = (window.__acGen || 0) + 1; // (how many engines this page has built; the tests read it)
   window.__acState = () => ac?.state;
+  window.__musicPos = () => (music ? music.position() : null); // (tests: the song's place, in 16ths)
+  window.__masterGain = () => master?.gain.value; // (tests: the whole mix's level)
   ac.onstatechange = () => { if (!ac) return; if (ac.state === 'interrupted') stale = true; if (ac.state !== 'running' && !document.hidden && enabled()) armUnlock(); }; // (iOS takes the audio away for a call, Siri, another app: 'interrupted'. Such an engine may never come back, so the next tap builds a new one, see rebuild)
   master = ac.createGain();
   master.gain.value = 0.9;
@@ -1266,11 +1268,12 @@ function startMusic() {
     musicLoading = false;
     if (!enabled() || music) return; // sound went off while it loaded
     music = createMusic(ac, musicBus);
-    music.start();
+    music.start(resumePoint());
   }, () => { musicLoading = false; }); // offline: no music, sound effects still work
 }
 
 function stopMusic() {
+  rememberMusic();
   music?.stop();
   music = null;
 }
@@ -1377,8 +1380,61 @@ export function initAudio() {
   if (enabled()) armUnlock();
   document.addEventListener('visibilitychange', () => {
     if (!ac) return;
-    if (document.hidden) { wasHidden = true; ac.suspend().catch(() => {}); }
-    else wake();
+    if (document.hidden) { wasHidden = true; quiet(true); }
+    else { unquiet(); wake(); }
   });
-  window.addEventListener('pageshow', (e) => { if (e.persisted) wake(); }); // back from the browser's page cache
+  window.addEventListener('pagehide', () => quiet(true)); // (leaving for another page, or the browser freezing this one)
+  window.addEventListener('pageshow', (e) => { if (e.persisted) { unquiet(); wake(); } }); // back from the browser's page cache
+  // a link that leaves (a new tab, LinkedIn, GitHub, a live app, the mail app): fade out BEFORE the page goes away
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest?.('a[href]');
+    if (!a || !ac || e.defaultPrevented) return;
+    const href = a.getAttribute('href') || '';
+    const leaves = a.target === '_blank' || /^(mailto:|tel:)/i.test(href) || (/^https?:/i.test(href) && new URL(href, location.href).origin !== location.origin);
+    if (!leaves) return;
+    quiet(false);
+    setTimeout(() => { if (!document.hidden) unquiet(); }, 1500); // (nothing actually left, e.g. no mail app: the sound comes back)
+  });
+}
+
+/* ---------- leaving without a buzz, coming back where the music was (Nov 23, John: "when clicking the links, sometimes the
+   sound or the music kind of bugs out like a bee buzzing in your ear. And then when you go back, the music restarts straight
+   from zero"). Root causes: (1) the engine was paused (or, on a phone, taken away by the system) in the middle of whatever was
+   playing, at full level: a phone can then repeat its last few milliseconds of sound, a buzz. (2) The music kept no place: a
+   new engine (an iPhone always gets one on return) or a reload started the song from its first beat. Now every exit fades the
+   whole mix to silence in ~40 ms before the engine pauses, the song's place is kept (also in this tab's session storage, for a
+   page that reloads on return), and the music comes back from that beat with its usual soft fade-in. */
+const POS_KEY = 'jn-music-pos';
+let musicPos = null;
+function rememberMusic() {
+  if (!music || !ac) return;
+  try { musicPos = music.position(); } catch { return; }
+  try { sessionStorage.setItem(POS_KEY, JSON.stringify({ n: musicPos, at: Date.now() })); } catch { /* private mode */ }
+}
+function resumePoint() {
+  if (musicPos !== null) return musicPos;
+  try {
+    const v = JSON.parse(sessionStorage.getItem(POS_KEY) || 'null');
+    if (v && Number.isFinite(v.n) && Date.now() - v.at < 30 * 60 * 1000) return v.n; // (half an hour away: start fresh)
+  } catch { /* nothing kept */ }
+  return 0;
+}
+let quietTimer = 0;
+function quiet(pause) {
+  if (!ac || !master) return;
+  rememberMusic();
+  const t = ac.currentTime;
+  master.gain.cancelScheduledValues(t);
+  master.gain.setValueAtTime(master.gain.value, t);
+  master.gain.linearRampToValueAtTime(0, t + 0.04);
+  clearTimeout(quietTimer);
+  if (pause) { const a = ac; quietTimer = setTimeout(() => { if (a === ac && document.hidden) a.suspend().catch(() => {}); }, 60); }
+}
+function unquiet() {
+  clearTimeout(quietTimer);
+  if (!ac || !master) return;
+  const t = ac.currentTime;
+  master.gain.cancelScheduledValues(t);
+  master.gain.setValueAtTime(master.gain.value, t);
+  master.gain.linearRampToValueAtTime(0.9, t + 0.25);
 }
