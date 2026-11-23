@@ -38,7 +38,7 @@ import { createMenu, MENU_ITEMS } from './scenes/menu.js';
 import { SECTION_RENDERERS, SECTION_TITLES, dossierMarkup, animateDossier } from './scenes/sections.js';
 import { renderQuickView } from './scenes/quickview.js';
 import { sfx, setSound, setMusicVolume, initAudio } from './audio/audio.js';
-import { unlock, refreshCounter, listMarkup, count, ACHIEVEMENTS } from './eggs/achievements.js';
+import { unlock, refreshCounter, listMarkup, count, allFound, ACHIEVEMENTS } from './eggs/achievements.js';
 import { armBee } from './eggs/bee.js';
 import { installConsole } from './eggs/console.js';
 import { bindInput, bindGamepad } from './input/input.js';
@@ -642,6 +642,7 @@ function renderPage(id) {
   hydrateStamps(root);
   if (id === 'contact') sfx('sparkle');
   store.addTo('visited', id);
+  if (id === 'secret') refreshCounter(); // (the SECRETS glow stops once the cut is seen)
   if (CHAPTERS.every((c) => store.has('visited', c))) unlock('full-recon'); // every chapter opened
   updateGuide(id);
 }
@@ -803,6 +804,13 @@ window.addEventListener('popstate', () => {
 }
 
 $('#modal').addEventListener('click', (e) => {
+  if (e.target.closest('[data-cut]')) { // close the pop-up, then open the cut (navigate waits for the pop-up's own step back)
+    e.preventDefault();
+    sfx('select');
+    closeModal();
+    navigate('secret');
+    return;
+  }
   if (e.target.id === 'modal' || e.target.closest('[data-close]')) {
     sfx('back');
     closeModal();
@@ -815,7 +823,9 @@ $('#achBtn').addEventListener('click', () => {
     <header class="dossier-head"><p class="dossier-code">SECRETS · ${count()}/${ACHIEVEMENTS.length} FOUND</p>
     <h2 class="dossier-title ransom" id="modalTitle" data-ransom="ACHIEVEMENTS">ACHIEVEMENTS</h2></header>
     ${listMarkup()}
-    <p class="dossier-hint">All 6 unlock the director's cut, how my AI crew built this.</p></div>`);
+    ${allFound()
+    ? `<p class="ach-cut"><a class="btn" href="#/secret" data-cut>★ OPEN THE DIRECTOR'S CUT</a></p>`
+    : `<p class="dossier-hint">All 6 unlock the director's cut, how my AI crew built this.</p>`}</div>`);
 });
 
 /* PROGRESS chip: a real button that shows what is left and how each item counts. */

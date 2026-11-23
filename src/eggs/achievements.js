@@ -28,6 +28,9 @@ let shownCount = null;
 export function refreshCounter() {
   const el = $('#achCount');
   const text = `${count()}/${ACHIEVEMENTS.length}`;
+  // the reward is easy to find (Nov 23, John: "where do i see directors cut? it does not appear"):
+  // the SECRETS button glows yellow from the 6th secret until the director's cut is opened
+  $('#achBtn')?.classList.toggle('ach-ready', allFound() && !store.has('visited', 'secret'));
   if (!el || text === shownCount) return;
   const changed = shownCount !== null; // not on first paint
   shownCount = text;
@@ -41,7 +44,7 @@ export function unlock(id) {
   toast(a.name);
   sfx('treasure');
   refreshCounter();
-  if (allFound()) setTimeout(() => toast('Behind the scenes unlocked — check SYSTEM', 'ALL SECRETS FOUND'), 1200);
+  if (allFound()) setTimeout(() => toast("Director's cut unlocked. Tap SECRETS at the top right.", 'ALL SECRETS FOUND'), 1200);
   return true;
 }
 

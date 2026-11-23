@@ -388,7 +388,7 @@ function system() {
         <section class="sys jag light" data-in style="grid-column:1/-1">
           <h3>ACHIEVEMENTS</h3>
           ${listMarkup()}
-          ${allFound() ? '<p style="margin:14px 0 0"><a class="btn" data-nav href="#/secret">★ Behind the scenes</a></p>' : ''}
+          ${allFound() ? `<p class="ach-cut"><a class="btn" data-nav href="#/secret">★ OPEN THE DIRECTOR'S CUT</a></p>` : ''}
         </section>
         <section class="sys jag light sys-credits" data-in style="grid-column:1/-1">
           <h3>SOUND CREDITS</h3>
@@ -408,8 +408,8 @@ function system() {
 
 function secret() {
   return {
-    title: 'BEHIND THE SCENES',
-    html: `${back}${head('BEHIND THE SCENES', 'You found every secret. Here is how this site was made.')}
+    title: "DIRECTOR'S CUT",
+    html: `${back}${head("DIRECTOR'S CUT", 'You found every secret. Here is how this site was made.')}
       <div class="sq-list bts">
         <article class="sq jag light" data-in><h3>THE CREW</h3><p>Same workflow as my projects. An orchestrator agent planned it, a researcher agent checked the details, a builder agent wrote the code, and I directed and reviewed every step. Every click path is covered by automated browser tests.</p></article>
         <article class="sq jag light" data-in><h3>THE ART</h3><p>The subway, the city, the train and the trash on the platform are cel-shaded art I directed Google's Nano Banana to generate. The train that roars past is drawn live in perspective by code, and every sticker, poster and comic shape is inline SVG and CSS.</p></article>
@@ -419,7 +419,7 @@ function secret() {
   };
 }
 
-export const SECTION_TITLES = { missions: 'MISSIONS', skills: 'SKILLS', different: 'MY EDGE', stats: 'STATS', 'side-quests': 'SIDE QUESTS', contact: 'CONTACT', system: 'SETTINGS', secret: 'BEHIND THE SCENES' };
+export const SECTION_TITLES = { missions: 'MISSIONS', skills: 'SKILLS', different: 'MY EDGE', stats: 'STATS', 'side-quests': 'SIDE QUESTS', contact: 'CONTACT', system: 'SETTINGS', secret: "DIRECTOR'S CUT" };
 
 export const SECTION_RENDERERS = {
   missions,

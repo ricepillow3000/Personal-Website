@@ -194,6 +194,22 @@ test('non-developers: tapping JOHN on the main menu 5 times unlocks Inspector', 
   await expect(page.locator('#achCount')).toHaveText('1/6');
 });
 
+test("all 6 secrets: SECRETS glows and its pop-up opens the director's cut", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.setItem('jn-resume-v1', JSON.stringify({ achievements: ['first-words', 'case-file', 'full-recon', 'bee', 'off-record', 'inspector'] }));
+  });
+  await openBoard(page);
+  await expect(page.locator('#achCount')).toHaveText('6/6');
+  await expect(page.locator('#achBtn')).toHaveClass(/ach-ready/);
+  await page.locator('#achBtn').click();
+  await page.getByRole('link', { name: /OPEN THE DIRECTOR'S CUT/ }).click();
+  await expect(page.locator('#modal')).not.toBeVisible();
+  await expect(page.locator('#page h2.ransom')).toHaveAccessibleName("DIRECTOR'S CUT");
+  await expect(page.locator('#achBtn')).not.toHaveClass(/ach-ready/);
+});
+
 test('works with motion enabled too (start sequence + board reveal finish)', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
