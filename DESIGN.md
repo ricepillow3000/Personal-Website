@@ -522,6 +522,12 @@ Run after every design change; report results honestly.
 - **Share card (Nov 23, John: "change the picture to take you time loading screen with just the background and the motto"):** `public/assets/og-card-hd.png`, 2400x1260 lossless PNG (Nov 23, John: "looks bad quality... exactly like in the website": never JPEG for this flat cut-out art, JPEG smears its hard edges; captured at 2x straight from the live loading screen with the real fonts, about 150 KB), the loading screen's background with TAKE YOUR TIME fully inked and underlined, nothing else (no case line, no %, no wheel, no button, never the old title shot that showed the dropped codename). A new file name busts LinkedIn's and Discord's cached preview; give any future card a new name too.
 - **Privacy link (Nov 23, "the link to terms and privacy couldnt open"):** relative (`privacy.html`, back link `./`), so it opens on Vercel, on Pages and in the Claude preview, which now carries privacy.html too.
 
+- **Body text spacing (Nov 23, John: "some of the words kind of look connected together"):** the body face (Alegreya Sans ExtraBold) sets a tight word gap, so `body` carries `word-spacing: .16em; letter-spacing: .012em`; headings, buttons, labels, cut-out letters and slabs reset to `word-spacing: normal`. Never tighten body text below this.
+- **Director's cut has no motto (Nov 23):** the Akane Tsunemori quote lives on STATS only (no repeats rule). The cut keeps THE CREW, THE ART and THE SOUND.
+- **Privacy → back (Nov 23, John: "it just puts me all the way back to the loading screen... It should just make them go back to the plan"):** the privacy page's button is BACK TO THE PLAN (`./#/board`), and the loader skips itself whenever the visitor arrives from privacy.html (same-origin referrer), so they land straight on THE PLAN with their save.
+
+- **Skill levels are John's own, modest on purpose (Nov 23, John: "my skills look a little bit too [inflated]"):** AI Agents 7, Testing / QA 6, Python 5, AI Evaluation 8, GitHub Actions 6, Flask 5, Git / GitHub 7, JavaScript 4, Docker 4. No MAX. Never raise a level without John saying so.
+
 ## 16. Communication with John
 
 - Do the work automatically; don't stop for manual steps he didn't ask for.
