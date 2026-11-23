@@ -528,6 +528,8 @@ Run after every design change; report results honestly.
 
 - **Skill levels are John's own, modest on purpose (Nov 23, John: "my skills look a little bit too [inflated]"):** AI Agents 7, Testing / QA 6, Python 5, AI Evaluation 8, GitHub Actions 6, Flask 5, Git / GitHub 7, JavaScript 4, Docker 4. No MAX. Never raise a level without John saying so.
 
+- **Link metadata (Nov 23, John's LinkedIn Post Inspector: "make sure there is an author which is me"):** app.html carries `author` / `article:author` = John Nguyen and a publish date (`publish_date` / `og:publish_date` and `article:published_time`, Nov 23, 2026, the launch day) next to the Open Graph tags.
+
 ## 16. Communication with John
 
 - Do the work automatically; don't stop for manual steps he didn't ask for.
