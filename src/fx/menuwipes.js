@@ -81,6 +81,11 @@ export function panelsWipe(swap, label = 'MY EDGE') {
     whole page shatters and its pieces fall away, showing the new page behind it. */
 export function glassWipe(swap) {
   if (reducedMotion()) return instant(swap);
+  /* (Nov 23, John: "on my iPhone... going to the director's cut... the site crashes". Root cause: every
+     shard used to carry its own full copy of the screen, city art, page and HUD, 9 copies at once, each
+     a full-screen layer: ~14,600 elements and ~2.7 GB of layers at an iPhone's 3x, so iOS killed the tab.
+     Now ONE copy of the screen takes the hit; the shards are panes of dark glass, each a layer only as big
+     as its own triangle, that fall away over the new page. About one screen of layers in all.) */
   const W = window.innerWidth;
   const H = window.innerHeight;
   const c = { x: W * 0.56, y: H * 0.44 }; // the impact
@@ -88,7 +93,6 @@ export function glassWipe(swap) {
   const N = 9;
   const ang = Array.from({ length: N }, (_, i) => (i / N) * Math.PI * 2 + ((i * 37) % 10) / 30);
   const at = (a, r) => [c.x + Math.cos(a) * r, c.y + Math.sin(a) * r];
-  const P = ([x, y]) => `${x.toFixed(0)}px ${y.toFixed(0)}px`;
   // cracks: rays out from the impact plus two broken rings, drawn as white glints with a dark edge
   const rays = ang.map((a) => `M${c.x.toFixed(0)} ${c.y.toFixed(0)} L${at(a + 0.05, R * 0.3).map((v) => v.toFixed(0)).join(' ')} L${at(a - 0.03, R).map((v) => v.toFixed(0)).join(' ')}`);
   const ring = (r) => `M${ang.map((a, i) => at(a + (i % 2 ? 0.04 : -0.04), r * (0.85 + (i % 3) * 0.12)).map((v) => v.toFixed(0)).join(' ')).join(' L')} Z`;
@@ -96,24 +100,36 @@ export function glassWipe(swap) {
   const el = document.createElement('div');
   el.className = 'fxw mw glass';
   el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = `${ang.map(() => '<div class="gl-shard"><i class="gl-shine"></i></div>').join('')}
+  el.innerHTML = `<div class="gl-pane"></div>${ang.map(() => '<div class="gl-shard"><i class="gl-shine"></i></div>').join('')}
     <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${cracks.map((d) => `<path class="gl-crack" d="${d}"/>`).join('')}</svg><i class="gl-hit"></i>`;
+  const pane = el.querySelector('.gl-pane');
+  const snap = snapshotScreen(); // the one copy of the screen
+  pane.appendChild(snap.frag);
+  // each shard is boxed to its triangle (clamped to the screen), so its layer is small
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   const shards = [...el.querySelectorAll('.gl-shard')];
-  shards.forEach((sh, i) => {
-    sh.style.clipPath = `polygon(${P([c.x, c.y])}, ${P(at(ang[i], R))}, ${P(at(ang[(i + 1) % N], R))})`;
-    const snap = snapshotScreen();
-    sh.prepend(snap.frag);
-    sh.settle = snap.settle;
+  const boxes = shards.map((sh, i) => {
+    const pts = [[c.x, c.y], at(ang[i], R), at(ang[(i + 1) % N], R)];
+    const x0 = clamp(Math.min(...pts.map((q) => q[0])), 0, W);
+    const y0 = clamp(Math.min(...pts.map((q) => q[1])), 0, H);
+    const x1 = clamp(Math.max(...pts.map((q) => q[0])), 0, W);
+    const y1 = clamp(Math.max(...pts.map((q) => q[1])), 0, H);
+    Object.assign(sh.style, {
+      left: `${x0}px`, top: `${y0}px`, width: `${Math.max(1, x1 - x0)}px`, height: `${Math.max(1, y1 - y0)}px`,
+      clipPath: `polygon(${pts.map(([x, y]) => `${(x - x0).toFixed(0)}px ${(y - y0).toFixed(0)}px`).join(', ')})`
+    });
+    return { x0, y0 };
   });
   const hit = el.querySelector('.gl-hit');
   gsap.set(hit, { left: c.x, top: c.y });
   document.body.appendChild(el);
-  shards.forEach((sh) => sh.settle());
+  snap.settle();
   const paths = el.querySelectorAll('.gl-crack');
   paths.forEach((p) => {
     const L = p.getTotalLength();
     gsap.set(p, { strokeDasharray: L, strokeDashoffset: L });
   });
+  gsap.set(shards, { opacity: 0 });
   const tl = gsap.timeline({ onComplete: () => el.remove() });
   tl.set(el, { visibility: 'visible' })
     .add(() => sfx('crack'), 0)
@@ -121,16 +137,19 @@ export function glassWipe(swap) {
     .to(hit, { opacity: 0, duration: 0.12 }, 0.12)
     .to(paths, { strokeDashoffset: 0, duration: 0.16, ease: 'power3.out', stagger: 0.012 }, 0.02)
     .add(() => shake(el), 0.04)
-    // a beat with the cracked screen, then it gives way
+    // a beat with the cracked screen, then it gives way: the old screen drops out and its glass falls
     .add(swap, 0.34)
     .add(() => sfx('shatter'), 0.34)
+    .set(pane, { display: 'none' }, 0.34)
+    .set(shards, { opacity: 1 }, 0.34)
     .set(paths, { opacity: 0 }, 0.36)
     .to(shards, {
       x: (i) => Math.cos(ang[i] + Math.PI / N) * W * 0.18,
       y: (i) => H * (0.9 + (i % 3) * 0.25),
       rotation: (i) => (i % 2 ? 1 : -1) * (12 + (i % 4) * 9),
       scale: (i) => 0.92 - (i % 3) * 0.05,
-      transformOrigin: () => `${c.x}px ${c.y}px`,
+      transformOrigin: (i) => `${c.x - boxes[i].x0}px ${c.y - boxes[i].y0}px`,
+      opacity: 0,
       duration: 0.5,
       ease: 'power2.in',
       stagger: { each: 0.025, from: 'random' },

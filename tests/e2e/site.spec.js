@@ -225,6 +225,31 @@ test("the director's cut does not repeat the motto (it lives on STATS)", async (
   await expect(page.locator('#page .motto, #page .motto-strip')).toHaveCount(0);
 });
 
+test("director's cut: the glass transition copies the screen once, never once per shard (iPhone crash)", async ({ browser }) => {
+  // (Nov 23: the old shatter cloned the whole screen for each of its 9 shards, ~14,600 elements and GBs of
+  // layers at an iPhone's 3x, so iOS killed the tab. One copy of the screen plus the new page stays under 4x the page.)
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  const errors = errorsOf(page);
+  await openBoard(page);
+  const base = await page.evaluate(() => document.querySelectorAll('*').length);
+  const peak = await page.evaluate(() => new Promise((done) => {
+    let max = 0;
+    const t0 = performance.now();
+    const tick = () => {
+      max = Math.max(max, document.querySelectorAll('*').length);
+      if (performance.now() - t0 < 1400) requestAnimationFrame(tick); else done(max);
+    };
+    location.hash = '#/secret';
+    requestAnimationFrame(tick);
+  }));
+  expect(peak).toBeLessThan(base * 4); // (one copy + the new page is ~2.6x; the per-shard bug was ~9x)
+  await expect(page.locator('#page h2.ransom')).toHaveAccessibleName("DIRECTOR'S CUT");
+  await expect(page.locator('.glass')).toHaveCount(0); // the effect cleans itself up
+  expect(errors).toEqual([]);
+  await ctx.close();
+});
+
 test('works with motion enabled too (start sequence + board reveal finish)', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
