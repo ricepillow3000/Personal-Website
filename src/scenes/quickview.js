@@ -59,7 +59,7 @@ export function renderQuickView(el) {
             .join('')}
         </section>
       </div>
-      <p class="legal">Independent, non-commercial personal portfolio inspired by Persona 5. Persona 5 and related marks are trademarks of ATLUS / SEGA. No affiliation implied. Copyright 2026 John Nguyen. <a href="/privacy.html">Privacy and terms</a></p>
+      <p class="legal">Independent, non-commercial personal portfolio inspired by Persona 5. Persona 5 and related marks are trademarks of ATLUS / SEGA. No affiliation implied. Copyright 2026 John Nguyen. <a href="privacy.html">Privacy and terms</a></p>
     </div>`;
   ransom(el.querySelector('#qName'), r.name.toUpperCase(), 3);
 }
