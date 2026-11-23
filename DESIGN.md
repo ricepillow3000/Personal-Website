@@ -528,7 +528,7 @@ Run after every design change; report results honestly.
 
 - **Skill levels are John's own, modest on purpose (Nov 23, John: "my skills look a little bit too [inflated]"):** AI Agents 7, Testing / QA 6, Python 5, AI Evaluation 8, GitHub Actions 6, Flask 5, Git / GitHub 7, JavaScript 4, Docker 4. No MAX. Never raise a level without John saying so.
 
-- **Link metadata (Nov 23, John's LinkedIn Post Inspector: "make sure there is an author which is me"):** app.html carries `author` / `article:author` = John Nguyen and a publish date (`publish_date` / `og:publish_date` and `article:published_time`, Nov 23, 2026, the launch day) next to the Open Graph tags. The share description (og and twitter) is at least 100 characters (LinkedIn warns below that): "AI Solutions Engineer in training. I direct AI agents to build software, then test it like it's going to production. Play my interactive resume." (144).
+- **Link metadata (Nov 23, John's LinkedIn Post Inspector: "make sure there is an author which is me"):** app.html carries `author` / `article:author` = John Nguyen and a publish date (`publish_date` / `og:publish_date` and `article:published_time`, Nov 23, 2026, the launch day) next to the Open Graph tags. The share description (og and twitter) is at least 100 characters (LinkedIn warns below that), plain words, no em dashes, in John's own voice (Nov 23, John: "simple... as if a 19 year old college student wrote it wanting to prove something to the world"): "I'm a college student who got tired of boring resumes, so I directed AI agents to build mine as a game. Then I tested every click. Press start." (143). The search description says the same with his name and GSU.
 
 ## 16. Communication with John
 
