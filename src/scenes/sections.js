@@ -396,7 +396,7 @@ function system() {
           <ul>${SOUND_CREDITS.map((c) => `<li><b>${esc(c.what)}</b> · <a href="${esc(c.source)}" target="_blank" rel="noopener noreferrer">${esc(c.pack)}</a> by ${c.authorUrl ? `<a href="${esc(c.authorUrl)}" target="_blank" rel="noopener noreferrer">${esc(c.author)}</a>` : esc(c.author)} · <a href="${esc(c.licenseUrl)}" target="_blank" rel="noopener noreferrer">${esc(c.license)}</a>${c.changes ? ` · ${esc(c.changes)}` : ''}</li>`).join('')}</ul>
         </section>
       </div>
-      <p class="legal">Independent, non-commercial personal portfolio inspired by Persona 5. Persona 5 and related marks are trademarks of ATLUS / SEGA. No affiliation implied. Copyright 2026 John Nguyen. <a href="/privacy.html">Privacy and terms</a></p>`,
+      <p class="legal">Independent, non-commercial personal portfolio inspired by Persona 5. Persona 5 and related marks are trademarks of ATLUS / SEGA. No affiliation implied. Copyright 2026 John Nguyen. <a href="privacy.html">Privacy and terms</a></p>`,
     after(root) {
       // the slider's red runs as far as its knob (the track is drawn by the page, not the browser)
       const vol = root.querySelector('#musicVol');
