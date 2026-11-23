@@ -87,10 +87,12 @@ let lastFocus = null;
 document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotion === true);
 ransom($('#titleName'), resume.first, NAME_SEED);
 /* Inspector's second door (Nov 23, John: "i want to be where recruiters and devs can finish it"):
-   developers type john.run() in the console, everyone else taps the name on the title 5 times */
+   developers type john.run() in the console, everyone else taps JOHN on the main menu 5 times
+   (moved from the title to the menu Nov 23, John's screenshot: "make it so they tap this") */
 {
   let taps = 0, timer = 0;
-  $('#titleName').addEventListener('click', () => {
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest?.('#boardName')) return;
     clearTimeout(timer);
     timer = setTimeout(() => { taps = 0; }, 2500);
     if (++taps >= 5) { taps = 0; unlock('inspector'); }
