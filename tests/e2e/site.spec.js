@@ -210,6 +210,21 @@ test("all 6 secrets: SECRETS glows and its pop-up opens the director's cut", asy
   await expect(page.locator('#achBtn')).not.toHaveClass(/ach-ready/);
 });
 
+test('privacy page: BACK TO THE PLAN skips the loading screen and lands on THE PLAN', async ({ page, baseURL }) => {
+  await page.goto('/privacy.html');
+  await expect(page.locator('a.back')).toHaveAttribute('href', './#/board');
+  // (?intro turns the loading screen on for a test browser; coming from privacy.html must still skip it)
+  await page.goto('/?intro#/board', { referer: new URL('/privacy.html', baseURL).href });
+  await expect(page.locator('#loader')).toHaveCount(0);
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+});
+
+test("the director's cut does not repeat the motto (it lives on STATS)", async ({ page }) => {
+  await page.goto('/#/secret');
+  await expect(page.locator('#page h2.ransom')).toBeVisible();
+  await expect(page.locator('#page .motto, #page .motto-strip')).toHaveCount(0);
+});
+
 test('works with motion enabled too (start sequence + board reveal finish)', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();

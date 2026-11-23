@@ -113,18 +113,20 @@ export const resume = {
     }
   ],
 
-  /* Ranks 1–10, or 'MAX'. Each one is backed by proof. `uses` = which projects the
+  /* (Nov 23, John: "my skills look a little bit too [inflated]": set by John to agents 7, testing 6, Python 5,
+     evaluation 8, GitHub Actions 6, Flask 5, Git 7, JavaScript 4, Docker 4.)
+     Ranks 1–10, or 'MAX'. Each one is backed by proof. `uses` = which projects the
      red string on the Heist Board connects it to. */
   skills: [
-    { id: 'agents', name: 'AI Agents (Claude Code)', rank: 9, proof: 'Both apps and this site, built by a crew I direct', uses: ['meliona'] },
-    { id: 'testing', name: 'Testing / QA', rank: 'MAX', proof: 'Every app ships with its own test suite', uses: ['meliona', 'arcas'] },
+    { id: 'agents', name: 'AI Agents (Claude Code)', rank: 7, proof: 'Both apps and this site, built by a crew I direct', uses: ['meliona'] },
+    { id: 'testing', name: 'Testing / QA', rank: 6, proof: 'Every app ships with its own test suite', uses: ['meliona', 'arcas'] },
     { id: 'python', name: 'Python', rank: 5, proof: 'Meliona’s engine · ARCAS backend', uses: ['meliona', 'arcas'] },
     { id: 'aieval', name: 'AI Evaluation', rank: 8, proof: 'Audits the engine against live market data', uses: ['meliona'] },
-    { id: 'cicd', name: 'GitHub Actions (CI/CD)', rank: 7, proof: 'Every push linted, security-scanned and tested', uses: ['meliona', 'arcas'] },
-    { id: 'flask', name: 'Flask', rank: 7, proof: 'ARCAS REST API', uses: ['arcas'] },
+    { id: 'cicd', name: 'GitHub Actions (CI/CD)', rank: 6, proof: 'Every push linted, security-scanned and tested', uses: ['meliona', 'arcas'] },
+    { id: 'flask', name: 'Flask', rank: 5, proof: 'ARCAS REST API', uses: ['arcas'] },
     { id: 'git', name: 'Git / GitHub', rank: 7, proof: 'Both projects, public repos', uses: ['meliona', 'arcas'] },
-    { id: 'js', name: 'JavaScript', rank: 6, proof: 'Office.js task pane · web UIs', uses: ['meliona', 'arcas'] },
-    { id: 'docker', name: 'Docker', rank: 6, proof: 'Meliona deployment', uses: ['meliona'] }
+    { id: 'js', name: 'JavaScript', rank: 4, proof: 'Office.js task pane · web UIs', uses: ['meliona', 'arcas'] },
+    { id: 'docker', name: 'Docker', rank: 4, proof: 'Meliona deployment', uses: ['meliona'] }
   ],
 
   different: [
