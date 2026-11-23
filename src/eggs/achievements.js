@@ -10,7 +10,7 @@ export const ACHIEVEMENTS = [
   { id: 'full-recon', name: 'Full Recon', hint: 'Open all six chapters.' },
   { id: 'bee', name: 'BEE!!', hint: 'Something small and buzzing passes by. Be quick.' },
   { id: 'off-record', name: 'Off the Record', hint: 'That GPA star has a flip side.' },
-  { id: 'inspector', name: 'Inspector', hint: 'Developers know where to look. Everyone else, tap my name on the title screen five times.' }
+  { id: 'inspector', name: 'Inspector', hint: 'Developers know where to look. Everyone else, tap my name on the main menu five times.' }
 ];
 /* (Player 2, "use a gamepad", was dropped Nov 22, John: "some ppl dont have controllers... make it just 6
    and people can complete the game without external devices". A controller still drives the site.) */
