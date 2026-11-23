@@ -519,7 +519,7 @@ Run after every design change; report results honestly.
 
 - **Legal line (Nov 23, John: "cant really see it with the background"):** it sits on a solid black plate with a red edge, full white text and a yellow "Privacy and terms" link, on SETTINGS and Quick View alike. Never faint grey text over the city art.
 
-- **Share card (Nov 23, John: "change the picture to take you time loading screen with just the background and the motto"):** `public/assets/og-card.jpg`, 1200x630, the loading screen's background with TAKE YOUR TIME fully inked and underlined, nothing else (no case line, no %, no wheel, no button, never the old title shot that showed the dropped codename). A new file name busts LinkedIn's and Discord's cached preview; give any future card a new name too.
+- **Share card (Nov 23, John: "change the picture to take you time loading screen with just the background and the motto"):** `public/assets/og-card-hd.png`, 2400x1260 lossless PNG (Nov 23, John: "looks bad quality... exactly like in the website": never JPEG for this flat cut-out art, JPEG smears its hard edges; captured at 2x straight from the live loading screen with the real fonts, about 150 KB), the loading screen's background with TAKE YOUR TIME fully inked and underlined, nothing else (no case line, no %, no wheel, no button, never the old title shot that showed the dropped codename). A new file name busts LinkedIn's and Discord's cached preview; give any future card a new name too.
 - **Privacy link (Nov 23, "the link to terms and privacy couldnt open"):** relative (`privacy.html`, back link `./`), so it opens on Vercel, on Pages and in the Claude preview, which now carries privacy.html too.
 
 ## 16. Communication with John
