@@ -1771,7 +1771,8 @@ test('inside Instagram, LinkedIn or Facebook the title has a standing OPEN IN BR
       expect(link).not.toMatch(/package=/); // (the default browser, not one named browser)
       expect(link).toMatch(/S\.browser_fallback_url=https?%3A/);
     } else expect(link).toMatch(/^x-safari-https?:\/\//);
-    await expect(page.locator('#inappNote')).toContainText(kind === 'intent' ? 'Open in browser' : 'Open in Safari', { timeout: 4000 }); // (the test browser keeps the page, like an app that refuses; it also refuses the clipboard, so no "copied")
+    await expect(page.locator('#inappNote')).toContainText(/Instagram|Facebook/.test(app) ? 'Open in external browser' : kind === 'intent' ? 'Open in browser' : 'Open in Safari', { timeout: 4000 });
+    await expect(page.locator('.ib-point')).toHaveCount(/Instagram|Facebook/.test(app) ? 1 : 0); // (Instagram blocks the hand-off: an arrow points at its ··· menu) // (the test browser keeps the page, like an app that refuses; it also refuses the clipboard, so no "copied")
     await expect(page.locator('#inappNote')).not.toContainText('Link copied');
     expect(errors).toEqual([]);
     await ctx.close();
