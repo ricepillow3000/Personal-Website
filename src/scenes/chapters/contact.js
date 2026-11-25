@@ -11,7 +11,7 @@ export default function contact() {
   return {
     title: 'CONTACT',
     html: `${watermark('CALLING')}${back}${head('CONTACT')}
-      <div class="card-stage"><div class="pg-rays" aria-hidden="true"></div><div class="ccard" id="ccard">
+      <div class="card-stage"><div class="pg-rays-win" aria-hidden="true"><div class="pg-rays"></div></div><div class="ccard" id="ccard">
         <div class="ccard-face ccard-front" aria-hidden="true"><div class="ccard-emblem"></div></div>
         <div class="ccard-face ccard-back">
           <span class="ccard-name">${esc(resume.name)}</span>
