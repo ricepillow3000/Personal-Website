@@ -151,3 +151,14 @@
 .rot-ok:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
 .rot-ok:active { transform: skew(-12deg) translate(3px, 3px); box-shadow: 2px 2px 0 var(--black); }
 @media (prefers-reduced-motion: reduce) { .rot-body, .rot-arrow, .rot-head { animation: none; } .rot-body { transform: rotate(90deg); } .rot-arrow { stroke-dashoffset: 0; } }
+
+/* pointing at Instagram's ··· menu (top right of the app's own bar, just above the page): the only way out of its browser */
+.ib-point { position: fixed; top: max(6px, env(safe-area-inset-top)); right: 10px; z-index: 400; display: grid; justify-items: end; gap: 2px;
+  pointer-events: none; animation: ibPoint 0.9s ease-in-out infinite alternate; }
+.ib-point svg { width: 54px; height: 54px; overflow: visible; }
+.ib-point path { fill: none; stroke: var(--yellow); stroke-width: 7; stroke-linecap: square; filter: drop-shadow(3px 3px 0 var(--black)); }
+.ib-point b { font-family: var(--f-menu); font-size: 24px; letter-spacing: .06em; padding: 2px 12px; background: var(--yellow); color: var(--black); transform: skew(-10deg); box-shadow: 4px 4px 0 var(--black); }
+.ib-point span { font-weight: 800; font-size: 14px; padding: 3px 10px; background: var(--black); color: var(--white); transform: skew(-10deg); }
+@keyframes ibPoint { to { translate: 4px -6px; } }
+@media (prefers-reduced-motion: reduce) { .ib-point { animation: none; } }
+.reduce-motion .ib-point { animation: none; }

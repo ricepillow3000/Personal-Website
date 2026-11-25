@@ -51,9 +51,27 @@ export function openInBrowser(note, from) {
   if (link !== url) location.href = link;
   setTimeout(() => { // still here: the app kept the page, so say the one step to take
     if (document.hidden || !note) return;
-    const step = IOS ? 'In this app, tap ··· (or the share button), then Open in Safari.' : 'In this app, tap ⋮, then Open in browser.';
+    const meta = /Instagram|FBAN|FBAV|FB_IAB/i.test(UA); // (Instagram and Facebook word it the same)
+    const step = meta ? 'Tap ··· at the top right, then Open in external browser.'
+      : IOS ? 'In this app, tap ··· (or the share button), then Open in Safari.' : 'In this app, tap ⋮, then Open in browser.';
     note.textContent = copied ? `Link copied. ${step}` : step;
+    if (meta) pointAtMenu();
   }, 1200);
+}
+/* (Nov 25, John: "automatically opens Safari on LinkedIn but not on Insta, is that something we can fix?") Instagram, on an
+   iPhone above all, blocks every way a page could hand itself to Safari (x-safari-https included, which LinkedIn allows): only
+   the visitor's own tap on its ··· menu does it. So the one step is made impossible to miss: a yellow arrow pointing at the
+   menu in the top right corner, with Instagram's own words. It leaves on the next tap, or after 15 s. */
+function pointAtMenu() {
+  document.querySelector('.ib-point')?.remove();
+  const el = document.createElement('div');
+  el.className = 'ib-point';
+  el.setAttribute('aria-hidden', 'true'); // (the note above says the same in words, for screen readers)
+  el.innerHTML = '<svg viewBox="0 0 60 60"><path d="M10 50 L44 16 M44 16 L22 16 M44 16 L44 38" /></svg><b>TAP ··· UP HERE</b><span>then Open in external browser</span>';
+  document.body.appendChild(el);
+  const off = () => { el.remove(); window.removeEventListener('pointerdown', off, true); };
+  setTimeout(() => window.addEventListener('pointerdown', off, true), 300);
+  setTimeout(off, 15000);
 }
 const upright = () => window.matchMedia('(orientation: portrait) and (max-width: 600px) and (pointer: coarse)').matches;
 
