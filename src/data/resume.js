@@ -61,8 +61,8 @@ export const resume = {
       story: [
         ['SETUP', 'My dad kept asking one question. Which stock can I actually rely on and hold for years? A lot of people ask the same thing.'],
         ['TENSION', 'Nobody can promise that answer, and a risk tool that guesses is worse than none. Every number had to come from live data, checked a second way.'],
-        ['PIVOT', 'Steady stocks were only half the plan. People also want what grows fastest, so each high-flyer got a steady anchor carrying the same share of the risk.'],
-        ['LESSON', 'A student project can meet a trading desk’s bar if every number is tested twice.']
+        ['PIVOT', 'Steady stocks were only half the plan. People also want fast-growing stocks, so I paired each one with a steady stock that carries the same share of the risk.'],
+        ['LESSON', 'A student project can meet a professional standard if every number is checked twice.']
       ],
       objectives: [
         'Designed and launched a public web app that estimates how much a portfolio of stocks, ETFs, FX or futures could lose in a bad year.',

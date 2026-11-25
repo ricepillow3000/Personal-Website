@@ -1818,6 +1818,15 @@ test('pain-point pass: a slim calling card, phone pop-ups at the bottom left (ne
   expect(t.x).toBeLessThan(40); // the left side: the NEXT chip owns the bottom right
 });
 
+test('the bee comes back: missed, it flies again later instead of once per visit (6/6 never needs a reload)', async ({ page }) => {
+  test.setTimeout(60000);
+  await openBoard(page, '/?bee#/board'); // (?bee: the waits shrink to a second; the 7.5 s flight is real)
+  const bee = page.locator('#bee');
+  await expect(bee).toBeVisible({ timeout: 8000 });
+  await expect(bee).toBeHidden({ timeout: 12000 }); // nobody catches it: it leaves
+  await expect(bee).toBeVisible();
+});
+
 test('no emojis anywhere: no emoji-capable character in the site (phones draw them as emoji tiles), and outbound links use the drawn arrow', async ({ page }) => {
   const files = [];
   const walk = (d) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) walk(p); else if (/\.(js|css|html)$/.test(f)) files.push(p); } };

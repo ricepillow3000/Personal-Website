@@ -1,26 +1,28 @@
 import { gsap } from 'gsap';
 import { $, reducedMotion } from '../core/util.js';
 
-/* Once per visit, 30–90s after the board opens, a bee buzzes across the screen.
-   Click it before it leaves → onCatch(). Nobody clicks → it just flies away. */
+/* 30–90s after the board opens, a bee buzzes across the screen. Click it before it leaves → onCatch().
+   Missed, it comes back 45–90s later, until it is caught (Nov 25 pain-point pass: it used to fly once per visit, so a
+   visitor reading a chapter at that moment could never finish the six secrets without reloading). */
 let armed = false;
 let flying = false;
 
 export function armBee(isOnBoard, onCatch) {
   if (armed) return;
   armed = true;
-  const delay = 30000 + Math.random() * 60000;
+  const quick = /[?&]bee\b/.test(location.search); // (tests: ?bee shortens the waits to a second)
+  const delay = quick ? 1000 : 30000 + Math.random() * 60000;
   const tryFly = () => {
     if (!isOnBoard() || document.hidden) {
       setTimeout(tryFly, 4000);
       return;
     }
-    fly(onCatch);
+    fly(onCatch, () => setTimeout(tryFly, quick ? 1000 : 45000 + Math.random() * 45000)); // (missed: it comes round again)
   };
   setTimeout(tryFly, delay);
 }
 
-export function fly(onCatch) {
+export function fly(onCatch, onMiss) {
   if (flying) return;
   flying = true;
   const bee = $('#bee');
@@ -29,7 +31,9 @@ export function fly(onCatch) {
   const H = window.innerHeight;
   const fromLeft = Math.random() < 0.5;
   const y0 = H * (0.25 + Math.random() * 0.3);
+  let caught = false;
   const done = () => {
+    if (!caught) onMiss?.();
     bee.hidden = true;
     flying = false;
     bee.onclick = null;
@@ -44,7 +48,6 @@ export function fly(onCatch) {
   }
   // pointerdown, not click: the bee moves, so down and up can land on different spots and
   // the browser drops the click. Keyboard users still trigger it through click (Enter/Space).
-  let caught = false;
   const catchIt = () => {
     if (caught) return;
     caught = true;
