@@ -4,14 +4,14 @@
 import { gsap } from 'gsap';
 import { resume } from '../../data/resume.js';
 import { esc, reducedMotion } from '../../core/util.js';
-import { back, head, watermark } from './common.js';
+import { back, head, watermark, storyList } from './common.js';
 
 export default function stats() {
   const e = resume.education;
   const gpa = Number(e.gpa) || 0;
   return {
     title: 'STATS',
-    html: `${watermark('PROFILE')}${back}${head('STATS', 'The person behind the projects.')}
+    html: `${watermark('PROFILE')}${back}${head('STATS', 'Who I am, and why this site exists.')}
       <section class="idcard" data-in>
         <button class="gpa-burst" type="button" aria-label="Off the record. Press to flip for a secret stat." aria-pressed="false"><span class="gb-front"><b>???</b><small>OFF RECORD</small></span><span class="gb-back"><b>MAX</b><small>BEE FEAR</small></span></button>
         <div class="id-band"><span>ID · ${esc(resume.name.toUpperCase())}</span><span>${esc(resume.location)}</span></div>
@@ -24,11 +24,12 @@ export default function stats() {
           <div class="id-info">
             <h3>${esc(e.school)}</h3>
             <p>${esc(e.degree)}<br>Concentration: <b>${esc(e.concentration)}</b></p>
-            <div class="id-chips"><span>DEAN’S LIST ×2</span><span>${esc(e.grad.toUpperCase())}</span><span>${esc(e.dates)}</span></div>
+            <div class="id-chips"><span>${esc(e.grad.toUpperCase())}</span><span>${esc(e.dates)}</span></div>
             <p class="id-honors">${esc(e.honors)}</p>
           </div>
         </div>
       </section>
+      <section class="story story-site" data-in aria-label="Why this site"><h3>WHY THIS SITE</h3>${storyList(resume.siteStory)}</section>
       <ul class="traits">${resume.funFacts.map((f, i) => `<li class="trait t${i}" data-in><i class="ff-star" aria-hidden="true"></i>${esc(f)}</li>`).join('')}</ul>
       <blockquote class="motto-strip" data-in>“${esc(resume.motto.text)}”<cite>— ${esc(resume.motto.by)}</cite></blockquote>`,
     intro(root) {

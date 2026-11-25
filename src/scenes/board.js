@@ -38,7 +38,6 @@ export function nextChapter() {
 const ZIG = [0.35, 1.6, 0.6, 2.2, 1.1, 2.7]; // the stack zigzags down (em of indent), never a straight column
 
 function planMarkup(ctx) {
-  const e = resume.education;
   const note = ctx.company
     ? `<p class="plan-note"><b>Wait, someone from ${esc(ctx.company.name)}?</b> I've been expecting you.</p>`
     : '';
@@ -49,14 +48,9 @@ function planMarkup(ctx) {
         <h1 class="ransom" id="boardName"></h1>
         <div class="slab board-slab"><span>${esc(resume.name.split(' ').slice(1).join(' ').toUpperCase())}</span></div>
       </div>
-      <p class="plan-role">${esc(resume.role)}<span class="plan-status"> · GSU ${esc(e.grad.replace('Class of ', "'").replace(/^'20/, "'"))} · ${esc(resume.status)}</span></p>
+      <p class="plan-role">${esc(resume.role)}</p>
       </div>
       <div class="plan-side">
-      <ul class="plan-proof" aria-label="At a glance">
-        <li class="pp pp0"><b>2</b> live apps</li>
-        <li class="pp pp1"><b>2,000+</b> tests</li>
-        <li class="pp pp2"><b>${esc(e.gpa)}</b> GPA</li>
-      </ul>
       </div>
       ${note}
     </header>
@@ -159,10 +153,18 @@ export function createBoard(root, ctx) {
   refresh(false);
 
   let revealedOnce = false;
-  function reveal(delay = 0) {
+  /** built: THE PLAN is the first screen of the visit (a deep link). It is drawn finished at once,
+      because the loading screen covers it until the visitor clicks ENTER THE STATION (at least 1.6 s),
+      so the cascade below would only ever play unseen under it, while holding the board's big words
+      at opacity 0 (Nov 21: a phone's Lighthouse timed THE PLAN's largest paint at 3-7 s). */
+  function reveal(delay = 0, built = false) {
     armed = restXY === null; // wait for the resting mouse to move before it can pick anything
     refresh(revealedOnce);
     if (reducedMotion()) return;
+    if (built && !revealedOnce) {
+      revealedOnce = true; // the full cascade counts as played: coming back is the quick slam, as before
+      return;
+    }
     const parts = root.querySelectorAll('[data-board-item]');
     if (revealedOnce) {
       return gsap.from(parts, { x: -30, opacity: 0, duration: 0.22, ease: 'power3.out', stagger: 0.03, delay, clearProps: 'transform,opacity' });
@@ -172,17 +174,14 @@ export function createBoard(root, ctx) {
     // slammed together like a command screen: the chapter lines punch in from the left one after
     // another, the blade slices out behind the picked one, the number spins onto the starburst,
     // and the picked chapter's name lands last, big, where the eye ends up
-    // the picked chapter, its number and its big word land first (that's where the eye should go), then
-    // the rest of the stack, the preview stickers and the header fill in around them
+    // the picked chapter and its big word land first (that's where the eye should go), then the
+    // rest of the stack, the number, the preview stickers and the header fill in around them
     tl.from(root.querySelector('.pl-item.on'), { x: -260, rotation: -14, opacity: 0, duration: 0.28, ease: 'back.out(1.8)', clearProps: 'transform,opacity' }, 0)
       .from(root.querySelector('.pl-item.on .pl-blade'), { scaleX: 0, duration: 0.22, ease: 'power4.out', clearProps: 'transform' }, 0.12)
       .from(cont, { y: 90, rotation: 5, opacity: 0, duration: 0.3, ease: 'back.out(1.8)', clearProps: 'transform,opacity' }, 0.08)
       .from(title.querySelectorAll('.rl'), { y: -60, rotation: () => gsap.utils.random(-40, 40), opacity: 0, duration: 0.26, ease: 'back.out(2.2)', stagger: 0.025 }, 0.12)
       .from(root.querySelectorAll('.pl-item:not(.on)'), { x: -220, rotation: -12, opacity: 0, duration: 0.26, ease: 'back.out(1.8)', stagger: 0.045, clearProps: 'transform,opacity' }, 0.22)
-      // the picked chapter's number spins onto the starburst WITH its chapter, on the first beat (Nov 21,
-      // the speed pass: at 0.3 s, its first frame at 2.2x was the screen's "largest paint" and landed after
-      // the fonts, so a phone's load score charged it their whole download: LCP ~3.7 s on /#/board)
-      .from(root.querySelector('.cmd-right'), { scale: 2.2, rotation: 25, opacity: 0, duration: 0.3, ease: 'back.out(1.7)', clearProps: 'transform,opacity' }, 0)
+      .from(root.querySelector('.cmd-right'), { scale: 2.2, rotation: 25, opacity: 0, duration: 0.3, ease: 'back.out(1.7)', clearProps: 'transform,opacity' }, 0.3)
       .from(loot.children, { x: -60, scale: 1.5, rotation: () => gsap.utils.random(-18, 18), opacity: 0, duration: 0.24, ease: 'back.out(2.4)', stagger: 0.06, clearProps: 'transform,opacity' }, 0.4)
       .from(root.querySelector('.plan-head'), { y: -40, opacity: 0, duration: 0.26, ease: 'power3.out', clearProps: 'transform,opacity' }, 0.34)
       .from(root.querySelectorAll('.pp'), { scale: 1.8, rotation: () => gsap.utils.random(-20, 20), opacity: 0, duration: 0.24, ease: 'back.out(2.6)', stagger: 0.06, clearProps: 'transform,opacity' }, 0.46)

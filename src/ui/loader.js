@@ -32,10 +32,19 @@ export const introOpen = new Promise((r) => { opened = r; });
 const CAP = 6000; // ms: counted as loaded by then whatever is still coming
 const FILL = 1600; // ms: the shortest fill, 0 to 100 (every letter is seen landing)
 
+function fromPrivacy() {
+  try {
+    const r = new URL(document.referrer);
+    return r.origin === location.origin && /\/privacy\.html$/.test(r.pathname);
+  } catch { return false; }
+}
+
 export function runLoader() {
   const el = document.getElementById('loader');
   if (!el) { opened(); return Promise.resolve(); }
-  if (navigator.webdriver && !/[?&]intro\b/.test(location.search)) {
+  // back from the privacy page (Nov 23, John: "pressing back to station... puts me all the way back to the
+  // loading screen... It should just make them go back to the plan"): no loading screen, straight to THE PLAN
+  if (fromPrivacy() || (navigator.webdriver && !/[?&]intro\b/.test(location.search))) {
     el.remove();
     opened();
     return Promise.resolve();

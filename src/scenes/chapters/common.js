@@ -25,3 +25,6 @@ export const watermark = (word) => `<div class="pg-mark" aria-hidden="true"><spa
 /* Shared slam for page-specific intros: offset by ~3 frames, overshoot, settle. */
 export const slamIn = (els, from, extra = {}) =>
   gsap.from(els, { ...from, duration: 0.34, ease: 'back.out(2.4)', stagger: 0.05, clearProps: 'transform,opacity,visibility', ...extra });
+
+/* a work story in four beats (setup, tension, pivot, lesson): a hiring manager wants the bets, where it broke and what was learned */
+export const storyList = (beats) => `<ol class="story-beats">${beats.map(([k, t]) => `<li><b>${esc(k)}</b><span>${esc(t)}</span></li>`).join('')}</ol>`;

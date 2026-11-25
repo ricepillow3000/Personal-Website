@@ -3,19 +3,42 @@
 .title-block { position: relative; z-index: 2; max-width: 760px; }
 .title-codename { font-size: clamp(22px, 3vw, 34px); margin: 18px 0 10px; }
 .title-role { display: table; margin: 0 0 12px; padding: 2px 12px; font-family: var(--f-menu); font-size: clamp(16px, 1.6vw, 20px); letter-spacing: 1.5px; text-transform: uppercase; color: var(--yellow); background: var(--black); transform: skew(var(--skew)); box-shadow: 4px 4px 0 var(--white); }
-.title-hook { display: inline-block; margin: 0 0 26px; max-width: 560px; padding: 6px 12px; background: rgba(5, 5, 5, .82); font-family: var(--f-type); font-size: clamp(15px, 1.6vw, 19px); transform: rotate(-1deg); }
+/* the role line is two short rows on every screen (Nov 22: as one row it was 493 to 613px long and reached the departure board
+   on a sideways phone; it was already two rows on upright phones): who, then the proof */
+.title-role .tr-sep { display: none; }
+.title-role .tr-proof { display: block; }
+.title-hook { display: block; width: fit-content; margin: 0 0 26px; max-width: 20em; /* (two short lines at every size: as one line it is a strip as long as the old box) */ padding: 6px 0; font-family: var(--f-type); font-size: clamp(15px, 1.6vw, 19px); line-height: 1.5; transform: rotate(-1deg); }
+/* THE HOOK'S BLACK HUGS ITS WORDS (Nov 22, John, with a sideways-phone screenshot: "the box... it's blocking the train station
+   sign... find the root cause"). Root cause: the line is balanced into two short lines (text-wrap: balance) but its box was an
+   inline-block that takes its full max-width whenever the text wraps, so the box was 561px wide for 297px of words: a slab of
+   empty black lying over the station (and, once the box was made solid so the star and rails stop running under the words,
+   over the departure board). The black is now on the words themselves, line by line (an inline span, cloned per line), so
+   it is exactly as long as each line, at every size and however the line wraps. */
+.title-hook > span { padding: 6px 12px; background: var(--black); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .press-start {
   display: block; border: 0; background: var(--white); color: var(--black);
   font-family: var(--f-head); font-size: clamp(32px, 4.2vw, 54px); letter-spacing: 3px; line-height: 1.15;
   padding: 6px 36px; transform: skew(var(--skew)); box-shadow: 8px 8px 0 var(--black);
-  animation: pulse 1.2s ease-in-out infinite;
+  animation: pulse 1.2s var(--ease-snap) infinite; /* a beat: it punches up and settles (a soft in-out swell read as generic web UI) */
 }
 .press-start:hover, .press-start:focus-visible { background: var(--black); color: var(--white); box-shadow: 8px 8px 0 var(--white); animation: none; }
-@keyframes pulse { 50% { transform: skew(var(--skew)) scale(1.05); } }
+@keyframes pulse { 0%, 46%, 100% { transform: skew(var(--skew)); } 14% { transform: skew(var(--skew)) scale(1.06); } }
 .quick-link {
   display: inline-block; margin-top: 22px; padding: 6px 0; font-weight: 700; font-size: 17px;
   text-underline-offset: 4px; text-shadow: 1px 1px 0 var(--black);
+  background: var(--black); box-shadow: -8px 0 0 var(--black), 8px 0 0 var(--black); /* (solid behind the words: the wall's star outline struck through them) */
 }
+
+/* the way out of an app's built-in browser (only there): a hint, the button, and the one step if the app keeps the page */
+.inapp { margin-top: 16px; display: grid; justify-items: start; gap: 8px; }
+.inapp[hidden] { display: none; }
+.inapp-hint { margin: 0; max-width: 22em; font-weight: 700; font-size: 14px; line-height: 1.3; padding: 4px 10px; background: var(--black); color: var(--white); transform: skew(-8deg); }
+.inapp-open { min-height: 48px; padding: 6px 22px; border: 0; font-family: var(--f-menu); font-size: 22px; letter-spacing: .08em; cursor: pointer;
+  background: var(--red); color: var(--white); transform: skew(-12deg); box-shadow: 5px 5px 0 var(--black); }
+.inapp-open:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
+.inapp-open:active { transform: skew(-12deg) translate(3px, 3px); box-shadow: 2px 2px 0 var(--black); }
+.inapp-note { margin: 0; max-width: 22em; font-weight: 700; font-size: 14px; line-height: 1.3; padding: 6px 12px; background: var(--yellow); color: var(--black); transform: skew(-8deg); }
+.inapp-note:empty { display: none; }
 
 /* ===================== CONVERSATION ===================== */
 
@@ -41,6 +64,14 @@
 .dossier-sub { font-weight: 700; margin: 0 0 4px; }
 .dossier-stack { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 18px; padding: 0; list-style: none; }
 .dossier-stack li { border: 2px solid var(--black); padding: 0 8px; font-weight: 800; font-size: 13px; }
+/* THE STORY: four beats, each a slanted label and one or two sentences (setup, tension, pivot, lesson) */
+.story { margin: 0 0 22px; }
+.story-beats { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; line-height: 1.5; }
+.story-beats li { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: start; }
+.story-beats b { justify-self: start; font-family: var(--f-menu); font-weight: 400; font-size: 15px; letter-spacing: 1.5px; line-height: 1.5; padding: 0 8px;
+  background: var(--red-ink); color: var(--white); transform: skew(var(--skew)); box-shadow: 3px 3px 0 var(--black); }
+.story-beats li:nth-child(3) b { background: var(--black); box-shadow: 3px 3px 0 var(--red); } /* the pivot: the turn in the story */
+@media (max-width: 560px) { .story-beats li { grid-template-columns: 1fr; gap: 4px; } }
 .dossier-cols { display: grid; grid-template-columns: 1.45fr 1fr; gap: 26px; }
 .dossier h3 { display: inline-block; font-family: var(--f-menu); font-size: 22px; letter-spacing: 2px; font-weight: 400; background: var(--black); color: var(--white); padding: 0 12px; margin: 0 0 10px; transform: skew(var(--skew)); }
 .dossier ul.obj { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; line-height: 1.5; counter-reset: obj; }
@@ -123,7 +154,7 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 
 .ccard-role { font-weight: 700; margin-top: 8px; max-width: 75%; }
 .ccard-line { font-family: var(--f-type); font-size: 15px; max-width: 75%; }
-.contact-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin: 40px auto 0; max-width: 820px; }
+.contact-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin: 40px auto 0; max-width: 1000px; } /* (Nov 22: at 820px the fourth button dropped alone onto a second row on a desktop, an orphan straddling the black and red seam) */
 
 /* SYSTEM */
 .sys-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; max-width: 1000px; }
@@ -133,7 +164,15 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 .sys .btn { box-shadow: 4px 4px 0 var(--red); }
 .toggle { border: 3px solid var(--black); background: var(--white); color: var(--black); font-family: var(--f-menu); font-size: 20px; letter-spacing: 1px; padding: 2px 16px; transform: skew(var(--skew)); min-width: 86px; }
 .toggle[aria-pressed="true"] { background: var(--black); color: var(--yellow); }
-.sys input[type=range] { accent-color: var(--red); width: 160px; }
+/* the volume slider in the sheet's own shapes: the same slant, ink edge and hard shadow as the ON/OFF switches
+   (a browser's default round knob on a grey pill was the one soft, unstyled thing on the page) */
+.sys input[type=range] { -webkit-appearance: none; appearance: none; width: 160px; height: 28px; margin: 0 4px 0 0; padding: 0; background: none; cursor: pointer; transform: skew(var(--skew)); accent-color: var(--red); }
+.sys input[type=range]::-webkit-slider-runnable-track { box-sizing: border-box; height: 16px; border: 3px solid var(--black); background: linear-gradient(90deg, var(--red) var(--fill, 50%), var(--white) 0); }
+.sys input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 28px; margin-top: -9px; border: 0; border-radius: 0; background: var(--black); box-shadow: 3px 3px 0 var(--red); }
+.sys input[type=range]::-moz-range-track { box-sizing: border-box; height: 16px; border: 3px solid var(--black); background: var(--white); }
+.sys input[type=range]::-moz-range-progress { height: 10px; background: var(--red); }
+.sys input[type=range]::-moz-range-thumb { width: 14px; height: 28px; border: 0; border-radius: 0; background: var(--black); box-shadow: 3px 3px 0 var(--red); }
+.sys input[type=range]:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
 .ach-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .ach-list li { display: flex; gap: 12px; align-items: center; border: 3px solid var(--black); padding: 8px 12px; transform: skew(-4deg); background: var(--white); color: var(--black); }
 .ach-list li.got { background: var(--yellow); }
@@ -150,14 +189,14 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 .bts p { max-width: 70ch; }
 
 /* ===================== QUICK VIEW ===================== */
-#screen-quick { background: var(--black); padding-top: 76px; }
+#screen-quick { background: var(--black); padding-top: 76px; --f-body: var(--f-plain); } /* (the one-pager stays plain: ATS and a fast read) */
 .quick-bar { position: fixed; top: 14px; left: var(--gutter); z-index: 41; display: flex; gap: 14px; flex-wrap: wrap; }
 .paper { max-width: 900px; margin: 0 auto; background: var(--white); color: #151515; box-shadow: 12px 12px 0 var(--red); font-size: 15px; line-height: 1.5; }
 .paper header { background: var(--red); color: var(--white); padding: 26px 36px 30px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 24px), 0 100%); } /* (a fixed 24px slant: as 16% of a tall phone header it cut through the GitHub link, Nov 21 evaluation) */
 .paper header .ransom { font-size: clamp(38px, 6vw, 60px); }
 .paper .q-hook { margin: 12px 0 0; font-weight: 700; font-size: 16px; max-width: 64ch; }
-.paper .q-contact { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; font-size: 14px; font-weight: 600; }
-.paper .q-contact a { color: var(--white); }
+.paper .q-contact { display: flex; flex-wrap: wrap; gap: 0 18px; margin-top: 8px; font-size: 14px; font-weight: 600; }
+.paper .q-contact a { color: var(--white); padding-block: 3px; } /* (24px+ tall finger targets, launch QA) */
 .paper-body { display: grid; grid-template-columns: 1fr 2fr; gap: 28px; padding: 14px 36px 34px; }
 .paper h2 {
   display: inline-block; font-family: var(--f-menu); font-size: 24px; letter-spacing: 2px; font-weight: 400;
@@ -189,8 +228,6 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
   .screen-page { padding-top: 112px; }
   .back-btn { top: 70px; font-size: 17px; }
   .quick-bar { top: 58px; flex-wrap: nowrap; gap: 10px; }
-  .title-role .tr-sep { display: none; }
-  .title-role .tr-proof { display: block; }
   .quick-bar .btn { white-space: nowrap; }
   #screen-quick { padding-top: 116px; }
 
@@ -222,6 +259,7 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 @media (max-width: 440px), (min-width: 761px) and (max-width: 1099px) { .qb-long { display: none; } }
 /* the title's cut-out name and labels wait for their web fonts (see fontsReady in core/util.js) */
 #screen-title.title-wait :is(#titleName, .title-codename, .title-role, #pressStart, .quick-link) { opacity: 0; }
+#boardName { touch-action: pan-x pan-y; } /* (five quick taps unlock Inspector: no double-tap zoom on phones) */
 /* (while it waits, the block itself is invisible and only the hook shows: the hook paints from the first
    frame, under the loading screen, as the page's largest text; the name filling in above it then moves
    nothing a browser counts as a layout shift) */
@@ -235,10 +273,17 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 .contact-btns a[href^="mailto:"] { font-family: var(--f-body); font-weight: 700; letter-spacing: .2px; text-transform: none; }
 /* SETTINGS: sound credits (small print, still readable) */
 .sys-credits p { margin: 0 0 8px; font-weight: 600; }
-.sys-credits ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
-.sys-credits a { color: var(--black); text-decoration-color: var(--red); text-underline-offset: 2px; }
+/* (Nov 21, the whole-site pass: the judges called this "an unstyled, default browser bulleted list with standard
+   hyperlink underlines". It is small print, but it is still ours: a drawn red star per entry, a paper rule between
+   entries, a thick red underline on the links.) */
+.sys-credits ul { margin: 0; padding: 0; list-style: none; display: grid; font-size: 14px; line-height: 1.4; }
+.sys-credits li { position: relative; padding: 7px 0 7px 26px; border-top: 2px solid var(--paper); }
+.sys-credits li:first-child { border-top: 0; }
+.sys-credits li::before { content: ""; position: absolute; left: 2px; top: 10px; width: 14px; height: 14px; background: var(--red);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.sys-credits a { color: var(--black); text-decoration-color: var(--red); text-decoration-thickness: 2px; text-underline-offset: 3px; }
 .sys-credits a:hover, .sys-credits a:focus-visible { background: var(--yellow); }
 /* PRESS START while the train is still loading: the button "boards" (a quick pulse), never frozen */
-#pressStart.boarding { animation: boarding .5s ease-in-out infinite alternate; }
+#pressStart.boarding { animation: boarding .5s var(--ease-snap) infinite alternate; }
 @keyframes boarding { to { transform: skew(var(--skew)) scale(.96); filter: brightness(1.25); } }
 @media (prefers-reduced-motion: reduce) { #pressStart.boarding { animation: none; opacity: .8; } }

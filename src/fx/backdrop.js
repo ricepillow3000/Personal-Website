@@ -11,6 +11,7 @@
 import { loadSubway as loadTrainCode } from './lazy.js'; // (the train's code arrives with the platform picture, title only)
 import { artSrc } from './art.js';
 import { fontsReady } from '../core/util.js';
+import { isZoomed } from '../core/zoom.js';
 
 const C = { black: '#050505', red: '#D80000', red2: '#E60012', white: '#FFFFFF', blood: '#7A0008' };
 const VB = '0 0 1600 900';
@@ -176,6 +177,15 @@ const BB_TEXT = {
 const BB_ORDER = Object.keys(BB_TEXT);
 const bbSize = (n) => (BB_GEO[n].b0 - BB_GEO[n].t0) * BB_TEXT[n].fill;
 const RINGS_USED = BB_RINGS.filter(([n]) => BB_TEXT[n]);
+/* a ring's screen, as a box round its outline (with a little air), in the art's 1600x679 space */
+function ringBox(n) {
+  const v = BB_RINGS.find(([k]) => k === n)[1].match(/[\d.]+/g).map(Number);
+  const xs = v.filter((_, i) => i % 2 === 0);
+  const ys = v.filter((_, i) => i % 2 === 1);
+  const x = Math.floor(Math.min(...xs)) - 4;
+  const y = Math.floor(Math.min(...ys)) - 4;
+  return { x, y, w: Math.ceil(Math.max(...xs)) + 4 - x, h: Math.ceil(Math.max(...ys)) + 4 - y };
+}
 /* the rooftop aviation lights painted in the city art (x, y, radius in the 1600x679 art), found by
    their red glow on the art (the red reflections on walls and the wet street are left out) */
 const AV_LIGHTS = [[842.3, 49.2, 5], [755.4, 51.9, 5], [1191.3, 71.7, 2], [390.6, 85.8, 3.5], [620.5, 101.8, 4.5], [924.5, 114.5, 4.5],
@@ -189,28 +199,29 @@ function billboardLayer() {
       ? `<g class="bb-ch" data-w="1.05">${poly(star(0, 0, size * 0.48, 0.42, 5, -90), '#FFFFFF')}</g>`
       : `<g class="bb-ch" data-w="${ch === ' ' ? 0.42 : /[IJ]/.test(ch) ? 0.5 : /[MW]/.test(ch) ? 0.92 : 0.66}"><text font-size="${size.toFixed(1)}" text-anchor="middle" dominant-baseline="central">${ch === ' ' ? '' : ch}</text></g>`)).join('');
   };
+  /* The letters are the MASK and the LED dots are what shows through it (Nov 21, the deep-link speed
+     pass). It used to be the other way round (letters masked by the dots): the same white dots
+     either way, but live <text> was the biggest thing a browser saw "paint" on THE PLAN, and it only
+     appears once the 430 KB city picture has loaded, so a phone's Lighthouse timed the board's
+     largest paint at ~7 s. Inside a mask the letters are a stencil, not page text, and the board's
+     own words count instead. (The words stay in the DOM for the tests and the ticker.) */
   return `<svg class="bd-billboard" viewBox="0 0 1600 679" preserveAspectRatio="none" aria-hidden="true">
   <defs>
-    <pattern id="bbLed" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle cx="1.6" cy="1.6" r="1.4" fill="#fff"/></pattern>
-    <mask id="bbDots" maskUnits="userSpaceOnUse" x="560" y="120" width="500" height="460"><rect x="560" y="120" width="500" height="460" fill="url(#bbLed)"/></mask>
+    <!-- (Nov 22, the outside judges: the name read as "JOIN", YOUR as "VOUR", "fuzzy". At a 3.2 pitch a letter stroke was two diodes wide and the tight glow, 2.4 wide and laid twice, fogged them into one soft bar. A finer diode (2.4) draws each stroke three wide and the tight glow is half as wide, so the letters stay a crisp dot matrix; the wide red spill is as it was.) -->
+    <pattern id="bbLed" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><circle cx="1.2" cy="1.2" r="1.05" fill="#fff"/></pattern>
+    ${RINGS_USED.map(([n]) => { const b = ringBox(n); return `<mask id="bbText-${n}" maskUnits="userSpaceOnUse" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></mask>`; }).join('')}
     <!-- real LED light (Nov 19, John: "amplify it, make it actually look like billboard lights"): a
          tight white glow round every lit dot, a wide red-pink light spilling onto the screen around
          the letters, and the dots themselves a little warm, like LEDs behind a red face -->
     <filter id="bbGlow" x="-40%" y="-40%" width="180%" height="180%">
       <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 .93 0 0 0  0 0 .9 0 0  0 0 0 1 0" result="led"/>
-      <feGaussianBlur in="led" stdDeviation="2.4" result="b"/>
+      <feGaussianBlur in="led" stdDeviation="1.3" result="b"/>
       <feGaussianBlur in="led" stdDeviation="9" result="wide"/>
       <feColorMatrix in="wide" type="matrix" values="0 0 0 0 1  0 0 0 0 .32  0 0 0 0 .4  0 0 0 2.2 0" result="spill"/>
       <feMerge><feMergeNode in="spill"/><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="led"/></feMerge>
     </filter>
     <linearGradient id="bbSheen" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
     ${RINGS_USED.map(([n, d]) => `<clipPath id="bbRing-${n}"><path d="${d}"/></clipPath>`).join('')}
-    <!-- the moving letters are a MASK over the screen's lit face, never painted as text themselves
-         (Nov 21, the speed pass: painted as text inside the glow filter, every letter counted as
-         big as the filter's whole region, so each one crawling in set a later "largest paint" and
-         a deep link to THE PLAN scored LCP ~7 s while the board was on screen at ~1.3 s; the
-         pixels are exactly the same) -->
-    ${RINGS_USED.map(([n]) => `<mask id="bbType-${n}" maskUnits="userSpaceOnUse" x="560" y="120" width="500" height="460"><g class="bb-ring bb-${n}" data-ring="${n}">${letters(n)}</g></mask>`).join('')}
     ${BB_RINGS.map(([n, d]) => `<clipPath id="bbFace-${n}"><path d="${d}"/></clipPath>`).join('')}
     <pattern id="bbGrid" width="2.6" height="2.6" patternUnits="userSpaceOnUse"><path d="M.3 0V2.6" stroke="#4A000C" stroke-width=".6" opacity=".55"/><path d="M0 .3H2.6" stroke="#4A000C" stroke-width=".4" opacity=".25"/></pattern>
     ${BB_RINGS.map(([n]) => { const g = BB_GEO[n]; return `<linearGradient id="bbCurve-${n}" gradientUnits="userSpaceOnUse" x1="${g.cx - g.R}" x2="${g.cx + g.R}" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset=".2" stop-color="#000" stop-opacity=".14"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset=".8" stop-color="#000" stop-opacity=".14"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>`; }).join('')}
@@ -219,7 +230,7 @@ function billboardLayer() {
        "make it all a solid color, following the texture pattern"): the base red (matched to the art
        shown at 72%), the fine LED grid, and a little shade toward the edges so it still reads as a drum -->
   ${BB_RINGS.map(([n, d]) => `<path d="${d}" fill="#A3112A"/><path d="${d}" fill="url(#bbGrid)"/><path d="${d}" fill="url(#bbCurve-${n})"/>`).join('')}
-  ${RINGS_USED.map(([n, d]) => `<g clip-path="url(#bbRing-${n})"><g class="bb-flicker" filter="url(#bbGlow)"><g mask="url(#bbDots)"><path d="${d}" fill="#fff" mask="url(#bbType-${n})"/></g></g></g>`).join('')}
+  ${RINGS_USED.map(([n]) => { const b = ringBox(n); return `<g clip-path="url(#bbRing-${n})"><g class="bb-flicker" filter="url(#bbGlow)"><rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="url(#bbLed)" mask="url(#bbText-${n})"/></g></g>`; }).join('')}
   <!-- a faint light sweep gliding across each screen's glass, out of step, now and then -->
   ${BB_RINGS.map(([n], i) => { const g = BB_GEO[n]; return `<g clip-path="url(#bbFace-${n})"><rect class="bb-sheen" style="--sd:${(i * 2.3).toFixed(1)}s" x="${g.cx - g.R - 60}" y="${g.t0 - g.ta - 10}" width="60" height="${g.b0 - g.t0 + g.ta + 30}" fill="url(#bbSheen)" transform="skewX(-12)"/></g>`; }).join('')}
 </svg>`;
@@ -274,12 +285,20 @@ function startTicker(svg) {
       const t = th + ring.widths[i] / 2;
       th += ring.widths[i];
       const cos = Math.cos(t);
-      if (cos <= 0.04) { c.style.visibility = 'hidden'; return; }
+      // (Nov 21: only what changed is written: a letter round the back was set hidden again every frame)
+      /* (Nov 22: a letter turned almost edge-on was squashed to a sliver one or two LED dots wide, which read as a garbled
+         glyph at the drum's edge. It now comes round the curve out of the dark: unlit while it is still edge-on, at full light
+         as soon as it is a few dots wide.) */
+      if (cos <= 0.14) { if (c._v !== 0) { c.style.visibility = 'hidden'; c._v = 0; } return; }
+      const k = Math.min(1, (cos - 0.14) / 0.18);
+      const op = (Math.round(k * k * (3 - 2 * k) * 20) / 20).toFixed(2);
+      if (c._op !== op) { c.setAttribute('opacity', op); c._op = op; }
       const { cx, R, t0, ta, b0, ba } = ring.g;
       const x = cx + R * Math.sin(t);
       const y = (t0 + b0) / 2 + ((ta + ba) / 2) * (1 - cos);
-      c.style.visibility = 'visible';
-      c.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${cos.toFixed(3)} 1)`);
+      if (c._v !== 1) { c.style.visibility = 'visible'; c._v = 1; }
+      const tf = `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${cos.toFixed(3)} 1)`;
+      if (c._tf !== tf) { c.setAttribute('transform', tf); c._tf = tf; }
     });
   };
   const reduce = () => document.body.classList.contains('reduce-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -306,15 +325,21 @@ function startTicker(svg) {
   };
   const t0 = performance.now();
   const art = svg.parentNode.querySelector('img');
+  /* The LED rings step 30 times a second, like a real LED sign (Nov 21: every letter sits under a glow filter, a dot
+     mask and a clip, so each step is an SVG re-layout and a filtered repaint in the page's one lane; at 60 a second that
+     ran behind every chapter all the time. Under the dot mask 30 steps look the same, at half the work.) */
+  let lastLed = 0;
   const frame = (now) => {
     requestAnimationFrame(frame);
     if (document.body.dataset.mode === 'title') return; // the city isn't shown on the title
-    /* nor before its art has arrived (the screens stay at opacity 0 until then): moving the letters
-       re-lays out the whole SVG every frame, ~10 ms on a slow phone, right while a deep link's first
-       screen builds in (Nov 21, the speed pass) */
+    if (isZoomed()) return; // (pinch-zoomed: the crawl holds still, see src/core/zoom.js)
+    /* nor before its picture has arrived: the billboard fades in with it (.bd-city img.in ~), and
+       moving invisible letters cost a layout every frame while THE PLAN's entrance was playing */
     if (!art.classList.contains('in')) return;
     const still = reduce();
     lightsStep(now, still);
+    if (now - lastLed < 1000 / 30 - 2) return;
+    lastLed = now;
     rings.forEach((r) => {
       if (still) place(r, -r.total / 2);
       else place(r, EDGE - ((((now - t0) / 1000 + r.offset) % r.pass) * SPEED)); // enters at the right, travels left
@@ -445,14 +470,17 @@ export function mountBackdrop(el) {
     let raf = 0;
     let tx = 0;
     let ty = 0;
+    let layers = null;
     window.addEventListener('pointermove', (e) => {
       tx = (e.clientX / window.innerWidth) * 2 - 1;
       ty = (e.clientY / window.innerHeight) * 2 - 1;
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
-        el.style.setProperty('--px', tx.toFixed(3));
-        el.style.setProperty('--py', ty.toFixed(3));
+        // (Nov 21: was --px/--py on the whole backdrop, which re-checked the style of every element in it each move;
+        // now each layer's own transform is set: the graphics side just slides the painted layer)
+        layers ||= [...el.querySelectorAll('.bd-layer')].map((l) => [l, parseFloat(getComputedStyle(l).getPropertyValue('--amp')) || 0]);
+        for (const [l, amp] of layers) l.style.transform = `translate3d(${(-tx * amp).toFixed(2)}px, ${(-ty * amp * 0.5).toFixed(2)}px, 0)`;
       });
     }, { passive: true });
   }

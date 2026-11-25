@@ -6,15 +6,30 @@
 @font-face { font-family: "Bebas Fallback"; src: local("Arial"), local("Liberation Sans"), local("Arimo"), local("Helvetica"); size-adjust: 59.9%; }
 @font-face { font-family: "Bebas Fallback R"; src: local("Roboto"); size-adjust: 62.6%; }
 @font-face { font-family: "Bebas Fallback D"; src: local("DejaVu Sans"); size-adjust: 58.2%; }
-/* Anton (every big word, number and the page watermarks) got its stand-ins on Nov 21: without them
-   the swap moved the huge watermark behind each chapter (MY EDGE scored a 0.33-0.41 layout shift on
-   a deep link). Measured on the site's own capital words and digits at 100px: Anton 5078 px wide,
-   each stand-in 5077-5078; its lines are taller than any system font's (ascent 118, descent 33), so
-   the line boxes match too (151 px). font-weight covers every weight so nothing is fake-bolded wider. */
-@font-face { font-family: "Anton Fallback"; src: local("Arial"), local("Liberation Sans"), local("Arimo"), local("Helvetica"); size-adjust: 69.8%; ascent-override: 169.1%; descent-override: 47.3%; line-gap-override: 0%; font-weight: 100 900; }
-@font-face { font-family: "Anton Fallback R"; src: local("Roboto"); size-adjust: 73%; ascent-override: 161.6%; descent-override: 45.2%; line-gap-override: 0%; font-weight: 100 900; }
-@font-face { font-family: "Anton Fallback D"; src: local("DejaVu Sans"); size-adjust: 69.7%; ascent-override: 169.3%; descent-override: 47.3%; line-gap-override: 0%; font-weight: 100 900; }
 @font-face { font-family: "Elite Fallback"; src: local("Courier New"), local("Liberation Mono"), local("Cousine"), local("DejaVu Sans Mono"), local("Droid Sans Mono"), local("Menlo"), local("Courier"); size-adjust: 84.9%; }
+/* Barlow Condensed (the bold italic labels, THE PLAN's role line) got the same (Nov 21): on a deep link
+   THE PLAN is drawn at once, and its role line wrapped to two lines in a backup font on phones, then
+   snapped back to one when the font arrived (a 0.055 layout shift). Measured at 100px, bold italic,
+   on the role line and four labels: Arial 75-81%, Roboto 77-80%, DejaVu 67-70%; the narrow end is
+   used, so a stand-in line is never wider than the real one. These three sets cover only the Latin
+   range the brand fonts cover (Google's latin subset): a symbol they don't have (the teaser's arrow)
+   falls through to the same system font as before, so the finished page is unchanged. */
+@font-face { font-family: "Barlow Fallback"; src: local("Arial"), local("Liberation Sans"), local("Arimo"), local("Helvetica"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; size-adjust: 76%; }
+@font-face { font-family: "Barlow Fallback R"; src: local("Roboto"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; size-adjust: 78%; }
+@font-face { font-family: "Barlow Fallback D"; src: local("DejaVu Sans"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; size-adjust: 67.5%; }
+/* and Anton, for phones and Linux without Impact (Impact, Anton's near twin, stays first on Windows
+   and Mac): THE PLAN's big STATS button is centred, so its cut-out letters, wider in a backup font,
+   moved it 26px sideways when Anton arrived. Bold capitals at 100px: Arial 67-73%, Roboto 71-78%,
+   DejaVu 67-73% (Permanent Marker already matches Arial's width, so it needs none). */
+@font-face { font-family: "Anton Fallback"; src: local("Arial"), local("Liberation Sans"), local("Arimo"), local("Helvetica"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; size-adjust: 68%; }
+@font-face { font-family: "Anton Fallback R"; src: local("Roboto"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; size-adjust: 72%; }
+@font-face { font-family: "Anton Fallback D"; src: local("DejaVu Sans"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; size-adjust: 68%; }
+/* and the body font, Barlow Semi Condensed (after Arial Narrow, which Windows and Mac have): on phones
+   THE PLAN's teaser line under the big button sets that button's width. 500-700 weight, sentences and
+   the teaser line: Arial 81-93%, Roboto 85-92%, DejaVu 73-81% */
+@font-face { font-family: "Body Fallback"; src: local("Arial"), local("Liberation Sans"), local("Arimo"), local("Helvetica"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; size-adjust: 85%; }
+@font-face { font-family: "Body Fallback R"; src: local("Roboto"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; size-adjust: 87%; }
+@font-face { font-family: "Body Fallback D"; src: local("DejaVu Sans"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212; size-adjust: 76%; }
 
 :root {
   --red: #E5191C;
@@ -28,18 +43,20 @@
   --grey: #8A8A86;
   --grey-dark: #3B3B3B;
 
-  --f-head: "Anton", "Anton Fallback", "Anton Fallback R", "Anton Fallback D", Impact, "Arial Narrow Bold", sans-serif;
+  --f-head: "Anton", Impact, "Anton Fallback", "Anton Fallback R", "Anton Fallback D", "Arial Narrow Bold", sans-serif;
   --f-menu: "Bebas Neue", "Bebas Fallback", "Bebas Fallback R", "Bebas Fallback D", "Anton", Impact, sans-serif;
   --f-mark: "Permanent Marker", "Comic Sans MS", cursive;
   --f-type: "Special Elite", "Elite Fallback", "Courier New", monospace;
   --f-serif: Georgia, "Times New Roman", serif;
-  --f-body: "Barlow Semi Condensed", "Arial Narrow", system-ui, -apple-system, sans-serif;
-  --f-ui: "Barlow Condensed", "Bebas Neue", "Arial Narrow", sans-serif; /* bold italic labels */
+  /* body text (Nov 22, John: "do this font", a frame of Optima Nova Black, "for all body of text... the headers... a different, more bolder approach"). Optima Nova is a paid Monotype face; its closest free match, Alegreya Sans ExtraBold (flared, calligraphic strokes, heavy), is used. Quick View keeps the plain face (--f-plain). */
+  --f-body: "Alegreya Sans", "Barlow Semi Condensed", "Arial Narrow", "Body Fallback", "Body Fallback R", "Body Fallback D", system-ui, -apple-system, sans-serif;
+  --f-ui: "Barlow Condensed", "Barlow Fallback", "Barlow Fallback R", "Barlow Fallback D", "Bebas Neue", "Arial Narrow", sans-serif; /* bold italic labels */
 
   --skew: -12deg;
   /* the side margin clears a phone's notch when it is held sideways (the page fills the whole screen,
      viewport-fit=cover: Nov 19, John: "a really big red border blocks a lot of it") */
   --gutter: max(clamp(16px, 3.5vw, 48px), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   --ease-pop: cubic-bezier(.2, 1.5, .4, 1);
+  --ease-snap: cubic-bezier(.2, .8, .2, 1); /* off at once, a decisive stop: used in place of the floaty ease-in-out (Nov 21) */
   color-scheme: dark;
 }

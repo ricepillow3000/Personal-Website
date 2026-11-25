@@ -5,6 +5,7 @@ import { burst } from './impact.js';
 import { sfx, hush } from '../audio/audio.js';
 import { loadSubway } from './lazy.js'; // (the train's code: title only, already loaded by the time START is pressed)
 import { artSrc } from './art.js';
+import { isZoomed } from '../core/zoom.js';
 
 /* Every big animation runs through here so ONE click / Esc can skip it. */
 let current = null;
@@ -20,15 +21,34 @@ export function skipCurrent() {
 
 export const isAnimating = () => Boolean(current && current.isActive());
 
+/* a visible SKIP cue while a film shot runs (Nov 22, launch prep: the shots were always skippable by a tap, Enter, Space or Esc,
+   but nothing said so). Only for shots of a second or more; it leaves the moment the shot ends. */
+let skipChip = null;
+function showSkip(tl) {
+  if (tl.duration() < 1 || tl.progress() === 1) return;
+  skipChip?.remove();
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'skip-chip'; b.innerHTML = 'SKIP <span aria-hidden="true">▸</span>';
+  b.setAttribute('aria-label', 'Skip the animation');
+  b.addEventListener('click', (e) => { e.stopPropagation(); skipCurrent(); });
+  document.body.appendChild(b); skipChip = b;
+  const done = () => { if (skipChip === b) skipChip = null; b.remove(); };
+  tl.eventCallback('onInterrupt', done);
+  return done;
+}
+
 export function track(tl) {
   current = tl;
+  const hideSkip = showSkip(tl);
   return new Promise((resolve) => {
     const own = tl.eventCallback('onComplete');
     tl.eventCallback('onComplete', () => {
+      hideSkip?.();
       own?.();
       resolve();
     });
     if (tl.progress() === 1) resolve();
+    else if (isZoomed()) Promise.resolve().then(() => { if (tl.progress() < 1) { hush(); tl.progress(1); } }); // (started under a pinch zoom: it goes straight to its end, see src/core/zoom.js; a zoom during a shot does the same from main.js)
   });
 }
 
@@ -79,8 +99,8 @@ export function slashWipe(swap) {
     .fromTo(red, { xPercent: X(-140) }, { xPercent: X(4), duration: 0.2, ease: 'expo.in' }, 0)
     .fromTo(black, { xPercent: X(-120) }, { xPercent: 0, duration: 0.22, ease: 'expo.in' }, 0.04)
     .fromTo(star, { x: X(-0.7) * window.innerWidth, y: window.innerHeight * 0.18, rotation: 0, scale: 0.6 },
-      { x: X(0.75) * window.innerWidth, y: -window.innerHeight * 0.12, rotation: X(720), scale: 1.25, duration: 0.5, ease: 'power2.inOut' }, 0.02)
-    .fromTo(white, { xPercent: X(-150) }, { xPercent: X(150), duration: 0.24, ease: 'power2.inOut' }, 0.12)
+      { x: X(0.75) * window.innerWidth, y: -window.innerHeight * 0.12, rotation: X(720), scale: 1.25, duration: 0.5, ease: 'power4.inOut' }, 0.02) // (steep: a whip, not a glide)
+    .fromTo(white, { xPercent: X(-150) }, { xPercent: X(150), duration: 0.24, ease: 'power4.inOut' }, 0.12)
     .add(() => {
       if (old) gsap.set(old, { clearProps: 'transform' });
       swap();
@@ -148,7 +168,7 @@ export function cutIn(text = '') {
     and thumps, its headlights wash the track, brake sparks spray from the wheels, its wind lifts
     the dust, blows the trash and the title away, and a white star-flash cuts to the board. */
 export async function tunnelWipe(swap) {
-  const { trainShot, NOSE_PASS } = await loadSubway();
+  const { trainShot, NOSE_PASS, BURST, SHOT_END, shotSound } = await loadSubway();
   const W = window.innerWidth;
   const H = window.innerHeight;
   // tall screens only see the platform's middle: the camera pans left to catch the track
@@ -170,10 +190,13 @@ export async function tunnelWipe(swap) {
   const card = screen.querySelector('.cc'); // the CONNECT card goes with the wind too
   const cal = document.querySelector('#hudDate .hud-cal'); // and the calendar sticker
   const clock = { t: 0 };
-  // the train brakes in (Nov 19, "feel real"): the nose passes the camera at NOSE_PASS (~1.2 s), then
-  // the first car rolls by for about half a second before the cut
-  const SWAP = NOSE_PASS + 0.56;
-  const P = NOSE_PASS - 0.74; // the wind and the paper move with the nose (they were timed for 0.74 s)
+  // THE BURST (Nov 22, John: "pop out impactfully... faster... longer... a surprise", see subway.js): half a second of a
+  // still station, the nose breaks out of the tunnel at BURST and is at the camera at NOSE_PASS, then seven cars storm past,
+  // braking, until the cut at SHOT_END
+  const SWAP = SHOT_END;
+  // the blast of air out of the tunnel takes the title: it leaves as the train breaks out, so the nose never has to come
+  // through it (timed to the nose's pass, as before, it was still on screen when the train reached the camera: 0.43 s is too short)
+  const B = BURST + 0.06;
   const wall = [...document.querySelectorAll('#backdrop .bd-graffiti, #backdrop .bd-shards')]; // the poster, the arrow, the glass
   const posters = wall.map((l) => l.firstElementChild);
   const blown = [];
@@ -194,14 +217,14 @@ export async function tunnelWipe(swap) {
   });
   tl.set(el, { visibility: 'visible' });
   barsIn(tl, bars);
-  tl.add(() => sfx('tunnel', { pass: NOSE_PASS, cut: SWAP }), 0)
+  tl.add(() => sfx('tunnel', shotSound()), 0)
     .to(clock, {
       t: SWAP,
       duration: SWAP,
       ease: 'none',
       onUpdate: () => {
         const t = clock.t;
-        shot.tick(t, { rumble: Math.min(1, t / 0.5), panP: gsap.parseEase('power2.inOut')(Math.min(1, t / 0.45)) });
+        shot.tick(t, { rumble: Math.min(1, t / 0.5), panP: gsap.parseEase('power3.out')(Math.min(1, t / 0.5)) }); // (a whip pan that settles: off at once, decisive stop; the floaty in-out curve is not our motion)
         // a heavy train: a deep rumble that swells as it comes, a thump per wheel set, the air
         // wall's shove as the nose passes (never a random buzz: that read as weightless)
         const m = shot.motion(t);
@@ -210,18 +233,18 @@ export async function tunnelWipe(swap) {
         screen.style.translate = `${(m.x * 0.6).toFixed(1)}px ${(m.y * 0.6).toFixed(1)}px`;
       },
     }, 0)
-    // the headlights come out of the tunnel: the title steps back and dims, so you watch the train
-    // arrive (it used to sit on top of it until the nose was already at the camera)
-    .to([title, card].filter(Boolean), { opacity: 0.38, scale: 0.97, duration: 0.45, ease: 'power2.out' }, 0.45)
-    .to(wall, { opacity: 0.4, duration: 0.45, ease: 'power2.out' }, 0.45)
+    // the still beat before the burst: the title steps back and dims at once, so the eye is on the dark tunnel when the
+    // train breaks out of it (it used to dim as the headlights appeared: at this speed that is too late to be seen)
+    .to([title, card].filter(Boolean), { opacity: 0.38, scale: 0.97, duration: 0.3, ease: 'power2.out' }, 0.08)
+    .to(wall, { opacity: 0.4, duration: 0.3, ease: 'power2.out' }, 0.08)
     // its wind takes the title with it, and rips the posters off the wall
-    .to(title, { x: -W * 0.75, y: H * 0.15, rotation: -26, skewX: 16, autoAlpha: 0, duration: 0.42, ease: 'power3.in' }, 0.6 + P)
-    .to(card, { x: -W * 0.9, y: -H * 0.05, rotation: -40, skewX: 12, autoAlpha: 0, duration: 0.45, ease: 'power3.in' }, 0.64 + P)
-    .to([cal].filter(Boolean), { x: -W * 0.4, y: -H * 0.2, rotation: -30, autoAlpha: 0, duration: 0.4, ease: 'power3.in' }, 0.66 + P)
+    .to(title, { x: -W * 0.75, y: H * 0.15, rotation: -26, skewX: 16, autoAlpha: 0, duration: 0.3, ease: 'power2.in' }, B)
+    .to(card, { x: -W * 0.9, y: -H * 0.05, rotation: -40, skewX: 12, autoAlpha: 0, duration: 0.32, ease: 'power2.in' }, B + 0.04)
+    .to([cal].filter(Boolean), { x: -W * 0.4, y: -H * 0.2, rotation: -30, autoAlpha: 0, duration: 0.3, ease: 'power2.in' }, B + 0.06)
     .add(() => posters.forEach((p, i) => blown.push(p.animate(
       [{ translate: '0 0', rotate: '0deg', opacity: 1 }, { translate: `${-W * (0.9 + i * 0.3)}px ${H * (0.1 - i * 0.12)}px`, rotate: `${-34 + i * 50}deg`, opacity: 0 }],
-      { duration: 480, delay: i * 60, easing: 'cubic-bezier(.55,0,.9,.5)', fill: 'forwards' }
-    ))), 0.66 + P)
+      { duration: 380, delay: i * 50, easing: 'cubic-bezier(.55,0,.9,.5)', fill: 'forwards' }
+    ))), B + 0.06)
     // the cut: white star-flash, swap, clear
     .fromTo(flash, { scale: 0, rotation: -40, opacity: 1 }, { scale: 3.2, rotation: 0, duration: 0.2, ease: 'power3.in' }, SWAP - 0.2)
     .add(() => {
@@ -463,6 +486,7 @@ export async function riseWipe(swap, label = 'THE PLAN') {
   await filmReady(['upshot', 'crown', 'facade'], 900);
   const set = citySet(label || 'THE PLAN', '<div class="fall-half whole"></div>');
   const { el, H, TH, city, sky, tower, lines, sign } = set;
+  el.classList.add('rising'); // (the title leans the way this shot looks: up)
   const whole = el.querySelector('.fall-half.whole');
   const snap = snapshotScreen();
   whole.appendChild(snap.frag);
@@ -506,7 +530,7 @@ export async function trainWipe(swap, label = '') {
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `<div class="ns-cam">
       <div class="ns-out"><div class="ns-lights">${'<i></i>'.repeat(9)}</div>
-        <div class="ns-station"><i class="ns-tiles"></i><i class="ns-stripe"></i><div class="ns-sign"><small>NEXT STOP</small><span class="ransom"></span></div><i class="ns-pillar"></i><i class="ns-pillar p2"></i></div></div>
+        <div class="ns-station"><i class="ns-tiles"></i><i class="ns-stripe"></i><div class="ns-sign"><small>NEXT STOP</small><span class="ransom"></span></div><i class="ns-pillar"></i><i class="ns-pillar p2"></i></div></div><i class="ns-glass"></i>
     </div><div class="fall-flash"></div>${LETTERBOX}`;
   ransom(el.querySelector('.ns-sign span'), label, label.length + 3);
   const q = (sel) => el.querySelector(sel);
@@ -535,6 +559,11 @@ export async function trainWipe(swap, label = '') {
   const ox = free * fx;
   const oy = (bh - AH * k) * 0.46;
   gsap.set(sign, { left: ox + PX * k, top: oy + PY * k, scale: Math.min(1, (241 * k * 0.9) / sign.offsetWidth, (107 * k * 0.86) / sign.offsetHeight) });
+  /* The platform's pillars stop behind the car's wall, by the car's own measure (Nov 22). Placed by the screen's width, the
+     first one came to rest half inside the door's window, which read as a window in two tones; they still pass every window
+     as the station glides in. (Art x 225: the wall between the door and the big window; 1000: the wall right of it.) */
+  gsap.set(q('.ns-pillar:not(.p2)'), { left: ox + 225 * k, right: 'auto' });
+  gsap.set(q('.ns-pillar.p2'), { left: ox + 1000 * k, right: 'auto' });
 
   const tl = gsap.timeline({ onComplete: () => el.remove() });
   tl.set(el, { visibility: 'visible' });

@@ -22,7 +22,11 @@ function ensure() {
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return null;
   try { ac = new AC({ latencyHint: 'balanced' }); } catch { ac = new AC(); } // (a little more buffer: no crackle over Bluetooth when the phone is busy)
-  ac.onstatechange = () => { if (ac.state !== 'running' && !document.hidden && enabled()) armUnlock(); }; // (iOS 'interrupted' by a call, Siri...)
+  window.__acGen = (window.__acGen || 0) + 1; // (how many engines this page has built; the tests read it)
+  window.__acState = () => ac?.state;
+  window.__musicPos = () => (music ? music.position() : null); // (tests: the song's place, in 16ths)
+  window.__masterGain = () => master?.gain.value; // (tests: the whole mix's level)
+  ac.onstatechange = () => { if (!ac) return; if (ac.state === 'interrupted') stale = true; if (ac.state !== 'running' && !document.hidden && enabled()) armUnlock(); }; // (iOS takes the audio away for a call, Siri, another app: 'interrupted'. Such an engine may never come back, so the next tap builds a new one, see rebuild)
   master = ac.createGain();
   master.gain.value = 0.9;
   // safety limiter: fast transients (a whip crack lasts 12 ms) slip past the slower glue
@@ -541,6 +545,39 @@ function screech(bus, at, dur, gain) {
     o.stop(at + dur + 0.05);
   });
 }
+/* the train before it is seen: a rumble far down the tunnel that grows through the still beat, jumps as the train breaks
+   out, holds while it passes and sinks as it brakes; over it, faintly, the rails singing (steel carrying the wheels' noise
+   ahead of the train), cut off the moment it arrives */
+function farRumble(bus, at, burst, pass, cut) {
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(50, at);
+  lp.frequency.exponentialRampToValueAtTime(130, at + burst);
+  lp.frequency.exponentialRampToValueAtTime(260, at + pass);
+  lp.frequency.exponentialRampToValueAtTime(120, at + cut + 0.4);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0008, at);
+  g.gain.exponentialRampToValueAtTime(0.45, at + Math.max(0.05, burst - 0.03));
+  g.gain.exponentialRampToValueAtTime(1.15, at + burst + 0.05);
+  g.gain.setValueAtTime(1.15, at + pass + 0.3);
+  g.gain.exponentialRampToValueAtTime(0.6, at + cut);
+  g.gain.exponentialRampToValueAtTime(0.0008, at + cut + 0.45);
+  loopBuf(brownBuf, at, at + cut + 0.5).connect(lp).connect(g).connect(bus);
+  const sing = ac.createGain();
+  sing.gain.setValueAtTime(0.0008, at);
+  sing.gain.exponentialRampToValueAtTime(0.011, at + Math.max(0.1, burst - 0.02));
+  sing.gain.exponentialRampToValueAtTime(0.0008, at + burst + 0.06);
+  sing.connect(bus);
+  [2140, 2810].forEach((f, i) => {
+    const o = ac.createOscillator();
+    o.frequency.setValueAtTime(f, at);
+    o.frequency.linearRampToValueAtTime(f * 1.04, at + burst);
+    lfo(at, at + burst + 0.1, 9 + i * 4, 18, o.frequency);
+    o.connect(sing);
+    o.start(at);
+    o.stop(at + burst + 0.12);
+  });
+}
 /* one wheel crossing a rail joint: a dull metal clack with a low thump */
 function clack(bus, at, v) {
   noise(bus, { at, dur: 0.05, type: 'bandpass', freq: 1300, q: 1.4, gain: 0.5 * v });
@@ -728,19 +765,19 @@ const VOICES = {
     tone(bus, { at: at + 0.98, dur: 0.24, from: 1319, to: 1319, type: 'sine', gain: 0.1 }); // ding
     tone(bus, { at: at + 1.16, dur: 0.36, from: 1047, to: 1047, type: 'sine', gain: 0.1 }); // dong
   },
-  // PRESS START: a rumble deep in the tunnel, the horn, wheels hammering the rail joints faster and
-  // louder, the horn's pitch dropping as it passes, the blast of air and the paper flying
-  // (pass: when the nose passes the camera; the train brakes in, so this is ~1.2 s, see subway.js)
-  tunnel: (bus, at, v, { pass = 0.74 } = {}) => {
-    const d = pass - 0.74; // everything after the first rumble moves with the nose
-    rails(bus, at, 1.3 + d, { gapFrom: 0.3, gapTo: 0.07, vFrom: 0.3, vTo: 1, gain: 1.0, rumble: 0.85, punch: true }); // the track: loud and punchy
-    // one long horn: faint as the headlights appear, loudest as the nose passes us, then gone
-    trainHorn(bus, at + 0.02, 1.5 + d, 0.15, { fadeIn: 0.3, peak: pass, drop: HORN_DOPPLER }); // lower so the wheels are heard
+  // PRESS START, the burst (Nov 22, see VOICES.tunnel): a still beat with a rumble far down the tunnel, then the train breaks
+  // out: the horn, the blast of air, wheels hammering the rail joints fast and slowing as it brakes, the brakes biting at the end
+  // (burst: when the nose breaks out of the tunnel; pass: when it passes the camera; cut: the cut to the board; see subway.js)
+  tunnel: (bus, at, v, { burst = 0.53, pass = 0.95, cut = 2.6 } = {}) => {
+    farRumble(bus, at, burst, pass, cut);
+    rails(bus, at + burst, cut - burst + 0.3, { gapFrom: 0.07, gapTo: 0.2, vFrom: 1, vTo: 0.6, gain: 1.0, rumble: 0.5, punch: true }); // the track: loud and punchy
+    // one long horn: a breath of it in the tunnel, a blast as the train breaks out, loudest as the nose passes us, then gone
+    trainHorn(bus, at + burst - 0.2, 1.7, 0.16, { fadeIn: 0.2, peak: pass - burst + 0.2, drop: HORN_DOPPLER });
     // the wall of air the train shoves out of the tunnel ahead of itself, then its wake
-    airRoar(bus, at + 0.2 + d, 0.6, { from: 160, to: 1600, gain: 1.1 }); // pulled back so the wheels cut through
-    airRoar(bus, at + pass + 0.04, 0.6, { from: 1800, to: 300, gain: 1.0, up: false });
-    rattle(bus, at + 0.3, 1.0 + d, { gain: 0.16, from: 0.4, to: 1.6 }); // the cars shaking as they storm past
-    screech(bus, at + 0.4, 0.5 + d, 0.05); // the brakes biting as it comes out of the tunnel
+    airRoar(bus, at + burst - 0.06, 0.45, { from: 200, to: 2000, gain: 1.1 });
+    airRoar(bus, at + pass + 0.04, 0.7, { from: 1800, to: 300, gain: 1.0, up: false });
+    rattle(bus, at + burst, cut - burst, { gain: 0.16, from: 1.6, to: 0.5 }); // the cars shaking as they storm past
+    screech(bus, at + cut - 1.0, 1.1, 0.05); // the brakes biting as it slows
     flutter(bus, at + pass - 0.14, 0.45, 0.14);
   },
   // THE DROP: the wind roars louder as you fall, and the busy street below rushes up at you
@@ -1111,20 +1148,46 @@ Object.assign(VOICES, {
     [784, 1047, 1319].forEach((f, i) => tone(bus, { at: at + 0.14 + i * 0.05, dur: 0.1, from: f, to: f, type: 'triangle', gain: 0.22 }));
     tone(bus, { at: at + 0.29, dur: 0.46, from: 1568, to: 1568, type: 'triangle', gain: 0.2 });
   },
-  /* PRESS START: a real tram storming past the mic (steel wheels slamming the rail joints, motor,
-     air), its loudest crash on the frame the nose passes the camera; under it, the recorded brakes
-     squealing as the train brakes in (Nov 19, "feel real"). The horn and the paper flying stay
-     synthesized (no recorded horn passed). Faded out under the cut to the board.
-     { pass, cut }: when the nose passes and when the cut comes (seconds after the start). */
-  tunnel: (bus, at, v, { pass = 0.74, cut = 1.25 } = {}) => {
+  /* PRESS START, THE BURST (Nov 22, John: "make the train pop out impactfully with a lot of impact and impactful train
+     sounds. Make it faster and make it longer. That way it gives the user a surprise"). Sound makes a surprise out of a
+     quiet moment and a hit, so the voice is three beats, each on the picture's own frames (subway.js shotSound):
+     (1) STILL, until `burst`: almost nothing. A rumble far down the tunnel, growing, and the rails starting to sing.
+     (2) THE BURST: on the frame the nose breaks out of the mouth, the real metro horn blasts (a breath of it in the tunnel
+         first, then full, its pitch only ever falling as it goes by), a deep boom and the wall of air the train shoves out
+         of the tunnel; the real tram's pass comes up from under it, its loudest wheel crash on the frame the nose passes
+         the camera (`pass`), and the wake of air after it.
+     (3) THE PASS, to `cut`: seven cars. A second take of the tram's pass, slower and lower, carries on under the first; a
+         steel hit lands for every bogie as it passes the camera (`wheels`: the same times the camera is jolted), close
+         together and light while it storms, heavier and further apart as it brakes; the recorded brakes squeal up to the
+         cut; paper in the wind. Everything fades under the cut to the board.
+     The same recordings as before (no new downloads); the horn and the paper stay synthesized until the clips load. */
+  tunnel: (bus, at, v, { burst = 0.53, pass = 0.95, cut = 2.6, wheels = [] } = {}) => {
     const s0 = pass - CLIP_HIT['train-pass']; // the clip's own start, relative to at
-    if (!clip(bus, 'train-pass', at + pass, { gain: TRAIN.pass, env: [[0, 1], [cut - s0, 1], [cut + 0.45 - s0, 0]] })) return SYNTH.tunnel(bus, at, v, { pass });
-    clip(bus, 'train-brake', at + Math.max(0, pass - 0.9), { gain: TRAIN.brake * 0.55, env: [[0, 0], [0.35, 1], [cut + 0.45 - Math.max(0, pass - 0.9), 0]] }); // squeal peaks just after the nose
-    // the horn: a real metro car horn (won 2 of 3 listening rounds over the pass alone); synthesized until it loads
-    if (!clip(bus, 'train-horn', at + 0.02, { gain: TRAIN.horn, align: false, env: [[0, 0.5], [pass - 0.04, 1], [cut - 0.05, 0.5], [cut + 0.35, 0]] })) {
-      trainHorn(bus, at + 0.02, 1.5 + (pass - 0.74), 0.1, { fadeIn: 0.3, peak: pass, drop: HORN_DOPPLER });
+    // the first take: a murmur while the station is still, up at once as the train breaks out, its crash on the nose
+    if (!clip(bus, 'train-pass', at + pass, { gain: TRAIN.pass * 0.95, env: [[0, 0.06], [Math.max(0.02, burst - s0 - 0.05), 0.16], [Math.max(0.05, burst - s0 + 0.09), 1], [1.6, 1], [2.02, 0]] })) return SYNTH.tunnel(bus, at, v, { burst, pass, cut });
+    // the second take, slower and lower (the cars still coming as it brakes), its own crash a second after the nose
+    const p2 = pass + 0.95; const s2 = p2 - CLIP_HIT['train-pass'] / 0.9;
+    clip(bus, 'train-pass', at + p2, { gain: TRAIN.pass * 0.8, rate: 0.9, env: [[0, 0], [0.45, 1], [Math.max(0.5, cut - s2), 0.9], [cut + 0.45 - s2, 0]] });
+    farRumble(bus, at, burst, pass, cut);
+    // the horn: the real metro car horn. A breath of it down the tunnel, the blast as it breaks out, falling away after the nose
+    const h0 = burst - 0.2;
+    if (!clip(bus, 'train-horn', at + h0, { gain: TRAIN.horn * 1.3, align: false, rate: 1.03, rateTo: 0.93, env: [[0, 0], [0.14, 0.12], [0.26, 1], [pass - h0 + 0.2, 1], [1.4, 0.3], [1.72, 0]] })) {
+      trainHorn(bus, at + h0, 1.7, 0.16, { fadeIn: 0.2, peak: pass - h0, drop: HORN_DOPPLER });
     }
+    // the hit as it breaks out: a deep boom, and the air it shoves out of the tunnel; then its wake as the nose goes by
+    clip(bus, 'land-boom', at + burst, { gain: 0.42, lowpass: 600 }); // (only its deep part: the hit is felt, the horn and the steel are heard)
+    airRoar(bus, at + burst - 0.06, 0.42, { from: 220, to: 1800, gain: 0.7 });
+    airRoar(bus, at + pass + 0.03, 0.8, { from: 1700, to: 280, gain: 0.8, up: false });
+    // a steel hit for every bogie passing the camera (two wheel sets: ka-chunk), on the frames the camera is jolted
+    wheels.forEach(([tw, w]) => {
+      const vol = 0.07 + 0.17 * w; // light in the storm, a full thump as it brakes
+      railHit(bus, at + tw, vol, 0.25);
+      railHit(bus, at + tw + Math.min(0.07, 0.058 * w), vol * 0.8, 0.25);
+    });
+    // the brakes: the recorded squeal, swelling to its peak just before the cut
+    clip(bus, 'train-brake', at + cut - 1.45, { gain: TRAIN.brake * 0.5, env: [[0, 0], [0.5, 0.7], [1.2, 1], [1.9, 0]] });
     flutter(bus, at + pass - 0.14, 0.45, 0.14);
+    flutter(bus, at + pass + 0.55, 0.6, 0.07);
   },
   /* NEXT STOP: a real train braking into a station (wheels grinding, the brake squeal swelling as
      the station stops in the windows), then the two-note station chime (a PA tone, synthesized) */
@@ -1159,7 +1222,7 @@ export function sfx(name, arg) {
   if (!enabled()) return;
   if (!ac && !activated()) return; // no audio engine (and no sound downloads) before the visitor's first tap or key
   if (!ensure()) return;
-  if (ac.state === 'suspended') ac.resume();
+  if (ac.state !== 'running') ac.resume().catch(() => {}); // ('suspended', or iOS's own 'interrupted')
   // the same sound twice within 35 ms is never meant (a fast sweep across a list): stacking it
   // only smears into a stutter, so the second one is dropped
   if (ac.currentTime - (lastAt[name] ?? -1) < (name === 'hover' ? 0.015 : 0.035)) return; // hovers may overlap: rapid moves stay snappy
@@ -1169,12 +1232,12 @@ export function sfx(name, arg) {
     if (duck.gain.cancelAndHoldAtTime) duck.gain.cancelAndHoldAtTime(t); // hold where it is: a jump here was a click in the music
     else { duck.gain.cancelScheduledValues(t); duck.gain.setValueAtTime(duck.gain.value, t); }
     duck.gain.setTargetAtTime(name === 'hover' || name === 'hoverBig' ? 0.8 : 0.5, t, 0.012);
-    duck.gain.setTargetAtTime(1, t + (name === 'tunnel' || name === 'train' ? 1.4 : 0.22), 0.25);
+    duck.gain.setTargetAtTime(1, t + (name === 'tunnel' ? (arg?.cut ?? 1.4) : name === 'train' ? 1.4 : 0.22), 0.25); // (the train shot: the music stays under it until the cut)
   }
   const g = ac.createGain(); // each sound gets its own fader, so a skipped shot can be hushed
   g.connect(sfxBus);
   live.add(g);
-  setTimeout(() => live.delete(g), 2500);
+  setTimeout(() => live.delete(g), name === 'tunnel' ? 4200 : 2500); // (the train shot runs 2.6 s and fades for half a second more: a skip near its end must still find it)
   VOICES[name]?.(g, ac.currentTime, 1, arg);
   window.__sfxLog?.push(name); // (tests set this array to hear what played)
 }
@@ -1205,11 +1268,12 @@ function startMusic() {
     musicLoading = false;
     if (!enabled() || music) return; // sound went off while it loaded
     music = createMusic(ac, musicBus);
-    music.start();
+    music.start(resumePoint());
   }, () => { musicLoading = false; }); // offline: no music, sound effects still work
 }
 
 function stopMusic() {
+  rememberMusic();
   music?.stop();
   music = null;
 }
@@ -1224,6 +1288,9 @@ export function setSound(on) {
   store.setSetting('sound', on);
   store.setSetting('soundChosen', true);
   if (on) {
+    /* switching the sound on is the visitor asking for sound NOW: if the engine has been away (the page was hidden since it
+       was built) or is not running, it gets a new one inside this very click, never a resume() that may not take */
+    if (ac && (stale || wasHidden || ac.state !== 'running')) rebuild();
     ensure();
     ac?.resume().catch(() => {});
     startMusic();
@@ -1243,13 +1310,53 @@ export function setSound(on) {
    and if the phone needs another tap first (iOS after a call or a lock), the next tap does it. */
 const activated = () => !navigator.userActivation || navigator.userActivation.hasBeenActive;
 export const audioLive = () => Boolean(ac && ac.state === 'running');
+/* ---------- an engine that does not come back (Nov 22, John: "on phone, when I use the app and then I swiped out of it to do
+   other things and I come back, noise doesn't work, even if I toggle the sound on and off").
+   Root cause: the fix above trusted the old engine. Everything it did on the way back (the resume on return, the resume on
+   the next tap, the toggle) called resume() on the SAME AudioContext, and the toggle only stopped and restarted the music on
+   it. On an iPhone the system takes the audio away when the app is left (the context goes 'interrupted', a state the code
+   did not even ask about: sfx() only resumed a 'suspended' one), and a context left that way can stay dead for good: resume()
+   never settles, or it says 'running' with a clock that stands still, and then no call on that object ever makes a sound
+   again. Nothing ever built a new one, so nothing the visitor could do short of reloading brought the sound back.
+   Now: an engine that has been away is not trusted. (1) On an iPhone or iPad every return marks it stale. (2) Everywhere,
+   the return is checked: 450 ms later the engine must be 'running' AND its clock must have moved, or it is stale.
+   (3) A stale engine is thrown away and a new one is built inside the visitor's next tap, click or key (where a phone
+   allows sound to start), and the music starts again on it. (4) Switching the sound on by hand always gets a new engine
+   if the page was ever hidden. The recordings are kept (a decoded sound works in any engine), so nothing downloads twice. */
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let stale = false; // the engine may be dead: the next gesture builds a new one
+let wasHidden = false; // the page has been hidden since this engine was built
+function rebuild() {
+  const old = ac;
+  stale = false; wasHidden = false;
+  if (!old) return;
+  stopMusic();
+  live.clear();
+  Object.keys(lastAt).forEach((k) => delete lastAt[k]); // (those times were on the old engine's clock)
+  old.onstatechange = null;
+  ac = null; master = null; sfxBus = null; musicBus = null; duck = null;
+  try { old.close().catch(() => {}); } catch { /* already closed */ }
+  ensure();
+}
+/** Is the engine really running? Its state must say so and its clock must be moving. If not, it is stale. */
+function probe() {
+  const a = ac;
+  if (!a) return;
+  const t0 = a.currentTime;
+  setTimeout(() => {
+    if (a !== ac || document.hidden || !enabled()) return;
+    if (a.state !== 'running' || a.currentTime <= t0) { stale = true; armUnlock(); }
+  }, 450);
+}
 const UNLOCK = ['pointerup', 'click', 'touchend', 'keydown'];
 let unlockArmed = false;
 function onUnlock(e) {
   if (e.type === 'keydown' && e.key === 'Escape') return; // Escape doesn't let a page start audio
   if (!enabled()) { disarm(); return; }
+  if (stale) rebuild(); // a new engine, built inside this gesture
   if (!ensure()) return;
-  ac.resume().then(() => { if (ac.state === 'running') disarm(); }, () => {});
+  const a = ac;
+  a.resume().then(() => { if (a === ac && a.state === 'running' && !stale) disarm(); }, () => {});
   startMusic();
 }
 function disarm() {
@@ -1263,8 +1370,9 @@ function armUnlock() {
 }
 function wake() {
   if (!ac || !enabled()) return;
-  ac.resume().then(() => { if (ac.state !== 'running') armUnlock(); }, () => armUnlock());
-  setTimeout(() => { if (ac.state !== 'running') armUnlock(); }, 400);
+  if (IOS) { stale = true; armUnlock(); return; } // (an iPhone's engine is not asked to carry on: the next tap builds a new one)
+  ac.resume().catch(() => {});
+  probe();
   startMusic();
 }
 /** Boot: with sound on, the first gesture starts it; leaving pauses it, coming back resumes it. */
@@ -1272,8 +1380,61 @@ export function initAudio() {
   if (enabled()) armUnlock();
   document.addEventListener('visibilitychange', () => {
     if (!ac) return;
-    if (document.hidden) ac.suspend().catch(() => {});
-    else wake();
+    if (document.hidden) { wasHidden = true; quiet(true); }
+    else { unquiet(); wake(); }
   });
-  window.addEventListener('pageshow', (e) => { if (e.persisted) wake(); }); // back from the browser's page cache
+  window.addEventListener('pagehide', () => quiet(true)); // (leaving for another page, or the browser freezing this one)
+  window.addEventListener('pageshow', (e) => { if (e.persisted) { unquiet(); wake(); } }); // back from the browser's page cache
+  // a link that leaves (a new tab, LinkedIn, GitHub, a live app, the mail app): fade out BEFORE the page goes away
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest?.('a[href]');
+    if (!a || !ac || e.defaultPrevented) return;
+    const href = a.getAttribute('href') || '';
+    const leaves = a.target === '_blank' || /^(mailto:|tel:)/i.test(href) || (/^https?:/i.test(href) && new URL(href, location.href).origin !== location.origin);
+    if (!leaves) return;
+    quiet(false);
+    setTimeout(() => { if (!document.hidden) unquiet(); }, 1500); // (nothing actually left, e.g. no mail app: the sound comes back)
+  });
+}
+
+/* ---------- leaving without a buzz, coming back where the music was (Nov 23, John: "when clicking the links, sometimes the
+   sound or the music kind of bugs out like a bee buzzing in your ear. And then when you go back, the music restarts straight
+   from zero"). Root causes: (1) the engine was paused (or, on a phone, taken away by the system) in the middle of whatever was
+   playing, at full level: a phone can then repeat its last few milliseconds of sound, a buzz. (2) The music kept no place: a
+   new engine (an iPhone always gets one on return) or a reload started the song from its first beat. Now every exit fades the
+   whole mix to silence in ~40 ms before the engine pauses, the song's place is kept (also in this tab's session storage, for a
+   page that reloads on return), and the music comes back from that beat with its usual soft fade-in. */
+const POS_KEY = 'jn-music-pos';
+let musicPos = null;
+function rememberMusic() {
+  if (!music || !ac) return;
+  try { musicPos = music.position(); } catch { return; }
+  try { sessionStorage.setItem(POS_KEY, JSON.stringify({ n: musicPos, at: Date.now() })); } catch { /* private mode */ }
+}
+function resumePoint() {
+  if (musicPos !== null) return musicPos;
+  try {
+    const v = JSON.parse(sessionStorage.getItem(POS_KEY) || 'null');
+    if (v && Number.isFinite(v.n) && Date.now() - v.at < 30 * 60 * 1000) return v.n; // (half an hour away: start fresh)
+  } catch { /* nothing kept */ }
+  return 0;
+}
+let quietTimer = 0;
+function quiet(pause) {
+  if (!ac || !master) return;
+  rememberMusic();
+  const t = ac.currentTime;
+  master.gain.cancelScheduledValues(t);
+  master.gain.setValueAtTime(master.gain.value, t);
+  master.gain.linearRampToValueAtTime(0, t + 0.04);
+  clearTimeout(quietTimer);
+  if (pause) { const a = ac; quietTimer = setTimeout(() => { if (a === ac && document.hidden) a.suspend().catch(() => {}); }, 60); }
+}
+function unquiet() {
+  clearTimeout(quietTimer);
+  if (!ac || !master) return;
+  const t = ac.currentTime;
+  master.gain.cancelScheduledValues(t);
+  master.gain.setValueAtTime(master.gain.value, t);
+  master.gain.linearRampToValueAtTime(0.9, t + 0.25);
 }

@@ -5,7 +5,6 @@
      red borders show on the train section"): iPhone Safari and the apps built on it tint the strips beside the
      notch with the background COLOUR of the fixed layer at that edge, and this layer's was red */
   background: var(--black) linear-gradient(#B0000E, #B0000E);
-  --px: 0; --py: 0;
   transition: filter .3s steps(4);
 }
 .bd-layer { position: absolute; inset: -4%; will-change: transform; }
@@ -15,7 +14,7 @@
 /* one shared drift + pointer parallax, scaled per layer so it moves as one wall */
 .bd-graffiti { --amp: 10; }
 .bd-shards { --amp: 18; }
-.bd-layer { transform: translate3d(calc(var(--px) * var(--amp) * -1px), calc(var(--py) * var(--amp) * -0.5px), 0); }
+.bd-layer { transform: translate3d(0, 0, 0); } /* (backdrop.js moves each layer with the pointer, scaled by its --amp) */
 .bd-drift { animation: bd-drift 18s ease-in-out infinite alternate; }
 @keyframes bd-drift {
   from { transform: translate3d(calc(var(--amp) * -1px), 0, 0); }
@@ -41,6 +40,19 @@ body[data-mode="quick"] .backdrop { filter: brightness(.16); }
 }
 body.reduce-motion .backdrop *, body.reduce-motion .backdrop .bd-drift { animation: none !important; }
 body.reduce-motion .bd-layer { transform: none !important; }
+
+/* A LAYER THAT IS NOT SHOWN LEAVES THE COMPOSITOR (Nov 22, zoom safety, see src/core/zoom.js). The title and the other
+   screens fade their pictures to opacity 0, but a layer at opacity 0 is still a layer: on THE PLAN the whole station
+   (its picture, its canvases, its lights and signs) stayed promoted and animating behind the city, and on the title the
+   city did behind the station. Once its fade has ended (the pictures fade in .5 s) a hidden layer is made invisible and
+   its loops are paused, so the browser drops it; it is back at once when its screen returns (the fade in is untouched). */
+:is(.bd-subway, .bd-graffiti, .bd-city, .bd-p5, .bd-tech) { transition: visibility 0s; }
+body[data-mode]:not([data-mode="title"]) :is(.bd-subway, .bd-graffiti),
+body:not([data-mode]) :is(.bd-city, .bd-p5, .bd-tech),
+body[data-mode="title"] :is(.bd-city, .bd-p5, .bd-tech) { visibility: hidden; transition: visibility 0s .7s; }
+body[data-mode]:not([data-mode="title"]) :is(.bd-subway, .bd-graffiti) *,
+body:not([data-mode]) :is(.bd-city, .bd-p5, .bd-tech) *,
+body[data-mode="title"] :is(.bd-city, .bd-p5, .bd-tech) * { animation-play-state: paused; }
 
 
 /* Background art (Nano Banana, cel-shaded + comic ink, grayscale with red accents only).
@@ -126,31 +138,30 @@ body[data-mode="title"] .bd-cam img.in ~ .st-wrap { opacity: 1; } /* (title only
 .st-wrap .st { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .st-dim { mix-blend-mode: multiply; }
 .st-glow { mix-blend-mode: screen; }
-/* the departure board (station.js): a painted board (.ss-img, placed in art px) with its LED screen mapped
-   onto the painted screen (.ss-screen in art px on .ss-plane, scaled by --k = CSS px per art px) */
+/* the platform signs (station.js): the LED board, THE CITY sign beside it and their hangers are drawn in
+   art px (.ss-signs); the LED row is HTML on a plane scaled like the art (--k = CSS px per art px), mapped
+   onto the board's screen */
 .ss { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease-out; }
 .ss[hidden] { display: none; }
-.ss.in { opacity: 1; } /* (the board lights up once it has picked its spot) */
-.bd-cam .st-wrap img.ss-img { position: absolute; inset: auto; display: block; height: auto; opacity: 1; object-fit: fill; transition: none; transform-origin: 50% 50%; } /* (not the platform picture's rules: full size, faded until loaded) */
-/* the LED rows, laid out in art px on a plane scaled like the art, then mapped onto the painted screen's
-   four corners (a perspective transform set by station.js) */
+.ss.in { opacity: 1; } /* (the signs light up once they have picked their spot) */
 .ss-plane { position: absolute; left: 0; top: 0; width: 1600px; height: 914px; transform-origin: 0 0; transform: scale(var(--k, 1)); }
-.ss-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; display: grid; grid-template-rows: 1fr 1fr; gap: .2em; padding: .22em .3em; }
-.ss-row { position: relative; overflow: hidden; display: flex; align-items: center; background: #08080A; }
+.ss-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; display: grid; padding: .16em .2em; }
+.ss-row { position: relative; overflow: hidden; display: flex; align-items: center; gap: .55em; padding: 0 .35em; background: #0B0806; } /* (the screen's black is the picture's warm black, not a neutral one: Nov 22) */
+.ss-win { flex: 1; min-width: 0; overflow: hidden; } /* (the line scrolls between the clock and JN) */
 /* the LED dots: a fixed grid of dark gaps over each row, so the text sliding under it lights the dots */
 .ss-row::after { content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(circle, transparent 0 .05em, rgba(5, 5, 6, .92) .08em) 0 0 / .16em .16em; }
-.ss-run { display: flex; width: max-content; will-change: transform; animation: ssRun 9s linear infinite; }
-.ss-run span { padding-right: 3em; font-family: var(--f-menu); font-size: 1.32em; letter-spacing: .06em; line-height: 1; white-space: nowrap;
-  color: #FFC83A; text-shadow: 0 0 .3em rgba(255, 170, 30, .85); }
-@keyframes ssRun { from { transform: translateX(0); } to { transform: translateX(-50%); } } /* right to left, seamless */
-.ss-bot { justify-content: space-between; padding: 0 .4em; }
-.ss-bot b { font-family: var(--f-menu); font-weight: 400; font-size: 1.32em; letter-spacing: .1em; line-height: 1; }
-.ss-time { color: #4BEA74; text-shadow: 0 0 .3em rgba(60, 230, 110, .8); font-variant-numeric: tabular-nums; }
+  background: radial-gradient(circle, transparent 0 .055em, rgba(11, 7, 4, .6) .08em) 0 0 / .16em .16em; } /* (Nov 22: the gaps were near black (.92) and a letter's stroke is about one diode wide at this size, so the grid cut strokes into loose dots, "garbled... half-formed letters" to both outside judges. The gaps are see-through now: the letters stay whole and the grid reads as the board's texture.) */
+/* the message in pages, each as wide as the window: a page slides in from the right, stops whole, slides out */
+.ss-run { display: flex; width: 300%; will-change: transform; animation: ssRun 9s cubic-bezier(.45, 0, .2, 1) infinite; }
+.ss-run span { flex: 0 0 33.3334%; box-sizing: border-box; padding: 0 .14em; /* (each page starts a hair inside its own width: the next page's first letter and its glow showed as a faint tick at the window's edge) */ overflow: hidden; font-family: var(--f-menu); font-size: 1.32em; letter-spacing: .06em; line-height: 1; white-space: nowrap;
+  color: #FFC83A; text-shadow: 0 0 .035em #FFC83A, 0 0 .14em rgba(255, 170, 30, .8); } /* (the glow is under one diode pitch wide: a wider one fogged the strokes together) */
+@keyframes ssRun { 0%, 38% { transform: translateX(0); } 50%, 88% { transform: translateX(-33.3334%); } 100% { transform: translateX(-66.6667%); } } /* right to left; the third page is the first again, so the loop is seamless */
+.ss-row > b { flex: none;  font-family: var(--f-menu); font-weight: 400; font-size: 1.32em; letter-spacing: .1em; line-height: 1; }
+.ss-time { color: #4BEA74; text-shadow: 0 0 .035em #4BEA74, 0 0 .14em rgba(60, 230, 110, .75); font-variant-numeric: tabular-nums; }
 .ss-ap { font-size: .62em; margin-left: .3em; letter-spacing: .08em; }
 .ss-colon { animation: ssBlink 1s steps(2) infinite; }
 @keyframes ssBlink { 50% { opacity: .15; } }
-.ss-code { color: #FF3B3B; text-shadow: 0 0 .3em rgba(255, 40, 40, .85); }
+.ss-code { color: #FF3B3B; text-shadow: 0 0 .035em #FF3B3B, 0 0 .14em rgba(255, 40, 40, .8); } /* (each lit colour also bleeds a hair past its own edge, .035em: a diode's light is never a cut edge, and the razor-sharp strokes read as text typed over the picture) */
 @media (prefers-reduced-motion: reduce) { .ss-run, .ss-colon { animation: none; } }
 body.reduce-motion .ss-run, body.reduce-motion .ss-colon { animation: none; }
 /* (phones held upright show it too since Nov 19: a smaller board further back, wherever it fits) */

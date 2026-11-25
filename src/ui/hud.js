@@ -39,7 +39,7 @@ export function renderDate() {
       <span class="cal-week" aria-hidden="true">${cutType(day.toUpperCase(), now.getDay() + 3, { mixCase: true })}</span>
       ${wx ? wx.replace('<span class="cal-wx">', '<span class="cal-wx" aria-hidden="true">') : ''}
     </div>
-    <div class="hud-meta"><span>${esc(resume.status)}</span><span>${esc(resume.school)}</span></div>`;
+`; // (Nov 22: the status line and "GSU · Class of 2029" left the calendar: the status is on the CONNECT card, the class year on STATS; nothing is said twice)
   return tod;
 }
 

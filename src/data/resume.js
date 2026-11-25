@@ -10,8 +10,15 @@ export const resume = {
   role: 'AI Solutions Engineer in training',
   hook: "I direct AI agents to build software, then test it like it's going to production.",
   // the title screen tells the story; the board keeps the job line above
-  titleHook: 'Resumes are boring. So I directed a crew of AI agents to turn mine into a game.',
+  titleHook: 'Resumes are boring. So I directed AI agents to make mine a game.', // (Nov 22: shortened from "...directed a crew of AI agents to turn mine into a game." so its box stays small on the station)
   status: 'Status: open to opportunities',
+  // why this site exists, told as a work story (from DESIGN.md: the problem, the 10-second skim, the scrapped portrait, the agent crew)
+  siteStory: [
+    ['SETUP', 'Persona 5 has been impactful in my life. Its hero is treated as guilty before he can speak, and I know that frustration of being judged unfairly. A paper resume gets judged in seconds too, so I built mine as a game you play first.'], // (Nov 22, John's own reason)
+    ['TENSION', 'I kept hearing that the job market waiting for me was doomed. That fear was loud, and for a while it got to me.'], // (Nov 22, John: "a victim of fearmongering about my future job market")
+    ['PIVOT', 'I put all of it behind me and bet everything on what I love, AI. Every project on this site came out of that bet.'], // (John: "put that all behind me and focus everything into my interest, which is AI. And bet everything on it")
+    ['LESSON', 'Directing AI agents is its own skill. They wrote the code. I set the plan, checked every step and threw out what was not good enough.']
+  ],
   school: 'GSU · Class of 2029',
   location: 'Atlanta Metropolitan Area',
 
@@ -46,14 +53,22 @@ export const resume = {
       target: 'Meliona',
       grade: 'S',
       status: 'LIVE',
-      dates: 'Jun 2026 — Present',
+      dates: 'Jun 2026 — Sep 2026', // (Nov 22, John: "I finished in September 2026"; it said Present)
       stack: ['Python', 'JavaScript', 'Docker'],
-      brief: 'How much could a portfolio lose in a bad year? 10,000 simulated years answer it.',
+      brief: 'How much could a portfolio lose in a bad year?',
+      // the work story (Nov 22, John: "make our website sound like it's telling a story... why I made my projects"): setup, tension,
+      // pivot, lesson. Every beat comes from the project's own repo (hero.py STORY, README, PROGRESS.md), nothing invented.
+      story: [
+        ['SETUP', 'My dad kept asking one question. Which stock can I actually rely on and hold for years? A lot of people ask the same thing.'],
+        ['TENSION', 'Nobody can promise that answer, and a risk tool that guesses is worse than none. Every number had to come from live data, checked a second way.'],
+        ['PIVOT', 'Steady stocks were only half the plan. People also want what grows fastest, so each high-flyer got a steady anchor carrying the same share of the risk.'],
+        ['LESSON', 'A student project can meet a trading desk’s bar if every number is tested twice.']
+      ],
       objectives: [
         'Designed and launched a public web app that estimates how much a portfolio of stocks, ETFs, FX or futures could lose in a bad year.',
         'Runs 10,000 simulated years on live data from Yahoo Finance.',
-        'Created 300+ test cases and a live-data audit to cross-verify the risk engine (727 of 728 checks in the October 2026 runs).',
-        'Directed AI coding agents in a three-role workflow (orchestrator, researcher, builder) to write 7,700+ lines of Python, validated by five checks (lint, security scan, three test suites) across six GitHub Actions workflows.'
+        'Created 300+ test cases and a live-data audit to cross-verify the risk engine.',
+        'Directed AI coding agents in a three-role workflow (orchestrator, researcher, builder) to write the Python, every change gated by lint, a security scan and three test suites.'
       ],
       loot: ['727 of 728 checks passed', '7,700+ lines of Python', '6 GitHub Actions workflows', '5-check validation gate'],
       // word for word from the PDF resume (Quick View shows these)
@@ -75,11 +90,16 @@ export const resume = {
       dates: 'Sep 2026 — Present',
       stack: ['Python', 'Flask', 'JavaScript', 'CI/CD'],
       brief: 'Finds the broken cells in your spreadsheet and explains them in plain English.',
+      // the work story: from the repo (README, CLAUDE.md, docs/SYSTEMS-MAP.md)
+      story: [
+        ['SETUP', 'The longer I spent in Excel, the more boring it got. I did not want to keep worrying whether past data went in right or wrong. I wanted to look forward, so I built a checker to do it for me.'], // (Nov 22, John's own reason)
+        ['TENSION', 'A checker that cries wolf gets switched off, and on 30 real public tables mine cried wolf thousands of times.'],
+        ['PIVOT', 'I traced the false alarms to “NA” codes and blank cells that were never errors, and taught it the difference, without missing a single planted error.'],
+        ['LESSON', 'Test on data you have never seen. Blind tests on unseen tables found bugs my own tests missed.']
+      ],
       objectives: [
         'Built and launched a Windows Excel add-in with 21 data checks, plain-language explanations for flagged cells, and suggested fixes, powered by a Python Flask REST API and a JavaScript (Office.js) task pane.',
-        'Detected 199 of 201 planted errors across 42 unseen test sheets.',
-        'Wrote 1,700+ automated tests covering every safety guard, plus mutation tests that plant 171 bugs across 70 guards to verify detection.',
-        'Cut serious false alarms from 5,022 to 710 across 30 public tables by tracing them to "NA" codes and blank cells, while still catching every planted error.'
+        'Wrote automated tests covering every safety guard, plus mutation tests that plant 171 bugs across 70 guards to verify detection.'
       ],
       loot: ['199 of 201 planted errors caught', 'Serious false alarms 5,022 → 710 (−86%)', '1,700+ automated tests', '42 unseen test sheets'],
       resume: [
@@ -93,25 +113,27 @@ export const resume = {
     }
   ],
 
-  /* Ranks 1–10, or 'MAX'. Each one is backed by proof. `uses` = which projects the
+  /* (Nov 23, John: "my skills look a little bit too [inflated]": set by John to agents 7, testing 6, Python 5,
+     evaluation 8, GitHub Actions 6, Flask 5, Git 7, JavaScript 4, Docker 4.)
+     Ranks 1–10, or 'MAX'. Each one is backed by proof. `uses` = which projects the
      red string on the Heist Board connects it to. */
   skills: [
-    { id: 'agents', name: 'AI Agents (Claude Code)', rank: 9, proof: '3-role agent workflow: orchestrator, researcher, builder', uses: ['meliona'] },
-    { id: 'testing', name: 'Testing / QA', rank: 'MAX', proof: '2,000+ automated tests across 2 apps', uses: ['meliona', 'arcas'] },
-    { id: 'python', name: 'Python', rank: 5, proof: '7,700+ lines in Meliona · ARCAS backend', uses: ['meliona', 'arcas'] },
-    { id: 'aieval', name: 'AI Evaluation', rank: 8, proof: 'Live-data audits · 727/728 checks passed', uses: ['meliona'] },
-    { id: 'cicd', name: 'GitHub Actions (CI/CD)', rank: 7, proof: '5 checks (lint, security scan, 3 test suites) across 6 workflows', uses: ['meliona', 'arcas'] },
-    { id: 'flask', name: 'Flask', rank: 7, proof: 'ARCAS REST API', uses: ['arcas'] },
+    { id: 'agents', name: 'AI Agents (Claude Code)', rank: 7, proof: 'Both apps and this site, built by a crew I direct', uses: ['meliona'] },
+    { id: 'testing', name: 'Testing / QA', rank: 6, proof: 'Every app ships with its own test suite', uses: ['meliona', 'arcas'] },
+    { id: 'python', name: 'Python', rank: 5, proof: 'Meliona’s engine · ARCAS backend', uses: ['meliona', 'arcas'] },
+    { id: 'aieval', name: 'AI Evaluation', rank: 8, proof: 'Audits the engine against live market data', uses: ['meliona'] },
+    { id: 'cicd', name: 'GitHub Actions (CI/CD)', rank: 6, proof: 'Every push linted, security-scanned and tested', uses: ['meliona', 'arcas'] },
+    { id: 'flask', name: 'Flask', rank: 5, proof: 'ARCAS REST API', uses: ['arcas'] },
     { id: 'git', name: 'Git / GitHub', rank: 7, proof: 'Both projects, public repos', uses: ['meliona', 'arcas'] },
-    { id: 'js', name: 'JavaScript', rank: 6, proof: 'Office.js task pane · web UIs', uses: ['meliona', 'arcas'] },
-    { id: 'docker', name: 'Docker', rank: 6, proof: 'Meliona deployment', uses: ['meliona'] }
+    { id: 'js', name: 'JavaScript', rank: 4, proof: 'Office.js task pane · web UIs', uses: ['meliona', 'arcas'] },
+    { id: 'docker', name: 'Docker', rank: 4, proof: 'Meliona deployment', uses: ['meliona'] }
   ],
 
   different: [
-    { title: 'I ship, not just study', fact: 'Two live apps, launched while keeping a 3.88 GPA.' },
-    { title: 'I test like it’s production', fact: '2,000+ automated tests. 199 of 201 planted errors caught. Serious false alarms cut 86%.' },
-    { title: 'I manage AI agents', fact: 'Orchestrator plans, researcher checks, builder codes. I direct and test.' },
-    { title: 'I lead under pressure', fact: 'Elected team leader. Led a section of 5 new servers and temps on the club’s busiest day of the year.' }
+    { title: 'I ship, not just study', fact: 'What I build goes out on a public link, not into a drawer, while I’m still in school.' },
+    { title: 'I test like it’s production', fact: 'Nothing I build ships until it passes its tests.' },
+    { title: 'I manage AI agents', fact: 'Each agent gets one job, and I review everything they write.' },
+    { title: 'I lead under pressure', fact: 'When the rush hits, I am the one teaching the new people.' }
   ],
 
   sideQuests: [
@@ -120,7 +142,7 @@ export const resume = {
       place: 'Business Model Canvas',
       dates: 'Aug 2026 — Present',
       did: [
-        'Coordinated 35 assignments across seven weekly rounds for a five-person team.',
+        'Coordinated the team’s assignments across seven weekly rounds.',
         'Spearheaded a pivot to commuters after spotting missed parking-deck opportunities, then pitched three high-traffic locations and a contactless sampling plan with geofence advertising.'
       ],
       resume: [
@@ -135,7 +157,7 @@ export const resume = {
       place: 'Dunwoody Country Club',
       dates: 'Feb 2026 — Present',
       did: [
-        'Led a section of 5 new servers and temps on July 4th, the club’s busiest day, explaining the service routine to each one as the shift ran.',
+        'On the club’s busiest day of the year, explained the service routine to each new hire as the shift ran.',
         'Set up shortcuts and pre-placed supplies for accurate, on-time orders at 5 weekly banquets and private events.'
       ],
       resume: [
@@ -143,7 +165,7 @@ export const resume = {
         'Established shortcuts and pre-placed supplies to ensure accurate, on-time orders for 5 weekly banquets and private events'
       ],
       org: 'Dunwoody Country Club Inc',
-      stat: ['5', 'new servers and temps led on July 4th'],
+      stat: ['5', 'new servers and temps led on July 4th'], // (the bullet above no longer repeats it)
       lesson: 'I onboard people fast, under real pressure.'
     },
     {

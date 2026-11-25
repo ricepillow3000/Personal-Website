@@ -9,7 +9,7 @@ import { back, head, mark, watermark } from './common.js';
 export default function different() {
   return {
     title: 'MY EDGE',
-    html: `${watermark('FACTS')}${back}${head('MY EDGE', 'What makes me different. Four facts, no pitch.')}
+    html: `${watermark('FACTS')}${back}${head('MY EDGE', 'Where it all adds up. Four facts, no pitch.')}
       <div class="comic">${resume.different
         .map((d, i) => `<article class="panel panel-${i}" data-nav tabindex="0"><span class="panel-num" aria-hidden="true">${i + 1}</span><h3>${esc(d.title)}</h3><p>${mark(d.fact)}</p></article>`)
         .join('')}</div>`,

@@ -15,14 +15,13 @@ export default function contact() {
         <div class="ccard-face ccard-front" aria-hidden="true"><div class="ccard-emblem"></div></div>
         <div class="ccard-face ccard-back">
           <span class="ccard-name">${esc(resume.name)}</span>
-          <span class="ccard-role">${esc(resume.role)} · ${esc(resume.education.school)}, ${esc(resume.education.grad)}</span>
-          <span class="ccard-line">${esc(resume.location)} · ${esc(resume.status)}</span>
+          <span class="ccard-role">${esc(resume.role)}</span>
         </div>
       </div></div>
       <div class="contact-btns" data-in>
-        <a class="btn btn-primary" data-nav data-magnetic href="${esc(L.linkedin)}" target="_blank" rel="noopener" data-track="linkedin_click">in · Connect on LinkedIn ${EXT}</a>
+        <a class="btn btn-primary" data-nav data-magnetic href="${esc(L.linkedin)}" target="_blank" rel="noopener noreferrer" data-track="linkedin_click">in · Connect on LinkedIn ${EXT}</a>
         <a class="btn" data-nav href="mailto:${esc(L.email)}" data-track="email_click">${esc(L.email)}</a>
-        <a class="btn" data-nav href="${esc(L.github)}" target="_blank" rel="noopener" data-track="github_click">GitHub ${EXT}</a>
+        <a class="btn" data-nav href="${esc(L.github)}" target="_blank" rel="noopener noreferrer" data-track="github_click">GitHub ${EXT}</a>
         <a class="btn btn-accent" data-nav href="${esc(L.pdf)}" download data-track="pdf_click">↓ PDF resume</a>
       </div>`,
     after(root) {
