@@ -17,7 +17,7 @@ export default function skills(ctx) {
   const total = resume.missions.length;
   return {
     title: 'SKILLS',
-    html: `${watermark('LEVELS')}${back}${head('SKILLS', 'Level out of 10. Point at a skill to see where I proved it.')}
+    html: `${watermark('LEVELS')}${back}${head('SKILLS', `Level out of 10. ${window.matchMedia?.('(pointer: coarse)').matches ? 'Tap' : 'Point at'} a skill to see where I proved it.`)}
       <div class="crew">
         <div class="crew-star" aria-hidden="true"></div>
                 <div class="crew-board">

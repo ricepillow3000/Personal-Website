@@ -140,7 +140,7 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 
 /* CONTACT card */
 .card-stage { perspective: 1400px; display: grid; place-items: center; margin-top: 4px; }
-.ccard { position: relative; width: min(92vw, 600px); aspect-ratio: 1.62; transform-style: preserve-3d; }
+.ccard { position: relative; width: min(92vw, 600px); aspect-ratio: 3; transform-style: preserve-3d; } /* (Nov 25 pain-point pass: a slim calling card; at 1.62 it was a big empty box above the buttons) */
 .ccard-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 14px 14px 0 var(--black); }
 .ccard-front { background: var(--red); border: 6px solid var(--black); display: grid; place-items: center; transform: rotateY(180deg); }
 .ccard-front::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(0, 0, 0, .4) 1.4px, transparent 2px); background-size: 8px 8px; }
@@ -238,7 +238,7 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
   .dossier-head .dossier-title { font-size: clamp(26px, 7.4vw, 40px); } /* long cut-out titles (ACHIEVEMENTS) fit a phone */
     .paper header { padding: 22px 20px 28px; }
   .paper-body { gap: 0; padding: 8px 20px 26px; }
-  .ccard { aspect-ratio: auto; min-height: 300px; }
+  .ccard { aspect-ratio: auto; min-height: 170px; }
   .ccard-role, .ccard-line { max-width: 100%; }
   .ccard-back { background-image: none; }
 }
