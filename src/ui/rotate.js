@@ -55,28 +55,7 @@ export function openInBrowser(note, from) {
     const step = meta ? 'Tap ··· at the top right, then Open in external browser.'
       : IOS ? 'In this app, tap ··· (or the share button), then Open in Safari.' : 'In this app, tap ⋮, then Open in browser.';
     note.textContent = copied ? `Link copied. ${step}` : step;
-    if (meta) pointAtMenu();
   }, 1200);
-}
-/* (Nov 25, John: "automatically opens Safari on LinkedIn but not on Insta, is that something we can fix?") Instagram, on an
-   iPhone above all, blocks every way a page could hand itself to Safari (x-safari-https included, which LinkedIn allows): only
-   the visitor's own tap on its ··· menu does it. So the one step is made impossible to miss: a yellow arrow pointing at the
-   menu in the top right corner, with Instagram's own words. It leaves on the next tap, or after 15 s. */
-function pointAtMenu() {
-  document.querySelector('.ib-point')?.remove();
-  const el = document.createElement('div');
-  el.className = 'ib-point';
-  el.setAttribute('aria-hidden', 'true'); // (the note above says the same in words, for screen readers)
-  /* (Nov 25, John: "make a Persona 5 theme within our design... not so bland... simple and easy"): a chunky arrow with a red
-     misprint, a jagged red burst with cut-out letters, a slanted black strip. One arrow, one label, one line. */
-  const arrow = 'M78 2 L78 46 L63 31 L21 73 L7 59 L49 17 L34 2 Z';
-  el.innerHTML = `<svg class="ib-arrow" viewBox="0 0 86 86"><path class="ib-arrow-red" d="${arrow}" transform="translate(6 6)" /><path class="ib-arrow-main" d="${arrow}" /></svg>
-    <div class="ib-burst"><b class="ib-cut">${cutType('TAP ••• HERE', 23)}</b></div>
-    <span class="ib-step">then Open in external browser</span>`;
-  document.body.appendChild(el);
-  const off = () => { el.remove(); window.removeEventListener('pointerdown', off, true); };
-  setTimeout(() => window.addEventListener('pointerdown', off, true), 300);
-  setTimeout(off, 15000);
 }
 const upright = () => window.matchMedia('(orientation: portrait) and (max-width: 600px) and (pointer: coarse)').matches;
 
