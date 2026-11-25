@@ -862,6 +862,11 @@ function drawTrack(g, kk) {
 }
 let trackCache = null;
 let trackKey = '';
+/** resolves once the title is the screen being shown (at once if it already is) */
+const onTitle = () => (document.body.dataset.mode === 'title' ? Promise.resolve() : new Promise((res) => {
+  const mo = new MutationObserver(() => { if (document.body.dataset.mode === 'title') { mo.disconnect(); res(); } });
+  mo.observe(document.body, { attributes: true, attributeFilter: ['data-mode'] });
+}));
 /** the track, drawn once per screen size / camera framing, then stamped every frame */
 let trackIdle = 0; // 0: nothing pending, 1: waiting for an idle moment, 2: that moment has come
 function stampTrack(kk) {
@@ -871,7 +876,9 @@ function stampTrack(kk) {
     if (!state && trackIdle !== 2) { // at rest: draw it in an idle moment (never in the platform's first task)
       if (trackIdle === 0) {
         trackIdle = 1;
-        idle(() => { trackIdle = 2; draw(); }, 2000).catch(() => { trackIdle = 0; });
+        // ...and only once the title is on screen: a deep link to THE PLAN or a chapter never shows the
+        // station, and this one drawing was ~200 ms of a slow phone's blocked time there (Nov 21)
+        onTitle().then(() => idle(() => { trackIdle = 2; draw(); }, 2000)).catch(() => { trackIdle = 0; });
       }
       if (!trackCache) return;
     } else { // the shot needs it now

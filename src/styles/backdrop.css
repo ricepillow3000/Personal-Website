@@ -24,6 +24,9 @@
 /* living details */
 .spin-slow { transform-box: fill-box; transform-origin: center; animation: bd-spin var(--spin, 90s) linear infinite; }
 @keyframes bd-spin { to { transform: rotate(360deg); } }
+/* a spin on a layer that is faded out waits (Nov 21): a turning SVG part re-lays out its whole SVG every
+   frame, seen or not (the graffiti star is only on the title, the P5 burst only off it) */
+body:not([data-mode="title"]) .bd-graffiti .spin-slow, body[data-mode="title"] .bd-p5 .spin-slow { animation-play-state: paused; }
 
 /* PRESS START freeze: the wall drains to grey and stops */
 
@@ -106,7 +109,11 @@ body:not([data-mode="title"]) .bd-graffiti { opacity: 0; }
 .bd-billboard { position: absolute; opacity: 0; transition: opacity .5s ease-out; pointer-events: none; }
 .bd-city img.in ~ .bd-billboard { opacity: 1; }
 body[data-mode="title"] .bd-billboard, body[data-mode="title"] .bd-city img.in ~ .bd-billboard { opacity: 0; } /* (the second outranks the rule above: the screens' solid faces must not show on the title) */
-.bb-ch text { font-family: var(--f-head); fill: #FFFFFF; letter-spacing: 0; }
+/* geometricPrecision (Nov 21, the speed pass): each letter is squashed a little more every frame as it
+   rides round the drum, and a hinted SVG letter is re-shaped whenever its on-screen scale changes, so
+   the ticker re-laid out ~25 letters every frame (8.7 ms on a slow phone, 1.1 ms now). Seen through the
+   LED dots, hinting makes no visible difference. */
+.bb-ch text { font-family: var(--f-head); fill: #FFFFFF; letter-spacing: 0; text-rendering: geometricPrecision; }
 .bb-ch { visibility: hidden; }
 /* LED life: a faint electrical flicker on the lit words, a light sweep gliding across each screen now
    and then, and the rooftop aviation lights blinking (lit bulb <-> dark glass bulb, a short filament
