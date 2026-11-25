@@ -93,7 +93,7 @@ export const resume = {
       // the work story: from the repo (README, CLAUDE.md, docs/SYSTEMS-MAP.md)
       story: [
         ['SETUP', 'The longer I spent in Excel, the more boring it got. I did not want to keep worrying whether past data went in right or wrong. I wanted to look forward, so I built a checker to do it for me.'], // (Nov 22, John's own reason)
-        ['TENSION', 'A checker that cries wolf gets switched off, and on 30 real public tables mine cried wolf thousands of times.'],
+        ['TENSION', 'A checker that raises too many false alarms gets ignored, and on 30 real public tables mine raised thousands of them.'], // (Nov 25, John: no "cries wolf" idiom; simple words, the same "false alarms" as the loot and the resume)
         ['PIVOT', 'I traced the false alarms to “NA” codes and blank cells that were never errors, and taught it the difference, without missing a single planted error.'],
         ['LESSON', 'Test on data you have never seen. Blind tests on unseen tables found bugs my own tests missed.']
       ],
