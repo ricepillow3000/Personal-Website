@@ -74,7 +74,7 @@ export const resume = {
       // word for word from the PDF resume (Quick View shows these)
       resume: [
         'Designed and launched a public web app to estimate how a portfolio of stocks, ETFs, FX, or futures could lose in a bad year, using 10,000 simulated years of live data from Yahoo Finance',
-        'Created more than 300 test cases and a live-data audit to cross-verify risk engine results; October 2026 runs past with 0 failures (727 of 728 checks)',
+        'Created more than 300 test cases and a live-data audit to cross-verify risk engine results; October 2026 runs passed with 0 failures (727 of 728 checks)',
         'Directed AI coding agents in a three-role workflow (orchestrator, researcher, builder) to write 7,700+ lines of Python, validated by five checks: lint, security scan, and three test suites, across six GitHub Actions workflows'
       ],
       live: 'https://summer-2026-quant-project-risk-engine-blueprint-production.up.railway.app/',
@@ -150,7 +150,7 @@ export const resume = {
         'Spearheaded a shift to commuters after uncovering missed parking deck opportunities; pitched three high-traffic locations and a contactless sampling plan with geofence advertising'
       ],
       stat: ['35', 'assignments run for a 5-person team'],
-      lesson: 'I can turn five opinions into one plan — and change course when the data says so.'
+      lesson: 'I can turn five opinions into one plan, and change course when the data says so.'
     },
     {
       title: 'Banquet Server',
