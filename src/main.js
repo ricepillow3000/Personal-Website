@@ -14,7 +14,7 @@ import { resume } from './data/resume.js';
 import { readCompany } from './data/companies.js';
 import { store } from './core/store.js';
 import { runLoader, introOpen } from './ui/loader.js';
-import { maybeRotateHint } from './ui/rotate.js';
+import { maybeRotateHint, inAppBrowser, inAppName, openInBrowser } from './ui/rotate.js';
 import { initFullscreen } from './ui/fullscreen.js';
 import { $, $$, esc, reducedMotion, fontsReady } from './core/util.js';
 import { menuTeasers } from './data/script.js';
@@ -86,6 +86,12 @@ let lastFocus = null;
 
 document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotion === true);
 ransom($('#titleName'), resume.first, NAME_SEED);
+/* opened inside Instagram, LinkedIn and the like: a standing way out to the visitor's own browser, where the phone can turn (Nov 25) */
+if (inAppBrowser()) {
+  $('#inapp').hidden = false;
+  $('#inappHint').textContent = `Opened inside ${inAppName()}. It plays best in your browser, held sideways.`;
+  $('#inappOpen').addEventListener('click', (e) => { sfx('select'); openInBrowser($('#inappNote'), e.currentTarget); });
+}
 /* Inspector's second door (Nov 23, John: "i want to be where recruiters and devs can finish it"):
    developers type john.run() in the console, everyone else taps JOHN on the main menu 5 times
    (moved from the title to the menu Nov 23, John's screenshot: "make it so they tap this") */
