@@ -1,4 +1,4 @@
-import{b as c,g as r,e as a,a as t}from"./main-D7xjSmyb.js";import{b as l,w as d,h as p,a as u}from"./common-BI3duj6_.js";function h(){const s=t.education,i=Number(s.gpa)||0;return{title:"STATS",html:`${d("PROFILE")}${l}${p("STATS","Who I am, and why this site exists.")}
+import{b as c,g as r,e as a,a as t}from"./main-BEy43xr4.js";import{b as l,w as d,h as p,a as u}from"./common-DPxJVe0H.js";function h(){const s=t.education,i=Number(s.gpa)||0;return{title:"STATS",html:`${d("PROFILE")}${l}${p("STATS","Who I am, and why this site exists.")}
       <section class="idcard" data-in>
         <button class="gpa-burst" type="button" aria-label="Off the record. Press to flip for a secret stat." aria-pressed="false"><span class="gb-front"><b>???</b><small>OFF RECORD</small></span><span class="gb-back"><b>MAX</b><small>BEE FEAR</small></span></button>
         <div class="id-band"><span>ID · ${a(t.name.toUpperCase())}</span><span>${a(t.location)}</span></div>

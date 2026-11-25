@@ -142,7 +142,7 @@ test('deep links open sections directly, and Esc returns to the board', async ({
 test('Quick View has the real PDF, and the PDF is served', async ({ page, request }) => {
   await page.goto('/#/quick');
   await expect(page.locator('#paper')).toContainText('Georgia State University');
-  await expect(page.locator('#paper')).toContainText('0 failures (727 of 728 checks)'); // word for word from the PDF
+  await expect(page.locator('#paper')).toContainText('727 of 728 passed, 1 skipped'); // (Nov 25, John: the one check was skipped, not failed)
   const href = await page.locator('#quickPdf').getAttribute('href');
   const res = await request.get(`/${href}`);
   expect(res.status()).toBe(200);

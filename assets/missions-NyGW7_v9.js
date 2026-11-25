@@ -1,4 +1,4 @@
-import{r as n,a as c,e as a,i as r,b as p,g as i,c as d}from"./main-D7xjSmyb.js";import{b as u,s as $,w as h,h as b,c as y,E as l,a as f}from"./common-BI3duj6_.js";function S(s){const t=n(c.missions,s.company?.order?.missions);return{title:"MISSIONS",html:`${h("TARGETS")}${u}${b("MISSIONS","Two problems I set out to solve. Open a file for the whole story.")}
+import{r as n,a as c,e as a,i as r,b as p,g as i,c as d}from"./main-BEy43xr4.js";import{b as u,s as $,w as h,h as b,c as y,E as l,a as f}from"./common-DPxJVe0H.js";function S(s){const t=n(c.missions,s.company?.order?.missions);return{title:"MISSIONS",html:`${h("TARGETS")}${u}${b("MISSIONS","Two problems I set out to solve. Open a file for the whole story.")}
       <ul class="wanted">${t.map((e,o)=>`<li class="wanted-slot" style="--tilt:${o%2?2.4:-2.8}deg;--d:${o*-1.3}s">
           <button class="poster" type="button" data-nav data-mission="${e.id}">
             <span class="poster-tape" aria-hidden="true"></span>

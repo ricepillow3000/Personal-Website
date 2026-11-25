@@ -1,4 +1,4 @@
-import"./main-D7xjSmyb.js";import{b as e,h as a}from"./common-BI3duj6_.js";function r(){return{title:"DIRECTOR'S CUT",html:`${e}${a("DIRECTOR'S CUT","You found every secret. Here is how this site was made.")}
+import"./main-BEy43xr4.js";import{b as e,h as a}from"./common-DPxJVe0H.js";function r(){return{title:"DIRECTOR'S CUT",html:`${e}${a("DIRECTOR'S CUT","You found every secret. Here is how this site was made.")}
       <div class="sq-list bts">
         <article class="sq jag light" data-in><h3>THE CREW</h3><p>Same workflow as my projects. An orchestrator agent planned it, a researcher agent checked the details, a builder agent wrote the code, and I directed and reviewed every step. Every click path is covered by automated browser tests.</p></article>
         <article class="sq jag light" data-in><h3>THE ART</h3><p>The subway, the city, the train and the trash on the platform are cel-shaded art I directed Google's Nano Banana to generate. The train that roars past is drawn live in perspective by code, and every sticker, poster and comic shape is inline SVG and CSS.</p></article>

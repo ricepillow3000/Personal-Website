@@ -70,11 +70,11 @@ export const resume = {
         'Created 300+ test cases and a live-data audit to cross-verify the risk engine.',
         'Directed AI coding agents in a three-role workflow (orchestrator, researcher, builder) to write the Python, every change gated by lint, a security scan and three test suites.'
       ],
-      loot: ['727 of 728 checks passed', '7,700+ lines of Python', '6 GitHub Actions workflows', '5-check validation gate'],
+      loot: ['727 of 728 passed, 1 skipped', '7,700+ lines of Python', '6 GitHub Actions workflows', '5-check validation gate'],
       // word for word from the PDF resume (Quick View shows these)
       resume: [
         'Designed and launched a public web app to estimate how a portfolio of stocks, ETFs, FX, or futures could lose in a bad year, using 10,000 simulated years of live data from Yahoo Finance',
-        'Created more than 300 test cases and a live-data audit to cross-verify risk engine results; October 2026 runs passed with 0 failures (727 of 728 checks)',
+        'Created more than 300 test cases and a live-data audit to cross-verify risk engine results; in October 2026 runs, 727 of 728 passed, 1 skipped',
         'Directed AI coding agents in a three-role workflow (orchestrator, researcher, builder) to write 7,700+ lines of Python, validated by five checks: lint, security scan, and three test suites, across six GitHub Actions workflows'
       ],
       live: 'https://summer-2026-quant-project-risk-engine-blueprint-production.up.railway.app/',
