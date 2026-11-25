@@ -29,6 +29,17 @@
   background: var(--black); box-shadow: -8px 0 0 var(--black), 8px 0 0 var(--black); /* (solid behind the words: the wall's star outline struck through them) */
 }
 
+/* the way out of an app's built-in browser (only there): a hint, the button, and the one step if the app keeps the page */
+.inapp { margin-top: 16px; display: grid; justify-items: start; gap: 8px; }
+.inapp[hidden] { display: none; }
+.inapp-hint { margin: 0; max-width: 22em; font-weight: 700; font-size: 14px; line-height: 1.3; padding: 4px 10px; background: var(--black); color: var(--white); transform: skew(-8deg); }
+.inapp-open { min-height: 48px; padding: 6px 22px; border: 0; font-family: var(--f-menu); font-size: 22px; letter-spacing: .08em; cursor: pointer;
+  background: var(--red); color: var(--white); transform: skew(-12deg); box-shadow: 5px 5px 0 var(--black); }
+.inapp-open:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; }
+.inapp-open:active { transform: skew(-12deg) translate(3px, 3px); box-shadow: 2px 2px 0 var(--black); }
+.inapp-note { margin: 0; max-width: 22em; font-weight: 700; font-size: 14px; line-height: 1.3; padding: 6px 12px; background: var(--yellow); color: var(--black); transform: skew(-8deg); }
+.inapp-note:empty { display: none; }
+
 /* ===================== CONVERSATION ===================== */
 
 @keyframes tag-shake { 25% { transform: translate(-4px, 2px) rotate(-1deg); } 75% { transform: translate(4px, -2px) rotate(1deg); } }

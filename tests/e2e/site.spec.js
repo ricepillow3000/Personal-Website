@@ -1739,11 +1739,47 @@ test('opened inside an app (Instagram, LinkedIn, the Claude app...), the turn-yo
     await page.goto('/?rotate');
     await expect(page.locator('.rot')).toBeVisible({ timeout: 8000 });
     await expect(page.locator('.rot-open')).toHaveCount(inApp ? 1 : 0);
-    await expect(page.locator('.rot-body-text')).toContainText(inApp ? 'inside an app' : 'Hold it sideways');
+    await expect(page.locator('.rot-body-text')).toContainText(inApp ? 'This opened inside' : 'Hold it sideways');
     await page.locator('.rot-ok').click(); // GOT IT always lets anyone carry on upright
     await expect(page.locator('.rot')).toHaveCount(0, { timeout: 3000 });
     await ctx.close();
   }
+});
+
+test('inside Instagram, LinkedIn or Facebook the title has a standing OPEN IN BROWSER: Android goes to the default browser, iPhone to Safari, and if the app keeps the page the link is copied with the one step to take', async ({ browser }) => {
+  // (Nov 25, John: "Let's say someone opens it on LinkedIn or Instagram. Can we have the button redirect them to their default browser? So then they can turn their phone")
+  const phone = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
+  for (const [ua, app, kind] of [
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 330.0.0.0', 'Instagram', 'safari'],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [LinkedInApp]/9.29', 'LinkedIn', 'safari'],
+    ['Mozilla/5.0 (Linux; Android 14; Pixel 7 Build/UQ1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/125.0 Mobile Safari/537.36 Instagram 330.0.0.0 Android', 'Instagram', 'intent'],
+    ['Mozilla/5.0 (Linux; Android 14; Pixel 7 Build/UQ1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/125.0 Mobile Safari/537.36 [FBAN/EMA;FBAV/400.0]', 'Facebook', 'intent'],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1', null, null],
+  ]) {
+    const ctx = await browser.newContext({ ...phone, userAgent: ua });
+    const page = await ctx.newPage();
+    const errors = errorsOf(page);
+    await page.goto('/');
+    await page.waitForSelector('#pressStart');
+    if (!app) { await expect(page.locator('#inapp')).toBeHidden(); await ctx.close(); continue; } // (a real browser: no button)
+    await expect(page.locator('#inappOpen')).toBeVisible();
+    await expect(page.locator('#inappHint')).toContainText(`inside ${app}`);
+    await page.locator('#inappOpen').click();
+    const link = await page.locator('#inappOpen').getAttribute('data-link');
+    if (kind === 'intent') {
+      expect(link).toMatch(/^intent:\/\/[^#]+#Intent;scheme=https;action=android\.intent\.action\.VIEW;/);
+      expect(link).not.toMatch(/package=/); // (the default browser, not one named browser)
+      expect(link).toMatch(/S\.browser_fallback_url=https?%3A/);
+    } else expect(link).toMatch(/^x-safari-https?:\/\//);
+    await expect(page.locator('#inappNote')).toContainText(kind === 'intent' ? 'Open in browser' : 'Open in Safari', { timeout: 4000 }); // (the test browser keeps the page, like an app that refuses; it also refuses the clipboard, so no "copied")
+    await expect(page.locator('#inappNote')).not.toContainText('Link copied');
+    expect(errors).toEqual([]);
+    await ctx.close();
+  }
+  const desk = await browser.newPage();
+  await desk.goto('/');
+  await expect(desk.locator('#inapp')).toBeHidden();
+  await desk.close();
 });
 
 test('no emojis anywhere: no emoji-capable character in the site (phones draw them as emoji tiles), and outbound links use the drawn arrow', async ({ page }) => {
