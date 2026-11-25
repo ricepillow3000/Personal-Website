@@ -32,8 +32,29 @@ export const isZoomed = () => zoomed;
 /** Call f(zoomed) whenever the page is zoomed in or back out. */
 export function onZoom(f) { subs.add(f); }
 
-/** Start watching the visual viewport (once, at boot). */
+/* ZOOM LOCK (Nov 25, John: "On my iPhone, I was using my website, and when I zoomed in, it crashed the entire site. I used
+   it on Instagram, I used it on Google... The goal is to have it where when zooming in, it does not affect the website").
+   The still state above was not enough: under a pinch the phone redraws the whole page at the zoom's scale, and the city
+   backdrop (a full-screen picture, its canvases and glow layers, behind every screen) is too much to draw at x3 on a 3x
+   iPhone, so the system kills the page (Instagram reloads it, Safari and the Google app show a crash). Now the page does
+   not zoom at all, like a game or a map: the viewport says so (in-app browsers and Android obey it), every element allows
+   only scrolling (touch-action, which iPhone Safari obeys), Apple's pinch gesture events and two-finger moves are refused,
+   and on a computer Ctrl/Cmd + wheel, trackpad pinch and Ctrl/Cmd + plus, minus, 0 are refused. The still state stays as
+   a backstop for a zoom nothing could refuse (the browser's own menu, an old browser). The privacy page and the PDF still
+   zoom: they are plain documents. */
+function lockZoom() {
+  const stop = (e) => { if (e.cancelable) e.preventDefault(); };
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((t) => document.addEventListener(t, stop, { passive: false }));
+  document.addEventListener('touchmove', (e) => { if (e.touches && e.touches.length > 1) stop(e); }, { passive: false });
+  window.addEventListener('wheel', (e) => { if (e.ctrlKey || e.metaKey) stop(e); }, { passive: false }); // (a trackpad pinch arrives as Ctrl + wheel)
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && ['+', '=', '-', '_', '0'].includes(e.key)) stop(e);
+  }, { capture: true });
+}
+
+/** Start watching the visual viewport (once, at boot), and lock zoom. */
 export function initZoom() {
+  lockZoom();
   if (!vv) return;
   vv.addEventListener('resize', update, { passive: true });
   update();

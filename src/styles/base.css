@@ -1,4 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; }
+/* ZOOM LOCK (Nov 25, John: "when I zoomed in, it crashed the entire site... The goal is to have it where when zooming in, it
+   does not affect the website"): a finger can scroll, never pinch or double-tap zoom. Set on every element because a scroll
+   container stops the parent's value from reaching its children. (none, on the loading screen and the bee, stays none.) */
+*, *::before, *::after { touch-action: pan-x pan-y; }
 html, body { margin: 0; height: 100%; }
 /* behind everything (a phone's rubber-band scroll, a notch's corners): the station's black, never a red band */
 html { background: var(--black); }

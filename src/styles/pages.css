@@ -210,7 +210,7 @@ body.reduce-motion .panel::before, body.reduce-motion .crew-m b::after { animati
   transform: rotate(-2deg) skewX(-10deg); box-shadow: 4px 4px 0 var(--black); }
 .ne-go { display: grid; gap: 4px; justify-items: center; width: 100%; padding: 18px 24px 16px; cursor: pointer; background: var(--black); color: var(--white);
   border: 4px solid var(--white); box-shadow: 10px 10px 0 var(--red); transform: rotate(1deg) skewX(-6deg);
-  transition: transform .16s var(--ease-pop), box-shadow .16s var(--ease-pop), background-color .16s; touch-action: manipulation; }
+  transition: transform .16s var(--ease-pop), box-shadow .16s var(--ease-pop), background-color .16s; touch-action: pan-x pan-y; }
 .ne-go:hover, .ne-go:focus-visible { background: var(--red); transform: rotate(0) skewX(-6deg) translateY(-4px); box-shadow: 14px 14px 0 var(--black); outline: 3px solid var(--yellow); outline-offset: 4px; }
 .ne-title { font-family: var(--f-head); font-size: clamp(40px, 8vw, 84px); line-height: .95; letter-spacing: 1px; text-wrap: balance; }
 .ne-tease { font-family: var(--f-ui); font-weight: 700; font-style: italic; font-size: 19px; letter-spacing: .5px; color: var(--yellow); }

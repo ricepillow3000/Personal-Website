@@ -1618,6 +1618,49 @@ test('departure board: it is hung on the resting title only. Through SAVE DATA a
   await ctx.close();
 });
 
+test('zoom lock: a real pinch, a double tap, Apple pinch gestures, two-finger moves and Ctrl/Cmd zoom never zoom the site', async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone', 'it makes its own phone and laptop');
+  // (Nov 25, John: "when I zoomed in, it crashed the entire site. I used it on Instagram, I used it on Google... The goal is
+  // to have it where when zooming in, it does not affect the website". Before the lock the same pinch reached 5x.)
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 330.0.0.0' });
+  const page = await ctx.newPage();
+  const errors = errorsOf(page);
+  const cdp = await ctx.newCDPSession(page);
+  for (const route of ['/', '/#/board', '/#/secret', '/#/quick']) {
+    await page.goto(route);
+    await page.waitForTimeout(800);
+    await cdp.send('Input.synthesizePinchGesture', { x: 195, y: 400, scaleFactor: 4, relativeSpeed: 1600, gestureSourceType: 'default' });
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => visualViewport.scale), `pinch on ${route}`).toBe(1);
+  }
+  expect(await page.locator('meta[name="viewport"]').getAttribute('content')).toMatch(/user-scalable=no/);
+  const r = await page.evaluate(() => {
+    const deep = document.querySelector('#page h2, .screen.active *') || document.body;
+    const touch = (n) => { const e = new Event('touchmove', { cancelable: true, bubbles: true }); Object.defineProperty(e, 'touches', { value: { length: n } }); document.body.dispatchEvent(e); return e.defaultPrevented; };
+    const g = new Event('gesturestart', { cancelable: true, bubbles: true }); document.dispatchEvent(g);
+    return { body: getComputedStyle(document.body).touchAction, deep: getComputedStyle(deep).touchAction, button: getComputedStyle(document.querySelector('button')).touchAction,
+      applePinch: g.defaultPrevented, twoFingers: touch(2), oneFinger: touch(1) };
+  });
+  expect(r).toEqual({ body: 'pan-x pan-y', deep: 'pan-x pan-y', button: 'pan-x pan-y', applePinch: true, twoFingers: true, oneFinger: false }); // (one finger still scrolls)
+  await ctx.close();
+  // a laptop: Ctrl/Cmd + wheel (a trackpad pinch) and Ctrl/Cmd + plus, minus, 0 are refused; plain scrolling is not
+  const lp = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  await lp.goto('/#/board');
+  const k = await lp.evaluate(() => {
+    const fire = (el, e) => { el.dispatchEvent(e); return e.defaultPrevented; };
+    return {
+      ctrlWheel: fire(document.body, new WheelEvent('wheel', { deltaY: -100, ctrlKey: true, cancelable: true, bubbles: true })),
+      cmdWheel: fire(document.body, new WheelEvent('wheel', { deltaY: -100, metaKey: true, cancelable: true, bubbles: true })),
+      plainWheel: fire(document.body, new WheelEvent('wheel', { deltaY: 100, cancelable: true, bubbles: true })),
+      ...Object.fromEntries(['=', '+', '-', '0'].map((key) => [`ctrl${key}`, fire(window, new KeyboardEvent('keydown', { key, ctrlKey: true, cancelable: true }))])),
+    };
+  });
+  expect(k).toEqual({ ctrlWheel: true, cmdWheel: true, plainWheel: false, 'ctrl=': true, 'ctrl+': true, 'ctrl-': true, ctrl0: true });
+  expect(errors).toEqual([]);
+  await lp.close();
+});
+
 test('zoom is safe: a pinch zoom on a phone, a tablet or a laptop never reloads the page; it holds the page still (no moving layers, the film goes to its end) and everything carries on when the zoom is let go', async ({ browser }, testInfo) => {
   test.skip(testInfo.project.name === 'phone', 'it makes its own phone, tablet and laptop');
   test.setTimeout(120000);
@@ -1645,11 +1688,17 @@ test('zoom is safe: a pinch zoom on a phone, a tablet or a laptop never reloads 
     const page = await ctx.newPage();
     let loads = 0; const errors = []; let crashed = false;
     page.on('load', () => loads++); page.on('pageerror', (e) => errors.push(e.message)); page.on('crash', () => { crashed = true; });
+    await page.route((u) => new URL(u).pathname === '/', async (route) => { // (the page served without its zoom lock)
+      const res = await route.fetch();
+      await route.fulfill({ response: res, body: (await res.text()).replace(/, minimum-scale=1, maximum-scale=1, user-scalable=no/, '') });
+    });
     await page.goto('/');
     await page.waitForSelector('#pressStart');
     await page.waitForTimeout(3500);
     const cdp = await ctx.newCDPSession(page);
     await cdp.send('LayerTree.enable');
+    // (Nov 25: the site now refuses zoom; this backstop is for a zoom nothing could refuse, so the lock is lifted here first,
+    // like a browser that ignores it)
     const zoom = async (z) => { await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: z }); await page.waitForTimeout(400); };
     const running = () => page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running' && a.constructor.name === 'CSSAnimation').length);
     // the title, zoomed in: still, no moving layer

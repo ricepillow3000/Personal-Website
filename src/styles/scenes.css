@@ -248,7 +248,7 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 @media (max-width: 440px), (min-width: 761px) and (max-width: 1099px) { .qb-long { display: none; } }
 /* the title's cut-out name and labels wait for their web fonts (see fontsReady in core/util.js) */
 #screen-title.title-wait :is(#titleName, .title-codename, .title-role, #pressStart, .quick-link) { opacity: 0; }
-#boardName { touch-action: manipulation; } /* (five quick taps unlock Inspector: no double-tap zoom on phones) */
+#boardName { touch-action: pan-x pan-y; } /* (five quick taps unlock Inspector: no double-tap zoom on phones) */
 /* (while it waits, the block itself is invisible and only the hook shows: the hook paints from the first
    frame, under the loading screen, as the page's largest text; the name filling in above it then moves
    nothing a browser counts as a layout shift) */
