@@ -48,7 +48,8 @@ Vite + vanilla JavaScript modules + GSAP. The spray-painted wall, the red string
 page rip are drawn in code (inline SVG + CSS), so the title screen paints without
 downloading any images. Every sound effect and the jazzy background theme are
 synthesized live with Web Audio (no audio files). CI runs the Playwright
-suite and Lighthouse budgets on every push; `deploy.yml` publishes `dist/` to GitHub Pages.
+suite and Lighthouse budgets on every push. GitHub Pages deploys from the `main` branch
+as-is: `npm run site` builds and copies the site to the repo root, and that gets committed.
 
 The visual style blends pop art, street art and high-contrast anime UI, but every screen,
 graphic and sound here is original.

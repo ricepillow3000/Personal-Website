@@ -51,7 +51,9 @@ export function openInBrowser(note, from) {
   if (link !== url) location.href = link;
   setTimeout(() => { // still here: the app kept the page, so say the one step to take
     if (document.hidden || !note) return;
-    const step = IOS ? 'In this app, tap ··· (or the share button), then Open in Safari.' : 'In this app, tap ⋮, then Open in browser.';
+    const meta = /Instagram|FBAN|FBAV|FB_IAB/i.test(UA); // (Instagram and Facebook word it the same)
+    const step = meta ? 'Tap ··· at the top right, then Open in external browser.'
+      : IOS ? 'In this app, tap ··· (or the share button), then Open in Safari.' : 'In this app, tap ⋮, then Open in browser.';
     note.textContent = copied ? `Link copied. ${step}` : step;
   }, 1200);
 }
