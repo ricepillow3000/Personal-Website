@@ -88,18 +88,18 @@ export function createMenu(go) {
   }
 
   let openState = false;
-  let anim = null;
-  const SHUT = 'polygon(0% 0%, 0% 0%, 0% 0%)';
-  const FULL = 'polygon(0% 0%, 260% 0%, 0% 260%)';
+  let settle = 0;
 
-  /* Menu has its own move: the panel unfolds diagonally from the top-left corner,
-     items fly in one by one on a rising chime. Closing folds it back. */
+  /* Menu has its own move: the panel unfolds diagonally from the top-left corner, items fly in one by one on a rising
+     chime; closing folds it back. The moves are CSS animations (.mn-in / .mn-out in components.css): transform and
+     opacity, played by the browser, so they stay smooth even while the menu is being built. */
   function open() {
     const artBox = overlay.querySelector('.mn-art');
     if (!artBox.firstChild) artBox.innerHTML = art(); // drawn on the first open, not while the title loads
     render();
     openState = true;
-    anim?.kill();
+    clearTimeout(settle);
+    overlay.classList.remove('mn-out');
     overlay.hidden = false;
     btn.setAttribute('aria-expanded', 'true');
     const first = stair.querySelector('.stair-item');
@@ -107,34 +107,31 @@ export function createMenu(go) {
     first.focus();
     if (reducedMotion()) return;
     sfx('menuOpen');
-    anim = gsap.timeline()
-      .fromTo(overlay, { clipPath: SHUT }, { clipPath: FULL, duration: 0.32, ease: 'power3.out' }, 0)
-      .fromTo(stair.querySelectorAll('li'), { x: () => -window.innerWidth * 0.6, rotation: -14, opacity: 0 },
-        { x: 0, rotation: 0, opacity: 1, duration: 0.3, ease: 'back.out(2.2)', stagger: 0.045, clearProps: 'transform,opacity' }, 0.06)
-      .fromTo(overlay.querySelector('.mn-slash'), { scaleY: 0, transformOrigin: '50% 0%' }, { scaleY: 1, duration: 0.26, ease: 'power4.out', clearProps: 'transform' }, 0.04)
-      .fromTo(overlay.querySelectorAll('.mn-tag, .mn-num, .mn-count'), { x: 120, rotation: 12, opacity: 0 }, { x: 0, rotation: 0, opacity: 1, duration: 0.28, ease: 'back.out(2.4)', stagger: 0.05, clearProps: 'transform,opacity' }, 0.12)
-      .fromTo(teaser, { scale: 0.3, rotation: -12 }, { scale: 1, rotation: 0, duration: 0.3, ease: 'back.out(2.6)', clearProps: 'transform' }, 0.22)
-      .add(() => gsap.set(overlay, { clearProps: 'clipPath' }));
+    overlay.classList.add('mn-in');
+    // once it has landed the animations are dropped (the final pose is the plain one), so nothing stays on its own layer
+    settle = setTimeout(() => overlay.classList.remove('mn-in'), 700);
   }
 
   /** animated = false when we are leaving for a page (the page wipe covers it) */
   function close(animated = true) {
     if (!openState) return;
     openState = false;
-    anim?.kill();
+    clearTimeout(settle);
     btn.setAttribute('aria-expanded', 'false');
     // closed in place (not leaving for a page): focus goes back to the MENU button
     if (animated && overlay.contains(document.activeElement)) btn.focus({ preventScroll: true });
     const done = () => {
+      if (openState) return; // (reopened while folding)
       overlay.hidden = true;
+      overlay.classList.remove('mn-in', 'mn-out');
       stair.classList.remove('has-on');
-      gsap.set([overlay, ...stair.querySelectorAll('li'), big, num], { clearProps: 'all' });
+      gsap.set([big, num], { clearProps: 'all' });
     };
     if (!animated || reducedMotion()) return done();
     sfx('menuClose');
-    anim = gsap.timeline({ onComplete: done })
-      .to(stair.querySelectorAll('li'), { x: () => window.innerWidth * 0.4, rotation: 10, autoAlpha: 0, duration: 0.16, ease: 'power3.in', stagger: 0.02 }, 0)
-      .fromTo(overlay, { clipPath: FULL }, { clipPath: SHUT, duration: 0.22, ease: 'power3.in' }, 0.06);
+    overlay.classList.remove('mn-in');
+    overlay.classList.add('mn-out');
+    settle = setTimeout(done, 340); // (60 ms delay + 220 ms fold, and a margin)
   }
 
   overlay.querySelector('[data-close-menu]').addEventListener('click', () => close());

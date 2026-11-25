@@ -2,7 +2,7 @@
    page's own code (src/scenes/chapters/*.js). Each chapter is its own file, downloaded the first time it is
    opened, or ahead of time once the page has settled (Nov 21, the code split). A deep link's chapter is
    fetched alongside the main code (vite.config.js adds a preload for the chapter in the address). */
-export const SECTION_TITLES = { missions: 'MISSIONS', skills: 'SKILLS', different: 'MY EDGE', stats: 'STATS', 'side-quests': 'SIDE QUESTS', contact: 'CONTACT', system: 'SETTINGS', secret: 'BEHIND THE SCENES' };
+export const SECTION_TITLES = { missions: 'MISSIONS', skills: 'SKILLS', different: 'MY EDGE', stats: 'STATS', 'side-quests': 'SIDE QUESTS', contact: 'CONTACT', system: 'SETTINGS', secret: "DIRECTOR'S CUT" };
 
 const LOADERS = {
   missions: () => import('./chapters/missions.js'),

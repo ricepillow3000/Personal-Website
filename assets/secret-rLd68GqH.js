@@ -1,7 +1,6 @@
-import{e,a as t}from"./main-CYGCKGZK.js";import{b as a,h as s}from"./common-D0IjVigK.js";function n(){return{title:"BEHIND THE SCENES",html:`${a}${s("BEHIND THE SCENES","You found every secret. Here is how this site was made.")}
+import"./main-C8Gz-Ghu.js";import{b as e,h as a}from"./common-DVIMEc-8.js";function r(){return{title:"DIRECTOR'S CUT",html:`${e}${a("DIRECTOR'S CUT","You found every secret. Here is how this site was made.")}
       <div class="sq-list bts">
         <article class="sq jag light" data-in><h3>THE CREW</h3><p>Same workflow as my projects. An orchestrator agent planned it, a researcher agent checked the details, a builder agent wrote the code, and I directed and reviewed every step. Every click path is covered by automated browser tests.</p></article>
         <article class="sq jag light" data-in><h3>THE ART</h3><p>The subway, the city, the train and the trash on the platform are cel-shaded art I directed Google's Nano Banana to generate. The train that roars past is drawn live in perspective by code, and every sticker, poster and comic shape is inline SVG and CSS.</p></article>
         <article class="sq jag light" data-in><h3>THE SOUND</h3><p>The music, every click, the wind on the fall and the train's horn are synthesized live in your browser. The trains, the breaking glass and a few hits (a whoosh, a paper slide, the stamp's clang, a passing car) are real recordings, free Creative Commons sounds, each kept only after an AI listening test picked it over the synthesized version.</p></article>
-        <article class="sq jag light" data-in><blockquote class="motto" style="margin:0">“${e(t.motto.text)}”<cite>— ${e(t.motto.by)}</cite></blockquote></article>
-      </div>`}}export{n as default};
+      </div>`}}export{r as default};

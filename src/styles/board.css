@@ -286,7 +286,7 @@ body[data-mode="board"] .hud-tl { display: none; } /* the tiny rotated status ta
 .pcn-tease::after { content: "  \25B8"; color: var(--yellow); white-space: pre; }
 .plan-continue:focus-visible .pcn-tease { outline: 3px solid var(--yellow); outline-offset: 3px; }
 /* a small jolt every few seconds while the picked chapter is the next unread one: the eye goes there */
-.plan:has(.pl-item.here.on) .pcn-btn { animation: cmd-nudge 3.2s ease-in-out 2.4s infinite; }
+.plan:has(.pl-item.here.on) .pcn-btn { animation: cmd-nudge 3.2s var(--ease-snap) 2.4s infinite; }
 @keyframes cmd-nudge { 0%, 86%, 100% { transform: none; } 90% { transform: scale(1.06) rotate(-1deg); } 95% { transform: scale(.98); } }
 
 @media (prefers-reduced-motion: reduce) {

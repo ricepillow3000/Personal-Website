@@ -34,7 +34,7 @@ export default function sideQuests() {
     intro(root) {
       if (reducedMotion()) return;
       const path = root.querySelector('.route-under');
-      gsap.fromTo(path, { strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.8, ease: 'power2.inOut', clearProps: 'strokeDasharray,strokeDashoffset' });
+      gsap.fromTo(path, { strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.8, ease: 'power3.out', clearProps: 'strokeDasharray,strokeDashoffset' });
       // every stop is heard once, the first time it is on screen: as its pin lands if it is on screen
       // from the start, else as it comes into view (one watcher, so a stop at the fold is never missed)
       const t0 = performance.now();

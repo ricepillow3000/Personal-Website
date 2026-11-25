@@ -1,4 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; }
+/* ZOOM LOCK (Nov 25, John: "when I zoomed in, it crashed the entire site... The goal is to have it where when zooming in, it
+   does not affect the website"): a finger can scroll, never pinch or double-tap zoom. Set on every element because a scroll
+   container stops the parent's value from reaching its children. (none, on the loading screen and the bee, stays none.) */
+*, *::before, *::after { touch-action: pan-x pan-y; }
 html, body { margin: 0; height: 100%; }
 /* behind everything (a phone's rubber-band scroll, a notch's corners): the station's black, never a red band */
 html { background: var(--black); }
@@ -8,11 +12,25 @@ body {
   font-family: var(--f-body);
   font-size: 16px;
   line-height: 1.5;
+  /* (Nov 23, John: "some of the words kind of look connected together": Alegreya Sans ExtraBold sets
+     its word gap tight, so body text gets a wider gap and a hair of tracking. Headings, buttons and
+     labels in the display faces keep their own spacing, below) */
+  word-spacing: .16em;
+  letter-spacing: .012em;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 button { font: inherit; color: inherit; cursor: pointer; }
+/* PINCH-ZOOMED: THE PAGE HOLDS STILL (Nov 22, John: zooming in on a phone restarted the page; see src/core/zoom.js).
+   Every animation pauses where it is and nothing keeps its own moving layer, so the page falls back into the browser's
+   tiled page layer, drawn only where the visitor looks, at the zoom's sharpness. The backdrop's parallax layers drop their
+   3D transform (a shift of a few px). Zooming back out takes the class away and everything carries on. Zoom stays on. */
+html.zoomed *, html.zoomed *::before, html.zoomed *::after { animation-play-state: paused !important; will-change: auto !important; }
+html.zoomed :is(.bd-layer, .bd-drift) { transform: none !important; }
+/* (the backdrop's slow loops are taken off, not only paused: a paused animation still holds its own moving layer, measured
+   in Chromium; they start again from their first frame when the zoom is let go: the drift, the camera push, the spin) */
+html.zoomed .backdrop, html.zoomed .backdrop *, html.zoomed .backdrop *::before, html.zoomed .backdrop *::after { animation: none !important; }
 a { color: inherit; }
 kbd {
   font-family: var(--f-body); font-size: .72em; font-weight: 800; line-height: 1;
@@ -47,3 +65,6 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
 
 /* text for screen readers only */
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* the display faces (headings, buttons, labels) keep their designed spacing: only the body face is opened up */
+:where(h1, h2, h3, h4, button, .btn, label, .ransom, .slab) { word-spacing: normal; }

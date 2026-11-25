@@ -67,17 +67,18 @@ body.sv-open { overflow: hidden; }
 /* (Nov 19, John: "it looks like two shapes... make it seamless, connected"): the red blade is the card
    itself running on to the left, ONE shape: same red, the full card height where they meet (tucked a few
    px under the card's left edge), tapering to a point. No second (white) blade: it read as a separate bar */
-.sv-li:has(.sv-slot.on)::before, .sv-li:has(.sv-slot.on)::after { display: block; bottom: auto; right: auto; z-index: -1; transform-origin: right center;
-  left: calc(-1 * var(--arm) - var(--bl)); width: calc(var(--bl) + 12px); top: -2%; height: 104%;
-  clip-path: polygon(0 46%, 100% 0, 100% 100%, 0 60%); animation: sv-blade .22s cubic-bezier(.2, 1.3, .35, 1) both; }
-.sv-li:has(.sv-slot.on)::after { --bl: 22vw; background: var(--red); }
-.sv-li:has(.sv-slot.on)::before { display: none; } /* (the white misprint read as a second shape: gone) */
-@keyframes sv-blade { from { scale: 0 1; } to { scale: 1 1; } }
-.sv-star { --s: clamp(46px, 6.6vh, 74px); filter: drop-shadow(3px 3px 0 var(--black)); position: absolute; z-index: 4; left: calc(-1 * var(--arm) - var(--s) * .9); top: calc(clamp(44px, 8.4vh, 86px) / 2 - var(--s) / 2);
-  width: var(--s); height: var(--s); background: var(--yellow); pointer-events: none; opacity: 0; transform: scale(0) rotate(-90deg);
-  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); transition: transform .2s var(--ease-pop), opacity .1s; }
+/* (Nov 21, John: the red blade "is a triangle on the left side... doesn't look like it's part of the design":
+   retired.) The picked file is now a SHEET LIFTED OFF THE PILE, built only from pieces the site already uses:
+   a hard WHITE offset edge down-left (paper under it, the misprint offset) plus the black hard shadow; its No.
+   tab turns YELLOW (THE PLAN's picked chapter: "its number tag turns yellow"); the yellow STAR is a sticker
+   stuck on that tab's corner and boils (as on THE PLAN, and as on phones already). No extra shape. */
+.sv-li:has(.sv-slot.on)::before, .sv-li:has(.sv-slot.on)::after { display: none; }
+.sv-star { --s: clamp(36px, 5.2vh, 56px); filter: drop-shadow(2px 0 0 var(--black)) drop-shadow(-2px 0 0 var(--black)) drop-shadow(0 2px 0 var(--black)) drop-shadow(0 -2px 0 var(--black)) drop-shadow(3px 3px 0 var(--black)); position: absolute; z-index: 4; left: calc(-1 * var(--arm) - var(--s) * .5); top: calc(var(--s) * -.5); /* (a black ink outline: it is a sticker ON the yellow tab) */
+  width: var(--s); height: var(--s); pointer-events: none; opacity: 0; transform: scale(0) rotate(-90deg); transition: transform .2s var(--ease-pop), opacity .1s; }
+.sv-star::before { content: ''; position: absolute; inset: 0; background: var(--yellow); /* (the shape lives inside, so the ink outline isn't clipped off) */
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
 .sv-li:has(.sv-slot.on) .sv-star { opacity: 1; transform: scale(1) rotate(0); animation: cmd-boil .9s steps(3) infinite; }
-.sv-li:has(.sv-slot.on) { z-index: 3; filter: drop-shadow(9px 9px 0 var(--black)); }
+.sv-li:has(.sv-slot.on) { z-index: 3; filter: drop-shadow(-7px 7px 0 var(--white)) drop-shadow(8px 8px 0 var(--black)); }
 
 /* the left end of every card not picked carries a black-and-white film-strip edge (the reference's texture) */
 .sv-slot:not(.on) { padding-left: 11px; background-image: repeating-linear-gradient(180deg, var(--black) 0 7px, var(--white) 7px 12px); background-size: 7px 100%; background-repeat: no-repeat; }
@@ -88,7 +89,7 @@ body.sv-open { overflow: hidden; }
   font-family: var(--f-head); font-size: clamp(30px, 4.6vh, 50px); line-height: 1; clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
   box-shadow: inset 3px 0 0 var(--white), inset 0 -3px 0 var(--white); } /* (a white ink edge, as the reference's tabs) */
 .sv-no small { font-family: var(--f-serif); font-style: italic; font-weight: 900; font-size: .42em; margin-bottom: .3em; }
-.sv-slot.on .sv-no { background: var(--white); color: var(--black); box-shadow: inset 3px 0 0 var(--black), inset 0 -3px 0 var(--black); }
+.sv-slot.on .sv-no { background: var(--yellow); color: var(--black); box-shadow: inset 3px 0 0 var(--black), inset 0 -3px 0 var(--black); }
 
 /* the date: big red month/day, weekday chip, time of day */
 .sv-date { display: flex; align-items: flex-end; gap: 6px; line-height: 1; }
@@ -124,6 +125,13 @@ body.sv-open { overflow: hidden; }
 .sv-new .ct.box { background: var(--black); color: var(--white); }
 .sv-hint { font: 400 clamp(12px, 1.8vh, 16px)/1 var(--f-menu); letter-spacing: 2px; color: #3E3E3A; }
 .sv-slot.on .sv-hint { color: var(--white); }
+/* (Nov 22: both judges on the save screen: the right two thirds of every file was bare paper, "empty vector trapezoids".
+   An empty file is stamped NO DATA where a played file carries its date and progress: a rubber stamp, slanted, pale ink.) */
+.sv-stamp { grid-column: 4; grid-row: 1; justify-self: end; margin-right: clamp(20px, 9vw, 150px); padding: .16em .5em .1em; rotate: -6deg;
+  font: 400 clamp(18px, 3.6vh, 34px)/1 var(--f-head); letter-spacing: .12em; white-space: nowrap;
+  color: #B4AFA0; border: .11em solid currentColor; box-shadow: inset 0 0 0 .07em var(--white), inset 0 0 0 .13em currentColor; }
+.sv-slot.on .sv-stamp { color: rgba(255, 255, 255, .5); box-shadow: inset 0 0 0 .07em var(--red), inset 0 0 0 .13em currentColor; }
+@media (max-width: 760px) { .sv-stamp { display: none; } }
 
 /* a finished file: COMPLETED, cut type on a white burst */
 /* a finished file: the whole slip is COMPLETED (a red slab, the word huge across it on a white burst,
@@ -139,7 +147,7 @@ body.sv-open { overflow: hidden; }
 .sv-ctime small { font: 400 clamp(11px, 1.6vh, 14px)/1 var(--f-menu); letter-spacing: 1px; padding: 2px 4px 1px; background: var(--black); color: var(--white); white-space: nowrap; }
 .sv-ctime b { font-weight: 400; font-size: clamp(24px, 4.4vh, 46px); }
 .sv-complete .sv-no { background: var(--black); color: var(--white); }
-.sv-complete.on .sv-no { background: var(--white); color: var(--black); }
+.sv-complete.on .sv-no { background: var(--yellow); color: var(--black); }
 .sv-slot.sv-complete:not(.on) { background-image: repeating-linear-gradient(180deg, var(--black) 0 7px, var(--white) 7px 12px); background-size: 7px 100%; background-repeat: no-repeat; }
 .sv-complete .sv-more { justify-content: center; } /* (CONTINUE clear of the COMPLETED burst) */
 .sv-complete.on .sv-time { display: none; } /* (its play time is already on the slab) */
@@ -164,8 +172,10 @@ body.sv-open { overflow: hidden; }
 .sv-keys { position: absolute; z-index: 3; left: var(--gutter); bottom: max(14px, env(safe-area-inset-bottom, 0px)); display: flex; gap: 14px; }
 .sv-key { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 0; background: none; color: var(--white); cursor: pointer;
   font: 400 18px/1 var(--f-menu); letter-spacing: 1px; }
-.sv-key kbd { font-size: 13px; padding: 4px 6px; border: 2px solid var(--white); background: var(--white); color: var(--black); }
-.sv-key span { padding: 3px 8px 1px; border: 2px solid var(--white); }
+/* (Nov 21: the judges read these as "flat, modern web badges": now slanted like every HUD tab, square keys, a hard red shadow) */
+.sv-key { transform: skew(var(--skew)); }
+.sv-key kbd { font-size: 13px; padding: 4px 6px; border: 2px solid var(--white); border-radius: 0; background: var(--white); color: var(--black); }
+.sv-key span { padding: 3px 8px 1px; border: 2px solid var(--white); background: var(--black); box-shadow: 3px 3px 0 var(--red); }
 .sv-key-ok { cursor: default; }
 @media (pointer: coarse) { .sv-key kbd, .sv-key-ok { display: none; } } /* (no keyboard on a phone: just BACK) */
 

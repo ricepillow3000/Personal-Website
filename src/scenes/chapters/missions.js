@@ -6,13 +6,13 @@ import { resume } from '../../data/resume.js';
 import { reorder } from '../../data/companies.js';
 import { esc, reducedMotion } from '../../core/util.js';
 import { clearStampMarkup, isCleared } from '../../ui/clear.js';
-import { EXT, back, head, cleared, watermark, slamIn } from './common.js';
+import { EXT, back, head, cleared, watermark, slamIn, storyList } from './common.js';
 
 export default function missions(ctx) {
   const list = reorder(resume.missions, ctx.company?.order?.missions);
   return {
     title: 'MISSIONS',
-    html: `${watermark('TARGETS')}${back}${head('MISSIONS', 'Two live apps. Pick a target to open its file.')}
+    html: `${watermark('TARGETS')}${back}${head('MISSIONS', 'Two problems I set out to solve. Open a file for the whole story.')}
       <ul class="wanted">${list
         .map(
           (m, i) => `<li class="wanted-slot" style="--tilt:${i % 2 ? 2.4 : -2.8}deg;--d:${i * -1.3}s">
@@ -45,10 +45,11 @@ export function dossierMarkup(m) {
       <ul class="dossier-stack">${m.stack.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
     </header>
     <div class="dossier-links">
-      <a class="btn" href="${esc(m.live)}" target="_blank" rel="noopener" data-track="live_${m.id}" data-clear="${m.id}">Try it live ${EXT}</a>
-      <a class="btn" href="${esc(m.repo)}" target="_blank" rel="noopener" data-track="repo_${m.id}" data-clear="${m.id}">Code on GitHub ${EXT}</a>
+      <a class="btn" href="${esc(m.live)}" target="_blank" rel="noopener noreferrer" data-track="live_${m.id}" data-clear="${m.id}">Try it live ${EXT}</a>
+      <a class="btn" href="${esc(m.repo)}" target="_blank" rel="noopener noreferrer" data-track="repo_${m.id}" data-clear="${m.id}">Code on GitHub ${EXT}</a>
     </div>
     <p class="dossier-hint">${isCleared(m.id) ? 'Case cleared. Thanks for checking it out.' : 'Visit the live app or the code to clear this case.'}</p>
+    ${m.story ? `<section class="story" aria-label="The story"><h3>THE STORY</h3>${storyList(m.story)}</section>` : ''}
     <div class="dossier-cols">
       <div><h3>OBJECTIVES</h3><ul class="obj">${m.objectives.map((o) => `<li>${esc(o)}</li>`).join('')}</ul></div>
       <div><h3>LOOT</h3><ul class="loot">${m.loot.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>

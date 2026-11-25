@@ -14,11 +14,13 @@ import { resume } from './data/resume.js';
 import { readCompany } from './data/companies.js';
 import { store } from './core/store.js';
 import { runLoader, introOpen } from './ui/loader.js';
-import { maybeRotateHint } from './ui/rotate.js';
+import { maybeRotateHint, inAppBrowser, inAppName, openInBrowser } from './ui/rotate.js';
 import { initFullscreen } from './ui/fullscreen.js';
 import { $, $$, esc, reducedMotion, fontsReady } from './core/util.js';
 import { menuTeasers } from './data/script.js';
 import { mountBackdrop, sceneReady } from './fx/backdrop.js';
+import { holdSign } from './fx/signhold.js'; // (the flag only: the station's code loads with the platform picture)
+import { initZoom, onZoom, isZoomed } from './core/zoom.js';
 import { initClickFx, burst } from './fx/impact.js';
 import { initMagnetic, initTilt, initScrollMeter, slamOnScroll, scramble, rollIn } from './fx/kinetic.js';
 import { initTooltips } from './ui/tooltip.js';
@@ -36,10 +38,14 @@ import { createMenu, MENU_ITEMS } from './scenes/menu.js';
 import { SECTION_TITLES, loadSection, sectionModule } from './scenes/sections.js';
 import { renderQuickView } from './scenes/quickview.js';
 import { sfx, setSound, setMusicVolume, initAudio } from './audio/audio.js';
-import { unlock, refreshCounter, listMarkup, count, ACHIEVEMENTS } from './eggs/achievements.js';
+import { unlock, refreshCounter, listMarkup, count, allFound, ACHIEVEMENTS } from './eggs/achievements.js';
 import { armBee } from './eggs/bee.js';
 import { installConsole } from './eggs/console.js';
 import { bindInput, bindGamepad } from './input/input.js';
+
+/* The Google Fonts sheet arrives as media="print" so it never blocks the first paint, then is switched
+   on here (it used to be an inline onload, which the Content-Security-Policy blocks). */
+{ const gf = document.getElementById('gfonts'); if (gf) gf.media = 'all'; }
 
 /* ---------------------------------------------------------------- setup */
 const company = readCompany();
@@ -80,9 +86,27 @@ let lastFocus = null;
 
 document.body.classList.toggle('reduce-motion', store.get().settings.reduceMotion === true);
 ransom($('#titleName'), resume.first, NAME_SEED);
-$('#titleHook').textContent = resume.titleHook || resume.hook;
+/* opened inside Instagram, LinkedIn and the like: a standing way out to the visitor's own browser, where the phone can turn (Nov 25) */
+if (inAppBrowser()) {
+  $('#inapp').hidden = false;
+  $('#inappHint').textContent = `Opened inside ${inAppName()}. It plays best in your browser, held sideways.`;
+  $('#inappOpen').addEventListener('click', (e) => { sfx('select'); openInBrowser($('#inappNote'), e.currentTarget); });
+}
+/* Inspector's second door (Nov 23, John: "i want to be where recruiters and devs can finish it"):
+   developers type john.run() in the console, everyone else taps JOHN on the main menu 5 times
+   (moved from the title to the menu Nov 23, John's screenshot: "make it so they tap this") */
+{
+  let taps = 0, timer = 0;
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest?.('#boardName')) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => { taps = 0; }, 2500);
+    if (++taps >= 5) { taps = 0; unlock('inspector'); }
+  });
+}
+$('#titleHook').innerHTML = `<span>${esc(resume.titleHook || resume.hook)}</span>`; // (the span carries the black: it hugs each line of words, see .title-hook)
 // who + proof in the first 10 seconds (two clean lines on phones)
-$('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">GSU '29 · 2 live apps · 727/728 checks</span>`;
+$('#titleRole').innerHTML = `<span>${esc(resume.role)}</span><span class="tr-sep"> · </span><span class="tr-proof">2 live apps · 2,000+ tests</span>`;
 /* the contact plate at the top of every screen (Nov 19, career advisor at GSU's Codex meetup:
    "make LinkedIn, GitHub and email easy to see, at the very top") */
 // and on the title, the same three in the red CONNECT card (the plate steps aside there)
@@ -224,7 +248,9 @@ async function show(id) {
   };
 
   if (prev === null) {
+    revealBuilt = true; // the first screen of the visit: it sits under the loading screen
     swap();
+    revealBuilt = false;
   } else if (prev === 'title' && id === 'board' && pendingStart) {
     pendingStart = false;
     revealDelay = 0.28; // the screen swaps under the star-flash; THE PLAN slams in as it clears and the city fades up
@@ -326,7 +352,7 @@ renderStartLabel();
 /* PRESS START / CONTINUE always opens with the train (Nov 19, John: "the train is going to be the
    main title every single time"). If the platform or the train art isn't ready yet (a returning
    visitor taps CONTINUE before the phone has loaded the scene), the button "boards" for a moment
-   while they load, at most 4s, then the shot plays. */
+   while they load (up to 20 s), then the shot plays. */
 let starting = false;
 $('#pressStart').addEventListener('click', () => {
   if (starting || savesOpen()) return;
@@ -337,6 +363,7 @@ $('#pressStart').addEventListener('click', () => {
 async function startFile(i) {
   if (starting) return;
   starting = true;
+  holdSign(true); // (a file is being played: from here to the end of the train shot the departure board does not move or first appear, see station.js)
   switchingFile = true;
   store.useSlot(i);
   switchingFile = false;
@@ -345,11 +372,13 @@ async function startFile(i) {
   renderStartLabel();
   const btn = $('#pressStart');
   unlock('first-words');
-  if (!reducedMotion()) {
+  if (!reducedMotion() && !isZoomed()) { // (zoomed in, the shot goes straight to its end: there is no train to wait for)
     let late = false;
     const wait = sceneReady();
     const t = setTimeout(() => { late = true; btn.classList.add('boarding'); btn.setAttribute('aria-busy', 'true'); }, 120);
-    await Promise.race([wait, new Promise((r) => setTimeout(r, 4000))]);
+    // (Nov 21: the cap was 4 s, and on a slow phone the shot then played with no train: the button now boards
+    // until the train is really here, up to 20 s; past that the shot is skipped, never played empty)
+    await Promise.race([wait, new Promise((r) => setTimeout(r, 20000))]);
     clearTimeout(t);
     if (late) { btn.classList.remove('boarding'); btn.removeAttribute('aria-busy'); }
   }
@@ -404,9 +433,10 @@ const board = createBoard($('#board'), ctx);
 
 let boardSeen = false;
 let revealDelay = 0;
+let revealBuilt = false; // (set by show() for the visit's first screen: see board.reveal)
 function enterBoard() {
   renderProgress();
-  board.reveal(revealDelay);
+  board.reveal(revealDelay, revealBuilt);
   revealDelay = 0;
   focusSoon($('#board .plan-continue'));
   if (!boardSeen) {
@@ -641,6 +671,7 @@ function renderPage(id) {
   hydrateStamps(root);
   if (id === 'contact') sfx('sparkle');
   store.addTo('visited', id);
+  if (id === 'secret') refreshCounter(); // (the SECRETS glow stops once the cut is seen)
   if (CHAPTERS.every((c) => store.has('visited', c))) unlock('full-recon'); // every chapter opened
   updateGuide(id);
 }
@@ -803,6 +834,13 @@ window.addEventListener('popstate', () => {
 }
 
 $('#modal').addEventListener('click', (e) => {
+  if (e.target.closest('[data-cut]')) { // close the pop-up, then open the cut (navigate waits for the pop-up's own step back)
+    e.preventDefault();
+    sfx('select');
+    closeModal();
+    navigate('secret');
+    return;
+  }
   if (e.target.id === 'modal' || e.target.closest('[data-close]')) {
     sfx('back');
     closeModal();
@@ -815,7 +853,9 @@ $('#achBtn').addEventListener('click', () => {
     <header class="dossier-head"><p class="dossier-code">SECRETS · ${count()}/${ACHIEVEMENTS.length} FOUND</p>
     <h2 class="dossier-title ransom" id="modalTitle" data-ransom="ACHIEVEMENTS">ACHIEVEMENTS</h2></header>
     ${listMarkup()}
-    <p class="dossier-hint">All 7 unlock the director's cut, how my AI crew built this.</p></div>`);
+    ${allFound()
+    ? `<p class="ach-cut"><a class="btn" href="#/secret" data-cut>★ OPEN THE DIRECTOR'S CUT</a></p>`
+    : `<p class="dossier-hint">All 6 unlock the director's cut, how my AI crew built this.</p>`}</div>`);
 });
 
 /* PROGRESS chip: a real button that shows what is left and how each item counts. */
@@ -855,6 +895,8 @@ function syncSoundButton() {
 /* sound is on by default: the visitor's first tap, click or key starts it (browsers allow audio only
    after one), leaving the page pauses it and coming back resumes it (audio.js initAudio) */
 initAudio();
+initZoom(); // (a pinch zoom puts the page in its still state: src/core/zoom.js)
+onZoom((z) => { if (z) skipCurrent(); }); // (a film shot is a full-screen layer moving every frame: under a zoom it goes straight to its end)
 initFullscreen();
 
 $('#soundBtn').addEventListener('click', () => toggleSound());
@@ -1011,7 +1053,15 @@ window.addEventListener('keydown', (e) => {
   if (!$('#modal').hidden) closeModal();
   menu.isOpen() ? menu.close() : menu.open();
 });
-bindGamepad(handle, () => unlock('player-2'));
+bindGamepad(handle, () => {}); // (a controller works, but earns nothing: every secret is reachable without one)
+
+/* copy the email on any email link (Nov 22, launch prep): a visitor with no mail app set up still gets the address */
+document.addEventListener('click', (e) => {
+  const a = e.target.closest?.('a[href^="mailto:"]');
+  if (!a || a === hudEmail || a.id === 'ccEmail') return; // (those two copy on their own, above)
+  const addr = a.getAttribute('href').slice(7).split('?')[0];
+  navigator.clipboard?.writeText(addr).then(() => toast(addr, 'EMAIL COPIED'), () => {});
+});
 
 /* ---------------------------------------------------------------- analytics (cookie-free, optional) */
 function track(name) {

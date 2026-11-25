@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { inflateSync } from 'node:zlib';
+import { PANELS } from '../../src/fx/station.js'; // (the ceiling lamps' places in the station picture: the signs must hang clear of them)
 
 /* Any US-style phone number, e.g. (555) 123-4567, 555-123-4567, 555.123.4567. No real digits live in this repo. */
 const PHONE = /\(?\b\d{3}\)?[\s.-]*\d{3}[\s.-]\d{4}\b/;
@@ -47,7 +48,7 @@ test('THE PLAN: pointing at a chapter picks it (number, preview stickers, big wo
   await page.locator('.pl-item[data-ch="missions"]').hover();
   await expect(page.locator('#board .pl-item.on')).toHaveAttribute('data-ch', 'missions');
   await expect(page.locator('#board .cn-no .sr-only')).toHaveText('02');
-  await expect(page.locator('#board .cmd-loot')).toContainText('727 of 728 checks');
+  await expect(page.locator('#board .cmd-loot')).toContainText('Meliona'); // (it names what is inside, never repeats a stat)
   await expect(page.locator('#board .plan-continue')).toHaveAttribute('href', '#/missions');
   await expect(page.locator('#board .pcn-kicker')).toHaveText('JUMP AHEAD');
   await page.mouse.move(5, 5);
@@ -64,7 +65,7 @@ test('opening all six chapters unlocks Full Recon, and CONTINUE moves on as you 
     await page.goto(`/#/${id}`);
     await expect(page.locator('body')).toHaveAttribute('data-screen', id);
   }
-  await expect(page.locator('#achCount')).toHaveText('1/7');
+  await expect(page.locator('#achCount')).toHaveText('1/6');
 });
 
 test('phone: all six chapters, the number and the big word fit on one screen', async ({ page, isMobile }) => {
@@ -173,16 +174,80 @@ test('flipping the off-the-record star on STATS unlocks an achievement that surv
   await page.goto('/#/stats');
   await page.locator('#page .gpa-burst').click();
   await expect(page.locator('#page .gpa-burst')).toHaveClass(/flipped/);
-  await expect(page.locator('#achCount')).toHaveText('1/7');
+  await expect(page.locator('#achCount')).toHaveText('1/6');
   await page.reload();
-  await expect(page.locator('#achCount')).toHaveText('1/7');
+  await expect(page.locator('#achCount')).toHaveText('1/6');
 });
 
 test('dev console: john.run() unlocks Inspector', async ({ page }) => {
   await openBoard(page);
   const reply = await page.evaluate(() => window.john.run());
   expect(reply).toContain('Thanks for looking under the hood');
-  await expect(page.locator('#achCount')).toHaveText('1/7');
+  await expect(page.locator('#achCount')).toHaveText('1/6');
+});
+
+test('non-developers: tapping JOHN on the main menu 5 times unlocks Inspector', async ({ page }) => {
+  await openBoard(page);
+  const name = page.locator('#boardName');
+  await expect(name).toBeVisible();
+  for (let i = 0; i < 5; i++) await name.click();
+  await expect(page.locator('#achCount')).toHaveText('1/6');
+});
+
+test("all 6 secrets: SECRETS glows and its pop-up opens the director's cut", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.setItem('jn-resume-v1', JSON.stringify({ achievements: ['first-words', 'case-file', 'full-recon', 'bee', 'off-record', 'inspector'] }));
+  });
+  await openBoard(page);
+  await expect(page.locator('#achCount')).toHaveText('6/6');
+  await expect(page.locator('#achBtn')).toHaveClass(/ach-ready/);
+  await page.locator('#achBtn').click();
+  await page.getByRole('link', { name: /OPEN THE DIRECTOR'S CUT/ }).click();
+  await expect(page.locator('#modal')).not.toBeVisible();
+  await expect(page.locator('#page h2.ransom')).toHaveAccessibleName("DIRECTOR'S CUT");
+  await expect(page.locator('#achBtn')).not.toHaveClass(/ach-ready/);
+});
+
+test('privacy page: BACK TO THE PLAN skips the loading screen and lands on THE PLAN', async ({ page, baseURL }) => {
+  await page.goto('/privacy.html');
+  await expect(page.locator('a.back')).toHaveAttribute('href', './#/board');
+  // (?intro turns the loading screen on for a test browser; coming from privacy.html must still skip it)
+  await page.goto('/?intro#/board', { referer: new URL('/privacy.html', baseURL).href });
+  await expect(page.locator('#loader')).toHaveCount(0);
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+});
+
+test("the director's cut does not repeat the motto (it lives on STATS)", async ({ page }) => {
+  await page.goto('/#/secret');
+  await expect(page.locator('#page h2.ransom')).toBeVisible();
+  await expect(page.locator('#page .motto, #page .motto-strip')).toHaveCount(0);
+});
+
+test("director's cut: the glass transition copies the screen once, never once per shard (iPhone crash)", async ({ browser }) => {
+  // (Nov 23: the old shatter cloned the whole screen for each of its 9 shards, ~14,600 elements and GBs of
+  // layers at an iPhone's 3x, so iOS killed the tab. One copy of the screen plus the new page stays under 4x the page.)
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  const errors = errorsOf(page);
+  await openBoard(page);
+  const base = await page.evaluate(() => document.querySelectorAll('*').length);
+  const peak = await page.evaluate(() => new Promise((done) => {
+    let max = 0;
+    const t0 = performance.now();
+    const tick = () => {
+      max = Math.max(max, document.querySelectorAll('*').length);
+      if (performance.now() - t0 < 1400) requestAnimationFrame(tick); else done(max);
+    };
+    location.hash = '#/secret';
+    requestAnimationFrame(tick);
+  }));
+  expect(peak).toBeLessThan(base * 4); // (one copy + the new page is ~2.6x; the per-shard bug was ~9x)
+  await expect(page.locator('#page h2.ransom')).toHaveAccessibleName("DIRECTOR'S CUT");
+  await expect(page.locator('.glass')).toHaveCount(0); // the effect cleans itself up
+  expect(errors).toEqual([]);
+  await ctx.close();
 });
 
 test('works with motion enabled too (start sequence + board reveal finish)', async ({ browser }) => {
@@ -508,19 +573,22 @@ test('SAVE DATA is a stack: every card peeks out, and picking one opens it and s
   await expect(slot(0).locator('.sv-go')).toBeVisible();
   expect(await slot(3).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeLessThan(2); // closed cards keep their details row shut
   expect(await slot(0).locator('.sv-more').evaluate((e) => e.offsetHeight)).toBeGreaterThan(20);
-  // all black, no red L; the picked file pops with THE PLAN's language: a yellow star cursor at its left end
-  // and ONE red blade: the card itself running on to the left (no second white blade: it read as two shapes); a red halftone corner
+  // all black, no red L, no blade (John, Nov 21: the triangle "doesn't look like it's part of the design"); the picked file is a
+  // sheet lifted off the pile: a white offset edge, its No. tab turns yellow (THE PLAN's picked tag) with the yellow star stuck on its corner
   await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); // file 3 picked
   await settle();
   const pop = await page.evaluate(() => {
     const lis = [...document.querySelectorAll('#saves .sv-li')];
     const star = (li) => { const r = li.querySelector('.sv-star').getBoundingClientRect(); return { on: getComputedStyle(li.querySelector('.sv-star')).opacity === '1', inView: r.left >= 0 && r.right <= innerWidth && r.width > 20 }; };
-    const blade = (li) => getComputedStyle(li, '::before').display;
+    const tab = lis[2].querySelector('.sv-no').getBoundingClientRect(), st = lis[2].querySelector('.sv-star').getBoundingClientRect();
+    const onTab = st.right > tab.left && st.left < tab.left + tab.width / 2 && st.bottom > tab.top && st.top < tab.top + tab.height / 2; // stuck on the tab's top-left corner
     return { bg: getComputedStyle(document.querySelector('#saves')).backgroundColor, gone: document.querySelectorAll('#saves .sv-l, #saves .sv-band, #saves .sv-arm').length,
       star: star(lis[2]), others: lis.filter((l, k) => k !== 2).every((l) => getComputedStyle(l.querySelector('.sv-star')).opacity === '0'),
-      white: blade(lis[2]), red: getComputedStyle(lis[2], '::after').backgroundColor, dots: !!document.querySelector('#saves .sv-dots') };
+      blade: [getComputedStyle(lis[2], '::before').display, getComputedStyle(lis[2], '::after').display], onTab,
+      tab: getComputedStyle(lis[2].querySelector('.sv-no')).backgroundColor, lift: /rgb\(245, 245, 240\)/.test(getComputedStyle(lis[2]).filter),
+      dots: !!document.querySelector('#saves .sv-dots') };
   });
-  expect(pop).toEqual({ bg: 'rgb(11, 11, 11)', gone: 0, star: { on: true, inView: true }, others: true, white: 'none', red: 'rgb(229, 25, 28)', dots: true });
+  expect(pop).toEqual({ bg: 'rgb(11, 11, 11)', gone: 0, star: { on: true, inView: true }, others: true, blade: ['none', 'none'], onTab: true, tab: 'rgb(255, 225, 26)', lift: true, dots: true });
   expect(errors).toEqual([]);
 });
 
@@ -912,6 +980,85 @@ test('sound: leaving the page pauses it and coming back resumes it, with no togg
   void state;
 });
 
+test('sound: an engine that does not come back is replaced (an iPhone gets a new one on the first tap after returning; anywhere, one whose resume never takes is rebuilt on the next tap; sound switched off and on after being away always gets a new one)', async ({ page, browser }, testInfo) => {
+  const hide = (p, h) => p.evaluate((h) => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h }); document.dispatchEvent(new Event('visibilitychange')); }, h);
+  const gen = (p) => p.evaluate(() => window.__acGen || 0);
+  const state = (p) => p.evaluate(() => window.__acState?.());
+  // 1) an iPhone: the app is left and reopened. The old engine is not trusted; the first tap builds a new one and it runs
+  const ctx = await browser.newContext({ ...testInfo.project.use, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1' });
+  const ip = await ctx.newPage();
+  await ip.goto('/');
+  await ip.locator('.title-hook').click();
+  await expect.poll(() => state(ip)).toBe('running');
+  expect(await gen(ip)).toBe(1);
+  await hide(ip, true); await ip.waitForTimeout(250); await hide(ip, false); await ip.waitForTimeout(250);
+  expect(await gen(ip)).toBe(1); // nothing is rebuilt without a tap (a phone would not let it start)
+  await ip.locator('.title-hook').click();
+  await expect.poll(() => gen(ip)).toBe(2);
+  await expect.poll(() => state(ip)).toBe('running');
+  await expect(ip.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'true');
+  await ctx.close();
+  // 2) any device: the engine's resume never takes after a return (it stays asleep). It is found out and the next tap builds a new one
+  await page.goto('/');
+  await page.locator('.title-hook').click();
+  await expect.poll(() => state(page)).toBe('running');
+  expect(await gen(page)).toBe(1);
+  await page.evaluate(() => { window.__resume = AudioContext.prototype.resume; AudioContext.prototype.resume = () => new Promise(() => {}); });
+  await hide(page, true); await page.waitForTimeout(250); await hide(page, false);
+  await page.waitForTimeout(800); // (the check runs 450 ms after the return)
+  expect(await state(page)).not.toBe('running');
+  await page.evaluate(() => { AudioContext.prototype.resume = window.__resume; });
+  await page.locator('.title-hook').click();
+  await expect.poll(() => gen(page)).toBe(2);
+  await expect.poll(() => state(page)).toBe('running');
+  // 3) a healthy return keeps its engine (the music carries on where it was); switching the sound off and on after being away gets a new one
+  await hide(page, true); await page.waitForTimeout(250); await hide(page, false); await page.waitForTimeout(800);
+  expect(await gen(page)).toBe(2);
+  expect(await state(page)).toBe('running');
+  await page.locator('#soundBtn').click();
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'false');
+  await page.locator('#soundBtn').click();
+  await expect(page.locator('#soundBtn')).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => gen(page)).toBe(3);
+  await expect.poll(() => state(page)).toBe('running');
+});
+
+test('sound: leaving fades the mix to silence first (no buzz), and coming back the music carries on from where it was, even on a new engine or after a reload', async ({ browser }, testInfo) => {
+  const hide = (p, h) => p.evaluate((h) => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h }); document.dispatchEvent(new Event('visibilitychange')); }, h);
+  const pos = (p) => p.evaluate(() => window.__musicPos?.() ?? null);
+  const gain = (p) => p.evaluate(() => window.__masterGain?.() ?? null);
+  const gen = (p) => p.evaluate(() => window.__acGen || 0);
+  // an iPhone (the hardest case: every return gets a brand new engine)
+  const ctx = await browser.newContext({ ...testInfo.project.use, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1' });
+  const p = await ctx.newPage();
+  await p.goto('/');
+  await p.locator('.title-hook').click();
+  await expect.poll(() => pos(p), { timeout: 15000 }).toBeGreaterThan(12); // the song is a few beats in
+  // 1) a link that leaves (LinkedIn, in a new tab): the mix fades out before the page goes; nothing left, so it comes back
+  const [tab] = await Promise.all([ctx.waitForEvent('page'), p.locator('#ccLinkedIn').click()]);
+  await tab.close();
+  await expect.poll(() => gain(p), { timeout: 1000 }).toBeLessThan(0.05);
+  await expect.poll(() => gain(p), { timeout: 4000 }).toBeGreaterThan(0.8);
+  // 2) swiping away: silent before the pause; back, and the next tap's new engine carries the song on from its place
+  const before = await pos(p);
+  await hide(p, true);
+  await p.waitForTimeout(150);
+  expect(await gain(p)).toBeLessThan(0.05);
+  await p.waitForTimeout(300);
+  await hide(p, false);
+  await p.locator('.title-hook').click();
+  await expect.poll(() => gen(p)).toBe(2);
+  await expect.poll(() => pos(p), { timeout: 8000 }).not.toBeNull();
+  expect(await pos(p)).toBeGreaterThanOrEqual(before - 1); // not back to the top (0)
+  // 3) a page that reloads on return (a redirect, the browser dropping it) carries on too
+  const beforeReload = await pos(p);
+  await p.reload();
+  await p.locator('.title-hook').click();
+  await expect.poll(() => pos(p), { timeout: 15000 }).not.toBeNull();
+  expect(await pos(p)).toBeGreaterThanOrEqual(beforeReload - 1);
+  await ctx.close();
+});
+
 test('tower lights: every aviation light blinks on its own random beat (never all together); all steady on with reduced motion', async ({ page, browser }) => {
   await openBoard(page); // reduced motion (this context)
   const states = () => page.locator('.bd-avfix .av').evaluateAll((els) => els.map((e) => e.classList.contains('lit')));
@@ -971,13 +1118,25 @@ test('city billboard: TAKE YOUR TIME crawls across the ring above JOHN NGUYEN â˜
 
 test('heavy train: the camera moves like a heavy train (steady rumble + wheel-set thumps, never a random buzz), and the heavy nose is ready on the first frame', async ({ browser }) => {
   // the motion is pure math: the same moment always moves the camera the same way
-  const { cameraMotion, NOSE_PASS } = await import('../../src/fx/subway.js');
+  const { cameraMotion, NOSE_PASS, BURST, SHOT_END, speedAt, shotSound } = await import('../../src/fx/subway.js');
   const near = (t) => (t < NOSE_PASS - 0.27 ? 0 : Math.min(1, (t - (NOSE_PASS - 0.27)) / 0.27));
   const ys = [];
-  for (let t = 0; t <= 1.25; t += 1 / 60) ys.push(cameraMotion(t, near(t)).y);
+  for (let t = 0; t <= SHOT_END; t += 1 / 60) ys.push(cameraMotion(t, near(t)).y); // (the whole shot, however long it takes)
   expect(cameraMotion(0.9, 1)).toEqual(cameraMotion(0.9, 1));
-  const early = Math.max(...ys.slice(0, 30).map(Math.abs)); // still in the tunnel
-  const late = Math.max(...ys.slice(44).map(Math.abs)); // the wheel sets pass the camera
+  const early = Math.max(...ys.slice(0, Math.round((BURST - 0.12) * 60)).map(Math.abs)); // still in the tunnel
+  // THE BURST (Nov 22, John: "pop out impactfully... faster... longer... a surprise"): a still beat, then it breaks out fast,
+  // is at the camera in under half a second, and at least six cars storm past, braking, before the cut
+  expect(BURST).toBeGreaterThan(0.4); // the station holds still first
+  expect(early).toBeLessThan(1); // (a faint tremble, no more)
+  expect(NOSE_PASS - BURST).toBeLessThan(0.5); // tunnel mouth to camera (0.98 s when it came in slowly)
+  expect(speedAt(NOSE_PASS)).toBeGreaterThan(3500); // still storming as it passes (1490 before)
+  expect(Math.abs(cameraMotion(BURST + 0.005, 0).y)).toBeGreaterThan(8); // the kick as it breaks out
+  expect(speedAt(SHOT_END)).toBeLessThan(speedAt(NOSE_PASS) * 0.45); // braked hard by the cut: a readable train again
+  const snd = shotSound();
+  expect(snd.wheels.length).toBeGreaterThanOrEqual(12); // a bogie hammers past for every half car: six cars and more
+  expect(snd.wheels.every(([at], i, a) => i === 0 || at > a[i - 1][0])).toBe(true);
+  expect(SHOT_END).toBeLessThan(3.1); // no more than a second longer than the slow arrival (2.07 s)
+  const late = Math.max(...ys.slice(Math.round((NOSE_PASS - 0.2) * 60)).map(Math.abs)); // the wheel sets pass the camera
   const jump = ys.slice(1).reduce((a, y, i) => a + Math.abs(y - ys[i]), 0) / (ys.length - 1);
   expect(late).toBeGreaterThan(early * 2); // it builds to the thumps as the train arrives
   expect(late).toBeLessThan(30); // strong, never jarring
@@ -1058,7 +1217,7 @@ test('station: the ceiling tubes flicker on their own (never two healthy ones at
   const acted = new Set();
   rows.forEach((r) => r.forEach((v, i) => v && acted.add(i)));
   expect(acted.size).toBeGreaterThan(1); // more than one tube misbehaved...
-  const TIRED = [3, 13];
+  const TIRED = [2, 9]; // (the two tired tubes, station.js)
   expect(rows.every((r) => r.filter((v, i) => v && !TIRED.includes(i)).length <= 1)).toBe(true); // ...never two healthy ones together
   await ctx.close();
 });
@@ -1222,11 +1381,29 @@ test('sound for every box: side quests are heard as they land and as you scroll 
   expect((await heard()).filter((n) => n === 'skillUp').length).toBe(3); // the first row (picked already) answers too
 
   await go('different');
+  // only panels that start below the fold land on scroll (the ones on screen come in with the page);
+  // with every web font loaded (CI) they can all fit on the first screen
+  const waiting = await page.locator('#page .panel.slam-wait').count();
   await scrollDown();
+  const landed = await heard();
+  if (waiting) expect(landed.filter((n) => n === 'panelSlap').length, `heard while landing and scrolling: ${landed.join(' ')}`).toBeGreaterThanOrEqual(1);
   await page.evaluate(() => document.querySelector('.screen.active').scrollTo(0, 0));
   await page.waitForTimeout(300);
-  await page.locator('.panel').first().tap();
-  expect((await heard()).filter((n) => n === 'panelSlap').length).toBeGreaterThanOrEqual(2); // scrolled to + tapped
+  // tap a bare spot of the first panel (not a link inside it, not under the fixed top bar): the
+  // panel's center moves with the real web fonts, which CI loads and this sandbox does not
+  const spot = await page.evaluate(() => {
+    const el = document.querySelector('#page .panel'); const r = el.getBoundingClientRect();
+    for (let y = r.top + 6; y < Math.min(r.bottom, innerHeight) - 4; y += 6) for (let x = r.left + 6; x < r.right - 4; x += 12) {
+      const t = document.elementFromPoint(x, y);
+      if (t && el.contains(t) && !t.closest('a, button, [role="button"]')) return { x, y };
+    }
+    return null;
+  });
+  expect(spot).not.toBeNull();
+  await page.touchscreen.tap(spot.x, spot.y);
+  await page.waitForTimeout(200);
+  const tapped = await heard();
+  expect(tapped.filter((n) => n === 'panelSlap').length, `heard on the tap at ${JSON.stringify(spot)}: ${tapped.join(' ')}`).toBeGreaterThanOrEqual(1);
   await ctx.close();
 });
 
@@ -1255,10 +1432,12 @@ test('SIDE QUESTS plays THE SQUARE: a painted square with nine screens, the big 
 test('the departure board and the station lights never show off the title (they used to hang faded over the city on THE PLAN)', async ({ page }) => {
   await page.goto('/#/board');
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
-  // (a deep link loads the station after THE PLAN has built in, so wait for its layer to exist)
-  await expect(page.locator('.st-wrap')).toHaveCount(1, { timeout: 10000 });
+  // (a deep link loads the station after THE PLAN has built in, so wait for its layers to exist)
+  await expect(page.locator('.st-wrap').first()).toBeAttached({ timeout: 10000 });
   await page.waitForTimeout(1200);
-  expect(await page.evaluate(() => getComputedStyle(document.querySelector('.st-wrap')).opacity)).toBe('0');
+  const ops = await page.evaluate(() => [...document.querySelectorAll('.st-wrap')].map((w) => getComputedStyle(w).opacity));
+  expect(ops.length).toBeGreaterThan(0);
+  expect(ops.every((o) => o === '0')).toBe(true); // (every layer of it: the station has a back and a front layer)
 });
 
 test('MY EDGE: the page watermark never jumps while the panels land (it sits beside #page, so their jolt cannot re-anchor it)', async ({ browser }) => {
@@ -1283,23 +1462,48 @@ test('departure board: a 3D box in the station\'s perspective; LET US START THE 
     await page.goto('/');
     const sign = page.locator('.ss');
     await expect(sign).toHaveClass(/\bin\b/, { timeout: 15000 });
-    // a painted board (the station's own toon style), hung from its ceiling channel; the LED text sits inside its painted screen
-    const img = sign.locator('.ss-img');
-    await expect(img).toBeVisible();
-    expect(await img.evaluate((e) => e.complete && e.naturalWidth > 0)).toBe(true);
-    const [ib, sb] = await Promise.all([img.boundingBox(), sign.locator('.ss-screen').boundingBox()]);
-    expect(sb.x).toBeGreaterThan(ib.x); expect(sb.x + sb.width).toBeLessThan(ib.x + ib.width);
-    expect(sb.y).toBeGreaterThan(ib.y + ib.height * 0.25); expect(sb.y + sb.height).toBeLessThan(ib.y + ib.height); // (under the rods and channel)
-    await expect(sign.locator('.ss-run span').first()).toHaveText('LET US START THE GAME');
+    // real platform signs, drawn in the station's perspective (Nov 21, John's reference): a slim LED board on two rods from
+    // a steel cross beam; the LED row sits inside the board's screen; no painted picture any more
+    await expect(sign.locator('.ss-img')).toHaveCount(0);
+    const scr = sign.locator('.ss-signs rect[fill="#08080A"]');
+    await expect(scr).toHaveCount(1);
+    const [ib, sb] = await Promise.all([scr.boundingBox(), sign.locator('.ss-screen').boundingBox()]);
+    expect(Math.abs(sb.x - ib.x)).toBeLessThan(3); expect(Math.abs(sb.x + sb.width - ib.x - ib.width)).toBeLessThan(3);
+    expect(Math.abs(sb.y - ib.y)).toBeLessThan(3); expect(sb.width / sb.height).toBeGreaterThan(4); // (long and slim)
+    if (w === 1440) { // two signs, not three: the board, and THE CITY as its own sign beside it (no EXIT)
+      await expect(sign.locator('.ss-signs text')).toHaveText(['JN', 'THE CITY']);
+      const gap = await page.evaluate(() => { // clear air between the two: the city sign's box does not meet the board's
+        const b = document.querySelector('.ss-screen').getBoundingClientRect();
+        const c = [...document.querySelectorAll('.ss-signs text')].find((e) => e.textContent === 'THE CITY').getBoundingClientRect();
+        const el = document.querySelector('.ss-signs rect[fill="url(#ssDiF)"]'); // THE CITY sign's whole face
+        const face = el.getBoundingClientRect();
+        const art = ['x', 'y', 'width', 'height'].map((k) => Number(el.getAttribute(k))); // the same face in the station picture's own px
+        return { apart: c.right < b.left - 4 || c.left > b.right + 4, narrower: c.width < b.width * 0.5, trackSide: face.right < b.left, art };
+      });
+      // never across the ceiling lights: its face meets none of the lamp panels (the picture's own coordinates), with 3 px of air
+      const [ax, ay, aw, ah] = gap.art; delete gap.art;
+      const lamps = PANELS.map((p) => (Array.isArray(p[0]) ? p : [[p[0], p[1]], [p[2], p[3]]])).map((q) => ({ l: Math.min(...q.map((v) => v[0])), r: Math.max(...q.map((v) => v[0])), t: Math.min(...q.map((v) => v[1])), b: Math.max(...q.map((v) => v[1])) }));
+      gap.lamps = lamps.length > 5;
+      gap.onLights = lamps.some((r) => ax < r.r + 3 && ax + aw > r.l - 3 && ay < r.b + 3 && ay + ah > r.t - 3);
+      // never across the train or the track: the train's roof line runs from the vanishing point (870, 548) up and left at
+      // 90 up per 174 across; the sign's lowest, leftmost corner stays well above it (so no car, near or far, is behind the sign)
+      gap.overTrain = (548 - (ay + ah)) / (870 - ax) > 0.62;
+      expect(gap).toEqual({ apart: true, narrower: true, lamps: true, onLights: false, trackSide: true, overTrain: true }); // (its own sign, on the track's side, never across the ceiling lights)
+    }
+    await expect(sign.locator('.ss-run span')).toHaveText(['LET US START', 'THE GAME', 'LET US START']); // the line, in pages that fit the window whole
     await expect(sign.locator('.ss-code')).toHaveText('JN');
     const shown = (await sign.locator('.ss-time').innerText()).replace(/\s+/g, '');
     // the visitor's time now, or a minute ago (the sign updates once a second, so a read right at the turn of a minute can lag)
     const want = await page.evaluate(() => [0, 60000].map((ms) => { const d = new Date(Date.now() - ms); const hr = d.getHours(); return `${hr % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}${hr < 12 ? 'AM' : 'PM'}`; }));
     expect(want).toContain(shown);
-    const x = () => sign.locator('.ss-run').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).m41);
-    const a = await x();
-    await page.waitForTimeout(500);
-    expect(await x()).toBeLessThan(a); // right to left
+    // the pages move right to left: read the run's place while a page holds, then mid-slide (the animation's own clock, so no waiting)
+    const [held, sliding, next] = await sign.locator('.ss-run').evaluate((e) => {
+      const an = e.getAnimations()[0]; const at = (f) => { an.currentTime = f * 9000; return new DOMMatrix(getComputedStyle(e).transform).m41; };
+      const r = [at(0.2), at(0.44), at(0.7)]; an.currentTime = 0; return r;
+    });
+    expect(held).toBe(0); // the first page stands whole
+    expect(sliding).toBeLessThan(held - 2); // right to left
+    expect(next).toBeLessThan(sliding - 2); // the next page has come in, and stands
     const hits = await page.evaluate(() => {
       const b = document.querySelector('.ss-screen').getBoundingClientRect();
       return [...document.querySelectorAll('#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr, #pressStart, #titleHook')]
@@ -1385,6 +1589,216 @@ test('SAVE DATA really saves: five new games fill five files (each its own progr
   await page.keyboard.press('Escape');
   await expect(page.locator('#pressStart')).toHaveText('PRESS START'); // nothing saved any more
   expect(errors).toEqual([]);
+});
+
+test('departure board: it is hung on the resting title only. Through SAVE DATA and the train shot it keeps the exact place it had; a visitor who starts before it has lit up never sees it appear mid-shot', async ({ browser }, testInfo) => {
+  const sign = (page) => page.evaluate(() => { const s = document.querySelector('.ss'); return s ? { hidden: s.hidden, tf: s.querySelector('.ss-screen').style.transform } : null; });
+  // the board's state at every look while the train shot is on screen, recorded by the page itself (20 looks a second: the
+  // test runner's own clock is too coarse when the whole suite runs at once)
+  const watch = (page) => page.evaluate(() => { window.__looks = []; setInterval(() => { const s = document.querySelector('.ss'); window.__looks.push({ shot: Boolean(document.querySelector('.fall.tunnel')) && document.body.dataset.mode === 'title', hidden: s ? s.hidden : true, tf: s ? s.querySelector('.ss-screen').style.transform : '' }); }, 50); });
+  const shots = async (page) => {
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 30000 });
+    return (await page.evaluate(() => window.__looks)).filter((l) => l.shot);
+  };
+  const phone = testInfo.project.name === 'phone';
+  const open = () => browser.newContext({ reducedMotion: 'no-preference', ...(phone ? { viewport: { width: 390, height: 664 }, isMobile: true, hasTouch: true } : { viewport: { width: 1280, height: 800 } }) });
+  // 1) the board is up on the title: it stays exactly there through SAVE DATA and the shot (the camera pans on a phone)
+  let ctx = await open(); let page = await ctx.newPage();
+  await page.goto('/');
+  await expect(page.locator('.ss.in')).toBeAttached({ timeout: 15000 });
+  await page.waitForTimeout(600);
+  const before = await sign(page);
+  expect(before.hidden).toBe(false);
+  await page.evaluate(() => document.getElementById('pressStart').click());
+  await page.waitForTimeout(1200);
+  expect((await sign(page)).tf).toBe(before.tf);
+  await watch(page);
+  await page.keyboard.press('Enter'); // play the picked file: the train comes
+  const seen = await shots(page);
+  expect(seen.length).toBeGreaterThan(0); // (looked at during the shot at least once: a software-drawn test browser gets few frames while the train fills the screen)
+  for (const s of seen) { expect(s.hidden).toBe(false); expect(s.tf).toBe(before.tf); }
+  await ctx.close();
+  // 2) a visitor who taps before the board has lit up: it is not on the title, and it never shows up during the shot
+  ctx = await open(); page = await ctx.newPage();
+  await page.goto('/');
+  await page.waitForSelector('#pressStart');
+  expect(await page.locator('.ss.in').count()).toBe(0); // (it waits for the fonts and the title to settle)
+  await page.evaluate(() => document.getElementById('pressStart').click());
+  await page.waitForTimeout(700);
+  await watch(page);
+  await page.keyboard.press('Enter');
+  const late = await shots(page);
+  expect(late.length).toBeGreaterThan(0);
+  for (const s of late) expect(s.hidden).toBe(true);
+  // 3) back on the title later, at rest, it is hung again
+  await page.evaluate(() => { location.hash = '#/'; });
+  await expect.poll(() => page.evaluate(() => document.body.dataset.mode), { timeout: 10000 }).toBe('title');
+  await expect.poll(async () => (await sign(page))?.hidden, { timeout: 10000 }).toBe(false);
+  await ctx.close();
+});
+
+test('zoom lock: a real pinch, a double tap, Apple pinch gestures, two-finger moves and Ctrl/Cmd zoom never zoom the site', async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone', 'it makes its own phone and laptop');
+  // (Nov 25, John: "when I zoomed in, it crashed the entire site. I used it on Instagram, I used it on Google... The goal is
+  // to have it where when zooming in, it does not affect the website". Before the lock the same pinch reached 5x.)
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 330.0.0.0' });
+  const page = await ctx.newPage();
+  const errors = errorsOf(page);
+  const cdp = await ctx.newCDPSession(page);
+  for (const route of ['/', '/#/board', '/#/secret', '/#/quick']) {
+    await page.goto(route);
+    await page.waitForTimeout(800);
+    await cdp.send('Input.synthesizePinchGesture', { x: 195, y: 400, scaleFactor: 4, relativeSpeed: 1600, gestureSourceType: 'default' });
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => visualViewport.scale), `pinch on ${route}`).toBe(1);
+  }
+  expect(await page.locator('meta[name="viewport"]').getAttribute('content')).toMatch(/user-scalable=no/);
+  const r = await page.evaluate(() => {
+    const deep = document.querySelector('#page h2, .screen.active *') || document.body;
+    const touch = (n) => { const e = new Event('touchmove', { cancelable: true, bubbles: true }); Object.defineProperty(e, 'touches', { value: { length: n } }); document.body.dispatchEvent(e); return e.defaultPrevented; };
+    const g = new Event('gesturestart', { cancelable: true, bubbles: true }); document.dispatchEvent(g);
+    return { body: getComputedStyle(document.body).touchAction, deep: getComputedStyle(deep).touchAction, button: getComputedStyle(document.querySelector('button')).touchAction,
+      applePinch: g.defaultPrevented, twoFingers: touch(2), oneFinger: touch(1) };
+  });
+  expect(r).toEqual({ body: 'pan-x pan-y', deep: 'pan-x pan-y', button: 'pan-x pan-y', applePinch: true, twoFingers: true, oneFinger: false }); // (one finger still scrolls)
+  await ctx.close();
+  // a laptop: Ctrl/Cmd + wheel (a trackpad pinch) and Ctrl/Cmd + plus, minus, 0 are refused; plain scrolling is not
+  const lp = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  await lp.goto('/#/board');
+  const k = await lp.evaluate(() => {
+    const fire = (el, e) => { el.dispatchEvent(e); return e.defaultPrevented; };
+    return {
+      ctrlWheel: fire(document.body, new WheelEvent('wheel', { deltaY: -100, ctrlKey: true, cancelable: true, bubbles: true })),
+      cmdWheel: fire(document.body, new WheelEvent('wheel', { deltaY: -100, metaKey: true, cancelable: true, bubbles: true })),
+      plainWheel: fire(document.body, new WheelEvent('wheel', { deltaY: 100, cancelable: true, bubbles: true })),
+      ...Object.fromEntries(['=', '+', '-', '0'].map((key) => [`ctrl${key}`, fire(window, new KeyboardEvent('keydown', { key, ctrlKey: true, cancelable: true }))])),
+    };
+  });
+  expect(k).toEqual({ ctrlWheel: true, cmdWheel: true, plainWheel: false, 'ctrl=': true, 'ctrl+': true, 'ctrl-': true, ctrl0: true });
+  expect(errors).toEqual([]);
+  await lp.close();
+});
+
+test('zoom is safe: a pinch zoom on a phone, a tablet or a laptop never reloads the page; it holds the page still (no moving layers, the film goes to its end) and everything carries on when the zoom is let go', async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone', 'it makes its own phone, tablet and laptop');
+  test.setTimeout(120000);
+  /* Nov 22, John: "when on my phone and I zoom in, that artifact automatically restarts or says that it cannot reach".
+     A page the browser kills for memory reloads. Measured in Chromium: on a 3x phone THE PLAN held 18 big layers promoted
+     for motion, 3.4 GB if drawn whole at x3. Budget now: while zoomed, no big layer of the backdrop is promoted for motion. */
+  const moving = async (page, cdp) => { // the big layers promoted for motion, and their area if drawn whole at this zoom (MB)
+    let layers = []; const got = new Promise((r) => cdp.once('LayerTree.layerTreeDidChange', (e) => { layers = e.layers || []; r(); }));
+    await page.evaluate(() => { document.body.style.outline = document.body.style.outline ? '' : '0 solid transparent'; });
+    await Promise.race([got, page.waitForTimeout(2000)]);
+    const { w, h, dpr, z } = await page.evaluate(() => ({ w: innerWidth, h: innerHeight, dpr: devicePixelRatio, z: visualViewport.scale }));
+    let n = 0; let mb = 0;
+    for (const l of layers.filter((x) => x.drawsContent && !x.invisible && x.width * x.height >= w * h * 0.5)) {
+      const r = (await cdp.send('LayerTree.compositingReasons', { layerId: l.layerId }).catch(() => ({}))).compositingReasonIds || [];
+      if (r.some((x) => /nimation|illChange|3D/.test(x))) { n++; mb += (l.width * l.height * dpr * dpr * z * z * 4) / 1048576; }
+    }
+    return { n, mb: Math.round(mb) };
+  };
+  for (const [name, opts] of [
+    ['phone', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }],
+    ['tablet', { viewport: { width: 820, height: 1180 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }],
+    ['laptop at 200%', { viewport: { width: 720, height: 450 }, deviceScaleFactor: 2 }], // (a browser zoom: a smaller window at twice the pixels; a trackpad pinch on top of it)
+  ]) {
+    const ctx = await browser.newContext({ ...opts, reducedMotion: 'no-preference' });
+    const page = await ctx.newPage();
+    let loads = 0; const errors = []; let crashed = false;
+    page.on('load', () => loads++); page.on('pageerror', (e) => errors.push(e.message)); page.on('crash', () => { crashed = true; });
+    await page.route((u) => new URL(u).pathname === '/', async (route) => { // (the page served without its zoom lock)
+      const res = await route.fetch();
+      await route.fulfill({ response: res, body: (await res.text()).replace(/, minimum-scale=1, maximum-scale=1, user-scalable=no/, '') });
+    });
+    await page.goto('/');
+    await page.waitForSelector('#pressStart');
+    await page.waitForTimeout(3500);
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('LayerTree.enable');
+    // (Nov 25: the site now refuses zoom; this backstop is for a zoom nothing could refuse, so the lock is lifted here first,
+    // like a browser that ignores it)
+    const zoom = async (z) => { await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: z }); await page.waitForTimeout(400); };
+    const running = () => page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running' && a.constructor.name === 'CSSAnimation').length);
+    // the title, zoomed in: still, no moving layer
+    await zoom(3);
+    await expect(page.locator('html')).toHaveClass(/\bzoomed\b/);
+    expect(await running(page)).toBe(0);
+    expect(await moving(page, cdp), `${name}: moving layers on the zoomed title`).toEqual({ n: 0, mb: 0 });
+    // a file played while zoomed: the train shot goes straight to its end, THE PLAN is there at once
+    await page.evaluate(() => document.getElementById('pressStart').click());
+    await page.waitForTimeout(900);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 2500 });
+    // (the station fades out and is hidden 0.7 s after its fade: under load that ends later, so wait for it, up to 4 s)
+    await expect.poll(() => moving(page, cdp), { message: `${name}: moving layers on zoomed THE PLAN`, timeout: 4000 }).toEqual({ n: 0, mb: 0 });
+    // let go of the zoom: the page moves again (its loops carry on), and the hidden station has left the compositor
+    await zoom(1);
+    await expect(page.locator('html')).not.toHaveClass(/\bzoomed\b/);
+    await expect.poll(() => running(page)).toBeGreaterThan(0);
+    expect(await page.evaluate(() => getComputedStyle(document.querySelector('.bd-subway')).visibility)).toBe('hidden');
+    // the canvases are held to a pixel budget (touch screens 3.2 megapixels each, desktops 8)
+    const px = await page.evaluate(() => Math.max(...[...document.querySelectorAll('.bd-cam canvas')].map((c) => c.width * c.height)));
+    expect(px).toBeLessThanOrEqual(opts.isMobile ? 3.2e6 : 8e6);
+    expect({ loads, errors, crashed }, name).toEqual({ loads: 1, errors: [], crashed: false });
+    await ctx.close();
+  }
+});
+
+test('opened inside an app (Instagram, LinkedIn, the Claude app...), the turn-your-phone screen says so and offers OPEN IN BROWSER; in Safari it does not', async ({ browser }) => {
+  const phone = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
+  for (const [ua, inApp] of [
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 330.0.0.0', true],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148', true],
+    ['Mozilla/5.0 (Linux; Android 14; Pixel 7 Build/UQ1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/125.0 Mobile Safari/537.36 LinkedInApp', true],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1', false],
+  ]) {
+    const ctx = await browser.newContext({ ...phone, userAgent: ua });
+    const page = await ctx.newPage();
+    await page.goto('/?rotate');
+    await expect(page.locator('.rot')).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('.rot-open')).toHaveCount(inApp ? 1 : 0);
+    await expect(page.locator('.rot-body-text')).toContainText(inApp ? 'This opened inside' : 'Hold it sideways');
+    await page.locator('.rot-ok').click(); // GOT IT always lets anyone carry on upright
+    await expect(page.locator('.rot')).toHaveCount(0, { timeout: 3000 });
+    await ctx.close();
+  }
+});
+
+test('inside Instagram, LinkedIn or Facebook the title has a standing OPEN IN BROWSER: Android goes to the default browser, iPhone to Safari, and if the app keeps the page the link is copied with the one step to take', async ({ browser }) => {
+  // (Nov 25, John: "Let's say someone opens it on LinkedIn or Instagram. Can we have the button redirect them to their default browser? So then they can turn their phone")
+  const phone = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
+  for (const [ua, app, kind] of [
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 330.0.0.0', 'Instagram', 'safari'],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [LinkedInApp]/9.29', 'LinkedIn', 'safari'],
+    ['Mozilla/5.0 (Linux; Android 14; Pixel 7 Build/UQ1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/125.0 Mobile Safari/537.36 Instagram 330.0.0.0 Android', 'Instagram', 'intent'],
+    ['Mozilla/5.0 (Linux; Android 14; Pixel 7 Build/UQ1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/125.0 Mobile Safari/537.36 [FBAN/EMA;FBAV/400.0]', 'Facebook', 'intent'],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1', null, null],
+  ]) {
+    const ctx = await browser.newContext({ ...phone, userAgent: ua });
+    const page = await ctx.newPage();
+    const errors = errorsOf(page);
+    await page.goto('/');
+    await page.waitForSelector('#pressStart');
+    if (!app) { await expect(page.locator('#inapp')).toBeHidden(); await ctx.close(); continue; } // (a real browser: no button)
+    await expect(page.locator('#inappOpen')).toBeVisible();
+    await expect(page.locator('#inappHint')).toContainText(`inside ${app}`);
+    await page.locator('#inappOpen').click();
+    const link = await page.locator('#inappOpen').getAttribute('data-link');
+    if (kind === 'intent') {
+      expect(link).toMatch(/^intent:\/\/[^#]+#Intent;scheme=https;action=android\.intent\.action\.VIEW;/);
+      expect(link).not.toMatch(/package=/); // (the default browser, not one named browser)
+      expect(link).toMatch(/S\.browser_fallback_url=https?%3A/);
+    } else expect(link).toMatch(/^x-safari-https?:\/\//);
+    await expect(page.locator('#inappNote')).toContainText(kind === 'intent' ? 'Open in browser' : 'Open in Safari', { timeout: 4000 }); // (the test browser keeps the page, like an app that refuses; it also refuses the clipboard, so no "copied")
+    await expect(page.locator('#inappNote')).not.toContainText('Link copied');
+    expect(errors).toEqual([]);
+    await ctx.close();
+  }
+  const desk = await browser.newPage();
+  await desk.goto('/');
+  await expect(desk.locator('#inapp')).toBeHidden();
+  await desk.close();
 });
 
 test('no emojis anywhere: no emoji-capable character in the site (phones draw them as emoji tiles), and outbound links use the drawn arrow', async ({ page }) => {
