@@ -555,7 +555,7 @@ p, li { text-wrap: pretty; }
 .case-link, .calling-row a, .save-reset { position: relative; }
 .case-link::after, .calling-row a::after, .save-reset::after { content: ""; position: absolute; inset: -10px -5px; } /* sideways slop stays under half the gap between neighbours */
 /* Vercel web-interface guidelines */
-a, button, [role="button"], [data-nav], .skill { touch-action: manipulation; } /* no double-tap zoom delay */
+a, button, [role="button"], [data-nav], .skill { touch-action: pan-x pan-y; } /* no double-tap zoom (and no delay), no pinch: see the zoom lock in base.css */
 .modal-panel { overscroll-behavior: contain; } /* scrolling a file never drags the page behind it */
 .panel:focus-visible, .stop:focus-visible .stop-card { outline: 3px solid var(--yellow); outline-offset: 4px; } /* clear keyboard focus */
 
