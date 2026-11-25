@@ -16,6 +16,8 @@
    face on the right (a flat face square to the camera, so it needs no perspective): chunky slanted red
    letters sprayed by hand (Nov 19, John: "not a font pasted onto the pillar... like someone shook a
    spray can and wrote it"), see tools/draw-graffiti.mjs. Its own design (no game's logo, mascot or lettering). */
+import { rectToQuad } from './quad.js';
+import { holdSign, signHeld } from './signhold.js';
 
 import { isZoomed } from '../core/zoom.js';
 const NS = 'http://www.w3.org/2000/svg';
@@ -178,18 +180,7 @@ function boardAt(s) {
   const beamY = VP[1] - CEIL_U * d; // the ceiling over it
   return { x, y, w, h, d, flip, quad, box: { l: x, r: x + w, t: beamY, b: y + h * 1.25 } };
 }
-/* a CSS matrix3d that maps the rectangle (0,0)-(w,h) onto the quad p (TL TR BR BL) */
-export function rectToQuad(w, h, p) {
-  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = p;
-  const dx1 = x1 - x2; const dx2 = x3 - x2; const dy1 = y1 - y2; const dy2 = y3 - y2;
-  const sx = x0 - x1 + x2 - x3; const sy = y0 - y1 + y2 - y3;
-  const det = dx1 * dy2 - dx2 * dy1;
-  const g = (sx * dy2 - dx2 * sy) / det;
-  const hh = (dx1 * sy - sx * dy1) / det;
-  const a = x1 - x0 + g * x1; const b = x3 - x0 + hh * x3; const c = x0;
-  const d = y1 - y0 + g * y1; const e = y3 - y0 + hh * y3; const f = y0;
-  return `matrix3d(${[a / w, d / w, 0, g / w, b / h, e / h, 0, hh / h, 0, 0, 1, 0, c, f, 0, 1].map((n) => +n.toFixed(6)).join(',')})`;
-}
+export { rectToQuad }; // (lives in quad.js, shared with the city square)
 /* ---- hung from the roof (Nov 21, John: "the sign is literally just floating in air... connected to the ceiling...
    part of the subway"; and "make the subway station roof lower"). The station's ceiling is now low and lit (the art
    is rebuilt with a panelled ceiling 1.75 m over the eye, see DESIGN.md), so every sign hangs on two short steel rods
@@ -437,9 +428,8 @@ const signHTML = () => `<div class="ss" hidden>
    holdSign(true) is called the moment a file is played and the train shot holds it too; it lets go when the shot ends or
    the visitor leaves the title. A board that was up stays exactly where it was for the shot; a board that was not up
    stays out until the visitor is back on the title. */
-let signHeld = false;
-export function holdSign(on) { signHeld = Boolean(on); }
-const titleAtRest = () => !signHeld && document.body.dataset.mode === 'title' && !document.body.classList.contains('sv-open');
+export { holdSign }; // (the flag lives in signhold.js, so the main code can set it without the station's code)
+const titleAtRest = () => !signHeld() && document.body.dataset.mode === 'title' && !document.body.classList.contains('sv-open');
 /* what the board must keep clear of (their boxes on screen, measured on resize and as the title settles) */
 const SIGN_KEEP_CLEAR = '#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr, #titleRole, #titleHook > span, #pressStart'; // (Nov 22: the role line, the hook and the button were not on this list, so the board could be hung behind them; it was only hidden while the hook's box was see-through) // (the name's letters, not its full-width line)
 let clearOf = [];
@@ -671,7 +661,7 @@ export function mountStation(box, before) {
   const nameEl = document.getElementById('titleName');
   if (nameEl && window.ResizeObserver) new ResizeObserver(later).observe(nameEl); // (and again if the name's box changes)
   // (the mode is watched too: leaving the title lets go of a hold, and coming back to it decides again)
-  new MutationObserver(() => { if (document.body.dataset.mode !== 'title') signHeld = false; later(); }).observe(document.body, { attributes: true, attributeFilter: ['class', 'data-mode'] });
+  new MutationObserver(() => { if (document.body.dataset.mode !== 'title') holdSign(false); later(); }).observe(document.body, { attributes: true, attributeFilter: ['class', 'data-mode'] });
   box.insertBefore(wrap, before);
   // the guardrails, on their own layer above the train (appended last: over its canvases)
   const front = document.createElement('div');

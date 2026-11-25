@@ -1432,8 +1432,27 @@ test('SIDE QUESTS plays THE SQUARE: a painted square with nine screens, the big 
 test('the departure board and the station lights never show off the title (they used to hang faded over the city on THE PLAN)', async ({ page }) => {
   await page.goto('/#/board');
   await expect(page.locator('body')).toHaveAttribute('data-screen', 'board');
+  // (a deep link loads the station after THE PLAN has built in, so wait for its layers to exist)
+  await expect(page.locator('.st-wrap').first()).toBeAttached({ timeout: 10000 });
   await page.waitForTimeout(1200);
-  expect(await page.evaluate(() => getComputedStyle(document.querySelector('.st-wrap')).opacity)).toBe('0');
+  const ops = await page.evaluate(() => [...document.querySelectorAll('.st-wrap')].map((w) => getComputedStyle(w).opacity));
+  expect(ops.length).toBeGreaterThan(0);
+  expect(ops.every((o) => o === '0')).toBe(true); // (every layer of it: the station has a back and a front layer)
+});
+
+test('MY EDGE: the page watermark never jumps while the panels land (it sits beside #page, so their jolt cannot re-anchor it)', async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: 'no-preference' });
+  const page = await ctx.newPage();
+  await page.goto('/#/different');
+  await expect(page.locator('#screen-page > .pg-mark')).toHaveCount(1);
+  await expect(page.locator('#page .pg-mark')).toHaveCount(0);
+  const ys = [];
+  for (let i = 0; i < 14; i++) { // across the whole panel entrance (each panel shakes #page as it lands)
+    ys.push(await page.evaluate(() => Math.round(document.querySelector('.pg-mark').getBoundingClientRect().y)));
+    await page.waitForTimeout(80);
+  }
+  expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(4); // (it used to drop ~270 px and snap back)
+  await ctx.close();
 });
 
 test('departure board: a 3D box in the station\'s perspective; LET US START THE GAME scrolls right to left, the clock shows the visitor\'s time (12-hour), it never covers the title, the calendar, the contact card or the top bar; on phones held upright too (a smaller board further back)', async ({ browser }) => {
