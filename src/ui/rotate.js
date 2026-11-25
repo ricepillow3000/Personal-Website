@@ -67,7 +67,12 @@ function pointAtMenu() {
   const el = document.createElement('div');
   el.className = 'ib-point';
   el.setAttribute('aria-hidden', 'true'); // (the note above says the same in words, for screen readers)
-  el.innerHTML = '<svg viewBox="0 0 60 60"><path d="M10 50 L44 16 M44 16 L22 16 M44 16 L44 38" /></svg><b>TAP ··· UP HERE</b><span>then Open in external browser</span>';
+  /* (Nov 25, John: "make a Persona 5 theme within our design... not so bland... simple and easy"): a chunky arrow with a red
+     misprint, a jagged red burst with cut-out letters, a slanted black strip. One arrow, one label, one line. */
+  const arrow = 'M78 2 L78 46 L63 31 L21 73 L7 59 L49 17 L34 2 Z';
+  el.innerHTML = `<svg class="ib-arrow" viewBox="0 0 86 86"><path class="ib-arrow-red" d="${arrow}" transform="translate(6 6)" /><path class="ib-arrow-main" d="${arrow}" /></svg>
+    <div class="ib-burst"><b class="ib-cut">${cutType('TAP ••• HERE', 23)}</b></div>
+    <span class="ib-step">then Open in external browser</span>`;
   document.body.appendChild(el);
   const off = () => { el.remove(); window.removeEventListener('pointerdown', off, true); };
   setTimeout(() => window.addEventListener('pointerdown', off, true), 300);

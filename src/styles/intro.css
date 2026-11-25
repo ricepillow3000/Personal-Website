@@ -152,13 +152,17 @@
 .rot-ok:active { transform: skew(-12deg) translate(3px, 3px); box-shadow: 2px 2px 0 var(--black); }
 @media (prefers-reduced-motion: reduce) { .rot-body, .rot-arrow, .rot-head { animation: none; } .rot-body { transform: rotate(90deg); } .rot-arrow { stroke-dashoffset: 0; } }
 
-/* pointing at Instagram's ··· menu (top right of the app's own bar, just above the page): the only way out of its browser */
-.ib-point { position: fixed; top: max(6px, env(safe-area-inset-top)); right: 10px; z-index: 400; display: grid; justify-items: end; gap: 2px;
-  pointer-events: none; animation: ibPoint 0.9s ease-in-out infinite alternate; }
-.ib-point svg { width: 54px; height: 54px; overflow: visible; }
-.ib-point path { fill: none; stroke: var(--yellow); stroke-width: 7; stroke-linecap: square; filter: drop-shadow(3px 3px 0 var(--black)); }
-.ib-point b { font-family: var(--f-menu); font-size: 24px; letter-spacing: .06em; padding: 2px 12px; background: var(--yellow); color: var(--black); transform: skew(-10deg); box-shadow: 4px 4px 0 var(--black); }
-.ib-point span { font-weight: 800; font-size: 14px; padding: 3px 10px; background: var(--black); color: var(--white); transform: skew(-10deg); }
-@keyframes ibPoint { to { translate: 4px -6px; } }
-@media (prefers-reduced-motion: reduce) { .ib-point { animation: none; } }
-.reduce-motion .ib-point { animation: none; }
+/* pointing at Instagram's ··· menu (top right of the app's own bar, just above the page): the only way out of its browser.
+   Our look: a chunky white arrow with a red misprint, a jagged red burst of cut-out letters, a slanted black strip. */
+.ib-point { position: fixed; top: max(4px, env(safe-area-inset-top)); right: 6px; z-index: 400; display: grid; justify-items: end; pointer-events: none; }
+.ib-arrow { width: 62px; height: 62px; overflow: visible; margin-right: 2px; animation: ibJab .8s cubic-bezier(.3, 1.6, .5, 1) infinite; }
+.ib-arrow-red { fill: var(--red); }
+.ib-arrow-main { fill: var(--white); stroke: var(--black); stroke-width: 4; stroke-linejoin: miter; }
+.ib-burst { margin-top: -4px; padding: 14px 22px 12px; background: var(--red); rotate: -6deg;
+  clip-path: polygon(0 18%, 9% 0, 30% 12%, 52% 0, 74% 10%, 100% 0, 94% 40%, 100% 70%, 88% 100%, 62% 88%, 38% 100%, 16% 86%, 0 100%, 5% 58%);
+  filter: drop-shadow(5px 5px 0 var(--black)); }
+.ib-cut { display: inline-flex; align-items: baseline; font-size: 30px; line-height: 1; color: var(--white); text-shadow: 2px 2px 0 var(--black); }
+.ib-step { margin-top: 2px; font-weight: 800; font-size: 14px; padding: 4px 12px; background: var(--black); color: var(--white); transform: skew(-12deg) rotate(-3deg); box-shadow: 4px 4px 0 var(--white); }
+@keyframes ibJab { 0%, 55%, 100% { translate: 0 0; } 25% { translate: 7px -9px; } }
+@media (prefers-reduced-motion: reduce) { .ib-arrow { animation: none; } }
+.reduce-motion .ib-arrow { animation: none; }
