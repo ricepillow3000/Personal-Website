@@ -169,6 +169,13 @@
   animation: rays 24s linear infinite;
 }
 @keyframes rays { to { rotate: 360deg; } }
+/* (Nov 25, John: "the old textures and design was fine. The only problem I had that it kind of just cuts off. It looks too
+   blunt"): the stage used to clip the rays along a straight line just above and below the card. They now sit in a window a
+   little taller than the stage that fades them out at its top and bottom; it does not turn, so the fade stays level */
+.pg-rays-win { position: absolute; left: 0; right: 0; top: -70px; bottom: -70px; z-index: -1; pointer-events: none; overflow: hidden;
+  -webkit-mask: linear-gradient(to bottom, transparent, #000 34%, #000 66%, transparent); mask: linear-gradient(to bottom, transparent, #000 34%, #000 66%, transparent); }
+/* the faded tails reach under the title and the buttons, never over them */
+#page .page-head:has(~ .card-stage), #page .card-stage ~ .contact-btns { position: relative; z-index: 2; }
 
 /* ---------- phones ---------- */
 @media (max-width: 760px) {
@@ -195,7 +202,7 @@ body.reduce-motion :is(.pg-mark span, .wanted-slot, .poster-grade, .crew-star, .
 body.reduce-motion .panel::before, body.reduce-motion .crew-m b::after { animation: none !important; }
 
 /* the rays stay inside the page (no sideways overflow on phones) */
-.card-stage { overflow: clip; padding: 30px 0; margin: -30px 0; }
+.card-stage { overflow-x: clip; overflow-y: visible; padding: 30px 0; margin: -30px 0; } /* (sideways only: the rays' window fades them out top and bottom) */
 
 /* side quests: one big number + one reward line per stop (details live in Quick View) */
 .stop-stat { display: flex; align-items: center; gap: 12px; margin: 4px 0 10px; }
