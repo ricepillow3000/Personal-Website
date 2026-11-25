@@ -306,6 +306,8 @@ body.reduce-motion .mn-burst { animation: none; }
 .toast b { font-family: var(--f-head); font-size: 22px; font-weight: 400; letter-spacing: 1px; }
 .toast.out { animation: toastOut .26s cubic-bezier(.5,0,.9,.4) forwards; }
 @keyframes toastIn { from { transform: skew(var(--skew)) translateX(120%); } }
+@keyframes toastUp { from { transform: skew(var(--skew)) translateY(160%); } }
+@keyframes toastDown { to { transform: skew(var(--skew)) translateY(160%); opacity: 0; } }
 @keyframes toastOut { 30% { transform: skew(var(--skew)) translateX(-12px); } to { transform: skew(var(--skew)) translateX(140%); } }
 
 .shake { animation: shake .3s; }
@@ -568,8 +570,11 @@ a, button, [role="button"], [data-nav], .skill { touch-action: pan-x pan-y; } /*
   kbd { display: none; } /* keyboard hints mean nothing on a phone */
 }
 @media (max-width: 760px) {
-  /* achievement pop-ups sit under the top bar and never cover a card for long; tap to dismiss */
-  .toasts { top: 58px; bottom: auto; }
+  /* achievement pop-ups sit at the bottom left, clear of the NEXT chip (bottom right), and slide up (Nov 25 pain-point pass:
+     under the top bar they landed on what a visitor reads first, a file's title or the stop map); taps pass through */
+  .toasts { top: auto; bottom: max(16px, env(safe-area-inset-bottom, 0px)); left: max(12px, env(safe-area-inset-left, 0px)); right: auto; justify-items: start; max-width: 58vw; }
+  .toast { animation-name: toastUp; }
+  .toast.out { animation-name: toastDown; }
   .toast { padding: 5px 12px; box-shadow: 4px 4px 0 var(--yellow); pointer-events: none !important; } /* taps pass straight through to whatever is under it, like a close button */
   .toast small { font-size: 12px; }
   .toast b { font-size: 17px; }

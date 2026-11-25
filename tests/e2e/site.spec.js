@@ -1802,6 +1802,22 @@ test('inside Instagram, LinkedIn or Facebook the title has a standing OPEN IN BR
   await desk.close();
 });
 
+test('pain-point pass: a slim calling card, phone pop-ups at the bottom left (never over a file title), and Tap wording on touch screens', async ({ page }, testInfo) => {
+  const phone = testInfo.project.name === 'phone';
+  await page.goto('/#/contact');
+  const card = await page.locator('#ccard').boundingBox();
+  expect(card.height / card.width).toBeLessThan(phone ? 0.6 : 0.4); // (it was a 1.62 box with only a name in it)
+  await page.goto('/#/skills');
+  await expect(page.locator('#page .page-sub, #page p').first()).toBeVisible();
+  await expect(page.locator('#page')).toContainText(phone ? 'Tap a skill' : 'Point at a skill');
+  if (!phone) return;
+  await page.evaluate(() => window.john.run()); // (an achievement: its pop-up appears)
+  const t = await page.locator('.toast').first().boundingBox();
+  const vh = page.viewportSize().height;
+  expect(t.y).toBeGreaterThan(vh * 0.6); // at the bottom, clear of the top bar and a file's title
+  expect(t.x).toBeLessThan(40); // the left side: the NEXT chip owns the bottom right
+});
+
 test('no emojis anywhere: no emoji-capable character in the site (phones draw them as emoji tiles), and outbound links use the drawn arrow', async ({ page }) => {
   const files = [];
   const walk = (d) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) walk(p); else if (/\.(js|css|html)$/.test(f)) files.push(p); } };
