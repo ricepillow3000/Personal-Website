@@ -1,55 +1,43 @@
-# John Nguyen — Interactive Resume
+# Personal Website
 
-![tests](https://github.com/ricepillow3000/ricepillow3000.github.io/actions/workflows/ci.yml/badge.svg)
+![tests](https://github.com/ricepillow3000/Personal-Website/actions/workflows/ci.yml/badge.svg)
 
-An original, game-style portfolio with a street-art look. Press start and you land on a
-**heist board**: two pinned case files (the projects), pinned skill tags, and red string
-connecting every skill to the project that proves it. Hover (or tap) a skill to light its strings. Every recruiter shortcut still works: a one-page
-**Quick View** and the **standard PDF** are always one click (or the `Q` key) away.
+Hi there! This is my resume, but I turned it into a game.
 
-Live: https://jnguyen-ai-engineer.vercel.app/ · One-pager: https://jnguyen-ai-engineer.vercel.app/#/quick (also mirrored at https://ricepillow3000.github.io/)
+I'm John, a student at Georgia State University in Atlanta. Regular resumes always felt boring to me, just plain black text on a white page that nobody remembers. So I built one you can actually play.
 
-## Design rules
-All design rules, decisions and lessons live in [`DESIGN.md`](DESIGN.md). Read it before changing anything visual, motion, sound or on-screen copy ([`CLAUDE.md`](CLAUDE.md) makes this mandatory for Claude Code).
+## Play it
 
-## Edit the content
-All text lives in two files — no other code needs to change:
+**https://jnguyen-ai-engineer.vercel.app/**
 
-| File | What it holds |
-|---|---|
-| `src/data/resume.js` | Name, links, education, projects ("missions"), skill ranks + which project each skill links to (`uses`), side quests, fun facts, HUD bars |
-| `src/data/companies.js` | `?company=` personalization (a pinned note + skill / project order per company) |
+In a hurry? The one-page version is right here: https://jnguyen-ai-engineer.vercel.app/#/quick
 
-The PDF download is `public/assets/John_Nguyen_Resume.pdf` — replace that one file to update it.
-Never put a phone number in the site files; a test fails the build if one appears.
+## What you will find
 
-## Personal links for applications
-`https://jnguyen-ai-engineer.vercel.app/?company=Google` pins a note for that company on the board and
-reorders skills and projects for it. Unknown names still get the greeting. Combine with a
-deep link: `/?company=Google#/missions`.
+- **A title screen.** Press start to begin.
+- **A plan board**, like the kind you see in heist movies. It shows my two projects and the skills each one proves.
+- **Short chapters** about my projects, my skills, my jobs, and me. You ride a train from stop to stop.
+- **A one-page resume and a PDF**, always one tap away.
+- **A few hidden secrets.** Find them all and you unlock the director's cut.
 
-## Run it
-```bash
-npm install
-npm run dev        # local dev server
-npm test           # build + Playwright tests (desktop + phone)
-npm run site       # build and copy the site to the repo root (GitHub Pages serves main as-is)
-```
+Small hint: I'm genuinely scared of bees. Keep an eye out.
 
-## Controls
-Mouse/touch · Tab or arrows/WASD · Enter · Esc back · `1–2` open a case file · `Q` Quick View · `F` flip the GPA star ·
-`M` sound · game controllers work too.
+## How I built it
 
-## Optional
-- **Analytics (optional, cookie-free):** create a GoatCounter site and put its code in `analytics.goatcounter`.
+I didn't type every line myself. I directed a team of AI helpers, kind of like a manager guiding a crew, and I checked their work along the way.
 
-## How it's built
-Vite + vanilla JavaScript modules + GSAP. The spray-painted wall, the red string and the
-page rip are drawn in code (inline SVG + CSS), so the title screen paints without
-downloading any images. Every sound effect and the jazzy background theme are
-synthesized live with Web Audio (no audio files). CI runs the Playwright
-suite and Lighthouse budgets on every push. GitHub Pages deploys from the `main` branch
-as-is: `npm run site` builds and copies the site to the repo root, and that gets committed.
+Then I tested every click. Before any change goes live, over 150 automatic checks make sure nothing broke, on computers and on phones.
 
-The visual style blends pop art, street art and high-contrast anime UI, but every screen,
-graphic and sound here is original.
+Every picture, sound, and song on the site was made for this project. The look is inspired by bold anime video game menus, but nothing is copied.
+
+## Works everywhere
+
+Computers, phones, and tablets all work. The sound stays off until you turn it on. If moving screens bother you, there is a setting that calms the motion down.
+
+## Want to change something?
+
+All the words on the site live in one file, `src/data/resume.js`. The design rules live in [`DESIGN.md`](DESIGN.md).
+
+## Say hi
+
+If you want to build something together, or you just want to talk tech, find me on [LinkedIn](https://www.linkedin.com/in/john-n-7978b72b8). I'm always happy to meet new people.
