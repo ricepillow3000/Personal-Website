@@ -123,7 +123,7 @@ body.sv-open { overflow: hidden; }
 .sv-new { font-family: var(--f-head); font-size: clamp(24px, 4.4vh, 46px); line-height: 1; color: var(--white); white-space: nowrap;
   filter: drop-shadow(.05em 0 0 var(--black)) drop-shadow(-.05em 0 0 var(--black)) drop-shadow(0 .05em 0 var(--black)) drop-shadow(0 -.05em 0 var(--black)); }
 .sv-new .ct.box { background: var(--black); color: var(--white); }
-.sv-hint { font: 400 clamp(12px, 1.8vh, 16px)/1 var(--f-menu); letter-spacing: 2px; color: #3E3E3A; }
+.sv-hint { font: 400 clamp(12px, 1.8vh, 16px)/1 var(--f-menu); letter-spacing: 2px; color: #3E3E3A; white-space: nowrap; } /* (EMPTY FILE wrapped onto two lines on phones) */
 .sv-slot.on .sv-hint { color: var(--white); }
 /* (Nov 22: both judges on the save screen: the right two thirds of every file was bare paper, "empty vector trapezoids".
    An empty file is stamped NO DATA where a played file carries its date and progress: a rubber stamp, slanted, pale ink.) */

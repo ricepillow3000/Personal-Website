@@ -21,13 +21,13 @@ export default function system() {
           <div class="row">Standard PDF <a class="btn" data-nav href="${esc(resume.links.pdf)}" download data-track="pdf_click">↓ Download</a></div>
         </section>
         <section class="sys jag light" data-in>
-          <h3>SETTINGS</h3>
+          <h3>SOUND &amp; MOTION</h3>
           <div class="row">Sound <button class="toggle" type="button" data-nav data-toggle="sound" aria-pressed="${s.sound ? 'true' : 'false'}">${s.sound ? 'ON' : 'OFF'}</button></div>
           <div class="row"><label for="musicVol">Music volume</label><input id="musicVol" type="range" min="0" max="1" step="0.05" value="${Number(s.music) || 0}" data-nav></div>
           <div class="row">Reduce motion <button class="toggle" type="button" data-nav data-toggle="motion" aria-pressed="${reduce ? 'true' : 'false'}">${reduce ? 'ON' : 'OFF'}</button></div>
         </section>
         <section class="sys jag light" data-in style="grid-column:1/-1">
-          <h3>ACHIEVEMENTS</h3>
+          <h3>SECRETS</h3>
           ${listMarkup()}
           ${allFound() ? `<p class="ach-cut"><a class="btn" data-nav href="#/secret">★ OPEN THE DIRECTOR'S CUT</a></p>` : ''}
         </section>

@@ -287,3 +287,7 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 #pressStart.boarding { animation: boarding .5s var(--ease-snap) infinite alternate; }
 @keyframes boarding { to { transform: skew(var(--skew)) scale(.96); filter: brightness(1.25); } }
 @media (prefers-reduced-motion: reduce) { #pressStart.boarding { animation: none; opacity: .8; } }
+
+/* contact buttons (Nov 25 pain-point pass): LinkedIn and email carry the same drawn marks as the HUD, not the letters "in";
+   the marks are cut out of the button's text colour, so they read in every state (normal, hover, focus) */
+.contact-btns .btn-ico { flex: none; vertical-align: -3px; }

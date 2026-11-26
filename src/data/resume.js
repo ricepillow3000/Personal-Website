@@ -62,7 +62,7 @@ export const resume = {
         ['SETUP', 'My dad kept asking one question. Which stock can I actually rely on and hold for years? A lot of people ask the same thing.'],
         ['TENSION', 'Nobody can promise that answer, and a risk tool that guesses is worse than none. Every number had to come from live data, checked a second way.'],
         ['PIVOT', 'Steady stocks were only half the plan. People also want fast-growing stocks, so I paired each one with a steady stock that carries the same share of the risk.'],
-        ['LESSON', 'A student project can meet a professional standard if every number is checked twice.']
+        ['LESSON', 'Check every number twice, and people can trust the answer.']
       ],
       objectives: [
         'Designed and launched a public web app that estimates how much a portfolio of stocks, ETFs, FX or futures could lose in a bad year.',
@@ -70,11 +70,11 @@ export const resume = {
         'Created 300+ test cases and a live-data audit to cross-verify the risk engine.',
         'Directed AI coding agents in a three-role workflow (orchestrator, researcher, builder) to write the Python, every change gated by lint, a security scan and three test suites.'
       ],
-      loot: ['727 of 728 passed, 1 skipped', '7,700+ lines of Python', '6 GitHub Actions workflows', '5-check validation gate'],
+      loot: ['727 of 728 checks passed, 1 skipped', '7,700+ lines of Python', '6 GitHub Actions workflows', '5 checks on every change'],
       // word for word from the PDF resume (Quick View shows these)
       resume: [
         'Designed and launched a public web app to estimate how a portfolio of stocks, ETFs, FX, or futures could lose in a bad year, using 10,000 simulated years of live data from Yahoo Finance',
-        'Created more than 300 test cases and a live-data audit to cross-verify risk engine results; in October 2026 runs, 727 of 728 passed, 1 skipped',
+        'Created more than 300 test cases and a live-data audit to cross-verify risk engine results; in October 2026 runs, 727 of 728 checks passed, 1 skipped',
         'Directed AI coding agents in a three-role workflow (orchestrator, researcher, builder) to write 7,700+ lines of Python, validated by five checks: lint, security scan, and three test suites, across six GitHub Actions workflows'
       ],
       live: 'https://summer-2026-quant-project-risk-engine-blueprint-production.up.railway.app/',
@@ -118,7 +118,7 @@ export const resume = {
      Ranks 1–10, or 'MAX'. Each one is backed by proof. `uses` = which projects the
      red string on the Heist Board connects it to. */
   skills: [
-    { id: 'agents', name: 'AI Agents (Claude Code)', rank: 7, proof: 'Both apps and this site, built by a crew I direct', uses: ['meliona'] },
+    { id: 'agents', name: 'AI Agents (Claude Code)', rank: 7, proof: 'Both apps and this site, built by a crew I direct', uses: ['meliona', 'arcas'] },
     { id: 'testing', name: 'Testing / QA', rank: 6, proof: 'Every app ships with its own test suite', uses: ['meliona', 'arcas'] },
     { id: 'python', name: 'Python', rank: 5, proof: 'Meliona’s engine · ARCAS backend', uses: ['meliona', 'arcas'] },
     { id: 'aieval', name: 'AI Evaluation', rank: 8, proof: 'Audits the engine against live market data', uses: ['meliona'] },
@@ -181,7 +181,7 @@ export const resume = {
 
   funFacts: ['I play drums (200+ BPM on a good day).', 'I love Pierce The Veil.', 'Genuinely scared of bees and wasps.'],
 
-  skillsLine: ['Python', 'JavaScript', 'Flask', 'Docker', 'Git', 'GitHub Actions (CI/CD)', 'Claude Code (multi-agent workflows)', 'AI Evaluation'],
+  skillsLine: ['Python', 'JavaScript', 'Flask', 'Docker', 'Git', 'GitHub Actions (CI/CD)', 'Claude Code (multi-agent workflows)', 'AI Evaluation', 'Testing / QA'],
 
   analytics: { goatcounter: '' } // e.g. 'johnnguyen' → https://johnnguyen.goatcounter.com/count
 };
