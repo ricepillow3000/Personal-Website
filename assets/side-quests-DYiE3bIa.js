@@ -1,4 +1,4 @@
-import{a as p,b as h,g as n,s as f,e as r}from"./main-C9JZSz4z.js";import{b as m,w as $,h as v}from"./common-DDsF8TIb.js";function g(){const i=p.sideQuests.length;let c="M50 0";for(let s=0;s<i;s++)c+=` C ${s%2?90:10} ${s*100+35}, ${s%2?10:90} ${s*100+65}, 50 ${s*100+100}`;return{title:"SIDE QUESTS",html:`${$("ROUTE")}${m}${v("SIDE QUESTS","Not everything I learned came from a keyboard.")}
+import{a as p,b as h,g as n,s as f,e as r}from"./main-DIpvbAX5.js";import{b as m,w as $,h as v}from"./common-TrjWRssN.js";function g(){const i=p.sideQuests.length;let c="M50 0";for(let s=0;s<i;s++)c+=` C ${s%2?90:10} ${s*100+35}, ${s%2?10:90} ${s*100+65}, 50 ${s*100+100}`;return{title:"SIDE QUESTS",html:`${$("ROUTE")}${m}${v("SIDE QUESTS","Not everything I learned came from a keyboard.")}
       <div class="route" style="--n:${i}">
         <svg class="route-line" viewBox="0 0 100 ${i*100}" preserveAspectRatio="none" aria-hidden="true">
           <path class="route-under" d="${c}" pathLength="1"/><path class="route-dash" d="${c}"/>

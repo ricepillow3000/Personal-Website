@@ -851,7 +851,7 @@ $('#achBtn').addEventListener('click', () => {
   sfx('select');
   openModal(`<div class="dossier"><button class="modal-x" type="button" data-close aria-label="Close">✕</button>
     <header class="dossier-head"><p class="dossier-code">SECRETS · ${count()}/${ACHIEVEMENTS.length} FOUND</p>
-    <h2 class="dossier-title ransom" id="modalTitle" data-ransom="ACHIEVEMENTS">ACHIEVEMENTS</h2></header>
+    <h2 class="dossier-title ransom" id="modalTitle" data-ransom="SECRETS">SECRETS</h2></header>
     ${listMarkup()}
     ${allFound()
     ? `<p class="ach-cut"><a class="btn" href="#/secret" data-cut>★ OPEN THE DIRECTOR'S CUT</a></p>`
