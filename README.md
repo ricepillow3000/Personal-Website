@@ -10,7 +10,7 @@ I'm John, a student at Georgia State University in Atlanta. Regular resumes alwa
 
 **https://jnguyen-ai-engineer.vercel.app/**
 
-In a hurry? The one-page version is right here: https://jnguyen-ai-engineer.vercel.app/#/quick
+In a hurry? The one-page version is right here, https://jnguyen-ai-engineer.vercel.app/#/quick
 
 ## What you will find
 
@@ -20,7 +20,7 @@ In a hurry? The one-page version is right here: https://jnguyen-ai-engineer.verc
 - **A one-page resume and a PDF**, always one tap away.
 - **A few hidden secrets.** Find them all and you unlock the director's cut.
 
-Small hint: I'm genuinely scared of bees. Keep an eye out.
+Small hint, I'm genuinely scared of bees. Keep an eye out.
 
 ## How I built it
 
