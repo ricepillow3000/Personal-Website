@@ -1846,7 +1846,8 @@ test('easy for anyone ("assume every recruiter is drunk"): plain words under PRE
   const quick = page.locator('.quick-link');
   await expect(quick).toContainText('1-page resume');
   const q = await quick.boundingBox();
-  expect(q.height).toBeGreaterThanOrEqual(44); // a button, not small print
+  expect(q.height).toBeGreaterThanOrEqual(phone ? 36 : 44); // a button, not small print
+  if (phone) expect(parseFloat(await quick.evaluate((a) => getComputedStyle(a, '::after').height))).toBeGreaterThanOrEqual(44); // a finger still gets 44px+
   expect(q.width).toBeGreaterThan(200);
   // a first visit: one tap on ANY file starts the game (no pick-then-tap-again)
   await start.click();

@@ -297,3 +297,9 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
 /* contact buttons (Nov 25 pain-point pass): LinkedIn and email carry the same drawn marks as the HUD, not the letters "in";
    the marks are cut out of the button's text colour, so they read in every state (normal, hover, focus) */
 .contact-btns .btn-ico { flex: none; vertical-align: -3px; }
+/* upright phones: the plain-words line and the 1-page button (Nov 28) stay compact so the title is no taller than it
+   was, and the departure board keeps its clear spot (fingers still get 46px from the hit slop) */
+@media (max-width: 559px) {
+  .press-start::after { font-size: 12px; margin-top: -4px; }
+  .quick-link { margin-top: 10px; min-height: 38px; padding: 2px 14px; font-size: 19px; }
+}
