@@ -431,7 +431,7 @@ const signHTML = () => `<div class="ss" hidden>
 export { holdSign }; // (the flag lives in signhold.js, so the main code can set it without the station's code)
 const titleAtRest = () => !signHeld() && document.body.dataset.mode === 'title' && !document.body.classList.contains('sv-open');
 /* what the board must keep clear of (their boxes on screen, measured on resize and as the title settles) */
-const SIGN_KEEP_CLEAR = '#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr, #titleRole, #titleHook > span, #pressStart'; // (Nov 22: the role line, the hook and the button were not on this list, so the board could be hung behind them; it was only hidden while the hook's box was see-through) // (the name's letters, not its full-width line)
+const SIGN_KEEP_CLEAR = '#titleName .rl, #hudDate .hud-cal, #contactCard, .hud-tr, #titleRole, #titleHook, #pressStart'; // (Nov 22: the role line, the hook and the button were not on this list, so the board could be hung behind them; it was only hidden while the hook's box was see-through) // (the name's letters, not its full-width line)
 let clearOf = [];
 function measureClear() {
   if (!titleAtRest()) return;
