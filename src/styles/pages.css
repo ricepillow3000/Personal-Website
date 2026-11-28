@@ -361,3 +361,8 @@ body.reduce-motion .next-ep.lit .ne-go { animation: none; }
   .cd-name { font-size: 26px; }
   .crew-side { justify-items: start; }
 }
+/* fewer words on the stop map (Nov 28, John: "clutters too much with words... the train part too"): only YOUR station's
+   name shows (on its yellow tag under the ticket); the other five stay for screen readers and the tickets' tooltips.
+   STOP 03 / 06 is gone too, the numbered tickets already say it. */
+.stop-strip .ss-stop:not(.now) .ss-name { display: none; }
+.stop-strip .ss-label { display: none; }
