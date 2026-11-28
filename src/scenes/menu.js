@@ -1,7 +1,7 @@
 import { gsap } from 'gsap';
 import { $, esc, reducedMotion } from '../core/util.js';
 import { store } from '../core/store.js';
-import { menuTeasers } from '../data/script.js';
+import { PLAIN } from '../data/script.js';
 import { sfx } from '../audio/audio.js';
 import { scramble } from '../fx/kinetic.js';
 import { cutType } from '../ui/cuttype.js';
@@ -79,7 +79,7 @@ export function createMenu(go) {
     // the picked item's number in big cut-out digits, and its name huge at the bottom
     num.innerHTML = [...String(i + 1).padStart(2, '0')].map((d, k) => `<span class="mn-d mn-d${k}">${d}</span>`).join('');
     big.innerHTML = cutType(MENU_ITEMS[i].label, i + 61, { mixCase: true });
-    scramble(teaser, menuTeasers[b.dataset.go] || '', { duration: 0.3 });
+    scramble(teaser, PLAIN[b.dataset.go] || '', { duration: 0.3 });
     if (!reducedMotion()) {
       gsap.fromTo(big, { x: 40, scale: 1.12, opacity: 0.4 }, { x: 0, scale: 1, opacity: 1, duration: 0.22, ease: 'back.out(2.4)', overwrite: true });
       gsap.fromTo(num, { rotation: -16, scale: 1.25 }, { rotation: 0, scale: 1, duration: 0.24, ease: 'back.out(3)', overwrite: true });

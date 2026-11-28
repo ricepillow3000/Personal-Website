@@ -1,6 +1,8 @@
 /* Short UI copy. */
 
 /* What the hover bubble on the diagonal [MENU] says. */
+/** Plain words for each chapter (Nov 28): the one small tag on the picked chapter (THE PLAN) and under the menu's big name. */
+export const PLAIN = { stats: 'about me', missions: 'projects', skills: 'what I can do', 'side-quests': 'my jobs', different: 'why me', contact: 'reach me', system: 'sound & motion' };
 export const menuTeasers = {
   missions: 'Two projects · the story behind each',
   skills: 'Nine skills, each one proved',

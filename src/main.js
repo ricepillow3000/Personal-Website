@@ -319,8 +319,7 @@ function renderProgress(celebrate) {
   chip.innerHTML = p.all
     ? '<span class="pc-label">PROGRESS</span> <span class="pc-all">ALL CLEAR!</span>'
     : `<span class="pc-label">PROGRESS</span> <span class="pc-count"><b>${p.done}</b>/${p.total}</span>
-       <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>
-       <span class="pc-hint" aria-hidden="true">6 chapters + 2 project visits</span>`;
+       <span class="pc-bar" aria-hidden="true">${p.items.map((i) => `<i class="${i.done ? 'on' : ''}"></i>`).join('')}</span>`;
   if (celebrate && !reducedMotion()) gsap.fromTo(chip, { scale: 1.6, rotation: -12 }, { scale: 1, rotation: -3, duration: 0.5, ease: 'elastic.out(1.4, .4)' });
   else if (lastDone !== null && p.done > lastDone) rollIn(chip.querySelector('.pc-count b')); // one more case rolls in
   lastDone = p.done;

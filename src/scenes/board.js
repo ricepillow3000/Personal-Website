@@ -1,7 +1,7 @@
 import { gsap } from 'gsap';
 import { MENU_ITEMS } from './menu.js';
 import { resume } from '../data/resume.js';
-import { menuTeasers, chapterLoot } from '../data/script.js';
+import { chapterLoot, PLAIN } from '../data/script.js';
 import { esc, reducedMotion } from '../core/util.js';
 import { ransom, NAME_SEED } from '../ui/ransom.js';
 import { cutType } from '../ui/cuttype.js';
@@ -28,7 +28,7 @@ export const CHAPTERS = ['stats', 'missions', 'skills', 'side-quests', 'differen
 export const STATIONS = { stats: 'YONGEN-JAYA', missions: 'SHIBUYA', skills: 'AOYAMA-ITCHOME', 'side-quests': 'SHINJUKU', different: 'AKIHABARA', contact: 'KICHIJOJI' };
 /** Plain words for each chapter (Nov 28, a LinkedIn reviewer: "assume every recruiter is drunk"): the game
     names stay, and a small tag says in everyday words what is inside. */
-export const PLAIN = { stats: 'about me', missions: 'projects', skills: 'what I can do', 'side-quests': 'my jobs', different: 'why me', contact: 'reach me' };
+
 const label = (id) => MENU_ITEMS.find((m) => m.id === id)?.label || id.toUpperCase();
 const no = (i) => String(i + 1).padStart(2, '0');
 
@@ -87,7 +87,6 @@ function planMarkup(ctx) {
       <a class="plan-continue" href="#/stats" data-nav data-board-item>
         <small class="pcn-kicker"></small>
         <span class="pcn-btn"><b class="pcn-title ransom"></b><i class="pcn-arrow" aria-hidden="true"></i></span>
-        <span class="pcn-tease"></span>
       </a>
     </div>
   </div>`;
@@ -116,7 +115,6 @@ export function createBoard(root, ctx) {
     ransom(num, no(i), i + 21);
     ransom(title, label(id), i + 5);
     title.removeAttribute('translate');
-    cont.querySelector('.pcn-tease').textContent = menuTeasers[id] || '';
     loot.innerHTML = (chapterLoot[id] || []).map((t, k) => `<li class="lt lt${k}">${esc(t)}</li>`).join('');
     cont.setAttribute('href', `#/${id}`);
     cont.querySelector('.pcn-kicker').textContent = id !== next
