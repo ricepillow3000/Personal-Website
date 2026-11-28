@@ -17,7 +17,7 @@ The project skill `.claude/skills/design-bible/SKILL.md` enforces the same thing
 
 ## Working style
 
-- Commits and pull requests are authored as John Nguyen. No Co-Authored-By, Claude-Session or "Generated with Claude" lines (Nov 28, John).
+- Commits and pull requests are authored as John Nguyen. About half the commits (every other one) end with `Co-Authored-By: Claude <noreply@anthropic.com>`; never a Claude-Session link or a "Generated with/by Claude Code" line, in commits or pull requests (Nov 28, John).
 
 - Do the work automatically; prove it works (see DESIGN.md section 12); commit; publish the preview with every asset and verify the published copy.
 - Report with a short summary a 6th grader can follow, plus one simple visual.
