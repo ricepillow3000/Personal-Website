@@ -23,11 +23,17 @@
 }
 .press-start:hover, .press-start:focus-visible { background: var(--black); color: var(--white); box-shadow: 8px 8px 0 var(--white); animation: none; }
 @keyframes pulse { 0%, 46%, 100% { transform: skew(var(--skew)); } 14% { transform: skew(var(--skew)) scale(1.06); } }
-.quick-link {
-  display: inline-block; margin-top: 22px; padding: 6px 0; font-weight: 700; font-size: 17px;
-  text-underline-offset: 4px; text-shadow: 1px 1px 0 var(--black);
-  background: var(--black); box-shadow: -8px 0 0 var(--black), 8px 0 0 var(--black); /* (solid behind the words: the wall's star outline struck through them) */
+.press-start::after { /* plain words under the game words (Nov 28, a LinkedIn reviewer: "assume every recruiter is drunk") */
+  content: attr(data-sub); display: block; margin-top: -2px;
+  font-family: var(--f-ui); font-style: italic; font-weight: 800; font-size: clamp(14px, 1.3vw, 18px); letter-spacing: .06em; line-height: 1.2; text-transform: uppercase;
 }
+.quick-link { /* the fast path is a real button, not small print (Nov 28, same review) */
+  display: inline-flex; align-items: center; gap: .45em; margin-top: 22px; min-height: 48px; padding: 6px 20px;
+  font-family: var(--f-menu); font-size: clamp(20px, 1.9vw, 26px); letter-spacing: .06em; line-height: 1; text-decoration: none;
+  color: var(--white); background: var(--black); transform: skew(var(--skew)); box-shadow: 5px 5px 0 var(--white), 5px 5px 0 2px var(--black);
+}
+.quick-link .ql-ask { color: var(--yellow); }
+.quick-link:hover, .quick-link:focus-visible { background: var(--red-ink); }
 
 /* the way out of an app's built-in browser (only there): a hint, the button, and the one step if the app keeps the page */
 .inapp { margin-top: 16px; display: grid; justify-items: start; gap: 8px; }
@@ -252,7 +258,7 @@ body.reduce-motion .dossier-head::before, body.reduce-motion .dossier-head::afte
   .title-role { margin-bottom: 6px; font-size: 15px; }
   .title-hook { margin-bottom: 12px; font-size: 14px; }
   .press-start { font-size: 26px; padding: 3px 24px; }
-  .quick-link { margin-top: 8px; font-size: 15px; }
+  .quick-link { margin-top: 12px; font-size: 19px; min-height: 44px; padding: 4px 14px; }
 }
 /* very narrow phones: the Quick View buttons keep to one row */
 /* short labels where the bar would touch the top row (phones, and laptops under 1100px since the contact plate) */

@@ -218,6 +218,13 @@ body[data-mode="board"] .hud-tl { display: none; } /* the tiny rotated status ta
 .pl-word { position: relative; z-index: 2; display: inline-flex; align-items: baseline; white-space: nowrap;
   text-shadow: .07em .07em 0 var(--black), -.04em -.04em 0 var(--black), .04em -.04em 0 var(--black), -.04em .04em 0 var(--black), .04em .04em 0 var(--black), 0 .05em 0 var(--black); } /* a thick ink edge: reads on the grey band too */
 .pl-no { position: relative; z-index: 2; align-self: center; margin-right: .22em; font: 400 .36em/1 var(--f-menu); letter-spacing: 1px; color: var(--white); background: var(--black); border: 2px solid var(--white); padding: .22em .3em .1em; transform: skew(var(--skew)); }
+.pl-say { /* plain words beside the game name (Nov 28: "assume every recruiter is drunk") */
+  position: relative; z-index: 2; align-self: center; margin-left: .5em; padding: .28em .5em; white-space: nowrap;
+  font-family: var(--f-ui); font-style: italic; font-weight: 800; font-size: max(13px, .36em); letter-spacing: .04em; line-height: 1; text-transform: uppercase;
+  color: var(--black); background: var(--white); transform: skew(-12deg); box-shadow: 3px 3px 0 var(--black);
+}
+.pl-say { display: none; } /* one tag at a time (Nov 28, John: "too much words going on"): only the picked chapter says its plain words */
+.pl-item.on .pl-say { display: inline-block; background: var(--yellow); }
 .pl-item.on .pl-no { color: var(--black); background: var(--yellow); border-color: var(--black); }
 .ct { display: inline-block; font-size: calc(var(--s) * 1em); transform: translateY(var(--y)) rotate(var(--r)); margin-right: .015em; }
 .ct.f0 { font-family: var(--f-head); }
@@ -343,3 +350,8 @@ body[data-mode="board"] .hud-tl { display: none; } /* the tiny rotated status ta
 }
 
 @media (max-width: 1100px) and (min-width: 761px) { .lt { font-size: clamp(16px, min(1.7vw, 3vh), 28px); } } /* (the INSIDE box clears the big number on ~1000px screens) */
+/* tiny phones: the plain-word tags (Nov 28) need the room beside the first two chapters, so the number box steps up a little smaller */
+@media (max-width: 380px) {
+  .cmd-right { scale: .78; transform-origin: top right; top: -2%; }
+  .pl-say { font-size: 11px; padding: .24em .4em; margin-left: .35em; }
+}

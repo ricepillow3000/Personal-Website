@@ -75,7 +75,7 @@ function markup() {
   const full = files.every(Boolean);
   return `<div class="sv-stripes" aria-hidden="true"><i></i><i></i><i></i></div>
     <h2 class="sv-title" id="svTitle"><span class="sr-only">Save data</span><span aria-hidden="true">${cutType('SAVE DATA', 41, { mixCase: true })}</span></h2>
-    <p class="sv-sub${full ? ' sv-full' : ''}">${full ? `All ${SLOTS} files are in use. CLEAR DATA on one to start a new game.` : 'Pick a file: your progress saves itself to it. An empty file starts a new game.'}</p>
+    <p class="sv-sub${full ? ' sv-full' : ''}">${full ? `All ${SLOTS} files are in use. CLEAR DATA on one to start a new game.` : (files.some(Boolean) ? 'Tap a file to keep going, or an empty one to start over. Your progress saves by itself.' : 'Tap any file to start. Your progress saves by itself.')}</p>
     <i class="sv-dots" aria-hidden="true"></i>
     <ol class="sv-list">${files.map(slip).join('')}</ol>
     <div class="sv-keys"><button class="sv-key" type="button" data-sv-back><kbd>Esc</kbd><span>BACK</span></button><span class="sv-key sv-key-ok" aria-hidden="true"><kbd>Enter</kbd><span>CONFIRM</span></span></div>`;
@@ -158,7 +158,7 @@ export function openSaves(o) {
       if (e.target.closest('[data-sv-back]')) { close(); return; }
       const btn = e.target.closest('.sv-slot');
       if (!btn) return;
-      if (lastPointer !== 'mouse' && e.detail !== 0 && !btn.classList.contains('on')) { pick(btn); return; } // a finger: first tap picks
+      if (lastPointer !== 'mouse' && e.detail !== 0 && !btn.classList.contains('on') && store.slots().some(Boolean)) { pick(btn); return; } // a finger: first tap picks (Nov 28: only when there are saves to tell apart; a first visit starts on the first tap, any file)
       activate(btn);
     });
     root.addEventListener('keydown', (e) => { // keep Tab inside

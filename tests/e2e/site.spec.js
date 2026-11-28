@@ -1836,3 +1836,33 @@ test('no emojis anywhere: no emoji-capable character in the site (phones draw th
   await page.goto('/#/contact');
   await expect(page.locator('#page a[href*="github"] .ext').first()).toBeAttached();
 });
+
+test('easy for anyone ("assume every recruiter is drunk"): plain words under PRESS START, a real 1-page resume button, one tap starts a first game, and every chapter says what is inside', async ({ page }, testInfo) => {
+  const phone = testInfo.project.name === 'phone';
+  await page.goto('/');
+  const start = page.locator('#pressStart');
+  await expect(start).toHaveText('PRESS START');
+  expect(await start.evaluate((b) => getComputedStyle(b, '::after').content)).toBe('"play my resume"');
+  const quick = page.locator('.quick-link');
+  await expect(quick).toContainText('1-page resume');
+  const q = await quick.boundingBox();
+  expect(q.height).toBeGreaterThanOrEqual(44); // a button, not small print
+  expect(q.width).toBeGreaterThan(200);
+  // a first visit: one tap on ANY file starts the game (no pick-then-tap-again)
+  await start.click();
+  await expect(page.locator('#saves .sv-sub')).toHaveText('Tap any file to start. Your progress saves by itself.');
+  const third = page.locator('#saves .sv-slot').nth(2);
+  if (phone) await third.tap(); else await third.click();
+  await expect(page.locator('body')).toHaveAttribute('data-screen', 'board', { timeout: 20000 });
+  // THE PLAN: each game name carries its plain words, readable and on screen
+  const says = page.locator('#board .pl-say');
+  await expect(says).toHaveText(['about me', 'projects', 'what I can do', 'my jobs', 'why me', 'reach me'], { ignoreCase: true });
+  await expect(page.locator('#board .pl-say:visible')).toHaveCount(1); // one tag at a time, never six to read
+  await expect(page.locator('#board .pl-item.on .pl-say')).toBeVisible();
+  const b = await page.locator('#board .pl-item.on .pl-say').boundingBox();
+  expect(b.x + b.width).toBeLessThanOrEqual(page.viewportSize().width);
+  await expect(page.locator('#board .pl-item[data-ch="missions"]')).toHaveAccessibleName(/projects/);
+  // a second visit: CONTINUE says so in plain words too
+  await page.goto('/');
+  expect(await page.locator('#pressStart').evaluate((b) => getComputedStyle(b, '::after').content)).toBe('"pick up where you left off"');
+});

@@ -1,4 +1,4 @@
-import{b as h,g as c,e as a,a as n}from"./main-DIpvbAX5.js";import{b as u,E as v,w as f,h as k}from"./common-TrjWRssN.js";function g(){const t=n.links;return{title:"CONTACT",html:`${f("CALLING")}${u}${k("CONTACT")}
+import{b as h,g as c,e as a,a as n}from"./main-BYQi0xjP.js";import{b as u,E as v,w as f,h as k}from"./common-CByueLnX.js";function g(){const t=n.links;return{title:"CONTACT",html:`${f("CALLING")}${u}${k("CONTACT")}
       <div class="card-stage"><div class="pg-rays-win" aria-hidden="true"><div class="pg-rays"></div></div><div class="ccard" id="ccard">
         <div class="ccard-face ccard-front" aria-hidden="true"><div class="ccard-emblem"></div></div>
         <div class="ccard-face ccard-back">

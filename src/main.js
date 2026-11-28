@@ -344,7 +344,10 @@ store.onChange(() => {
    SAVE DATA (src/scenes/saves.js), where the visitor continues a file or starts a new one. The old save
    line under the button ("Save found · Start over") is gone (Nov 19, John): files are erased there. */
 function renderStartLabel() {
-  $('#pressStart').textContent = store.slots().some(Boolean) ? 'CONTINUE' : 'PRESS START';
+  const any = store.slots().some(Boolean);
+  const b = $('#pressStart');
+  b.textContent = any ? 'CONTINUE' : 'PRESS START';
+  b.dataset.sub = any ? 'pick up where you left off' : 'play my resume'; // (Nov 28: plain words under the game words, for a visitor who has never played a game)
   $('#saveLine')?.remove();
 }
 renderStartLabel();

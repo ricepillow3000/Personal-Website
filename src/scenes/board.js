@@ -26,6 +26,9 @@ export const CHAPTERS = ['stats', 'missions', 'skills', 'side-quests', 'differen
     deliberate homage like TAKE YOUR TIME: Yongen-Jaya (the game's home neighborhood, invented for it)
     and five real Tokyo stations its story rides through. Only the names, in our own design. */
 export const STATIONS = { stats: 'YONGEN-JAYA', missions: 'SHIBUYA', skills: 'AOYAMA-ITCHOME', 'side-quests': 'SHINJUKU', different: 'AKIHABARA', contact: 'KICHIJOJI' };
+/** Plain words for each chapter (Nov 28, a LinkedIn reviewer: "assume every recruiter is drunk"): the game
+    names stay, and a small tag says in everyday words what is inside. */
+export const PLAIN = { stats: 'about me', missions: 'projects', skills: 'what I can do', 'side-quests': 'my jobs', different: 'why me', contact: 'reach me' };
 const label = (id) => MENU_ITEMS.find((m) => m.id === id)?.label || id.toUpperCase();
 const no = (i) => String(i + 1).padStart(2, '0');
 
@@ -58,11 +61,12 @@ function planMarkup(ctx) {
     <div class="cmd">
       <nav class="plan-line" aria-label="The resume, six chapters" data-board-item>
         <ol>${CHAPTERS.map((id, i) => `<li style="--i:${i};--zig:${ZIG[i]}">
-          <a class="pl-item" href="#/${id}" data-nav data-ch="${id}" aria-label="${no(i)} ${esc(label(id))}">
+          <a class="pl-item" href="#/${id}" data-nav data-ch="${id}" aria-label="${no(i)} ${esc(label(id))}, ${PLAIN[id]}">
             <span class="pl-blade" aria-hidden="true"><i></i></span>
             <span class="pl-star" aria-hidden="true"></span>
             <span class="pl-no" aria-hidden="true">${no(i)} </span>
             <span class="pl-word">${cutType(label(id), i + 3)}</span>
+            <span class="pl-say" aria-hidden="true">${PLAIN[id]}</span>
           </a></li>`).join('')}</ol>
       </nav>
 
